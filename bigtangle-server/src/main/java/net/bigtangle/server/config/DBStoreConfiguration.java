@@ -96,11 +96,14 @@ public class DBStoreConfiguration {
                 String data = " /data/vm/" + serverConfiguration.getDockerDBHost() + "/var/lib/mysql"; 
                 
                 dockerHelper.shellExecute(" mkdir -p  " + data  );
-                dockerHelper.shellExecute("   docker run -d  -t " + "-p 3306:3306  " + "-v " + data
+                dockerHelper.shellExecute("   docker run -d  -t " + "-v " + data
                         + ":/var/lib/mysql " + " -e MYSQL_ROOT_PASSWORD=" + dbStoreConfiguration.getPassword()
                         + " -e MYSQL_DATABASE=" + dbStoreConfiguration.getDbName() + " --name="
                         + serverConfiguration.getDockerDBHost() + "     mysql:8.0.23 ");
                 // check database available
+                 logger.debug(" check database connection " +
+                       MySQLFullBlockStore.DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName
+                       + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC");
                 checkConnectionWait(120);
             } catch (Exception e) {
                 if(e.getMessage().contains("Conflict")){
@@ -125,6 +128,7 @@ public class DBStoreConfiguration {
                         + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC", connectionProps);
                 rating = true;
             } catch (CommunicationsException e) {
+         
                 Thread.sleep(1000);
             }
         }
