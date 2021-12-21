@@ -58,6 +58,11 @@ docker exec  bigtangle-backup /bin/sh -c " tail -f /logs/server.log"
   root@bigtangle.de:/data/vm/bigtangle-mysql-backup/var/lib/mysql  \
   /data/vm/bigtangle-mysql-backup/var/lib/
   
-  
+  docker rm -f $DBHOST 
+  docker run -d  -t    -p 3306:3306   \
+-v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql  \
+-e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \
+-e MYSQL_DATABASE=info  --name=$DBHOST  -h $DBHOST   mysql:8.0.23 
+
   
    

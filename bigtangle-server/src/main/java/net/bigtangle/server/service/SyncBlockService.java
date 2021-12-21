@@ -464,7 +464,11 @@ public class SyncBlockService {
         
         if ( chain >= (serverConfiguration.getCheckpoint()) && 
                 chain % (serverConfiguration.getCheckpoint()  )  ==0) {
+            try {
             dockerService.dockerExec(dockerService.mysqldumpCheck(chain));
+            }catch (Exception e) {
+              log.debug("",e);
+            }
         }
     }
 
