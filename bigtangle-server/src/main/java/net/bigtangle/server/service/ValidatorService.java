@@ -708,9 +708,9 @@ public class ValidatorService {
         final Set<Sha256Hash> allPredecessorBlockHashes = blockService.getAllRequiredBlockHashes(block, false);
         for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
             final BlockWrap pred = store.getBlockWrap(predecessorReq);
-            if (pred == null) {
-                logger.debug("pred = null " + predecessorReq);
-                return SolidityState.from(predecessorReq, true);
+            if (pred == null) {               
+              //  logger.debug("pred = null " + predecessorReq);
+              //TODO  return SolidityState.from(predecessorReq, true);
             }
             if (pred.getBlock().getBlockType().requiresCalculation() && pred.getBlockEvaluation().getSolid() != 2) {
                 logger.debug("pred = fromMissingCalculation " +  pred.getBlockEvaluation().getSolid());
@@ -2324,10 +2324,12 @@ public class ValidatorService {
                 return formalSolidityResult;
 
             // Predecessors must exist and be ok
+            /* TODO sync blocks with allow broken block tree
             SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions, store);
             if (!predecessorsExist.isSuccessState()) {
                 return predecessorsExist;
             }
+            */
 
             // Inherit solidity from predecessors if they are not solid
             SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block, throwExceptions, store);

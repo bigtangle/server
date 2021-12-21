@@ -3,8 +3,8 @@
 ## docker service
 
 docker network create --driver bridge   bigtangle-bridged-network
- 
-export BIGTANGLEVERSION=$(date '+%Y-%m-%d')
+ $(date '+%Y-%m-%d')
+export BIGTANGLEVERSION=2021-12-20
 export DBHOST=bigtangle-backup-mysql
 export SERVERHOST=bigtangle-backup
 export KAFKA=bigtangle.de:9092
@@ -33,7 +33,7 @@ docker rm -f $SERVERHOST
 
 docker  run -d -t --link  $DBHOST \
   -v /data/vm/$SERVERHOST:/data/vm  -v /var/run/docker.sock:/var/run/docker.sock   \
--p $SERVERPORT:8088 --name  $SERVERHOST -e DOCKERCREATEDBHOST=true \
+-p $SERVERPORT:8088 --name  $SERVERHOST -e DOCKERCREATEDBHOST=true  -e CHECKPOINT=500000 \
 -e DB_PASSWORD=$DB_PASSWORD -e SERVER_PORT=8088  -e DB_NAME=info \
 -e DB_HOSTNAME=$DBHOST -e DOCKERDBHOST=$DBHOST -e SERVICE_MCMC_RATE=1000 \
 -e SERVER_MINERADDRESS=$SERVER_MINERADDRESS -e SERVERMODE= \
@@ -47,7 +47,7 @@ docker  run -d -t --link  $DBHOST \
  
  docker logs -f bigtangle-backup
 sleep 10s
-docker exec  bigtangle-backup /bin/sh -c " tail -f /var/log/supervisor/serverstart-stdout*"
+docker exec  bigtangle-backup /bin/sh -c " tail -f /logs/server.log"
 
 
 # http://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/
