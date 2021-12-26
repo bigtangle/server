@@ -1854,7 +1854,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     private Block adjustSolveAndSign(Block block) throws IOException, JsonParseException, JsonMappingException {
         // save block
         try {
- 
+
             block.solve();
             OkHttp3Util.post(getServerURL() + ReqCmd.signToken.name(), block.bitcoinSerialize());
             return block;
@@ -2213,7 +2213,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             }
         }
         if (beneficiary == null || offerValue.isNegative()) {
-            throw new InsufficientMoneyException("");
+            throw new InsufficientMoneyException("" + orderBaseToken);
         }
 
         OrderOpenInfo info = new OrderOpenInfo(targetValue, targetToken.getTokenid(), beneficiary.getPubKey(),
@@ -2367,7 +2367,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             if (allowClientMining && clientMiningAddress != null) {
                 block.setMinerAddress(clientMiningAddress);
             }
-           block.solve();
+            block.solve();
             // check the valid to time must be at least the block creation time
 
             OkHttp3Util.post(getServerURL() + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
@@ -2467,6 +2467,24 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         request.tx.setMemo(menoinfo);
         completeTx(request, aesKey);
         block.addTransaction(request.tx);
+        return solveAndPost(block);
+    }
+
+    public Transaction createTransaction(KeyParameter aesKey, Address destination, Coin amount, MemoInfo menoinfo)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
+        SendRequest request = SendRequest.to(destination, amount);
+        request.aesKey = aesKey;
+        request.tx.setMemo(menoinfo);
+        completeTx(request, aesKey);
+        return request.tx;
+    }
+
+    public Block payTransaction(List<Transaction> txs)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
+        Block block = getTip();
+        for (Transaction tx : txs) {
+            block.addTransaction(tx);
+        }
         return solveAndPost(block);
     }
 
