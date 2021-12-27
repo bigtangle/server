@@ -2479,6 +2479,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return request.tx;
     }
 
+    public Transaction createTransaction(KeyParameter aesKey,  List<TransactionOutput> candidates,  Address destination, Coin amount, String memo )
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
+        SendRequest request = SendRequest.to(destination, amount);
+        request.aesKey = aesKey;
+        request.tx.setMemo(new MemoInfo(memo));
+        completeTx(request, aesKey,candidates);
+        return request.tx;
+    }
+    
     public Block payTransaction(List<Transaction> txs)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
         Block block = getTip();

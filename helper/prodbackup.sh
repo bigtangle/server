@@ -67,5 +67,11 @@ docker exec  bigtangle-backup /bin/sh -c " tail -f /var/log/supervisor/serversta
 -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \
 -e MYSQL_DATABASE=info  --name=$DBHOST  -h $DBHOST   mysql:8.0.23 
 
+ mv  /data/vm/mysql-cc/var/lib/   /data/backup
+ ll   /data/vm/mysql-cc/var/lib/mysql/binlog.*
+   sudo rsync -avz -e "ssh -i /root/.ssh/id_rsa  "  \
+  root@39.106.42.141:/data/vm/mysql-cc/var/lib/mysql  \
+  /data/vm/mysql-cc/var/lib/
+  
   
    
