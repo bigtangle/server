@@ -294,7 +294,7 @@ public class PayOTCOrder {
         // addressResult.put((String) exchangemap.get("toTokenHex"),
         // fromAddress00);
 
-        List<TransactionOutput> candidates = this.wallet().transforSpendCandidates(outputs);
+        List<FreeStandingTransactionOutput> candidates = this.wallet().transforSpendCandidates(outputs);
         //this.wallet().setServerURL(this.serverURL);
         this.wallet().completeTx(req, candidates, false, addressResult);
         this.wallet().signTransaction(req);

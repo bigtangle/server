@@ -231,7 +231,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
     }
 
-    @Test
+   // @Test
     public void orderTickerSearchWithLastdayPriceAPI() throws Exception {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),

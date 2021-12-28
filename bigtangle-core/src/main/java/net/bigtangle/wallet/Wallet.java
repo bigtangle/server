@@ -1137,49 +1137,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     /******************************************************************************************************************/
 
-    /**
-     * A custom {@link TransactionOutput} that is free standing. This contains
-     * all the information required for spending without actually having all the
-     * linked data (i.e parent tx).
-     *
-     */
-    public class FreeStandingTransactionOutput extends TransactionOutput {
-        private UTXO output;
-
-        /**
-         * Construct a free standing Transaction Output.
-         * 
-         * @param params
-         *            The network parameters.
-         * @param output
-         *            The stored output (free standing).
-         */
-        public FreeStandingTransactionOutput(NetworkParameters params, UTXO output) {
-            super(params, null, output.getValue(), output.getScript().getProgram());
-            this.output = output;
-
-        }
-
-        /**
-         * Get the {@link UTXO}.
-         * 
-         * @return The stored output.
-         */
-        public UTXO getUTXO() {
-            return output;
-        }
-
-        @Override
-        public int getIndex() {
-            return (int) output.getIndex();
-        }
-
-        @Override
-        public Sha256Hash getParentTransactionHash() {
-            return output.getTxHash();
-        }
-    }
-
     public WalletFiles autosaveToFile(File f, long delayTime, TimeUnit timeUnit,
             @Nullable WalletFiles.Listener eventListener) {
         lock.lock();
@@ -1203,7 +1160,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public FeeCalculation calculateFee(SendRequest req, Coin value, List<TransactionInput> originalInputs,
-            boolean needAtLeastReferenceFee, List<TransactionOutput> candidates, Address changeAddress)
+            boolean needAtLeastReferenceFee, List<FreeStandingTransactionOutput> candidates, Address changeAddress)
             throws InsufficientMoneyException {
         checkState(lock.isHeldByCurrentThread());
         // There are 3 possibilities for what adding change might do:
@@ -1514,10 +1471,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     // All Spend Candidates as List<TransactionOutput>
-    public List<TransactionOutput> calculateAllSpendCandidates(KeyParameter aesKey, boolean multisigns)
+    public List<FreeStandingTransactionOutput> calculateAllSpendCandidates(KeyParameter aesKey, boolean multisigns)
             throws IOException {
 
-        List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
+        List<FreeStandingTransactionOutput> candidates = new ArrayList<FreeStandingTransactionOutput>();
         for (UTXO output : calculateAllSpendCandidatesUTXO(aesKey, multisigns)) {
             candidates.add(new FreeStandingTransactionOutput(this.params, output));
         }
@@ -1565,8 +1522,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     }
 
-    public List<TransactionOutput> transforSpendCandidates(List<UTXO> outputs) {
-        List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
+    public List<FreeStandingTransactionOutput> transforSpendCandidates(List<UTXO> outputs) {
+        List<FreeStandingTransactionOutput> candidates = new ArrayList<FreeStandingTransactionOutput>();
         for (UTXO output : outputs) {
             candidates.add(new FreeStandingTransactionOutput(this.params, output));
         }
@@ -1581,22 +1538,22 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         // can customize coin selection policies. The call below will ignore
         // immature coinbases and outputs
         // we don't have the keys for.
-        List<TransactionOutput> candidates = calculateAllSpendCandidates(aesKey, false);
+        List<FreeStandingTransactionOutput> candidates = calculateAllSpendCandidates(aesKey, false);
         completeTx(req, candidates, true, getAddresses(aesKey));
     }
 
-    public void completeTx(SendRequest req, KeyParameter aesKey, List<TransactionOutput> candidates)
+    public void completeTx(SendRequest req, KeyParameter aesKey, List<FreeStandingTransactionOutput> candidates)
             throws InsufficientMoneyException, IOException {
 
         completeTx(req, candidates, true, getAddresses(aesKey));
     }
 
-    public void completeTx(SendRequest req, List<TransactionOutput> candidates, boolean sign)
+    public void completeTx(SendRequest req, List<FreeStandingTransactionOutput> candidates, boolean sign)
             throws InsufficientMoneyException {
         this.completeTx(req, candidates, sign, new HashMap<String, Address>());
     }
 
-    public void completeTx(SendRequest req, List<TransactionOutput> candidates, boolean sign,
+    public void completeTx(SendRequest req, List<FreeStandingTransactionOutput> candidates, boolean sign,
             HashMap<String, Address> addressResult) throws InsufficientMoneyException {
         lock.lock();
         try {
@@ -1674,7 +1631,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
     }
 
-    public void completeTxSelection(SendRequest req, List<TransactionOutput> candidates,
+    public void completeTxSelection(SendRequest req, List<FreeStandingTransactionOutput> candidates,
             List<TransactionInput> originalInputs, Map<String, Coin> value, HashMap<String, Address> addressResult)
             throws InsufficientMoneyException {
         List<TransactionInput> start = originalInputs;
@@ -2194,22 +2151,41 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         if (targetToken.getTokenid().equals(orderBaseToken))
             throw new OrderImpossibleException("buy token is base token ");
+        List<UTXO> coinList = getSpendableUTXO(aesKey, Utils.HEX.decode(orderBaseToken));
+
+        List<FreeStandingTransactionOutput> candidates = new ArrayList<FreeStandingTransactionOutput>();
+        for (UTXO u : coinList) {
+            candidates.add(new FreeStandingTransactionOutput(this.params, u));
+        }
+
+        return buyOrder(aesKey, targetToken, buyPrice, targetValue, validToTime, validFromTime, orderBaseToken,
+                allowRemainder, candidates);
+    }
+
+    public Block buyOrder(KeyParameter aesKey, Token targetToken, long buyPrice, long targetValue, Long validToTime,
+            Long validFromTime, String orderBaseToken, boolean allowRemainder,
+            List<FreeStandingTransactionOutput> candidates) throws JsonProcessingException, IOException,
+            InsufficientMoneyException, UTXOProviderException, NoTokenException {
+
+        if (targetToken.getTokenid().equals(orderBaseToken))
+            throw new OrderImpossibleException("buy token is base token ");
         Integer priceshift = params.getOrderPriceShift(orderBaseToken);
         // Burn orderBaseToken to buy
         Coin offerValue = new Coin(
                 totalAmount(buyPrice, targetValue, targetToken.getDecimals() + priceshift, allowRemainder),
                 Utils.HEX.decode(orderBaseToken)).negate();
         Transaction tx = new Transaction(params);
-        List<UTXO> coinList = getSpendableUTXO(aesKey, Utils.HEX.decode(orderBaseToken));
+
         ECKey beneficiary = null;
-        for (UTXO u : coinList) {
-            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
-            beneficiary = getECKey(aesKey, u.getAddress());
-            offerValue = spendableOutput.getValue().add(offerValue);
-            tx.addInput(u.getBlockHash(), spendableOutput);
-            if (!offerValue.isNegative()) {
-                tx.addOutput(offerValue, beneficiary);
-                break;
+        for (FreeStandingTransactionOutput spendableOutput : candidates) {
+            if (orderBaseToken.equals(spendableOutput.getUTXO().getTokenId())) {
+                beneficiary = getECKey(aesKey, spendableOutput.getUTXO().getAddress());
+                offerValue = spendableOutput.getValue().add(offerValue);
+                tx.addInput(spendableOutput.getUTXO().getBlockHash(), spendableOutput);
+                if (!offerValue.isNegative()) {
+                    tx.addOutput(offerValue, beneficiary);
+                    break;
+                }
             }
         }
         if (beneficiary == null || offerValue.isNegative()) {
@@ -2252,22 +2228,40 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
         if (t.getTokenid().equals(orderBaseToken))
             throw new OrderImpossibleException("sell token is not allowed as base token ");
+        // Burn tokens to sell
+        Coin myCoin = Coin.valueOf(offervalue, t.getTokenid()).negate();
+        List<UTXO> coinList = getSpendableUTXO(aesKey, myCoin.getTokenid());
+        List<FreeStandingTransactionOutput> candidates = new ArrayList<FreeStandingTransactionOutput>();
+        for (UTXO u : coinList) {
+            candidates.add(new FreeStandingTransactionOutput(this.params, u));
+
+        }
+        return sellOrder(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken, allowRemainder,
+                candidates);
+    }
+
+    public Block sellOrder(KeyParameter aesKey, Token t, long sellPrice, long offervalue, Long validToTime,
+            Long validFromTime, String orderBaseToken, boolean allowRemainder,
+            List<FreeStandingTransactionOutput> candidates)
+            throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
+        if (t.getTokenid().equals(orderBaseToken))
+            throw new OrderImpossibleException("sell token is not allowed as base token ");
         Integer priceshift = params.getOrderPriceShift(orderBaseToken);
         // Burn tokens to sell
         Coin myCoin = Coin.valueOf(offervalue, t.getTokenid()).negate();
 
         Transaction tx = new Transaction(params);
 
-        List<UTXO> coinList = getSpendableUTXO(aesKey, myCoin.getTokenid());
         ECKey beneficiary = null;
-        for (UTXO u : coinList) {
-            TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.params, u);
-            beneficiary = getECKey(aesKey, u.getAddress());
-            myCoin = spendableOutput.getValue().add(myCoin);
-            tx.addInput(u.getBlockHash(), spendableOutput);
-            if (!myCoin.isNegative()) {
-                tx.addOutput(myCoin, beneficiary);
-                break;
+        for (FreeStandingTransactionOutput spendableOutput : candidates) {
+            if (t.getTokenid().equals(spendableOutput.getUTXO().getTokenId())) {
+                beneficiary = getECKey(aesKey, spendableOutput.getUTXO().getAddress());
+                myCoin = spendableOutput.getValue().add(myCoin);
+                tx.addInput(spendableOutput.getUTXO().getBlockHash(), spendableOutput);
+                if (!myCoin.isNegative()) {
+                    tx.addOutput(myCoin, beneficiary);
+                    break;
+                }
             }
         }
         if (beneficiary == null || myCoin.isNegative()) {
@@ -2439,7 +2433,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public Block pay(KeyParameter aesKey, Address destination, Coin amount, String memo,
-            List<TransactionOutput> candidates)
+            List<FreeStandingTransactionOutput> candidates)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
 
         Block block = getTip();
@@ -2479,15 +2473,16 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return request.tx;
     }
 
-    public Transaction createTransaction(KeyParameter aesKey,  List<TransactionOutput> candidates,  Address destination, Coin amount, String memo )
+    public Transaction createTransaction(KeyParameter aesKey, List<FreeStandingTransactionOutput> candidates,
+            Address destination, Coin amount, String memo)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
         SendRequest request = SendRequest.to(destination, amount);
         request.aesKey = aesKey;
         request.tx.setMemo(new MemoInfo(memo));
-        completeTx(request, aesKey,candidates);
+        completeTx(request, aesKey, candidates);
         return request.tx;
     }
-    
+
     public Block payTransaction(List<Transaction> txs)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
         Block block = getTip();
@@ -2516,7 +2511,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         List<UTXO> l = calculateAllSpendCandidatesUTXO(aesKey, false);
 
-        List<TransactionOutput> candidates = new ArrayList<TransactionOutput>();
+        List<FreeStandingTransactionOutput> candidates = new ArrayList<FreeStandingTransactionOutput>();
 
         Coin summe = Coin.valueOf(0, tokenid);
         int size = 0;

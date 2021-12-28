@@ -247,7 +247,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
         testPartsToOne(aCoin, to);
         testPartsToOne(aCoin, to);
-        List<TransactionOutput> uspent = walletAppKit1.wallet().calculateAllSpendCandidates(null, false);
+        List<FreeStandingTransactionOutput> uspent = walletAppKit1.wallet().calculateAllSpendCandidates(null, false);
         assertTrue(uspent.size() == 3);
         walletAppKit1.wallet().payPartsToOne(null, to.toAddress(networkParameters), NetworkParameters.BIGTANGLE_TOKENID,
                 "0,3");

@@ -247,7 +247,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
             OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
-            List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(null, false);
+            List<FreeStandingTransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(null, false);
             for (TransactionOutput transactionOutput : candidates) {
                 log.info("UTXO : " + transactionOutput);
             }
@@ -288,7 +288,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
 
-        List<TransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(null, false);
+        List<FreeStandingTransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(null, false);
         for (TransactionOutput transactionOutput : candidates) {
             log.info("UTXO : " + transactionOutput);
         }
