@@ -90,6 +90,7 @@ import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.data.SolidityState.State;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.OrderTickerService;
+import net.bigtangle.server.service.OutputService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.StoreService;
 import net.bigtangle.server.service.ValidatorService;
@@ -133,6 +134,9 @@ public class FullBlockGraph {
     @Autowired
     private StoreService storeService;
 
+    @Autowired
+    private OutputService outputService;
+    
     public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
         boolean added;
         if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
@@ -1198,6 +1202,9 @@ public class FullBlockGraph {
                         }
                     }
                 }
+                //reset cache
+                outputService.evictTransactionOutputs(fromAddress);
+                outputService.evictTransactionOutputs( getScriptAddress(script));
             }
             blockStore.addUnspentTransactionOutput(utxos);
         }

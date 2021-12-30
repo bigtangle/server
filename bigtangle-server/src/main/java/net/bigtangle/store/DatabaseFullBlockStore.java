@@ -1452,6 +1452,36 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
+    public List<UTXO> getOpenTransactionOutputs(String address) throws UTXOProviderException {
+        PreparedStatement s = null;
+        List<UTXO> outputs = new ArrayList<UTXO>();
+        try {
+            maybeConnect();
+            s = getConnection().prepareStatement(SELECT_OPEN_TRANSACTION_OUTPUTS_SQL);
+        
+                s.setString(1, address.toString());
+                s.setString(2, address.toString());
+                ResultSet results = s.executeQuery();
+                while (results.next()) {
+                    outputs.add(setUTXO(Sha256Hash.wrap(results.getBytes("hash")), results.getLong("outputindex"),
+                            results));
+                } 
+            return outputs;
+        } catch (SQLException ex) {
+            throw new UTXOProviderException(ex);
+        } catch (BlockStoreException bse) {
+            throw new UTXOProviderException(bse);
+        } finally {
+            if (s != null)
+                try {
+                    s.close();
+                } catch (SQLException e) {
+                    //
+                }
+        }
+    }
+    
+    @Override
     public List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid00)
             throws UTXOProviderException {
         PreparedStatement s = null;

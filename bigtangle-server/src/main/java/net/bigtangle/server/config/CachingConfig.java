@@ -11,11 +11,7 @@ import com.hazelcast.config.MaxSizeConfig;
 @Configuration
 
 public class CachingConfig {
-    //
-    // @Bean
-    // public CacheManager cacheManager() {
-    // return new ConcurrentMapCacheManager("blocks");
-    // }
+ 
 
     @Bean
     public Config hazelCastConfig() {
@@ -24,11 +20,7 @@ public class CachingConfig {
         config.setInstanceName("hazelcast-instance")
                 .addMapConfig(new MapConfig().setName("configuration")
                         .setMaxSizeConfig(new MaxSizeConfig(200, MaxSizeConfig.MaxSizePolicy.FREE_HEAP_SIZE))
-                        .setEvictionPolicy(EvictionPolicy.LRU).setTimeToLiveSeconds(360)) 
-        .addMapConfig(new MapConfig().setName("priceticker")
-                .setMaxSizeConfig(new MaxSizeConfig(200, MaxSizeConfig.MaxSizePolicy.FREE_HEAP_SIZE))
-                .setEvictionPolicy(EvictionPolicy.LRU).setTimeToLiveSeconds(2))
-        ;
+                        .setEvictionPolicy(EvictionPolicy.LRU).setTimeToLiveSeconds(360))   ;
 
         return config;
 

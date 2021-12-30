@@ -33,6 +33,9 @@ import net.bigtangle.core.exception.UTXOProviderException;
 public interface UTXOProvider {
 
     
+    
+    List<UTXO> getOpenTransactionOutputs(String address) throws UTXOProviderException;
+
     List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException;
     
     List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid) throws UTXOProviderException;
