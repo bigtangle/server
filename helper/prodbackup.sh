@@ -54,6 +54,7 @@ docker exec  bigtangle-backup /bin/sh -c " tail -f /var/log/supervisor/serversta
 
  rm -fr /data/vm/bigtangle-backup-mysql/var/lib/mysql/binlog.*
  
+ cp -r    /data/vm/bigtangle-mysql/var/lib/mysql/  /data/vm/bigtangle-backup-mysql/var/lib/mysql/
  sudo rm -fr /data/vm/bigtangle-backup-mysql/var/lib
  mkdir -p /data/vm/bigtangle-backup-mysql/var/lib
  

@@ -2167,6 +2167,41 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             List<FreeStandingTransactionOutput> candidates) throws JsonProcessingException, IOException,
             InsufficientMoneyException, UTXOProviderException, NoTokenException {
 
+        return buyOrderDo(aesKey, targetToken, buyPrice, targetValue, validToTime, validFromTime, orderBaseToken,
+                allowRemainder, candidates, 3, 60000);
+    }
+
+    public Block buyOrderDo(KeyParameter aesKey, Token targetToken, long buyPrice, long targetValue, Long validToTime,
+            Long validFromTime, String orderBaseToken, boolean allowRemainder,
+            List<FreeStandingTransactionOutput> candidates, int repeat, int sleep) throws JsonProcessingException,
+            IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
+        try {
+            return buyOrderDo(aesKey, targetToken, buyPrice, targetValue, validToTime, validFromTime, orderBaseToken,
+                    allowRemainder, candidates);
+        } catch (ConflictPossibleException e) {
+            if (repeat > 0) {
+                repeat -= 1;
+                try {
+                    Thread.sleep(sleep);
+                } catch (InterruptedException e1) {
+                }
+                candidates = calculateAllSpendCandidates(aesKey, false);
+                return buyOrderDo(aesKey, targetToken, buyPrice, targetValue, validToTime, validFromTime,
+                        orderBaseToken, allowRemainder, candidates, repeat, sleep);
+
+            }
+        } catch (RuntimeException e) {
+
+            throw e;
+        }
+        throw new InsufficientMoneyException("payTransaction ");
+    }
+
+    public Block buyOrderDo(KeyParameter aesKey, Token targetToken, long buyPrice, long targetValue, Long validToTime,
+            Long validFromTime, String orderBaseToken, boolean allowRemainder,
+            List<FreeStandingTransactionOutput> candidates) throws JsonProcessingException, IOException,
+            InsufficientMoneyException, UTXOProviderException, NoTokenException {
+
         if (targetToken.getTokenid().equals(orderBaseToken))
             throw new OrderImpossibleException("buy token is base token ");
         Integer priceshift = params.getOrderPriceShift(orderBaseToken);
@@ -2241,6 +2276,40 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     }
 
     public Block sellOrder(KeyParameter aesKey, Token t, long sellPrice, long offervalue, Long validToTime,
+            Long validFromTime, String orderBaseToken, boolean allowRemainder,
+            List<FreeStandingTransactionOutput> candidates)
+            throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
+        return sellOrderDo(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken, allowRemainder,
+                candidates, 3, 60000);
+    }
+
+    public Block sellOrderDo(KeyParameter aesKey, Token t, long sellPrice, long offervalue, Long validToTime,
+            Long validFromTime, String orderBaseToken, boolean allowRemainder,
+            List<FreeStandingTransactionOutput> candidates, int repeat, int sleep)
+            throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
+        try {
+            return sellOrderDo(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken,
+                    allowRemainder, candidates);
+        } catch (ConflictPossibleException e) {
+            if (repeat > 0) {
+                repeat -= 1;
+                try {
+                    Thread.sleep(sleep);
+                } catch (InterruptedException e1) {
+                }
+                candidates = calculateAllSpendCandidates(aesKey, false);
+                return sellOrderDo(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken,
+                        allowRemainder, candidates, repeat, sleep);
+
+            }
+        } catch (RuntimeException e) {
+
+            throw e;
+        }
+        throw new InsufficientMoneyException("payTransaction ");
+    }
+
+    public Block sellOrderDo(KeyParameter aesKey, Token t, long sellPrice, long offervalue, Long validToTime,
             Long validFromTime, String orderBaseToken, boolean allowRemainder,
             List<FreeStandingTransactionOutput> candidates)
             throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
@@ -2485,11 +2554,37 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
     public Block payTransaction(List<Transaction> txs)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
+        return payTransaction(txs, 2, 60000);
+    }
+
+    public Block payTransactionDo(List<Transaction> txs)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
         Block block = getTip();
         for (Transaction tx : txs) {
             block.addTransaction(tx);
         }
         return solveAndPost(block);
+    }
+
+    public Block payTransaction(List<Transaction> txs, int repeat, int sleep)
+            throws JsonProcessingException, IOException, InsufficientMoneyException {
+
+        try {
+            return payTransactionDo(txs);
+        } catch (ConflictPossibleException e) {
+            if (repeat > 0) {
+                repeat -= 1;
+                try {
+                    Thread.sleep(sleep);
+                } catch (InterruptedException e1) {
+                }
+                return payTransaction(txs, repeat, sleep);
+            }
+        } catch (RuntimeException e) {
+
+            throw e;
+        }
+        throw new InsufficientMoneyException("payTransaction ");
     }
 
     /*
