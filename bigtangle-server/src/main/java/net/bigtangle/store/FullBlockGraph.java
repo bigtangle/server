@@ -2001,6 +2001,9 @@ public class FullBlockGraph {
 
     public void cleanUp(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
 
+    }
+    public void cleanUpDo(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
+
         Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
         log.info(" pruned until block " +""+ (rewardblock.getLastMiningRewardBlock()- 500));
         // store.prunedClosedOrders(rewardblock.getTimeSeconds());
