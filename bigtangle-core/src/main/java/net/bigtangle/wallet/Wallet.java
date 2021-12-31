@@ -2559,12 +2559,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return request.tx;
     }
 
+  
+//no repeat here
     public Block payTransaction(List<Transaction> txs)
-            throws JsonProcessingException, IOException, InsufficientMoneyException {
-        return payTransaction(txs, 2, 60000);
-    }
-
-    public Block payTransactionDo(List<Transaction> txs)
             throws JsonProcessingException, IOException, InsufficientMoneyException {
         Block block = getTip();
         for (Transaction tx : txs) {
@@ -2573,30 +2570,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(block);
     }
 
-    public Block payTransaction(List<Transaction> txs, int repeat, int sleep)
-            throws JsonProcessingException, IOException, InsufficientMoneyException {
-
-        try {
-            return payTransactionDo(txs);
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("ConflictPossibleException:")) {
-                log.debug(" ConflictPossibleException  " + " repeat time =" + repeat + " sleep=" + sleep);
-
-                if (repeat > 0) {
-                    repeat -= 1;
-                    try {
-                        Thread.sleep(sleep);
-                    } catch (InterruptedException e1) {
-                    }
-                    return payTransaction(txs, repeat, sleep);
-                }
-            } else {
-                throw e;
-            }
-        }
-        throw new InsufficientMoneyException("payTransaction ");
-    }
-
+   
     /*
      * pay all small coins in a wallet to one destination. This destination can
      * be in same wallet.
