@@ -2178,21 +2178,24 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         try {
             return buyOrderDo(aesKey, targetToken, buyPrice, targetValue, validToTime, validFromTime, orderBaseToken,
                     allowRemainder, candidates);
-        } catch (ConflictPossibleException e) {
-            if (repeat > 0) {
-                repeat -= 1;
-                try {
-                    Thread.sleep(sleep);
-                } catch (InterruptedException e1) {
-                }
-                candidates = calculateAllSpendCandidates(aesKey, false);
-                return buyOrderDo(aesKey, targetToken, buyPrice, targetValue, validToTime, validFromTime,
-                        orderBaseToken, allowRemainder, candidates, repeat, sleep);
-
-            }
         } catch (RuntimeException e) {
+            if (e.getMessage().contains("ConflictPossibleException:")) {
+                log.debug(" ConflictPossibleException  " + " repeat time =" + repeat + " sleep=" + sleep);
 
-            throw e;
+                if (repeat > 0) {
+                    repeat -= 1;
+                    try {
+                        Thread.sleep(sleep);
+                    } catch (InterruptedException e1) {
+                    }
+                    candidates = calculateAllSpendCandidates(aesKey, false);
+                    return buyOrderDo(aesKey, targetToken, buyPrice, targetValue, validToTime, validFromTime,
+                            orderBaseToken, allowRemainder, candidates, repeat, sleep);
+
+                }
+            } else {
+                throw e;
+            }
         }
         throw new InsufficientMoneyException("payTransaction ");
     }
@@ -2290,21 +2293,25 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         try {
             return sellOrderDo(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken,
                     allowRemainder, candidates);
-        } catch (ConflictPossibleException e) {
-            if (repeat > 0) {
-                repeat -= 1;
-                try {
-                    Thread.sleep(sleep);
-                } catch (InterruptedException e1) {
-                }
-                candidates = calculateAllSpendCandidates(aesKey, false);
-                return sellOrderDo(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken,
-                        allowRemainder, candidates, repeat, sleep);
-
-            }
         } catch (RuntimeException e) {
+            if (e.getMessage().contains("ConflictPossibleException:")) {
+                log.debug(" ConflictPossibleException  " + " repeat time =" + repeat + " sleep=" + sleep);
 
-            throw e;
+                if (repeat > 0) {
+                    repeat -= 1;
+                    try {
+                        Thread.sleep(sleep);
+                    } catch (InterruptedException e1) {
+                    }
+                    candidates = calculateAllSpendCandidates(aesKey, false);
+                    return sellOrderDo(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken,
+                            allowRemainder, candidates, repeat, sleep);
+
+                }
+            } else {
+
+                throw e;
+            }
         }
         throw new InsufficientMoneyException("payTransaction ");
     }
@@ -2571,18 +2578,21 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         try {
             return payTransactionDo(txs);
-        } catch (ConflictPossibleException e) {
-            if (repeat > 0) {
-                repeat -= 1;
-                try {
-                    Thread.sleep(sleep);
-                } catch (InterruptedException e1) {
-                }
-                return payTransaction(txs, repeat, sleep);
-            }
         } catch (RuntimeException e) {
+            if (e.getMessage().contains("ConflictPossibleException:")) {
+                log.debug(" ConflictPossibleException  " + " repeat time =" + repeat + " sleep=" + sleep);
 
-            throw e;
+                if (repeat > 0) {
+                    repeat -= 1;
+                    try {
+                        Thread.sleep(sleep);
+                    } catch (InterruptedException e1) {
+                    }
+                    return payTransaction(txs, repeat, sleep);
+                }
+            } else {
+                throw e;
+            }
         }
         throw new InsufficientMoneyException("payTransaction ");
     }
