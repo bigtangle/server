@@ -1850,8 +1850,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             String memo, List<FreeStandingTransactionOutput> coinList, int repeat, int sleep)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
+     
         try {
-            return payMoneyToECKeyListNoSplit(aesKey, giveMoneyResult, tokenid, memo, coinList);
+            return payMoneyToECKeyListNoSplit(aesKey, giveMoneyResult, tokenid, memo,   filterTokenid(tokenid, coinList));
         } catch (InsufficientMoneyException e) {
             log.debug(
                     " InsufficientMoneyException  " + giveMoneyResult + " repeat time =" + repeat + " sleep=" + sleep);
@@ -2382,6 +2383,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     private List<FreeStandingTransactionOutput> getSpendableUTXO(KeyParameter aesKey, byte[] tokenid)
             throws IOException {
         List<FreeStandingTransactionOutput> l = calculateAllSpendCandidates(aesKey, false);
+        return filterTokenid(tokenid, l);
+    }
+
+    private List<FreeStandingTransactionOutput> filterTokenid(byte[] tokenid, List<FreeStandingTransactionOutput> l) {
         List<FreeStandingTransactionOutput> re = new ArrayList<FreeStandingTransactionOutput>();
         for (FreeStandingTransactionOutput u : l) {
             if (Arrays.equals(u.getValue().getTokenid(), tokenid)) {
