@@ -225,8 +225,7 @@ public class LotteryRemoteTest {
             userkeys.add(key);
         }
 
-        Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(USDTokenPub), " pay to user ", 3,
-                20000);
+        Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(USDTokenPub), " pay to user " );
         log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         return userkeys;

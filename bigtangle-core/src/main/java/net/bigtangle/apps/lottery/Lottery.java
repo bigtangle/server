@@ -33,6 +33,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.utils.UtilSort;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.Wallet;
 
 public class Lottery {
@@ -164,7 +165,12 @@ public class Lottery {
             List<UTXO> userlist)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException, Exception {
 
-        return walletAdmin.payFromList(null, address, new Coin(amount, Utils.HEX.decode(tokenid)), memo, userlist);
+        List<FreeStandingTransactionOutput> candidates = new ArrayList<FreeStandingTransactionOutput>();
+        for (UTXO u : userlist) {
+            candidates.add(new FreeStandingTransactionOutput(this.params, u));
+        }
+        
+        return walletAdmin.payFromList(null, address, new Coin(amount, Utils.HEX.decode(tokenid)), memo, candidates);
 
     }
 

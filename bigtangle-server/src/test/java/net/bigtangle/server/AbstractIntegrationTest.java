@@ -257,7 +257,7 @@ public abstract class AbstractIntegrationTest {
 
         giveMoneyTestToken.put(beneficiary.toAddress(networkParameters).toString(), amount);
 
-        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
+        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "");
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         addedBlocks.add(b);
@@ -284,7 +284,7 @@ public abstract class AbstractIntegrationTest {
 
         giveMoneyTestToken.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), amount);
 
-        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "", 3, 1000);
+        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "");
         // log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         addedBlocks.add(b);

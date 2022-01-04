@@ -103,7 +103,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
         userkeys.add(key2);
         
         String memo = "pay to user";
-        Block b = w.payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), memo, 3, 20000);
+        Block b = w.payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), memo );
         log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmc();
 

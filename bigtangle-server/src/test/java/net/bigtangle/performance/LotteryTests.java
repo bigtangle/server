@@ -150,8 +150,8 @@ public class LotteryTests extends AbstractIntegrationTest {
             userkeys.add(key);
         }
 
-        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), "pay to user",
-                3, 20000);
+        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), "pay to user"
+                );
         log.debug("block " + (b == null ? "block is null" : b.toString()));
         mcmc();
         return userkeys;

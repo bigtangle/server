@@ -61,47 +61,7 @@ public class ECKeyEncryptTest extends AbstractIntegrationTest {
         }
     }
 
-    private Block payBig(ECKey ecKey, long amount, String memoHex) throws Exception,
-            InterruptedException, ExecutionException, BlockStoreException, UTXOProviderException {
-        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
-        giveMoneyResult.put(ecKey.toAddress(networkParameters).toString(), amount);
-
-        Block b = walletAppKit.wallet().payMoneyToECKeyListMemoHex(null, giveMoneyResult, memoHex);
-        mcmcServiceUpdate();
-        
-        
-        return b;
-    }
-
-    @Test
-    public void transactionBlockEncrypt() throws Exception {
-        ECKey testKey = walletKeys.get(0);
-        
-        List<Block> addedBlocks = new ArrayList<>();
-        resetAndMakeTestToken(testKey, addedBlocks);
-        
-        walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle4");
-        walletAppKit2.wallet().setServerURL(contextRoot);
-        wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
-        
-        byte[] cipher = ECIESCoder.encrypt(testKey.getPubKeyPoint(), payload);
-        String memoHex = Utils.HEX.encode(cipher);
-        
-        long amount = 77l;
-        Block b = payBig(wallet2Keys.get(0), amount, memoHex);
-        String jsonString = b.getTransactions().get(0).getMemo();
-        
-        MemoInfo memoInfo = MemoInfo.parse(jsonString);
-        for (KeyValue keyValue : memoInfo.getKv()) {
-            if (keyValue.getKey().equals(MemoInfo.ENCRYPT)) {
-                memoHex = keyValue.getValue();
-            }
-        }
-        
-        byte[] decryptedPayload = ECIESCoder.decrypt(testKey.getPrivKey(), Utils.HEX.decode(memoHex));
-        assertArrayEquals(decryptedPayload, payload);
-    }
-
+      
     @Test
     public void accessTokenSignatureVerify() {
         String message = UUID.randomUUID().toString();

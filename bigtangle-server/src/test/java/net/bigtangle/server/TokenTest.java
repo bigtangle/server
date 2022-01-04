@@ -664,7 +664,7 @@ public class TokenTest extends AbstractIntegrationTest {
         }
 
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
-                "pay to user", 3, 20000);
+                "pay to user" );
         makeRewardBlock();
 
         log.debug("block " + (b == null ? "block is null" : b.toString()));
@@ -691,7 +691,7 @@ public class TokenTest extends AbstractIntegrationTest {
             giveMoneyResult.put(utxo.getAddress(), utxo.getValue().getValue().longValue() * 3 / 1000);
         }
         Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
-                "pay to user", 3, 20000);
+                "pay to user" );
         log.debug("block " + (b == null ? "block is null" : b.toString()));
 
         makeRewardBlock();
