@@ -177,6 +177,9 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    totalQuantity bigint NOT NULL,\n" 
             + "    highprice bigint NOT NULL,\n"
             + "    lowprice bigint NOT NULL,\n"
+            + "    open bigint NOT NULL,\n"
+            + "    close bigint NOT NULL,\n"
+            + "    interval varchar(255) NOT NULL,\n"
             + "    inserttime bigint NOT NULL,\n"
             + "    PRIMARY KEY (id) \n" 
             + ") ENGINE=InnoDB\n";
