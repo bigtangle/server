@@ -31,6 +31,8 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.crypto.TransactionSignature;
@@ -41,6 +43,7 @@ import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.SendRequest;
+import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -230,7 +233,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
                 continue;
             }
             if (amount.compareTo(utxo.getValue()) == 0)
-                my = 1; 
+                my = 1;
         }
         assertTrue(my == 1);
     }
@@ -286,7 +289,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         }
         return sb.toString();
     }
-    
+
     @Test
     // coins in wallet to one coin to address
     public void testRepay() throws Exception {
@@ -294,7 +297,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         ECKey to = new ECKey();
         walletAppKit1.wallet().importKey(to);
         Coin aCoin = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
-     
+
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -308,12 +311,43 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
         OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
         makeRewardBlock();
-        //repay the block
+        // repay the block
         walletAppKit.wallet().rePayBlock(null, rollingBlock);
         makeRewardBlock();
-        checkBalanceSum(Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID),  walletAppKit1.wallet().getImportedKeys());
- 
+        checkBalanceSum(Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID), walletAppKit1.wallet().getImportedKeys());
 
     }
-    
+
+    @Test
+    public void testBurnedAddress() throws Exception {
+
+        ECKey to = ECKey
+                .fromPrivate(Utils.HEX.decode("34c4fc283cd9ac303deb6617b8dcd4c033b007782fd15bd168d7fc0e1819f3f8"));
+
+        Coin aCoin = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+
+        SendRequest request = SendRequest.to(to.toAddress(networkParameters), aCoin);
+
+        walletAppKit.wallet().completeTx(request, null);
+        rollingBlock.addTransaction(request.tx);
+        rollingBlock.solve();
+
+        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        makeRewardBlock();
+        // pay from burned address
+        try {
+            Wallet wallet = Wallet.fromKeys(networkParameters, to);
+            wallet.setServerURL(contextRoot);
+            wallet.pay(null, to.toAddress(networkParameters), aCoin, "");
+            fail();
+        } catch (RuntimeException e) {
+          assertTrue(e.getMessage().contains("Burned"));
+        }
+
+    }
 }

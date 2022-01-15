@@ -53,7 +53,7 @@ public class ServerConfiguration {
     //can be FullPruned server node with cleanup old data or fullnode node with all data
     private String servermode="fullnode";
     
-    private List<LockAddress>  lockAddress=   LockAddress.init();
+    private List<BurnedAddress>  burnedAddress=   BurnedAddress.init();
 
     
     
@@ -289,13 +289,13 @@ public class ServerConfiguration {
     }
 
 
-    public List<LockAddress> getLockAddress() {
-        return lockAddress;
+    public List<BurnedAddress> getLockAddress() {
+        return burnedAddress;
     }
 
 
-    public void setLockAddress(List<LockAddress> lockAddress) {
-        this.lockAddress = lockAddress;
+    public void setLockAddress(List<BurnedAddress> burnedAddress) {
+        this.burnedAddress = burnedAddress;
     }
 
 

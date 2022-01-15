@@ -179,7 +179,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    lowprice bigint NOT NULL,\n"
             + "    open bigint NOT NULL,\n"
             + "    close bigint NOT NULL,\n"
-            + "    interval varchar(255) NOT NULL,\n"
+            + "    matchinterval varchar(255) NOT NULL,\n"
             + "    inserttime bigint NOT NULL,\n"
             + "    PRIMARY KEY (id) \n" 
             + ") ENGINE=InnoDB\n";
@@ -509,7 +509,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX);
         sqlStatements.add(CREATE_BLOCKS_MILESTONE_INDEX);
         sqlStatements.add(CREATE_TXREARD_CHAINLENGTH_INDEX);
-        sqlStatements.add( CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
+        sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
         return sqlStatements;
     }
     protected List<String> getCreateIndexesSQL2() {

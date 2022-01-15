@@ -8,6 +8,7 @@ import java.util.Random;
 import org.junit.Test;
 
 import net.bigtangle.core.ECKey;
+import net.bigtangle.params.TestParams;
 
 public class ECKeyEncryptTest {
 
@@ -30,6 +31,9 @@ public class ECKeyEncryptTest {
     @Test
     public void newECKeyDecrypt() {
         ECKey ecKey = new ECKey();
+        System.out.println("public= " +ecKey.getPublicKeyAsHex());
+        System.out.println("public address= " +ecKey.toAddress(TestParams.get()));
+        System.out.println("private= " +ecKey.getPrivateKeyAsHex());
         try {
             byte[] cipher = ECIESCoder.encrypt(ecKey.getPubKeyPoint(), payload);
             byte[] decryptedPayload = ECIESCoder.decrypt(ecKey.getPrivKey(), cipher);

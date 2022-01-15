@@ -39,6 +39,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
@@ -85,6 +86,8 @@ import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.Script.VerifyFlag;
+import net.bigtangle.server.config.BurnedAddress;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.server.data.SolidityState;
@@ -111,6 +114,9 @@ public class ValidatorService {
     @Autowired
     private NetworkParameters params;
 
+    @Autowired
+    private ServerConfiguration serverConfiguration;
+    
     private static final Logger logger = LoggerFactory.getLogger(ValidatorService.class);
 
     ExecutorService scriptVerificationExecutor = Executors.newFixedThreadPool(
@@ -1315,6 +1321,9 @@ public class ValidatorService {
                     }
                 }
             }
+           if( checkBurnedFromAddress(tx, block.getLastMiningRewardBlock())){
+               throw new InvalidTransactionException("Burned Address");  
+            }
         }
 
         // Transaction validation
@@ -1427,6 +1436,40 @@ public class ValidatorService {
         return SolidityState.getSuccessState();
     }
 
+    private Boolean checkBurnedFromAddress(final Transaction tx,  Long chain) {
+        String fromAddress = fromAddress(tx);
+      for( BurnedAddress burned : serverConfiguration.getLockAddress()) {
+           if(burned.getLockaddress().equals(fromAddress) &&
+                   burned.getChain() >=  chain   ) {
+               return true;
+           }
+        }
+        
+        return false;
+        
+        
+    }
+    private String fromAddress(final Transaction tx ) {
+        String fromAddress = ""; 
+            for (TransactionInput t : tx.getInputs()) {
+                try {
+                    if (t.getConnectedOutput().getScriptPubKey().isSentToAddress()) {
+                        fromAddress = t.getFromAddress().toBase58();
+                    } else {
+                        fromAddress = new Address(networkParameters,
+                                Utils.sha256hash160(t.getConnectedOutput().getScriptPubKey().getPubKey())).toBase58();
+
+                    }
+
+                    if (!fromAddress.equals(""))
+                        return fromAddress;
+                } catch (Exception e) {
+                    return "";
+                }
+            }
+            return fromAddress;
+      
+    }
     private boolean checkTxOutputSigns(Map<String, Coin> valueOut) {
         for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
             // System.out.println(entry.getKey() + "/" + entry.getValue());
