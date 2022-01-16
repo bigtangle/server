@@ -24,6 +24,10 @@ public class BurnedAddress {
 
         a = new BurnedAddress("141JK2qkCRJxZbFZ9qbocRvMMpEEGa4tGj", 549937L);
         re.add(a);
+        
+        a = new BurnedAddress("1MymcnqHbDErpj8fvt2eDnn1bmFqsPh65S", 549937L);
+        re.add(a); 
+        
         // for test
         a = new BurnedAddress("1PqtKWvCUuPJf9YDK2WQAXqb3aeoav42Yh", 1L);
         re.add(a);
