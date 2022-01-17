@@ -1439,6 +1439,8 @@ public class ValidatorService {
     private Boolean checkBurnedFromAddress(final Transaction tx,  Long chain) {
         String fromAddress = fromAddress(tx);
       for( BurnedAddress burned : serverConfiguration.getLockAddress()) {
+          logger.debug(" checkBurnedFromAddress " +  fromAddress + " "
+                  +burned.getLockaddress() + " " +chain +" "+ burned.getChain()  );
            if(burned.getLockaddress().equals(fromAddress) &&
                    burned.getChain() >=  chain   ) {
                return true;
