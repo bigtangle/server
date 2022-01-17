@@ -171,7 +171,7 @@ public class ValidatorService {
 
     /**
      * Checks if the given set is eligible to be walked to during local approval
-     * tip selection given the current set of non-confirmed blocks to include.
+     * tip selection given the currentcheckBur set of non-confirmed blocks to include.
      * This is the case if the set is compatible with the current milestone. It
      * must disallow spent prev UTXOs / unconfirmed prev UTXOs
      * 
@@ -1443,7 +1443,7 @@ public class ValidatorService {
         for (BurnedAddress burned : BurnedAddress.init()) {
             logger.debug(" checkBurnedFromAddress " + fromAddress + "  " + burned.getLockaddress() + " " + chain + " "
                     + burned.getChain());
-            if (burned.getLockaddress().equals(fromAddress) && burned.getChain() >= chain) {
+            if (burned.getLockaddress().equals(fromAddress) &&  chain >= burned.getChain() ) {
                 return true;
             }
         }
