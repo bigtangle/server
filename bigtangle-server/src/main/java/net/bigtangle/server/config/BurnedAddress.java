@@ -11,7 +11,7 @@ public class BurnedAddress {
     public static List<BurnedAddress> init() {
         List<BurnedAddress> re = new ArrayList<BurnedAddress>();
         BurnedAddress a = new BurnedAddress("1718BePa7qEhNb24gyw3xZDvjsrCa6it5H", 549937L);
-        re.add(a); 
+        re.add(a);
         long chain2 = 552648;
         a = new BurnedAddress("1MSHr1E2n8XogsPs2bP5qkzB6AUTpzXaQS", chain2);
         re.add(a);
@@ -34,9 +34,18 @@ public class BurnedAddress {
         a = new BurnedAddress("1ACA4Yt4YYwCxiVDR2SpcYN7XuvAeCGU7s", chain2);
         re.add(a);
 
-        // for test
         a = new BurnedAddress("1PqtKWvCUuPJf9YDK2WQAXqb3aeoav42Yh", chain2);
         re.add(a);
+
+        long chain = 552648;
+        a = new BurnedAddress("1EV6ViUNuCTroK814PP28V1SkWtmmLUZ1b", chain);
+        re.add(a);
+        a = new BurnedAddress("1E7ghXtwtb7dS1TgT4t175HQSgdiZrGdce", chain);
+        re.add(a);
+        a = new BurnedAddress("1DcnMm4d9G1K13gP7kG9jZxRpBC31mZzvm", chain);
+        re.add(a);
+
+        // for test
 
         return re;
     }
