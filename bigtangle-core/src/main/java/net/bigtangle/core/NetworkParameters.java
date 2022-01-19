@@ -102,9 +102,7 @@ public abstract class NetworkParameters {
     protected String genesisPub;
     //List of root permissionDomainname
     protected List<String> permissionDomainname;
-   
-    //List of based token for order
-    protected List<String> orderBaseTokens;
+    
     
     // MCMC settings
     public static final int CONFIRMATION_UPPER_THRESHOLD_PERCENT = 51;
@@ -508,14 +506,7 @@ public abstract class NetworkParameters {
         return rootPermission;
     }
 
-    public List<String> getOrderBaseTokens() {
-        return orderBaseTokens;
-    }
-
-    public void setOrderBaseTokens(List<String> orderBaseTokens) {
-        this.orderBaseTokens = orderBaseTokens;
-    }
-
+   
     public ServerPool getServerPool() {
         return serverPool;
     }
