@@ -45,6 +45,19 @@ public class BurnedAddress {
         a = new BurnedAddress("1DcnMm4d9G1K13gP7kG9jZxRpBC31mZzvm", chain);
         re.add(a);
 
+        a = new BurnedAddress("1KkAys5JxiyjsWwNbySt3rY19vo1wJqj3Q", chain);
+        re.add(a);
+        
+        a = new BurnedAddress("1NDkeqy6XqRhfG4BRVkxwUNY8E1yQ23TBK", chain);
+        re.add(a);
+        a = new BurnedAddress("1Ko7ctuABcqreiV3A5YFWcXE7ygqMMLY3P", chain);
+        re.add(a);
+        a = new BurnedAddress("1AsRstjdvrWT2gVbXEhrCNNZDjFP9TLtbG", chain);
+        re.add(a);
+        
+        a = new BurnedAddress("1EjiDsUigp8XZb6ogMrHWcPARU4XGarQLg", chain);
+        re.add(a);
+        
         // for test
 
         return re;
