@@ -74,4 +74,13 @@ public abstract class AbstractBitcoinNetParams extends NetworkParameters {
     public boolean hasMaxMoney() {
         return true;
     }
+    @Override
+    public Integer getOrderPriceShift(String orderBaseTokens) {
+        if (BIGTANGLE_TOKENID_STRING.equals(orderBaseTokens)) {
+            return 0;
+        } else {
+            return 6;
+        }
+    }
+
 }

@@ -24,15 +24,11 @@ import java.math.BigInteger;
 
 import com.google.common.collect.ImmutableList;
 
-import net.bigtangle.core.exception.VerificationException;
-
 /**
  * Parameters for the main production network on which people trade goods and
  * services.
  */
 public class MainNetParams extends AbstractBitcoinNetParams {
-    private static final String CNY = // CNY
-            "03bed6e75294e48556d8bb2a53caf6f940b70df95760ee4c9772681bbf90df85ba";
     public static final int MAINNET_MAJORITY_WINDOW = 1000;
     public static final int MAINNET_MAJORITY_REJECT_BLOCK_OUTDATED = 950;
     public static final int MAINNET_MAJORITY_ENFORCE_BLOCK_UPGRADE = 750;
@@ -60,9 +56,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         genesisPub = "03d6053241c5abca6621c238922e7473977320ef310be0a8538cc2df7ee5a0187c";
 
         permissionDomainname = ImmutableList.of("0222c35110844bf00afd9b7f08788d79ef6edc0dce19be6182b44e07501e637a58");
-
-        orderBaseTokens = ImmutableList.of(BIGTANGLE_TOKENID_STRING, CNY);
-
+     
         // Equihash Settings
         equihashN = 100;
         equihashK = 4;
@@ -84,7 +78,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
 
         genesisBlock = createGenesis(this);
         // seeds for servers
-       
+
     }
 
     public String[] serverSeeds() {
@@ -102,13 +96,5 @@ public class MainNetParams extends AbstractBitcoinNetParams {
         return instance;
     }
 
-    @Override
-    public Integer getOrderPriceShift(String orderBaseTokens) {
-        if (CNY.equals(orderBaseTokens))
-            return 6;
-        if (BIGTANGLE_TOKENID_STRING.equals(orderBaseTokens))
-            return 0;
-        throw new VerificationException("orderBaseTokens is not allowed");
-    }
 
 }
