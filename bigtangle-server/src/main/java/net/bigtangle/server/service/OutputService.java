@@ -35,14 +35,17 @@ import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.OutputsDetailsResponse;
+import net.bigtangle.server.config.FilterToken;
 import net.bigtangle.store.FullBlockStore;
-import net.bigtangle.wallet.CoinSelector;
-import net.bigtangle.wallet.DefaultCoinSelector;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @Service
 public class OutputService {
 
+
+    @Autowired
+    private NetworkParameters networkParameters;
+    
     public AbstractResponse getAccountBalanceInfo(Set<byte[]> pubKeyHashs, FullBlockStore store)
             throws BlockStoreException {
         List<UTXO> outputs = new ArrayList<UTXO>();
@@ -67,13 +70,20 @@ public class OutputService {
             tokens.add(entry.getValue());
         }
 
-        return GetBalancesResponse.create(tokens, outputs, getTokename(outputs, store));
+        return GetBalancesResponse.create(tokens, filterToken(outputs), getTokename(outputs, store));
     }
 
-    @Autowired
-    private NetworkParameters networkParameters;
 
-    protected CoinSelector coinSelector = new DefaultCoinSelector();
+    public    List<UTXO> filterToken(  List<UTXO> outputs){
+        List<UTXO> re = new ArrayList<UTXO>();
+       for(UTXO u: outputs ) {
+          if(!FilterToken.filter(u.getTokenId())) {
+              re.add(u);
+          }
+       }
+       return re;
+    }
+    
 
     public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(Set<byte[]> pubKeyHashs,
             boolean excludeImmatureCoinbases, FullBlockStore store) {
@@ -174,7 +184,7 @@ public class OutputService {
                 || (toaddress != null && !"".equals(toaddress) && checkValidAddress(toaddress))) {
             outputs = store.getOutputsHistory(fromaddress, toaddress, starttime, endtime);
         }
-        return GetOutputsResponse.create(outputs, getTokename(outputs, store));
+        return GetOutputsResponse.create(filterToken(outputs), getTokename(outputs, store));
     }
 
     public GetOutputsResponse getAccountOutputsWithToken(byte[] pubKey, byte[] tokenid, FullBlockStore store)
