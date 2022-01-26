@@ -17,12 +17,8 @@ public class FilterToken {
         re.add(a);
         //usdt@etf.com
         a = new FilterToken("02da3b615e2c79b1b54c6cf452d55cb6a234324c20ecb8ebc3384ab1dd0f7ed272");
-        re.add(a);
-
-        //usdt@etf.com
-        a = new FilterToken("03d3df82d1e5fe2167f4c540873e0522cfb92c6af843eeb00f58a1e6354fc78560");
-        re.add(a);
-
+        re.add(a); 
+        
         //人民币@bigtangle
         a = new FilterToken("03bed6e75294e48556d8bb2a53caf6f940b70df95760ee4c9772681bbf90df85ba");
         re.add(a);
