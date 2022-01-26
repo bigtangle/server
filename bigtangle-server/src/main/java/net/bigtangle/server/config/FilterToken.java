@@ -16,7 +16,7 @@ public class FilterToken {
         a = new FilterToken("025aef367beaeb5099c400ea19e5dcacb312966070a99ffe86af58dc4195448fef");
         re.add(a);
         //usdt@etf.com
-        a = new FilterToken("03d3df82d1e5fe2167f4c540873e0522cfb92c6af843eeb00f58a1e6354fc78560");
+        a = new FilterToken("02da3b615e2c79b1b54c6cf452d55cb6a234324c20ecb8ebc3384ab1dd0f7ed272");
         re.add(a);
 
         //usdt@etf.com
