@@ -124,7 +124,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         {
             final String tokenid = new ECKey().getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "金", aesKey, "");
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "金", aesKey, "金");
 
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
@@ -134,7 +134,9 @@ public class TokenTest extends AbstractIntegrationTest {
             }
 
             makeRewardBlock();
-
+            //check uft8 
+          log.debug( getToken(tokenid).toString());
+            
         }
         {
             final String tokenid = new ECKey().getPublicKeyAsHex();
@@ -913,6 +915,21 @@ public class TokenTest extends AbstractIntegrationTest {
         return currentToken;
     }
 
+    public   Token getToken(String  idcom ) throws Exception { 
+       // String idcom= "02ffa8c71c0dd200c82fb07323147b4aca5c3ac7b93c6bf53730a42008b72bffa3";
+                //idcom: "0365cc54778405323781041a791a1048d3742234fe07e6cce041419d8038ab26ed";
+       //   String tokenid = "03d109174d7b8aaab67d4090e58cde8a69906f85a292d26333f04ac81d99371798";
+          HashMap<String, Object> requestParam = new HashMap<String, Object>();
+          requestParam.put("tokenid", idcom);
+          byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+                  Json.jsonmapper().writeValueAsString(requestParam));
+         
+      return   Json.jsonmapper().readValue(resp, GetTokensResponse.class).getTokens().get(0);
+   
+    
+     
+      }
+    
     public byte[] readFile(File file) {
         byte[] buf = null;
         if (file != null) {
