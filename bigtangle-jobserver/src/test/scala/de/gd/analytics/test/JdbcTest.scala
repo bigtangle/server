@@ -2,30 +2,28 @@
 package de.gd.analytics.test
 
 import org.apache.spark.SparkConf
-import com.google.common.base.Stopwatch;
+import com.google.common.base.Stopwatch
 import org.apache.spark.SparkContext
 import org.apache.spark.sql.SQLContext
 import org.apache.spark.graphx.Pregel
 import org.apache.spark.graphx
 import org.apache.spark.graphx._
-
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.Row
 import org.apache.spark.graphx.Edge
 import org.apache.spark.graphx.Graph
-import net.bigtangle.core.Sha256Hash
-import net.bigtangle.core.NetworkParameters
+import net.bigtangle.core.{BlockEvaluation, BlockMCMC, NetworkParameters, Sha256Hash}
 import net.bigtangle.params.MainNetParams
 import net.bigtangle.spark.BlockWrapSpark
-import net.bigtangle.core.BlockEvaluation
+import net.bigtangle.server.core.ConflictCandidate
+
 import java.util.concurrent.TimeUnit
 import java.util.HashSet
 import java.io.ObjectOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ByteArrayInputStream
-import net.bigtangle.core.ConflictCandidate
 import scala.collection.immutable.Nil
 import java.util.ArrayList
 import scala.collection.mutable.ListMap
@@ -57,7 +55,9 @@ object JdbcTest {
 
     blocks.createOrReplaceTempView("blocks")
 
-    val SELECT_SQL = "SELECT  hash, rating, depth, cumulativeweight, height, milestone, milestonelastupdate, milestonedepth, inserttime, maintained ,  prevblockhash ,  prevbranchblockhash ,  block FROM blocks "
+    val SELECT_SQL = "SELECT  hash, rating, depth, cumulativeweight, height, milestone," +
+      " milestonelastupdate, milestonedepth, inserttime," +
+      "   prevblockhash ,  prevbranchblockhash ,  block FROM blocks "
 
     val df = sqlContext.sql(SELECT_SQL)
 
@@ -68,25 +68,23 @@ object JdbcTest {
       Sha256Hash.of(payload).toBigInteger().longValue()
     }
 
-    val bytestoBlock = (data: Array[Byte], eval: BlockEvaluation) =>
-      { new BlockWrapSpark(data, eval, MainNetParams.get()) };
-    val toBlockEvaluation = (x$1: Sha256Hash, x$2: Long, x$3: Long, x$4: Long, x$5: Long, x$6: Boolean, x$7: Long, x$8: Long, x$9: Long, x$10: Boolean) =>
-      { BlockEvaluation.build(x$1, x$2, x$3, x$4, x$5, x$6, x$7, x$8, x$9, x$10) };
+    val bytestoBlock = (data: Array[Byte], eval: BlockEvaluation, mcmc: BlockMCMC) =>
+      { new BlockWrapSpark(data, eval,mcmc, MainNetParams.get()) };
 
     val myVertices = rows.map(
       row => (bytestoLong(row.getAs[Array[Byte]](0)), bytestoBlock(
         row.getAs[Array[Byte]](12),
-        toBlockEvaluation(
+        BlockEvaluation.build(
           Sha256Hash.wrap(row.getAs[Array[Byte]](0)),
-          row.getLong(1),
+          row.getLong(4),
           row.getLong(2),
           row.getLong(3),
-          row.getLong(4),
-          row.getBoolean(5),
-          row.getLong(6),
-          row.getLong(7),
           row.getLong(8),
-          row.getBoolean(9)))))
+          row.getLong(8),
+          row.getBoolean(9)),
+        new   BlockMCMC(  Sha256Hash.wrap(row.getAs[Array[Byte]](0)),
+          row.getLong(1),   row.getLong(2),   row.getLong(3))
+       )))
 
     // TODO use byte arrays for vertex ids
     val myEdges = rows.filter(row => !Sha256Hash.wrap(row.getAs[Array[Byte]](0)).equals(MainNetParams.get.getGenesisBlock.getHash)).map(row =>
@@ -97,11 +95,10 @@ object JdbcTest {
     val originalBlocks = myGraph.vertices.collect
 
     // Run test for update depth
-    val watch = new Stopwatch();
-    watch.start();
+
     val updatedGraph = phase3(myGraph).cache
     val updatedBlocks = updatedGraph.vertices.collect
-    println("Update time " + watch.elapsedMillis());
+  //  println("Update time " + watch.elapsed(TimeUnit.MILLISECONDS));
 
     //Debug output
     //    updatedBlocks.map(_._2).sortBy(b => b.getBlock.getHashAsString).foreach(b => {
@@ -110,10 +107,7 @@ object JdbcTest {
     //      println(b.getBlockEvaluation.getCumulativeWeight)
     //    })
 
-    assert(originalBlocks.map(e => e._2.getBlock).deep == updatedBlocks.map(e => e._2.getBlock).deep)
-    assert(originalBlocks.map(e => e._2.getBlockEvaluation.getDepth).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getDepth).deep)
-    assert(originalBlocks.map(e => e._2.getBlockEvaluation.getMilestoneDepth).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getMilestoneDepth).deep)
-    assert(originalBlocks.map(e => e._2.getBlockEvaluation.getCumulativeWeight).deep == updatedBlocks.map(e => e._2.getBlockEvaluation.getCumulativeWeight).deep)
+    assert(originalBlocks.map(e => e._2).deep == updatedBlocks.map(e => e._2.getBlock).deep)
 
     println(sc.getCheckpointDir)
     
@@ -220,7 +214,7 @@ object JdbcTest {
 
     // For maintained part of the graph only
     var maintainedGraph = targetGraph.subgraph(
-      vpred = (vid, vdata: BlockWrapSpark) => vdata.getBlockEvaluation.isMaintained())
+      vpred = (vid, vdata: BlockWrapSpark) => vdata.getBlockEvaluation.isConfirmed)
 
     // The initial message received by all vertices in the update
     val initialMessage = new HashSet[ConflictCandidate]
@@ -275,7 +269,8 @@ object JdbcTest {
     val outgoingWeights = maintainedGraph.aggregateMessages[ListMap[Sha256Hash, Double]](
       triplet => {
         val msg = new ListMap[Sha256Hash, Double]
-        msg += (triplet.srcAttr.getBlockHash -> transitionWeight(triplet.dstAttr.getBlockEvaluation.getCumulativeWeight - triplet.srcAttr.getBlockEvaluation.getCumulativeWeight))
+        msg += (triplet.srcAttr.getBlockHash -> transitionWeight(triplet.dstAttr.getMcmc().getCumulativeWeight
+          - triplet.srcAttr.getMcmc.getCumulativeWeight))
         triplet.sendToDst(msg)
       },
       (a, b) => {
@@ -314,7 +309,7 @@ object JdbcTest {
   def phase3(targetGraph: Graph[BlockWrapSpark, (Double, Double)]): Graph[BlockWrapSpark, (Double, Double)] = {
     // For maintained part of the graph only
     val maintainedGraph = targetGraph.subgraph(
-      vpred = (vid, vdata: BlockWrapSpark) => vdata.getBlockEvaluation.isMaintained())
+      vpred = (vid, vdata: BlockWrapSpark) => vdata.getBlockEvaluation.isConfirmed())
 
     // The initial message received by all vertices in the update
     val initialMessage = (new HashSet[Sha256Hash](), 0L, -1L)
@@ -335,9 +330,9 @@ object JdbcTest {
       }
 
       // Calculate new statistics
-      updatedBlockWrap.getBlockEvaluation.setCumulativeWeight(updatedBlockWrap.getWeightHashes.size())
-      updatedBlockWrap.getBlockEvaluation.setDepth(msgSum._2)
-      updatedBlockWrap.getBlockEvaluation.setMilestoneDepth(msgSum._3)
+      updatedBlockWrap.getMcmc().setCumulativeWeight(updatedBlockWrap.getWeightHashes.size())
+      updatedBlockWrap.getMcmc.setDepth(msgSum._2)
+    //  updatedBlockWrap.getMcmc.setMilestoneDepth(msgSum._3)
 
       // Return new updated BlockWrap instance
       updatedBlockWrap
@@ -346,8 +341,8 @@ object JdbcTest {
     def sendMessage(edge: EdgeTriplet[BlockWrapSpark, (Double, Double)]) = {
       // Calculate messages
       val sentWeightHashes = edge.srcAttr.getReceivedWeightHashes
-      val sentDepth = edge.srcAttr.getBlockEvaluation.getDepth + 1L;
-      val sentMilestoneDepth = if (edge.dstAttr.getBlockEvaluation.isMilestone) edge.srcAttr.getBlockEvaluation.getMilestoneDepth + 1L else edge.srcAttr.getBlockEvaluation.getMilestoneDepth;
+      val sentDepth = edge.srcAttr.getMcmc().getDepth + 1L;
+      val sentMilestoneDepth =  edge.srcAttr.getBlock.getLastMiningRewardBlock ;
 
       Iterator((edge.dstId, (sentWeightHashes, sentDepth, sentMilestoneDepth)))
     }

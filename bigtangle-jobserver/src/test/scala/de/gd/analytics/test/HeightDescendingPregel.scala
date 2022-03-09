@@ -18,13 +18,12 @@
 package org.apache.spark.graphx
 
 import scala.reflect.ClassTag
-
 import org.apache.spark.graphx.util.PeriodicGraphCheckpointer
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD
 import org.apache.spark.rdd.util.PeriodicRDDCheckpointer
 
-import net.bigtangle.core.BlockWrap
+import net.bigtangle.server.core.BlockWrap
 
 /**
  * Implements a Pregel-like bulk-synchronous message-passing API.

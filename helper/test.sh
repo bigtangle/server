@@ -1,6 +1,6 @@
 
 
-export BIGTANGLEVERSION=2022-01-28
+export BIGTANGLEVERSION=2022-01-29
 export DBHOST=bigtangle-test-mysql
 export SERVERHOST=bigtangle-test
 #export KAFKA=bigtangle.de:9092
@@ -15,7 +15,7 @@ export DB_PASSWORD=test1234
 export SERVICE_MINING_RATE=15000
 export SERVERPORT=18088
  
-# rm -fr /data/vm/$DBHOST/*
+sudo rm -fr /data/vm/$DBHOST/*
  
 docker rm -f $DBHOST 
 
@@ -42,26 +42,4 @@ docker  run -d -t --link  $DBHOST \
 
  
  docker logs -f $SERVERHOST
-sleep 10s
-docker exec  bigtangle-backup /bin/sh -c " tail -f /logs/server.log"
-docker exec  bigtangle-backup /bin/sh -c " tail -f /var/log/supervisor/serverstart-stdout*"
-
-# http://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/
-
- rm -fr /data/vm/bigtangle-backup-mysql/var/lib/mysql/binlog.*
  
- cp -r    /data/vm/bigtangle-mysql/var/lib/mysql/  /data/vm/bigtangle-backup-mysql/var/lib/mysql/
- sudo rm -fr /data/vm/bigtangle-backup-mysql/var/lib
- mkdir -p /data/vm/bigtangle-backup-mysql/var/lib
- 
- sudo rsync -avz -e "ssh -i /data/git/sshkeys/cui/id_rsa  "  \
-  root@bigtangle.de:/data/vm/bigtangle-backup-mysql/var/lib/mysql  \
-  /data/vm/bigtangle-backup-mysql/var/lib/
-  
-  docker rm -f $DBHOST 
-  docker run -d  -t    -p 3306:3306   \
--v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql  \
--e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \
--e MYSQL_DATABASE=info  --name=$DBHOST  -h $DBHOST   mysql:8.0.23 
-
-   

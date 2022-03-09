@@ -11,10 +11,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.HashSet;
 
-import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockEvaluation;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.*;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
@@ -36,7 +33,7 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
     private double incomingTransitionWeightSum;
     private ListMap<Sha256Hash, scala.Double> incomingTransitionWeights;
     private double currentTransitionRealization;
-    
+    private BlockMCMC mcmc;
     //@vertex: conflictpoint sets + milestone validity, outgoing weight unnormalized, transient dicerolls
     //@edges: applicable diceroll interval for sendmsg
     
@@ -56,15 +53,16 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
         receivedConflictPoints = new HashSet<>();
     }
 
+
     // Used in Spark
-    public BlockWrapSpark(byte[] blockbyte, BlockEvaluation blockEvaluation, NetworkParameters params) {
+    public BlockWrapSpark(byte[] blockbyte, BlockEvaluation blockEvaluation, BlockMCMC mcmc, NetworkParameters params) {
         super(params.getDefaultSerializer().makeBlock(blockbyte), blockEvaluation, params);
         weightHashes = new HashSet<>();
         receivedWeightHashes = new HashSet<>();
         approvedNonMilestoneConflicts = new HashSet<>();
         receivedConflictPoints = new HashSet<>();
+        mcmc= mcmc;
     }
-    
     public BlockWrapSpark(BlockWrapSpark other) {
         super(other.getBlock(), new BlockEvaluation(other.getBlockEvaluation()), other.params);
         weightHashes = new HashSet<>(other.getWeightHashes());
@@ -114,12 +112,8 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
         if (o == null || getClass() != o.getClass())
             return false;
         return getBlockHash().equals(((BlockWrapSpark) o).getBlockHash())
-                && getBlockEvaluation().getRating() == ((BlockWrapSpark) o).getBlockEvaluation().getRating()
-                && getBlockEvaluation().getDepth() == ((BlockWrapSpark) o).getBlockEvaluation().getDepth()
-                && getBlockEvaluation().getCumulativeWeight() == ((BlockWrapSpark) o).getBlockEvaluation()
-                        .getCumulativeWeight()
+
                 && getBlockEvaluation().getHeight() == ((BlockWrapSpark) o).getBlockEvaluation().getHeight()
-                && getBlockEvaluation().isMilestone() == ((BlockWrapSpark) o).getBlockEvaluation().isMilestone()
                 && getBlockEvaluation().getMilestoneLastUpdateTime() == ((BlockWrapSpark) o)
                         .getBlockEvaluation().getMilestoneLastUpdateTime()
                 
@@ -194,5 +188,13 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
 
     public void setIncomingTransitionWeights(ListMap<Sha256Hash, scala.Double> incomingTransitionWeights) {
         this.incomingTransitionWeights = incomingTransitionWeights;
+    }
+
+    public BlockMCMC getMcmc() {
+        return mcmc;
+    }
+
+    public void setMcmc(BlockMCMC mcmc) {
+        this.mcmc = mcmc;
     }
 }

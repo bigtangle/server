@@ -109,9 +109,9 @@ public class RewardService {
             if (lock == null) {
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;
-            } else if (lock.getLocktime() < System.currentTimeMillis() - 100 * scheduleConfiguration.getMiningrate()) {
-                log.info(" reward locked is delete   " + lock.getLocktime() + " < "
-                        + (System.currentTimeMillis() - 100 * scheduleConfiguration.getMiningrate()));
+            } else if (lock.getLocktime() < System.currentTimeMillis() - 5 * scheduleConfiguration.getMiningrate()) {
+                log.info(" reward locked is fored delete   " + lock.getLocktime() + " < "
+                        + (System.currentTimeMillis() - 5 * scheduleConfiguration.getMiningrate()));
                 store.deleteLockobject(LOCKID);
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;
