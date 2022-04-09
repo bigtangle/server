@@ -341,7 +341,8 @@ public class FullBlockGraph {
         block.verifyHeader();
           block.verifyTransactions();
 
-        SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid, blockStore);
+          //allow non chain block predecessors not solid
+        SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid, blockStore,false);
         if (solidityState.isFailState()) {
             log.debug(solidityState.toString());
         }

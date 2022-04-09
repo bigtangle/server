@@ -318,7 +318,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
     }
 
-    @Test
+    //@Test
     public void testBurnedAddress() throws Exception {
 
         ECKey to = ECKey

@@ -723,8 +723,11 @@ public class ValidatorService {
         }
         return SolidityState.getSuccessState();
     }
-
-    public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions, FullBlockStore store)
+    public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions, FullBlockStore store )   throws BlockStoreException {
+       return  getMinPredecessorSolidity(block, throwExceptions, store,true);
+    }
+    
+    public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions, FullBlockStore store, boolean predecessorsSolid)
             throws BlockStoreException {
         final List<BlockWrap> allPredecessors = blockService.getAllRequirements(block, store);
         SolidityState missingCalculation = null;
@@ -736,9 +739,9 @@ public class ValidatorService {
                 missingCalculation = SolidityState.fromMissingCalculation(predecessor.getBlockHash());
             } else if (predecessor.getBlockEvaluation().getSolid() == 0) {
                 missingDependency = SolidityState.from(predecessor.getBlockHash(), false);
-            } else if (predecessor.getBlockEvaluation().getSolid() == -1) {
-                if (throwExceptions)
-                    throw new VerificationException("The used blocks are invalid.");
+            } else if (predecessor.getBlockEvaluation().getSolid() == -1 && predecessorsSolid) {
+                if (throwExceptions )
+                    throw new VerificationException("The used blocks are invalid. getSolid() == -1");
                 return SolidityState.getFailState();
             } else {
                 throw new RuntimeException("not implemented");
@@ -2296,6 +2299,10 @@ public class ValidatorService {
      */
     public SolidityState checkSolidity(Block block, boolean throwExceptions, FullBlockStore store)
             throws BlockStoreException {
+        return checkSolidity(block, throwExceptions, store, true);
+    }
+    public SolidityState checkSolidity(Block block, boolean throwExceptions, FullBlockStore store, boolean predecessorsSolid)
+            throws BlockStoreException {
         try {
             // Check formal correctness of the block
             SolidityState formalSolidityResult = checkFormalBlockSolidity(block, throwExceptions);
@@ -2309,7 +2316,7 @@ public class ValidatorService {
             }
 
             // Inherit solidity from predecessors if they are not solid
-            SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block, throwExceptions, store);
+            SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block, throwExceptions, store, predecessorsSolid);
 
             // For consensus blocks, it works as follows:
             // If solid == 1 or solid == 2, we also check for PoW now
