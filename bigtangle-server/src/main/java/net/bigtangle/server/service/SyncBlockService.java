@@ -462,7 +462,7 @@ public class SyncBlockService {
      */
     public void checkPointDatabase(long chain) throws IOException, InterruptedException {
         
-        if ( chain >= (serverConfiguration.getCheckpoint()) && 
+        if ( chain >= (serverConfiguration.getCheckpoint()) && serverConfiguration.getCheckpoint() > 100000 &&
                 chain % (serverConfiguration.getCheckpoint()  )  ==0) {
             try {
             dockerService.dockerExec(dockerService.mysqldumpCheck(chain));
