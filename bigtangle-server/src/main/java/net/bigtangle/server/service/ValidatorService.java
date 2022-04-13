@@ -744,7 +744,9 @@ public class ValidatorService {
                     throw new VerificationException("The used blocks are invalid. getSolid() == -1");
                 return SolidityState.getFailState();
             } else {
-                throw new RuntimeException("not implemented");
+                logger.warn("predecessor.getBlockEvaluation().getSolid() =  "+predecessor.getBlockEvaluation().getSolid());
+                continue;
+             //   throw new RuntimeException("not implemented");
             }
         }
 
