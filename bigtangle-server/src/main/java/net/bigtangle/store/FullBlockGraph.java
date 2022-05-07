@@ -723,8 +723,8 @@ public class FullBlockGraph {
                 // Sanity check
                 if (prevOut == null)
                     throw new RuntimeException("Attempted to spend a non-existent output!");
-                if (prevOut.isSpent())
-                    throw new RuntimeException("Attempted to spend an already spent output!");
+            //FIXME transaction check at connected    if (prevOut.isSpent())
+            //        throw new RuntimeException("Attempted to spend an already spent output!");
 
                 blockStore.updateTransactionOutputSpent(prevOut.getBlockHash(), prevOut.getTxHash(), prevOut.getIndex(),
                         true, block.getBlockHash());
