@@ -309,7 +309,7 @@ public class FullBlockGraph {
                 return;
             }
             // Inherit solidity from predecessors if they are not solid
-            solidityState = validatorService.getMinPredecessorSolidity(block, false, store);
+            solidityState = validatorService.getMinPredecessorSolidity(block, false, store, false);
 
             // Sanity check
             if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
