@@ -362,7 +362,7 @@ public class RewardService {
         checkContainsNoRewardBlocks(newMilestoneBlock, store);
 
         // Check: At this point, predecessors must be solid
-        solidityState = validatorService.checkSolidity(newMilestoneBlock, false, store);
+        solidityState = validatorService.checkSolidity(newMilestoneBlock, false, store,false);
         if (!solidityState.isSuccessState())
             throw new VerificationException(" validatorService.checkSolidity is failed: " + solidityState.toString()
                     + "\n with block = " + newMilestoneBlock.toString());
