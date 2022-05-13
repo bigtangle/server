@@ -1,6 +1,5 @@
 package net.bigtangle.utils;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -23,17 +22,15 @@ import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.params.ReqCmd;
 
 public class WalletUtil {
-    public static void orderMap(OrderdataResponse orderdataResponse, List<MarketOrderItem> orderData,  
+    public static void orderMap(OrderdataResponse orderdataResponse, List<MarketOrderItem> orderData,
             NetworkParameters params, String buy, String sell) {
         for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
             MarketOrderItem marketOrderItem = MarketOrderItem.build(orderRecord, orderdataResponse.getTokennames(),
-                    params, buy, sell );
+                    params, buy, sell);
             orderData.add(marketOrderItem);
 
         }
     }
-
- 
 
     public static List<MarketOrderItem> resetOrderList(List<MarketOrderItem> orderList) {
         List<MarketOrderItem> list = new ArrayList<MarketOrderItem>();
@@ -59,9 +56,8 @@ public class WalletUtil {
                 Collections.sort(buys, new Comparator<MarketOrderItem>() {
                     @Override
                     public int compare(MarketOrderItem order1, MarketOrderItem order2) {
-                        BigDecimal price1 = new BigDecimal(order1.getPrice());
-                        BigDecimal price2 = new BigDecimal(order2.getPrice());
-                        return price2.compareTo(price1);
+
+                        return order2.getPrice().compareTo(order1.getPrice());
                     }
                 });
             }
@@ -71,9 +67,7 @@ public class WalletUtil {
                 Collections.sort(sells, new Comparator<MarketOrderItem>() {
                     @Override
                     public int compare(MarketOrderItem order1, MarketOrderItem order2) {
-                        BigDecimal price1 = new BigDecimal(order1.getPrice());
-                        BigDecimal price2 = new BigDecimal(order2.getPrice());
-                        return price1.compareTo(price2);
+                        return order1.getPrice().compareTo(order2.getPrice());
                     }
                 });
             }

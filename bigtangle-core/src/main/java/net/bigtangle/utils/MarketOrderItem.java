@@ -1,5 +1,6 @@
 package net.bigtangle.utils;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Map;
 
@@ -24,21 +25,19 @@ public class MarketOrderItem implements java.io.Serializable {
         if (orderRecord.getOrderBaseToken().equals(orderRecord.getOfferTokenid())) {
             Token t = tokennames.get(orderRecord.getTargetTokenid());
             marketOrderItem.setType(buy);
-            marketOrderItem.setAmount(mf.format(orderRecord.getTargetValue(), t.getDecimals()));
+            marketOrderItem.setAmount( new BigDecimal(mf.format(orderRecord.getTargetValue(), t.getDecimals())));
             marketOrderItem.setTokenId(orderRecord.getTargetTokenid());
             marketOrderItem.setTokenName(t.getTokennameDisplay());
-            marketOrderItem.setPrice(mf.format(orderRecord.getPrice(), base.getDecimals() + priceshift));
-            marketOrderItem.setTotal(mf.format(orderRecord.getOfferValue(), base.getDecimals()) + " ("
-                    + base.getTokennameDisplay() + ")");
+            marketOrderItem.setPrice(new BigDecimal(mf.format(orderRecord.getPrice(), base.getDecimals() + priceshift)));
+            marketOrderItem.setTotal(new BigDecimal(mf.format(orderRecord.getOfferValue(), base.getDecimals())));
         } else {
             Token t = tokennames.get(orderRecord.getOfferTokenid());
             marketOrderItem.setType(sell);
-            marketOrderItem.setAmount(mf.format(orderRecord.getOfferValue(), t.getDecimals()));
+            marketOrderItem.setAmount(new BigDecimal(mf.format(orderRecord.getOfferValue(), t.getDecimals())));
             marketOrderItem.setTokenId(orderRecord.getOfferTokenid());
             marketOrderItem.setTokenName(t.getTokennameDisplay());
-            marketOrderItem.setPrice(mf.format(orderRecord.getPrice(), base.getDecimals() + priceshift));
-            marketOrderItem.setTotal(mf.format(orderRecord.getTargetValue(), base.getDecimals()) + " ("
-                    + base.getTokennameDisplay() + ")");
+            marketOrderItem.setPrice(new BigDecimal(mf.format(orderRecord.getPrice(), base.getDecimals() + priceshift)));
+            marketOrderItem.setTotal(new BigDecimal(mf.format(orderRecord.getTargetValue(), base.getDecimals())));
         } 
       
         marketOrderItem.setValidateTo( new Date(orderRecord.getValidToTime() * 1000) );
@@ -53,11 +52,11 @@ public class MarketOrderItem implements java.io.Serializable {
 
     private String type;
 
-    private String amount;
+    private BigDecimal amount;
 
     private String tokenId;
 
-    private String price;
+    private BigDecimal price;
 
     private String orderId;
 
@@ -73,17 +72,9 @@ public class MarketOrderItem implements java.io.Serializable {
 
     private boolean cancelPending;
 
-    private String total;
+    private BigDecimal total;
 
-    private String  orderBaseToken;
-    
-    public String getTotal() {
-        return total;
-    }
-
-    public void setTotal(String total) {
-        this.total = total;
-    }
+    private String orderBaseToken;
 
     public String getType() {
         return type;
@@ -91,14 +82,6 @@ public class MarketOrderItem implements java.io.Serializable {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public String getAmount() {
-        return amount;
-    }
-
-    public void setAmount(String amount) {
-        this.amount = amount;
     }
 
     public String getTokenId() {
@@ -109,14 +92,6 @@ public class MarketOrderItem implements java.io.Serializable {
         this.tokenId = tokenId;
     }
 
-    public String getPrice() {
-        return price;
-    }
-
-    public void setPrice(String price) {
-        this.price = price;
-    }
-
     public String getOrderId() {
         return orderId;
     }
@@ -125,7 +100,6 @@ public class MarketOrderItem implements java.io.Serializable {
         this.orderId = orderId;
     }
 
-    
     public Date getValidateTo() {
         return validateTo;
     }
@@ -181,6 +155,29 @@ public class MarketOrderItem implements java.io.Serializable {
     public void setOrderBaseToken(String orderBaseToken) {
         this.orderBaseToken = orderBaseToken;
     }
-    
-    
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public BigDecimal getTotal() {
+        return total;
+    }
+
+    public void setTotal(BigDecimal total) {
+        this.total = total;
+    }
+
 }
