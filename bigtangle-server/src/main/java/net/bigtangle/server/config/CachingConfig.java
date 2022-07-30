@@ -17,10 +17,11 @@ public class CachingConfig {
     public Config hazelCastConfig() {
 
         Config config = new Config();
+        MapConfig mapconfig = new MapConfig().setName("configuration")
+                .setMaxSizeConfig(new MaxSizeConfig(200, MaxSizeConfig.MaxSizePolicy.FREE_HEAP_SIZE))
+                .setEvictionPolicy(EvictionPolicy.LRU).setTimeToLiveSeconds(360).setMaxIdleSeconds(20);
         config.setInstanceName("hazelcast-instance")
-                .addMapConfig(new MapConfig().setName("configuration")
-                        .setMaxSizeConfig(new MaxSizeConfig(200, MaxSizeConfig.MaxSizePolicy.FREE_HEAP_SIZE))
-                        .setEvictionPolicy(EvictionPolicy.LRU).setTimeToLiveSeconds(360))   ;
+                .addMapConfig(mapconfig)   ;
 
         return config;
 
