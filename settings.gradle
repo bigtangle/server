@@ -5,6 +5,6 @@ include 'bigtangle-servercore'
 //include 'bigtangle-wallet'
 include 'bigtangle-kafkabridge'
 include 'bigtangle-subtangle'
-//include 'bigtangle-pool'
+include 'bigtangle-jobserver'
 include 'bigtangle-docker'
 

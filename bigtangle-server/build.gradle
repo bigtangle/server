@@ -63,7 +63,7 @@ mainClassName = "net.bigtangle.server.ServerStart"
 //applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
 applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.net.bigtangle.level=INFO", 
  "-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8",
-   "-Xmx20g"]
+   "-Xmx10g"]
 
 jar {
     manifest {

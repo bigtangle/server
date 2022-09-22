@@ -45,8 +45,8 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
     }
 
     // Used in Spark
-    public BlockWrapSpark(Block block, BlockEvaluation blockEvaluation, NetworkParameters params) {
-        super(block, blockEvaluation, params);
+    public BlockWrapSpark(Block block, BlockEvaluation blockEvaluation, BlockMCMC mcmc, NetworkParameters params) {
+        super(block, blockEvaluation, mcmc,params);
         weightHashes = new HashSet<>();
         receivedWeightHashes = new HashSet<>();
         approvedNonMilestoneConflicts = new HashSet<>();
@@ -56,15 +56,15 @@ public class BlockWrapSpark extends BlockWrap implements Serializable {
 
     // Used in Spark
     public BlockWrapSpark(byte[] blockbyte, BlockEvaluation blockEvaluation, BlockMCMC mcmc, NetworkParameters params) {
-        super(params.getDefaultSerializer().makeBlock(blockbyte), blockEvaluation, params);
+        super(params.getDefaultSerializer().makeBlock(blockbyte), blockEvaluation, mcmc, params);
         weightHashes = new HashSet<>();
         receivedWeightHashes = new HashSet<>();
         approvedNonMilestoneConflicts = new HashSet<>();
         receivedConflictPoints = new HashSet<>();
-        mcmc= mcmc;
+   
     }
     public BlockWrapSpark(BlockWrapSpark other) {
-        super(other.getBlock(), new BlockEvaluation(other.getBlockEvaluation()), other.params);
+        super(other.getBlock(), new BlockEvaluation(other.getBlockEvaluation()), other.getMcmc(), other.params);
         weightHashes = new HashSet<>(other.getWeightHashes());
         receivedWeightHashes = new HashSet<>(other.getReceivedWeightHashes());
         approvedNonMilestoneConflicts = new HashSet<>(other.getApprovedNonMilestoneConflicts());
