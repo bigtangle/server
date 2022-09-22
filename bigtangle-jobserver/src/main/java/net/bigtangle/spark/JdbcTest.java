@@ -1,69 +1,62 @@
 
-package de.gd.analytics.test
+package net.bigtangle.spark;
 
-import org.apache.spark.SparkConf
-import com.google.common.base.Stopwatch
-import org.apache.spark.SparkContext
-import org.apache.spark.sql.SQLContext
-import org.apache.spark.graphx.Pregel
-import org.apache.spark.graphx
-import org.apache.spark.graphx._
-import com.typesafe.config.ConfigFactory
-import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.Row
-import org.apache.spark.graphx.Edge
-import org.apache.spark.graphx.Graph
-import net.bigtangle.core.{BlockEvaluation, BlockMCMC, NetworkParameters, Sha256Hash}
-import net.bigtangle.params.MainNetParams
-import net.bigtangle.spark.BlockWrapSpark
-import net.bigtangle.server.core.ConflictCandidate
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockMCMC;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.params.MainNetParams;
+import net.bigtangle.server.core.ConflictCandidate;
+import org.apache.spark.SparkConf;
+import org.apache.spark.SparkContext;
+import org.apache.spark.graphx.*;
+import org.apache.spark.rdd.RDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SQLContext;
+import scala.Array;
+import scala.Int;
+import scala.Tuple3;
+import scala.Tuple3$;
+import scala.collection.mutable.ListMap;
 
-import java.util.concurrent.TimeUnit
-import java.util.HashSet
-import java.io.ObjectOutputStream
-import java.io.ByteArrayOutputStream
-import java.io.ObjectInputStream
-import java.io.ByteArrayInputStream
-import scala.collection.immutable.Nil
-import java.util.ArrayList
-import scala.collection.mutable.ListMap
-import net.bigtangle.spark.BlockWrapSpark
+import java.util.HashSet;
+
+;
 
 // Run a test from MilestoneServiceTest, then this to validate our algorithm in scala
-object JdbcTest {
-  def main(args: Array[String]) {
-    val conf = new SparkConf().setMaster("local[4]").setAppName("FirstJob")
-    val sc = new SparkContext(conf)
-    val config = ConfigFactory.parseString("")
-    System.setProperty("HADOOP_USER_NAME", "hdfs");
-    val sql = new SQLContext(sc)
+public class JdbcTest {
+    public static void main(String[] args) throws Exception {
+     SparkConf  conf = new SparkConf().setMaster("local[4]").setAppName("FirstJob");
+        SparkContext sc = new SparkContext(conf);
+
+        String s = System.setProperty("HADOOP_USER_NAME", "hdfs");
+        SQLContext    sqlContext = new SQLContext(sc);
 
     // val tabledata = "{\"financial_year\":\"2004-05\",\"state\":\"TAS\",\"area_of_expenditure\":\"Community health\",\"broad_source_of_funding\":\"Government\",\"detailed_source_of_funding\":\"Australian Government\",\"real_expenditure_millions\":\"13\"}"
 
-    Class.forName("com.mysql.jdbc.Driver").newInstance
+    Class.forName("com.mysql.jdbc.Driver").newInstance();
 
-    val sqlContext = new SQLContext(sc)
 
-    val blocks = sqlContext.read
-      .format("jdbc")
-      .option("url", "jdbc:mysql://localhost:3306/info")
-      .option("user", "root")
-      .option("password", "test1234")
-      .option("dbtable", "blocks")
-      .load()
-    blocks.printSchema()
+        Dataset<Row> blocks = sqlContext.read()
+                .format("jdbc")
+                .option("url", "jdbc:mysql://localhost:3306/info")
+                .option("user", "root")
+                .option("password", "test1234")
+                .option("dbtable", "blocks")
+                .load();
+    blocks.printSchema();
 
-    blocks.createOrReplaceTempView("blocks")
+    blocks.createOrReplaceTempView("blocks");
 
-    val SELECT_SQL = "SELECT  hash, rating, depth, cumulativeweight, height, milestone," +
+      String SELECT_SQL = "SELECT  hash, rating, depth, cumulativeweight, height, milestone," +
       " milestonelastupdate, milestonedepth, inserttime," +
-      "   prevblockhash ,  prevbranchblockhash ,  block FROM blocks "
+      "   prevblockhash ,  prevbranchblockhash ,  block FROM blocks ";
 
-    val df = sqlContext.sql(SELECT_SQL)
+        Dataset<Row>   df = sqlContext.sql(SELECT_SQL);
 
     //as  Followers prevblockhash follows hash
     //            prevbranchblockhash  follows hash
-    val rows: RDD[Row] = df.rdd
+        RDD<Row> rows = df.rdd();
     val bytestoLong = (payload: Array[Byte]) => {
       Sha256Hash.of(payload).toBigInteger().longValue()
     }
@@ -71,8 +64,10 @@ object JdbcTest {
     val bytestoBlock = (data: Array[Byte], eval: BlockEvaluation, mcmc: BlockMCMC) =>
       { new BlockWrapSpark(data, eval,mcmc, MainNetParams.get()) };
 
-    val myVertices = rows.map(
-      row => (bytestoLong(row.getAs[Array[Byte]](0)), bytestoBlock(
+      rows.map(
+      row -> {
+           return
+                 row.getByte(0)), bytestoBlock(
         row.getAs[Array[Byte]](12),
         BlockEvaluation.build(
           Sha256Hash.wrap(row.getAs[Array[Byte]](0)),
@@ -84,7 +79,7 @@ object JdbcTest {
           row.getBoolean(9)),
         new   BlockMCMC(  Sha256Hash.wrap(row.getAs[Array[Byte]](0)),
           row.getLong(1),   row.getLong(2),   row.getLong(3))
-       )))
+       )});
 
     // TODO use byte arrays for vertex ids
     val myEdges = rows.filter(row => !Sha256Hash.wrap(row.getAs[Array[Byte]](0)).equals(MainNetParams.get.getGenesisBlock.getHash)).map(row =>
@@ -187,7 +182,7 @@ object JdbcTest {
 
   // TODO unmaintained cannot happen if not rewarded yet! also not if still used for milestoning
   
-  def transitionWeight(deltaWeight: Long): Double = {
+  public Double transitionWeight( Long deltaWeight )  {
     // TODO
     val alpha = 0.1
 
@@ -201,7 +196,7 @@ object JdbcTest {
    */
   // PHASE 1: batch precompute (maintained only) MAX_STEPS @vertex: conflictpoint sets + milestone validity, outgoing weight unnormalized, transient dicerolls
   //@edges: applicable diceroll interval for sendmsg
-  def phase1(targetGraph: Graph[BlockWrapSpark, (Double, Double)]): Graph[BlockWrapSpark, (Double, Double)] = {
+  public   Graph[BlockWrapSpark, Double, Double] phase1(  Graph[BlockWrapSpark, Double, Double] targetGraph ) {
     // dynamic step count less than infinity may lead to problems, since it could be possible to not catch up anymore.
     //On the other hand, infinity can make it take infinitely long if there is some kind of long snake that is referenced.
     //Since this can happen either way, we need to prevent this by:
@@ -238,7 +233,7 @@ object JdbcTest {
       updatedBlockWrap
     }
 
-    def sendMessage(edge: EdgeTriplet[BlockWrapSpark, (Double, Double)]) = {
+    public Tulpe2<> sendMessage(edge: EdgeTriplet[BlockWrapSpark, (Double, Double)]) = {
       // Calculate messages
       val sentConflicts = edge.srcAttr.getReceivedConflictPoints
 
@@ -315,9 +310,9 @@ object JdbcTest {
     val initialMessage = (new HashSet[Sha256Hash](), 0L, -1L)
 
     // Define functions for Pregel
-    def vertexProgram(id: VertexId, blockWrap: BlockWrapSpark, msgSum: (HashSet[Sha256Hash], Long, Long)): BlockWrapSpark = {
+      public  BlockWrapSpark vertexProgram(VertexId id, BlockWrapSpark blockWrap, Tuple3<HashSet<Sha256Hash>, Long, Long > msgSum) {
       // Build new updated BlockWrap instance
-      val updatedBlockWrap = new BlockWrapSpark(blockWrap)
+      val updatedBlockWrap = new BlockWrapSpark(blockWrap);
 
       if (msgSum._2 == 0L) {
         // Initialization (initial msg always has depth == 0)
@@ -338,7 +333,7 @@ object JdbcTest {
       updatedBlockWrap
     }
 
-    def sendMessage(edge: EdgeTriplet[BlockWrapSpark, (Double, Double)]) = {
+    public  sendMessage(EdgeTriplet<BlockWrapSpark, Double, Double> edge )   {
       // Calculate messages
       val sentWeightHashes = edge.srcAttr.getReceivedWeightHashes
       val sentDepth = edge.srcAttr.getMcmc().getDepth + 1L;
@@ -347,19 +342,20 @@ object JdbcTest {
       Iterator((edge.dstId, (sentWeightHashes, sentDepth, sentMilestoneDepth)))
     }
 
-    def messageCombiner(a: (HashSet[Sha256Hash], Long, Long), b: (HashSet[Sha256Hash], Long, Long)): (HashSet[Sha256Hash], Long, Long) = {
+    public  Tuple3<HashSet<Sha256Hash>, Long, Long>
+        messageCombiner(Tuple3< HashSet<Sha256Hash>, Long, Long> a , Tuple3<HashSet<Sha256Hash>, Long, Long>  b)  {
       // Combine multiple incoming messages into one
-      val mergedWeightHashes = new HashSet[Sha256Hash]()
+            HashSet<Sha256Hash> mergedWeightHashes = new HashSet<Sha256Hash>();
       mergedWeightHashes.addAll(a._1)
       mergedWeightHashes.addAll(b._1)
-      val mergedDepth = Math.max(a._2, b._2);
-      val mergedMilestoneDepth = Math.max(a._3, b._3);
+        mergedDepth = Math.max(a._2, b._2);
+        mergedMilestoneDepth = Math.max(a._3, b._3);
 
-      (mergedWeightHashes, mergedDepth, mergedMilestoneDepth)
+       return   new Tuple3<>(mergedWeightHashes, mergedDepth, mergedMilestoneDepth);
     }
 
     // Execute a dynamic version of Pregel.
-    Pregel(maintainedGraph, initialMessage, Int.MaxValue, EdgeDirection.Out)(
-      vertexProgram, sendMessage, messageCombiner)
+    Pregel(maintainedGraph, initialMessage, Integer.MAX_VALUE, EdgeDirection.Out())(
+      vertexProgram, sendMessage, messageCombiner);
   }
 }
