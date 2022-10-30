@@ -59,7 +59,8 @@ public class ServerConfiguration {
     
     private List<String> deniedIPlist = new ArrayList<String>();
     private Boolean ipcheck = false;
-  
+    //if ipcheck, alway allow those IPs
+    private List<String> allowIPlist = new ArrayList<String>();
     
     public synchronized Boolean checkService() {
         if (!serviceReady) {
@@ -224,6 +225,16 @@ public class ServerConfiguration {
     public void setDockerDBHost(String dockerDBHost) {
         this.dockerDBHost = dockerDBHost;
     }
+
+    public List<String> getAllowIPlist() {
+        return allowIPlist;
+    }
+
+
+    public void setAllowIPlist(List<String> allowIPlist) {
+        this.allowIPlist = allowIPlist;
+    }
+
 
     @Override
     public String toString() {

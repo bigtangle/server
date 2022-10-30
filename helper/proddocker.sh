@@ -57,8 +57,8 @@ mkdir /var/lib/mysql/backup
 mysqldump -u root -ptest1234 --databases info | gzip -c > /var/lib/mysql/backup/$(date +"%Y-%b-%d")_info-backup.sql.gz
 
 
- rsync -avz -e "ssh -i /home/cui/git/sshkeys/cui/id_rsa  "  \
-  root@bigtangle.de:/data/vm/bigtangle-mysql/var/lib/mysql/backup/2021-Dec-05_info-backup.sql.gz \
+ rsync -avz -e "ssh -i /data/git/sshkeys/cui/id_rsa  "  \
+  root@bigtangle.de:/data/vm/bigtangle-mysql/var/lib/mysql/backup/2022-Oct-30-15-18_info-backup.sql.gz \
   .
   
   gzip -d  $(date +"%Y-%b-%d")_info-backup.sql.gz

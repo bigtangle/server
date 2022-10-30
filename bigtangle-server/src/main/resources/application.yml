@@ -19,6 +19,7 @@ server:
   servermode: ${SERVERMODE:Fullnode}
   deniedIPlist: ${DENIEDIPLIST:} 
   ipcheck: ${IPCHECK:false}
+  allowIPlist: ${ALLOWIPLIST:} 
   syncblocks: ${SYNCBLOCKS:1000}
   dockerCreateDBHost: ${DOCKERCREATEDBHOST:false}
   dockerDBHost: ${DOCKERDBHOST:bigtangle-mysql}
