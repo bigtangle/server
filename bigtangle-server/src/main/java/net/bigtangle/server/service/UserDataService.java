@@ -58,12 +58,13 @@ public class UserDataService {
 
     public boolean ipCheck(String reqCmd, byte[] contentBytes, HttpServletResponse httpServletResponse,
             HttpServletRequest httprequest) {
-       if(! serverConfiguration.getIpcheck()) return true;
-        
+        if (!serverConfiguration.getIpcheck())
+            return true;
+
         String remoteAddr = remoteAddr(httprequest);
         if ("81.169.156.203".equals(remoteAddr) || "61.181.128.236".equals(remoteAddr)
                 || "61.181.128.230".equals(remoteAddr) || "127.0.0.1".equals(remoteAddr)
-                || "172.18.0.1".equals(remoteAddr) ) {
+                || "172.18.0.1".equals(remoteAddr)) {
             return true;
         }
         if (serverConfiguration.getDeniedIPlist().contains(remoteAddr)) {
@@ -98,23 +99,21 @@ public class UserDataService {
     // last 15 seconds schedule interval
     // call api 15 times per seconds, as attack
     public synchronized void calcDenied() {
-        if(! serverConfiguration.getIpcheck()) return ;
+        // if(! serverConfiguration.getIpcheck()) return ;
         try {
             logger.debug("calcDenied staticsticCalls size =  " + staticsticCalls.size());
             for (Entry<String, List<ApiCall>> a : staticsticCalls.entrySet()) {
-                // ApiCall max =
-                // a.getValue().stream().min(Comparator.comparing(ApiCall::getTime)).get();
+
                 List<ApiCall> s = a.getValue().stream().filter(
                         c -> c != null && c.getTime() != null && c.getTime() > (System.currentTimeMillis() - 15000))
                         .collect(Collectors.toList());
                 logger.debug("a.getKey() calls =  " + a.getKey() + " -> " + s.size());
+                for (ApiCall l : s) {
+                    logger.debug(" a.getKey() calls  " + a.getKey() + "  detail " + l.toString());
+                }
                 if (s.size() > 9) {
-                    logger.debug("add to denied = " + a.getKey());
-                    /*
-                     * for (ApiCall l : s) {
-                     * logger.debug("  " + l.toString());
-                     * }
-                     */
+                    logger.debug("add to may be denied = " + a.getKey());
+
                     denieds.add(a.getKey());
                 }
             }
