@@ -2,7 +2,7 @@
 
 ## docker service
 
-sudo docker network create --driver bridge   bigtangle-bridged-network
+sudo docker network create --driver bridge   cc-bridged-network
  
 export BIGTANGLEVERSION=0.3.5 
 export DBHOST=bigtangle-mysql
@@ -23,7 +23,7 @@ sudo rm -fr /data/vm/$DBHOST/*
 sudo  mkdir -p /data/vm/$DBHOST/var/lib/mysql
 docker rm -f $DBHOST 
 
-sudo docker run -d  -t --net=bigtangle-bridged-network   -p 3306:3306  \
+sudo docker run -d  -t --net=cc-bridged-network  \
 -v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql  \
 -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \
 -e MYSQL_DATABASE=info  --name=$DBHOST  -h $DBHOST   mysql:8.0.23 
@@ -31,7 +31,7 @@ sudo docker run -d  -t --net=bigtangle-bridged-network   -p 3306:3306  \
 
 docker rm -f $SERVERHOST 
 
-docker  run -d -t --net=bigtangle-bridged-network     \
+docker  run -d -t --net=cc-bridged-network    \
 -p $SERVERPORT:8088 --name  $SERVERHOST \
 -e DB_PASSWORD=$DB_PASSWORD -e SERVER_PORT=8088  -e DB_NAME=info \
 -e DB_HOSTNAME=$DBHOST  -e SERVICE_MCMC_RATE=1000 \
