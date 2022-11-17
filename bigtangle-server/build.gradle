@@ -40,6 +40,12 @@ dependencies {
  
 	compile group: 'com.zaxxer', name: 'HikariCP', version: '3.4.5'
  
+ 	implementation group: 'org.apache.spark', name: 'spark-sql_2.13', version: '3.3.1'
+ 	implementation group: 'org.apache.spark', name: 'spark-graphx_2.13', version: '3.3.1'
+    
+	implementation group: 'io.delta', name: 'delta-core_2.13', version: '2.1.1'
+
+  
     compile project(':bigtangle-servercore')
     compile project(':bigtangle-docker')
    

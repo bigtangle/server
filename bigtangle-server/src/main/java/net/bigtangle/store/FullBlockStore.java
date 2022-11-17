@@ -21,7 +21,6 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockMCMC;
 import net.bigtangle.core.ContractExecution;
-import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.OrderCancel;
@@ -397,17 +396,6 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     Token getTokensByDomainname(String domainname) throws BlockStoreException;
 
-    Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException;
-
-    public List<Exchange> getExchangeListWithAddressA(String address) throws BlockStoreException;
-
-    void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException;
-
-    void saveExchange(Exchange exchange) throws BlockStoreException;
-
-    void deleteExchange(String orderid) throws BlockStoreException;
-
-    public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException;
 
     List<Sha256Hash> getWhereConfirmedNotMilestone() throws BlockStoreException;
 

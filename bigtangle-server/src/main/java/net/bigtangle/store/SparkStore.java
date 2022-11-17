@@ -17,6 +17,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -83,13 +84,13 @@ import net.bigtangle.utils.Gzip;
  * </p>
  * 
  */
-public abstract class DatabaseFullBlockStore implements FullBlockStore {
+public class SparkStore implements FullBlockStore {
 
     private static final String OPENORDERHASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
     private static final String LIMIT_500 = " limit 500 ";
 
-    private static final Logger log = LoggerFactory.getLogger(DatabaseFullBlockStore.class);
+    private static final Logger log = LoggerFactory.getLogger(SparkStore.class);
 
     public static final String VERSION_SETTING = "version";
 
@@ -479,7 +480,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
      * be specified.
      * </p>
      */
-    public DatabaseFullBlockStore(NetworkParameters params, Connection conn) {
+    public SparkStore(NetworkParameters params, Connection conn) {
         this.params = params;
         this.conn = conn;
     }
@@ -512,48 +513,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected String getUpdate() {
         return "update ";
     }
-
-    /**
-     * Get the database driver class,
-     * <p>
-     * i.e org.postgresql.Driver.
-     * </p>
-     * 
-     * @return The fully qualified database driver class.
-     */
-    protected abstract String getDatabaseDriverClass();
-
-    /**
-     * Get the SQL statements that create the schema (DDL).
-     * 
-     * @return The list of SQL statements.
-     */
-    protected abstract List<String> getCreateSchemeSQL();
-
-    /**
-     * Get the SQL statements that create the tables (DDL).
-     * 
-     * @return The list of SQL statements.
-     */
-    protected abstract List<String> getCreateTablesSQL();
-
-    /**
-     * Get the SQL statements that create the indexes (DDL).
-     * 
-     * @return The list of SQL statements.
-     */
-    protected abstract List<String> getCreateIndexesSQL();
-
-    /**
-     * Get the database specific error code that indicated a duplicate key error
-     * when inserting a record.
-     * <p>
-     * This is the code returned by {@link java.sql.SQLException#getSQLState()}
-     * </p>
-     * 
-     * @return The database duplicate error code.
-     */
-    protected abstract String getDuplicateKeyErrorCode();
 
     /**
      * Get the SQL statement that checks if tables exist.
@@ -622,13 +581,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected String getInsertSettingsSQL() {
         return INSERT_SETTINGS_SQL;
     }
-
-    /**
-     * Get the SQL to update a setting coinvalue.
-     * 
-     * @return The SQL update statement.
-     */
-    protected abstract String getUpdateSettingsSLQ();
 
     /**
      * <p>
@@ -742,19 +694,19 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
         Statement s = getConnection().createStatement();
         try {
-        for (String sql : sqls) {
-            if (log.isDebugEnabled()) {
-                log.debug("DatabaseFullBlockStore :     " + sql);
+            for (String sql : sqls) {
+                if (log.isDebugEnabled()) {
+                    log.debug("DatabaseFullBlockStore :     " + sql);
+                }
+                s.addBatch(sql);
             }
-            s.addBatch(sql);
-        }
-        s.executeBatch();
-            } catch (Exception e) {
-                log.debug("DatabaseFullBlockStore :     "  , e);
+            s.executeBatch();
+        } catch (Exception e) {
+            log.debug("DatabaseFullBlockStore :     ", e);
 
-            } finally {
-                s.close();
-            }
+        } finally {
+            s.close();
+        }
 
     }
 
@@ -907,7 +859,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -937,7 +890,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -965,7 +919,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1008,7 +963,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1042,7 +998,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1075,7 +1032,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1108,7 +1066,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1138,7 +1097,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1167,7 +1127,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1195,9 +1156,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         if (minimumsign > 1) {
             address = results.getString("multitoaddress");
         }
-        return new UTXO(hash, index, coinvalue, coinbase, new Script(scriptBytes), address, blockhash,
-                fromaddress, memo, tokenid, spent, confirmed, spendPending, minimumsign, spendPendingTime, time,
-                spenderblockhash);
+        return new UTXO(hash, index, coinvalue, coinbase, new Script(scriptBytes), address, blockhash, fromaddress,
+                memo, tokenid, spent, confirmed, spendPending, minimumsign, spendPendingTime, time, spenderblockhash);
     }
 
     @Override
@@ -1338,23 +1298,20 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     public void deleteStore() throws BlockStoreException {
         maybeConnect();
 
-                try {
-                    Statement s = getConnection().createStatement();
-                    for (String sql : getDropTablesSQL()) {
-                        log.info("drop table : " + sql);
-                        s.addBatch(     sql);
-                    }
-                    s.executeBatch();
-                    s.close();
-                } catch (Exception e) {
-                    log.info("drop table : ", e);
-                } finally {
-
-                }
+        try {
+            Statement s = getConnection().createStatement();
+            for (String sql : getDropTablesSQL()) {
+                log.info("drop table : " + sql);
+                s.addBatch(sql);
             }
+            s.executeBatch();
+            s.close();
+        } catch (Exception e) {
+            log.info("drop table : ", e);
+        } finally {
 
-
-    protected abstract List<String> getDropIndexsSQL();
+        }
+    }
 
     @Override
     public List<UTXO> getOpenAllOutputs(String tokenid) throws UTXOProviderException {
@@ -1456,14 +1413,14 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         try {
             maybeConnect();
             s = getConnection().prepareStatement(SELECT_OPEN_TRANSACTION_OUTPUTS_SQL);
-        
-                s.setString(1, address.toString());
-                s.setString(2, address.toString());
-                ResultSet results = s.executeQuery();
-                while (results.next()) {
-                    outputs.add(setUTXO(Sha256Hash.wrap(results.getBytes("hash")), results.getLong("outputindex"),
-                            results));
-                } 
+
+            s.setString(1, address.toString());
+            s.setString(2, address.toString());
+            ResultSet results = s.executeQuery();
+            while (results.next()) {
+                outputs.add(
+                        setUTXO(Sha256Hash.wrap(results.getBytes("hash")), results.getLong("outputindex"), results));
+            }
             return outputs;
         } catch (SQLException ex) {
             throw new UTXOProviderException(ex);
@@ -1478,7 +1435,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 }
         }
     }
-    
+
     @Override
     public List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid00)
             throws UTXOProviderException {
@@ -1536,7 +1493,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1591,7 +1549,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    //// throw new BlockStoreException("Could not close statement");
+                    //// throw new BlockStoreException("Could not close
+                    //// statement");
                 }
             }
         }
@@ -1625,7 +1584,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1652,7 +1612,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1686,7 +1647,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1719,7 +1681,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1753,7 +1716,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1802,14 +1766,16 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
             if (deleteStatement != null) {
                 try {
                     deleteStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1850,20 +1816,20 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     insertStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
             if (preparedStatement != null) {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
     }
-
-    protected abstract String getUpdateBlockEvaluationMilestoneSQL();
 
     @Override
     public void updateBlockEvaluationMilestone(Sha256Hash blockhash, long b) throws BlockStoreException {
@@ -1884,7 +1850,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1909,14 +1876,13 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
 
     }
-
-    protected abstract String getUpdateBlockEvaluationRatingSQL();
 
     @Override
     public void updateBlockEvaluationRating(List<Rating> ratings) throws BlockStoreException {
@@ -1940,7 +1906,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1963,7 +1930,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -1993,7 +1961,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2023,13 +1992,12 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
     }
-
-    protected abstract String getUpdateOutputsSpentSQL();
 
     @Override
     public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b,
@@ -2052,14 +2020,13 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
 
     }
-
-    protected abstract String getUpdateOutputsConfirmedSQL();
 
     @Override
     public void updateTransactionOutputConfirmed(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b)
@@ -2080,7 +2047,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2102,13 +2070,12 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
     }
-
-    protected abstract String getUpdateOutputsSpendPendingSQL();
 
     @Override
     public void updateTransactionOutputSpendPending(List<UTXO> utxos) throws BlockStoreException {
@@ -2133,7 +2100,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2142,7 +2110,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     @Override
     public List<Token> getTokensList(Set<String> tokenids) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
-        if( tokenids.isEmpty() ) return list;
+        if (tokenids.isEmpty())
+            return list;
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -2167,7 +2136,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2196,7 +2166,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2228,7 +2199,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2262,7 +2234,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2297,7 +2270,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2394,7 +2368,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2420,7 +2395,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2445,7 +2421,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2468,7 +2445,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2491,7 +2469,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2514,7 +2493,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2543,7 +2523,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2569,7 +2550,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2597,7 +2579,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2623,7 +2606,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2648,7 +2632,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2671,7 +2656,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2730,7 +2716,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2776,7 +2763,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2813,7 +2801,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2840,7 +2829,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    //// throw new BlockStoreException("Could not close statement");
+                    //// throw new BlockStoreException("Could not close
+                    //// statement");
                 }
             }
         }
@@ -2862,7 +2852,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2887,7 +2878,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                 //   // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2918,7 +2910,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2946,7 +2939,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -2977,7 +2971,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3008,7 +3003,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3037,7 +3033,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3063,7 +3060,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3110,7 +3108,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3158,7 +3157,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3194,7 +3194,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                 //   // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3220,7 +3221,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3251,7 +3253,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3277,7 +3280,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3305,7 +3309,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3326,7 +3331,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3349,7 +3355,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3374,7 +3381,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3397,7 +3405,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    //// throw new BlockStoreException("Could not close statement");
+                    //// throw new BlockStoreException("Could not close
+                    //// statement");
                 }
             }
         }
@@ -3420,7 +3429,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3447,7 +3457,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3470,7 +3481,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3499,7 +3511,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3521,7 +3534,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3545,7 +3559,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3571,7 +3586,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3597,7 +3613,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3621,7 +3638,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3647,7 +3665,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                 //   // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3688,7 +3707,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3712,7 +3732,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3737,7 +3758,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3768,7 +3790,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3805,7 +3828,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3830,7 +3854,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3875,7 +3900,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                 //   // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3899,7 +3925,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3929,7 +3956,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3955,7 +3983,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -3981,7 +4010,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                 //   // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4005,7 +4035,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4041,7 +4072,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4074,7 +4106,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4097,7 +4130,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4145,7 +4179,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4171,7 +4206,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4220,7 +4256,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4245,7 +4282,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4268,7 +4306,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                 //   // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4289,7 +4328,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4318,7 +4358,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                 //   // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4342,7 +4383,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4363,7 +4405,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4387,7 +4430,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                  //  // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4417,7 +4461,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                   // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4447,7 +4492,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4482,7 +4528,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4506,7 +4553,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4531,7 +4579,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4555,7 +4604,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4582,7 +4632,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4608,7 +4659,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4631,7 +4683,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close statement");
+                    // // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4678,7 +4731,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4722,7 +4776,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4746,7 +4801,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4772,7 +4828,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4797,7 +4854,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4825,7 +4883,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4854,7 +4913,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     deleteStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4905,7 +4965,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     deleteStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4913,7 +4974,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     /*
-     * all spent UTXO History and older than the maxRewardblock 
+     * all spent UTXO History and older than the maxRewardblock
      * can be pruned.
      */
     @Override
@@ -4934,7 +4995,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     deleteStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -4966,7 +5028,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     deleteStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5019,7 +5082,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5077,7 +5141,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5129,7 +5194,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5154,7 +5220,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5184,14 +5251,16 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
             if (p2 != null) {
                 try {
                     p2.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5215,7 +5284,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5239,7 +5309,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5272,7 +5343,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5311,7 +5383,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     deleteStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
 
@@ -5319,7 +5392,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5338,7 +5412,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public List<MatchLastdayResult> getLastMatchingEvents(Set<String> tokenIds, String basetoken) throws BlockStoreException {
+    public List<MatchLastdayResult> getLastMatchingEvents(Set<String> tokenIds, String basetoken)
+            throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -5366,7 +5441,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5387,7 +5463,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5415,7 +5492,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5443,13 +5521,12 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
     }
-
- 
 
     @Override
     public List<Sha256Hash> getWhereConfirmedNotMilestone() throws BlockStoreException {
@@ -5470,7 +5547,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5511,7 +5589,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5547,7 +5626,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5573,8 +5653,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             List<MatchLastdayResult> list = new ArrayList<>();
             DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             while (resultSet.next()) {
-                list.add(new MatchLastdayResult("", resultSet.getString(1), resultSet.getString(2), resultSet.getLong(3),
-                        resultSet.getLong(4), dateFormat.parse(resultSet.getString(5)).getTime() / 1000));
+                list.add(
+                        new MatchLastdayResult("", resultSet.getString(1), resultSet.getString(2), resultSet.getLong(3),
+                                resultSet.getLong(4), dateFormat.parse(resultSet.getString(5)).getTime() / 1000));
             }
             return list;
         } catch (Exception ex) {
@@ -5584,7 +5665,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5609,7 +5691,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5636,7 +5719,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5659,7 +5743,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5681,7 +5766,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5707,7 +5793,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5739,7 +5826,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5771,7 +5859,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5790,7 +5879,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5814,7 +5904,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5827,7 +5918,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         List<ChainBlockQueue> list = new ArrayList<ChainBlockQueue>();
         try {
             s = getConnection().prepareStatement(
-                    SELECT_CHAINBLOCKQUEUE + " where orphan =? " + " order by chainlength asc" + " limit " +limit);
+                    SELECT_CHAINBLOCKQUEUE + " where orphan =? " + " order by chainlength asc" + " limit " + limit);
             s.setBoolean(1, orphan);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
@@ -5841,7 +5932,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     s.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
         }
     }
@@ -5867,7 +5959,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5887,7 +5980,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5906,7 +6000,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -5934,7 +6029,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -6007,7 +6103,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -6029,7 +6126,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -6061,7 +6159,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -6086,7 +6185,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -6112,7 +6212,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -6157,7 +6258,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -6192,7 +6294,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
@@ -6217,10 +6320,399 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 try {
                     preparedStatement.close();
                 } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close statement");
+                    // throw new BlockStoreException("Could not close
+                    // statement");
                 }
             }
         }
+    }
+
+    protected String getDuplicateKeyErrorCode() {
+        return "23000";
+    }
+
+    private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
+    private static final String DATABASE_DRIVER_CLASS = "com.mysql.jdbc.Driver";
+    public static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:mysql://"; // "jdbc:log4jdbc:mysql://";
+
+    // create table SQL
+    private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) NOT NULL,\n"
+            + "    settingvalue blob,\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
+
+    private static final String CREATE_BLOCKS_TABLE = "CREATE TABLE blocks (\n" + "    hash binary(32) NOT NULL,\n"
+            + "    height bigint NOT NULL,\n" + "    block mediumblob NOT NULL,\n"
+            + "    prevblockhash  binary(32) NOT NULL,\n" + "    prevbranchblockhash  binary(32) NOT NULL,\n"
+            + "    mineraddress binary(20) NOT NULL,\n" + "    blocktype bigint NOT NULL,\n"
+            // reward block chain length is here milestone
+            + "    milestone bigint NOT NULL,\n" + "    milestonelastupdate bigint NOT NULL,\n"
+            + "    confirmed boolean NOT NULL,\n"
+
+            // solid is result of validation of the block,
+            + "    solid bigint NOT NULL,\n" + "    inserttime bigint NOT NULL,\n"
+            + "    CONSTRAINT blocks_pk PRIMARY KEY (hash) \n" + ") ENGINE=InnoDB ";
+
+    private static final String CREATE_MCMC_TABLE = "CREATE TABLE mcmc (\n" + "    hash binary(32) NOT NULL,\n"
+    // dynamic data
+    // MCMC rating,depth,cumulativeweight
+            + "    rating bigint NOT NULL,\n" + "    depth bigint NOT NULL,\n"
+            + "    cumulativeweight bigint NOT NULL,\n" + "    CONSTRAINT mcmc_pk PRIMARY KEY (hash) \n"
+            + ") ENGINE=InnoDB ";
+
+    private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n"
+            + "    blockhash binary(32) NOT NULL,\n" + "    hash binary(32) NOT NULL,\n"
+            + "    outputindex bigint NOT NULL,\n" + "    coinvalue mediumblob NOT NULL,\n"
+            + "    scriptbytes mediumblob NOT NULL,\n" + "    toaddress varchar(255),\n"
+            + "    addresstargetable bigint,\n" + "    coinbase boolean,\n" + "    tokenid varchar(255),\n"
+            + "    fromaddress varchar(255),\n" + "    memo MEDIUMTEXT,\n" + "    minimumsign bigint NOT NULL,\n"
+            + "    time bigint,\n"
+            // begin the derived value of the output from block
+            // this is for track the spent, spent = true means spenderblock is
+            // confirmed
+            + "    spent boolean NOT NULL,\n" + "    spenderblockhash  binary(32),\n"
+            // confirmed = the block of this output is confirmed
+            + "    confirmed boolean NOT NULL,\n"
+            // this is indicator for wallet to minimize conflict, is set for
+            // create at spender block
+            + "    spendpending boolean NOT NULL,\n" + "    spendpendingtime bigint,\n"
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (blockhash, hash, outputindex) \n" + "   ) ENGINE=InnoDB \n";
+
+    // This is table for output with possible multi sign address
+    private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n"
+            + "    hash binary(32) NOT NULL,\n" + "    outputindex bigint NOT NULL,\n"
+            + "    toaddress varchar(255) NOT NULL,\n"
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) \n" + ") ENGINE=InnoDB \n";
+
+    private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
+            + "   blockhash binary(32) NOT NULL,\n" + "   confirmed boolean NOT NULL,\n"
+            + "   spent boolean NOT NULL,\n" + "   spenderblockhash binary(32),\n"
+            + "   prevblockhash binary(32) NOT NULL,\n" + "   difficulty bigint NOT NULL,\n"
+            + "   chainlength bigint NOT NULL,\n" + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
+
+    private static final String CREATE_ORDERS_TABLE = "CREATE TABLE orders (\n"
+            // initial issuing block hash
+            + "    blockhash binary(32) NOT NULL,\n"
+            // ZEROHASH if confirmed by order blocks,
+            // issuing ordermatch blockhash if issued by ordermatch block
+            + "    collectinghash binary(32) NOT NULL,\n" + "    offercoinvalue bigint NOT NULL,\n"
+            + "    offertokenid varchar(255),\n" + "   targetcoinvalue bigint,\n" + "    targettokenid varchar(255),\n"
+            // buy or sell
+            + "    side varchar(255),\n"
+            // public address
+            + "    beneficiaryaddress varchar(255),\n"
+            // the pubkey that will receive the targettokens
+            // on completion or returned tokens on cancels
+            + "    beneficiarypubkey binary(33),\n"
+            // order is valid untill this time
+            + "    validToTime bigint,\n"
+            // a number used to track operations on the
+            // order, e.g. increasing by one when refreshing
+            // order is valid after this time
+            + "    validFromTime bigint,\n"
+            // order base token
+            + "    orderbasetoken varchar(255),\n" + "    tokendecimals int ,\n" + "   price bigint,\n"
+            // true iff a order block of this order is confirmed
+            + "    confirmed boolean NOT NULL,\n"
+            // true if used by a confirmed ordermatch block (either
+            // returned or used for another orderoutput/output)
+            + "    spent boolean NOT NULL,\n" + "    spenderblockhash  binary(32),\n"
+            + "    CONSTRAINT orders_pk PRIMARY KEY (blockhash, collectinghash) " + " USING HASH \n"
+            + ") ENGINE=InnoDB \n";
+
+    private static final String CREATE_ORDER_CANCEL_TABLE = "CREATE TABLE ordercancel (\n"
+            + "   blockhash binary(32) NOT NULL,\n" + "   orderblockhash binary(32) NOT NULL,\n"
+            + "   confirmed boolean NOT NULL,\n" + "   spent boolean NOT NULL,\n" + "   spenderblockhash binary(32),\n"
+            + "   time bigint NOT NULL,\n" + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
+
+    private static final String CREATE_MATCHING_TABLE = "CREATE TABLE matching (\n"
+            + "    id bigint NOT NULL AUTO_INCREMENT,\n" + "    txhash varchar(255) NOT NULL,\n"
+            + "    tokenid varchar(255) NOT NULL,\n" + "    basetokenid varchar(255) NOT NULL,\n"
+            + "    price bigint NOT NULL,\n" + "    executedQuantity bigint NOT NULL,\n"
+            + "    inserttime bigint NOT NULL,\n" + "    PRIMARY KEY (id) \n" + ") ENGINE=InnoDB\n";
+
+    private static final String CREATE_MATCHINGDAILY_TABLE = "CREATE TABLE matchingdaily (\n"
+            + "    id bigint NOT NULL AUTO_INCREMENT,\n" + "    matchday varchar(255) NOT NULL,\n"
+            + "    tokenid varchar(255) NOT NULL,\n" + "    basetokenid varchar(255) NOT NULL,\n"
+            + "    avgprice bigint NOT NULL,\n" + "    totalQuantity bigint NOT NULL,\n"
+            + "    highprice bigint NOT NULL,\n" + "    lowprice bigint NOT NULL,\n" + "    open bigint NOT NULL,\n"
+            + "    close bigint NOT NULL,\n" + "    matchinterval varchar(255) NOT NULL,\n"
+            + "    inserttime bigint NOT NULL,\n" + "    PRIMARY KEY (id) \n" + ") ENGINE=InnoDB\n";
+
+    private static final String CREATE_MATCHING_LAST_TABLE = "CREATE TABLE matchinglast (\n"
+            + "    txhash varchar(255) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL,\n"
+            + "    basetokenid varchar(255) NOT NULL,\n" + "    price bigint NOT NULL,\n"
+            + "    executedQuantity bigint NOT NULL,\n" + "    inserttime bigint NOT NULL,\n"
+            + "    PRIMARY KEY ( tokenid,basetokenid) \n" + ") ENGINE=InnoDB\n";
+    private static final String CREATE_MATCHING_LAST_DAY_TABLE = "CREATE TABLE matchinglastday (\n"
+            + "    txhash varchar(255) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL,\n"
+            + "    basetokenid varchar(255) NOT NULL,\n" + "    price bigint NOT NULL,\n"
+            + "    executedQuantity bigint NOT NULL,\n" + "    inserttime bigint NOT NULL,\n"
+            + "    PRIMARY KEY ( tokenid,basetokenid) \n" + ") ENGINE=InnoDB\n";
+
+    private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" + "    blockhash binary(32) NOT NULL,\n"
+            + "    confirmed boolean NOT NULL,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
+            + "    tokenindex bigint NOT NULL   ,\n" + "    amount mediumblob ,\n" + "    tokenname varchar(100) ,\n"
+            + "    description varchar(5000) ,\n" + "    domainname varchar(100) ,\n"
+            + "    signnumber bigint NOT NULL   ,\n" + "    tokentype int(11),\n" + "    tokenstop boolean,\n"
+            + "    prevblockhash binary(32),\n" + "    spent boolean NOT NULL,\n"
+            + "    spenderblockhash  binary(32),\n" + "    tokenkeyvalues  mediumblob,\n" + "    revoked boolean   ,\n"
+            + "    language char(2)   ,\n" + "    classification varchar(255)   ,\n"
+            + "    domainpredblockhash varchar(255) NOT NULL,\n" + "    decimals int ,\n"
+            + "    PRIMARY KEY (blockhash) \n) ENGINE=InnoDB";
+
+    // Helpers
+    private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
+            + "    blockhash binary(32) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
+            + "    address varchar(255),\n" + "    pubKeyHex varchar(255),\n" + "    posIndex int(11),\n"
+            + "    tokenHolder int(11) NOT NULL DEFAULT 0,\n"
+            + "    PRIMARY KEY (blockhash, tokenid, pubKeyHex) \n) ENGINE=InnoDB";
+
+    private static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
+            + "    id varchar(255) NOT NULL  ,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
+            + "    tokenindex bigint NOT NULL   ,\n" + "    address varchar(255),\n"
+            + "    blockhash  mediumblob NOT NULL,\n" + "    sign int(11) NOT NULL,\n"
+            + "    PRIMARY KEY (id) \n) ENGINE=InnoDB";
+
+    private static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
+            + "    orderid varchar(255) NOT NULL  ,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
+            + "    toaddress varchar(255) NOT NULL,\n" + "    blockhash mediumblob NOT NULL,\n"
+            + "    amount mediumblob ,\n" + "    minsignnumber bigint(20) ,\n" + "    outputHashHex varchar(255) ,\n"
+            + "    outputindex bigint ,\n" + "    PRIMARY KEY (orderid) \n) ENGINE=InnoDB";
+
+    private static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"
+            + "    orderid varchar(255) NOT NULL  ,\n" + "    pubKey varchar(255),\n" + "    sign int(11) NOT NULL,\n"
+            + "    signIndex int(11) NOT NULL,\n" + "    signInputData mediumblob,\n"
+            + "    PRIMARY KEY (orderid, pubKey) \n) ENGINE=InnoDB";
+
+    private static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n"
+            + "    blockhash binary(32) NOT NULL,\n" + "    dataclassname varchar(255) NOT NULL,\n"
+            + "    data mediumblob NOT NULL,\n" + "    pubKey varchar(255),\n" + "    blocktype bigint,\n"
+            + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ") ENGINE=InnoDB";
+
+    private static final String CREATE_BATCHBLOCK_TABLE = "CREATE TABLE batchblock (\n"
+            + "    hash binary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n"
+            + "    inserttime datetime NOT NULL,\n" + "   CONSTRAINT batchblock_pk PRIMARY KEY (hash)  \n"
+            + ") ENGINE=InnoDB";
+
+    private static final String CREATE_SUBTANGLE_PERMISSION_TABLE = "CREATE TABLE subtangle_permission (\n"
+            + "    pubkey varchar(255) NOT NULL,\n" + "    userdataPubkey varchar(255) NOT NULL,\n"
+            + "    status varchar(255) NOT NULL,\n"
+            + "   CONSTRAINT subtangle_permission_pk PRIMARY KEY (pubkey) USING BTREE \n" + ") ENGINE=InnoDB";
+
+    /*
+     * indicate of a server created block
+     */
+    private static final String CREATE_MYSERVERBLOCKS_TABLE = "CREATE TABLE myserverblocks (\n"
+            + "    prevhash binary(32) NOT NULL,\n" + "    hash binary(32) NOT NULL,\n" + "    inserttime bigint,\n"
+            + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" + ") ENGINE=InnoDB";
+
+    private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
+            + "   orderid varchar(255) NOT NULL,\n" + "   fromAddress varchar(255),\n"
+            + "   fromTokenHex varchar(255),\n" + "   fromAmount varchar(255),\n" + "   toAddress varchar(255),\n"
+            + "   toTokenHex varchar(255),\n" + "   toAmount varchar(255),\n" + "   data varbinary(5000) NOT NULL,\n"
+            + "   toSign boolean,\n" + "   fromSign integer,\n" + "   toOrderId varchar(255),\n"
+            + "   fromOrderId varchar(255),\n" + "   market varchar(255),\n" + "   memo varchar(255),\n"
+            + "   signInputData varbinary(5000),\n" + "   PRIMARY KEY (orderid) ) ENGINE=InnoDB";
+
+    private static final String CREATE_EXCHANGE_MULTISIGN_TABLE = "CREATE TABLE exchange_multisign (\n"
+            + "   orderid varchar(255) ,\n" + "   pubkey varchar(255),\n" + "   signInputData varbinary(5000),\n"
+            + "   sign integer\n" + "    ) ENGINE=InnoDB";
+
+    private static final String CREATE_ACCESS_PERMISSION_TABLE = "CREATE TABLE access_permission (\n"
+            + "   accessToken varchar(255) ,\n" + "   pubKey varchar(255),\n" + "   refreshTime bigint,\n"
+            + "   PRIMARY KEY (accessToken) ) ENGINE=InnoDB";
+
+    private static final String CREATE_ACCESS_GRANT_TABLE = "CREATE TABLE access_grant (\n"
+            + "   address varchar(255),\n" + "   createTime bigint,\n" + "   PRIMARY KEY (address) ) ENGINE=InnoDB";
+
+    private static final String CREATE_CONTRACT_EVENT_TABLE = "CREATE TABLE contractevent (\n"
+            // initial issuing block hash
+            + "    blockhash binary(32) NOT NULL,\n" + "    contracttokenid varchar(255),\n"
+            + "   targetcoinvalue mediumblob,\n" + "    targettokenid varchar(255),\n"
+            // public address
+            + "    beneficiaryaddress varchar(255),\n"
+            // the pubkey that will receive the targettokens
+            // on completion or returned tokens on cancels
+            + "    beneficiarypubkey binary(33),\n"
+            // valid until this time
+            + "    validToTime bigint,\n" + "    validFromTime bigint,\n"
+            // true iff a order block of this order is confirmed
+            + "    confirmed boolean NOT NULL,\n"
+            // true if used by a confirmed block (either
+            // returned or used for another )
+            + "    spent boolean NOT NULL,\n" + "    spenderblockhash  binary(32),\n"
+            + "    CONSTRAINT contractevent_pk PRIMARY KEY (blockhash) " + " USING HASH \n" + ") ENGINE=InnoDB \n";
+
+    private static final String CREATE_CONTRACT_ACCOUNT_TABLE = "CREATE TABLE contractaccount (\n"
+            + "    contracttokenid varchar(255)  NOT NULL,\n" + "    tokenid varchar(255)  NOT NULL,\n"
+            + "    coinvalue mediumblob, \n"
+            // block hash of the last execution block
+            + "    blockhash binary(32) NOT NULL,\n"
+            + "    CONSTRAINT contractaccount_pk PRIMARY KEY (contracttokenid, tokenid) " + ") ENGINE=InnoDB \n";
+
+    private static final String CREATE_CONTRACT_EXECUTION_TABLE = "CREATE TABLE contractexecution (\n"
+            + "   blockhash binary(32) NOT NULL,\n" + "   contracttokenid varchar(255)  NOT NULL,\n"
+            + "   confirmed boolean NOT NULL,\n" + "   spent boolean NOT NULL,\n" + "   spenderblockhash binary(32),\n"
+            + "   prevblockhash binary(32) NOT NULL,\n" + "   difficulty bigint NOT NULL,\n"
+            + "   chainlength bigint NOT NULL,\n" + "   resultdata blob NOT NULL,\n"
+            + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
+
+    private static final String CREATE_CHAINBLOCKQUEUE_TABLE = "CREATE TABLE chainblockqueue (\n"
+            + "    hash binary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n" + "    chainlength bigint,\n "
+            + "    orphan boolean,\n " + "    inserttime bigint NOT NULL,\n"
+            + "    CONSTRAINT chainblockqueue_pk PRIMARY KEY (hash)  \n" + ") ENGINE=InnoDB \n";
+    private static final String CREATE_LOCKOBJECT_TABLE = "CREATE TABLE lockobject (\n"
+            + "    lockobjectid varchar(255) NOT NULL,\n" + "    locktime bigint NOT NULL,\n"
+            + "    CONSTRAINT lockobject_pk PRIMARY KEY (lockobjectid)  \n" + ") ENGINE=InnoDB \n";
+
+    // Some indexes to speed up stuff
+    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
+    private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING HASH";
+    private static final String CREATE_OUTPUTS_FROMADDRESS_INDEX = "CREATE INDEX outputs_fromaddress_idx ON outputs (fromaddress) USING HASH";
+
+    private static final String CREATE_PREVBRANCH_HASH_INDEX = "CREATE INDEX blocks_prevbranchblockhash_idx ON blocks (prevbranchblockhash) USING HASH";
+    private static final String CREATE_PREVTRUNK_HASH_INDEX = "CREATE INDEX blocks_prevblockhash_idx ON blocks (prevblockhash) USING HASH";
+
+    private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
+    private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
+
+    private static final String CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX orders_collectinghash_idx ON orders (collectinghash) USING btree";
+    private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone)  USING btree ";
+    private static final String CREATE_BLOCKS_HEIGHT_INDEX = "CREATE INDEX blocks_height_idx ON blocks (height)  USING btree ";
+    private static final String CREATE_TXREARD_CHAINLENGTH_INDEX = "CREATE INDEX txreard_chainlength_idx ON txreward (chainlength)  USING btree ";
+    private static final String CREATE_CONTRACT_EVENT_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractevent_contracttokenid_idx ON contractevent (contracttokenid) USING btree";
+    private static final String CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractexecution_contracttokenid_idx ON contractexecution (contracttokenid) USING btree";
+    private static final String CREATE_ORDERS_SPENT_TABLE_INDEX = "CREATE INDEX orders_spent_idx ON orders (confirmed, spent) ";
+    private static final String CREATE_MATCHING_TOKEN_TABLE_INDEX = "CREATE INDEX matching_inserttime_idx ON matching (inserttime) ";
+
+    private static final String CREATE_TOKEN_TOKENID_TABLE_INDEX = "CREATE INDEX tokens_tokenid_idx ON tokens (tokenid) ";
+
+    protected List<String> getCreateTablesSQL() {
+        List<String> sqlStatements = new ArrayList<String>();
+        sqlStatements.addAll(getCreateTablesSQL1());
+        sqlStatements.addAll(getCreateTablesSQL2());
+        return sqlStatements;
+    }
+
+    protected List<String> getCreateTablesSQL1() {
+        List<String> sqlStatements = new ArrayList<String>();
+        sqlStatements.add(CREATE_BLOCKS_TABLE);
+        sqlStatements.add(CREATE_OUTPUT_TABLE);
+        sqlStatements.add(CREATE_OUTPUT_MULTI_TABLE);
+        sqlStatements.add(CREATE_TOKENS_TABLE);
+        sqlStatements.add(CREATE_MATCHING_TABLE);
+        sqlStatements.add(CREATE_MULTISIGNADDRESS_TABLE);
+        sqlStatements.add(CREATE_MULTISIGN_TABLE);
+        sqlStatements.add(CREATE_TX_REWARD_TABLE);
+        sqlStatements.add(CREATE_USERDATA_TABLE);
+        sqlStatements.add(CREATE_PAYMULTISIGN_TABLE);
+        sqlStatements.add(CREATE_PAYMULTISIGNADDRESS_TABLE);
+        sqlStatements.add(CREATE_ORDER_CANCEL_TABLE);
+        sqlStatements.add(CREATE_BATCHBLOCK_TABLE);
+        sqlStatements.add(CREATE_SUBTANGLE_PERMISSION_TABLE);
+        sqlStatements.add(CREATE_ORDERS_TABLE);
+        sqlStatements.add(CREATE_MYSERVERBLOCKS_TABLE);
+        sqlStatements.add(CREATE_SETTINGS_TABLE);
+        sqlStatements.add(CREATE_EXCHANGE_TABLE);
+        sqlStatements.add(CREATE_EXCHANGE_MULTISIGN_TABLE);
+        sqlStatements.add(CREATE_MCMC_TABLE);
+        sqlStatements.add(CREATE_MATCHING_LAST_TABLE);
+        sqlStatements.add(CREATE_MATCHING_LAST_DAY_TABLE);
+        return sqlStatements;
+    }
+
+    protected List<String> getCreateTablesSQL2() {
+        List<String> sqlStatements = new ArrayList<String>();
+        sqlStatements.add(CREATE_ACCESS_PERMISSION_TABLE);
+        sqlStatements.add(CREATE_ACCESS_GRANT_TABLE);
+        sqlStatements.add(CREATE_CONTRACT_EVENT_TABLE);
+        sqlStatements.add(CREATE_CONTRACT_ACCOUNT_TABLE);
+        sqlStatements.add(CREATE_CONTRACT_EXECUTION_TABLE);
+        sqlStatements.add(CREATE_CHAINBLOCKQUEUE_TABLE);
+        sqlStatements.add(CREATE_LOCKOBJECT_TABLE);
+        sqlStatements.add(CREATE_MATCHINGDAILY_TABLE);
+        return sqlStatements;
+    }
+
+    public void updateDatabse() throws BlockStoreException, SQLException {
+
+        byte[] settingValue = getSettingValue("version");
+        String ver = "";
+        if (settingValue != null)
+            ver = new String(settingValue);
+
+        if ("03".equals(ver)) {
+            updateTables(getCreateTablesSQL2());
+            updateTables(getCreateIndexesSQL2());
+            dbupdateversion("05");
+        }
+
+    }
+
+    protected List<String> getCreateIndexesSQL() {
+        List<String> sqlStatements = new ArrayList<String>();
+        sqlStatements.addAll(getCreateIndexesSQL1());
+        sqlStatements.addAll(getCreateIndexesSQL2());
+        return sqlStatements;
+    }
+
+    protected List<String> getCreateIndexesSQL1() {
+        List<String> sqlStatements = new ArrayList<String>();
+        sqlStatements.add(CREATE_OUTPUTS_ADDRESS_MULTI_INDEX);
+        sqlStatements.add(CREATE_BLOCKS_HEIGHT_INDEX);
+        sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
+        sqlStatements.add(CREATE_PREVBRANCH_HASH_INDEX);
+        sqlStatements.add(CREATE_PREVTRUNK_HASH_INDEX);
+        sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
+        sqlStatements.add(CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX);
+        sqlStatements.add(CREATE_BLOCKS_MILESTONE_INDEX);
+        sqlStatements.add(CREATE_TXREARD_CHAINLENGTH_INDEX);
+        sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
+        return sqlStatements;
+    }
+
+    protected List<String> getCreateIndexesSQL2() {
+        List<String> sqlStatements = new ArrayList<String>();
+        sqlStatements.add(CREATE_OUTPUTS_FROMADDRESS_INDEX);
+        sqlStatements.add(CREATE_CONTRACT_EVENT_CONTRACTTOKENID_TABLE_INDEX);
+        sqlStatements.add(CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX);
+        sqlStatements.add(CREATE_ORDERS_SPENT_TABLE_INDEX);
+        sqlStatements.add(CREATE_MATCHING_TOKEN_TABLE_INDEX);
+        sqlStatements.add(CREATE_TOKEN_TOKENID_TABLE_INDEX);
+        return sqlStatements;
+    }
+
+    protected List<String> getCreateSchemeSQL() {
+        // do nothing
+        return Collections.emptyList();
+    }
+
+    protected String getDatabaseDriverClass() {
+        return DATABASE_DRIVER_CLASS;
+    }
+
+    protected String getUpdateSettingsSLQ() {
+        // return UPDATE_SETTINGS_SQL;
+        return getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
+    }
+
+    public String getUpdateBlockEvaluationMilestoneSQL() {
+        return UPDATE_BLOCKEVALUATION_MILESTONE_SQL;
+    }
+
+    protected String getUpdateBlockEvaluationRatingSQL() {
+        return UPDATE_BLOCKEVALUATION_RATING_SQL;
+    }
+
+    protected String getUpdateOutputsSpentSQL() {
+        return UPDATE_OUTPUTS_SPENT_SQL;
+    }
+
+    protected String getUpdateOutputsConfirmedSQL() {
+        return UPDATE_OUTPUTS_CONFIRMED_SQL;
+    }
+
+    protected String getUpdateOutputsSpendPendingSQL() {
+        return UPDATE_OUTPUTS_SPENDPENDING_SQL;
     }
 
 }

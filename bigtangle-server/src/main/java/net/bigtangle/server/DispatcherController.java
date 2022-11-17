@@ -63,7 +63,6 @@ import net.bigtangle.server.service.AccessGrantService;
 import net.bigtangle.server.service.AccessPermissionedService;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.CheckpointService;
-import net.bigtangle.server.service.ExchangeService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.OrderdataService;
@@ -111,8 +110,7 @@ public class DispatcherController {
     protected StoreService storeService;
     @Autowired
     private TokenDomainnameService tokenDomainnameService;
-    @Autowired
-    private ExchangeService exchangeService;
+ 
     @Autowired
     private RewardService rewardService;
     @Autowired
@@ -380,13 +378,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch, reqCmd);
             }
                 break;
-            case signOrder: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = exchangeService.signTransaction(request, store);
-                this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
-            }
-                break;
+ 
             case getTokenIndex: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -549,30 +541,7 @@ public class DispatcherController {
             }
                 break;
 
-            case getExchangeByOrderid: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                String orderid = (String) request.get("orderid");
-                AbstractResponse response = this.exchangeService.getExchangeByOrderid(orderid, store);
-                this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
-            }
-                break;
-            case saveExchange: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = exchangeService.saveExchange(request, store);
-
-                this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
-            }
-                break;
-            case deleteExchange: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-                AbstractResponse response = exchangeService.deleteExchange(request, store);
-
-                this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
-            }
-                break;
+ 
             case getChainNumber: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
@@ -581,13 +550,7 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
             }
                 break;
-            case getBatchExchange: {
-                String reqStr = new String(bodyByte, "UTF-8");
-                List<String> address = Json.jsonmapper().readValue(reqStr, List.class);
-                AbstractResponse response = exchangeService.getBatchExchangeListByAddressListA(address, store);
-                this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
-            }
-                break;
+    
             case getAllConfirmedReward: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

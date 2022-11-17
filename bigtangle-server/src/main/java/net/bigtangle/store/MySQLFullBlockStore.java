@@ -299,31 +299,8 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" 
             + ") ENGINE=InnoDB";
     
-    private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
-            + "   orderid varchar(255) NOT NULL,\n" 
-            + "   fromAddress varchar(255),\n"
-            + "   fromTokenHex varchar(255),\n" 
-            + "   fromAmount varchar(255),\n" 
-            + "   toAddress varchar(255),\n"
-            + "   toTokenHex varchar(255),\n" 
-            + "   toAmount varchar(255),\n" 
-            + "   data varbinary(5000) NOT NULL,\n"
-            + "   toSign boolean,\n" 
-            + "   fromSign integer,\n" 
-            + "   toOrderId varchar(255),\n"
-            + "   fromOrderId varchar(255),\n" 
-            + "   market varchar(255),\n" 
-            + "   memo varchar(255),\n" 
-            + "   signInputData varbinary(5000),\n"
-            + "   PRIMARY KEY (orderid) ) ENGINE=InnoDB";
-    
-    private static final String CREATE_EXCHANGE_MULTISIGN_TABLE = 
-            "CREATE TABLE exchange_multisign (\n"
-          + "   orderid varchar(255) ,\n" 
-          + "   pubkey varchar(255),\n"
-          + "   signInputData varbinary(5000),\n"
-          + "   sign integer\n"
-          + "    ) ENGINE=InnoDB";
+ 
+ 
     
     private static final String CREATE_ACCESS_PERMISSION_TABLE = 
             "CREATE TABLE access_permission (\n"
@@ -454,9 +431,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_SUBTANGLE_PERMISSION_TABLE);
         sqlStatements.add(CREATE_ORDERS_TABLE);
         sqlStatements.add(CREATE_MYSERVERBLOCKS_TABLE);
-        sqlStatements.add(CREATE_SETTINGS_TABLE);
-        sqlStatements.add(CREATE_EXCHANGE_TABLE);
-        sqlStatements.add(CREATE_EXCHANGE_MULTISIGN_TABLE);
+        sqlStatements.add(CREATE_SETTINGS_TABLE); 
         sqlStatements.add(CREATE_MCMC_TABLE); 
         sqlStatements.add(CREATE_MATCHING_LAST_TABLE);
         sqlStatements.add(CREATE_MATCHING_LAST_DAY_TABLE);

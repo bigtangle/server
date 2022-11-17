@@ -24,8 +24,7 @@ public enum ReqCmd {
 	launchPayMultiSign, payMultiSign,
 
 	getPayMultiSignList, getPayMultiSignAddressList, payMultiSignDetails,
-	// Direct exchange
-	getExchangeByOrderid, saveExchange, deleteExchange,
+ 
 
 	getUserData, userDataList, getBatchExchange,
 	// subtangle
