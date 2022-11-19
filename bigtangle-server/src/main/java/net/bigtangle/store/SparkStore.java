@@ -30,12 +30,14 @@ import java.util.TreeSet;
 
 import javax.annotation.Nullable;
 
+import org.apache.spark.sql.SparkSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
+import io.delta.tables.DeltaTable;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
@@ -466,28 +468,16 @@ public class SparkStore implements FullBlockStore {
     protected final String SELECT_CHAINBLOCKQUEUE = " select " + ChainBlockQueueColumn + " from chainblockqueue  ";
 
     protected NetworkParameters params;
-    protected Connection conn;
+    protected SparkSession sparkSession;
+    protected String location;
 
-    public Connection getConnection() throws SQLException {
-
-        return conn;
-    }
-
-    /**
-     * <p>
-     * Create a new DatabaseFullBlockStore, using the full connection URL
-     * instead of a hostname and password, and optionally allowing a schema to
-     * be specified.
-     * </p>
-     */
-    public SparkStore(NetworkParameters params, Connection conn) {
+    public SparkStore(NetworkParameters params, SparkSession sparkSession, String location) {
         this.params = params;
-        this.conn = conn;
+        this.sparkSession = sparkSession;
+        this.location = location;
     }
 
     public void create() throws BlockStoreException {
-
-        maybeConnect();
 
         try {
             // Create tables if needed
@@ -584,38 +574,6 @@ public class SparkStore implements FullBlockStore {
 
     /**
      * <p>
-     * If there isn't a connection on the {@link ThreadLocal} then create and
-     * store it.
-     * </p>
-     * <p>
-     * This will also automatically set up the schema if it does not exist
-     * within the DB.
-     * </p>
-     * 
-     * @throws BlockStoreException
-     *             if successful connection to the DB couldn't be made.
-     */
-    protected void maybeConnect() throws BlockStoreException {
-    }
-
-    @Override
-    public void close() {
-        try {
-            if (!conn.getAutoCommit()) {
-                conn.rollback();
-            }
-
-            conn.close();
-            conn = null;
-        } catch (Exception e) {
-            // Ignore
-
-        }
-
-    }
-
-    /**
-     * <p>
      * Check if a tables exists within the database.
      * </p>
      *
@@ -628,19 +586,8 @@ public class SparkStore implements FullBlockStore {
      * @throws java.sql.SQLException
      */
     private boolean tablesExists() throws SQLException {
-        PreparedStatement ps = null;
-        try {
-            ps = getConnection().prepareStatement(getTablesExistSQL());
-            ResultSet results = ps.executeQuery();
-            results.close();
-            return true;
-        } catch (SQLException ex) {
-            return false;
-        } finally {
-            if (ps != null && !ps.isClosed()) {
-                ps.close();
-            }
-        }
+    return   sparkSession.sql(getTablesExistSQL()).count() > 0 ;
+       
     }
 
     /**
@@ -672,40 +619,22 @@ public class SparkStore implements FullBlockStore {
      * initial ps.setBytes(2, "03".getBytes());
      */
     private void dbversion(String version) throws SQLException {
-        PreparedStatement ps = getConnection().prepareStatement(getInsertSettingsSQL());
-        ps.setString(1, VERSION_SETTING);
-        ps.setBytes(2, version.getBytes());
-        ps.execute();
-        ps.close();
+       sparkSession.sql(getInsertSettingsSQL());
+     
     }
 
     protected void dbupdateversion(String version) throws SQLException {
-        PreparedStatement ps = getConnection().prepareStatement(UPDATE_SETTINGS_SQL);
-        ps.setString(2, VERSION_SETTING);
-        ps.setBytes(1, version.getBytes());
-        ps.execute();
-        ps.close();
+       sparkSession.sql(UPDATE_SETTINGS_SQL);
+      
     }
 
     /*
      * check version and update the tables
      */
     protected synchronized void updateTables(List<String> sqls) throws SQLException, BlockStoreException {
+        for (String sql : sqls) {
 
-        Statement s = getConnection().createStatement();
-        try {
-            for (String sql : sqls) {
-                if (log.isDebugEnabled()) {
-                    log.debug("DatabaseFullBlockStore :     " + sql);
-                }
-                s.addBatch(sql);
-            }
-            s.executeBatch();
-        } catch (Exception e) {
-            log.debug("DatabaseFullBlockStore :     ", e);
-
-        } finally {
-            s.close();
+            sparkSession.sql(sql + " USING DELTA " + "   LOCATION '" + location + "'");
         }
 
     }
@@ -787,9 +716,7 @@ public class SparkStore implements FullBlockStore {
     }
 
     protected void putUpdateStoredBlock(Block block, BlockEvaluation blockEvaluation) throws SQLException {
-        try {
-
-            PreparedStatement s = getConnection().prepareStatement(INSERT_BLOCKS_SQL);
+      sparkSession.sql(INSERT_BLOCKS_SQL);
             s.setBytes(1, block.getHash().getBytes());
             s.setLong(2, block.getHeight());
             s.setBytes(3, Gzip.compress(block.unsafeBitcoinSerialize()));
@@ -809,19 +736,12 @@ public class SparkStore implements FullBlockStore {
             s.setBoolean(j + 11, blockEvaluation.isConfirmed());
 
             s.executeUpdate();
-            s.close();
-            // log.info("add block hexStr : " + block.getHash().toString());
-        } catch (SQLException e) {
-            // It is possible we try to add a duplicate Block if we
-            // upgraded
-            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
-                throw e;
-        }
+          
+        
     }
 
     @Override
     public void put(Block block) throws BlockStoreException {
-        maybeConnect();
 
         try {
 
@@ -835,45 +755,21 @@ public class SparkStore implements FullBlockStore {
     }
 
     public Block get(Sha256Hash hash) throws BlockStoreException {
+ 
 
-        maybeConnect();
-        PreparedStatement s = null;
-        // log.info("find block hexStr : " + hash.toString());
-        try {
-            s = getConnection().prepareStatement(SELECT_BLOCKS_SQL);
-            s.setBytes(1, hash.getBytes());
-            ResultSet results = s.executeQuery();
-            if (!results.next()) {
-                return null;
-            }
-            // Parse it.
+            return params.getDefaultSerializer().makeZippedBlock(sparkSession.sql(SELECT_BLOCKS_SQL).first().getBytes(2));
 
-            return params.getDefaultSerializer().makeZippedBlock(results.getBytes(2));
-
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (Exception e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+       
     }
 
     public List<byte[]> blocksFromChainLength(long start, long end) throws BlockStoreException {
         // Optimize for chain head
         List<byte[]> re = new ArrayList<byte[]>();
-        maybeConnect();
+
         PreparedStatement s = null;
         // log.info("find block hexStr : " + hash.toString());
         try {
-            s = getConnection().prepareStatement(SELECT_BLOCKS_MILESTONE_SQL);
+            s = sparkSession.sql(SELECT_BLOCKS_MILESTONE_SQL);
             s.setLong(1, start);
             s.setLong(2, end);
             s.setLong(3, start);
@@ -901,11 +797,11 @@ public class SparkStore implements FullBlockStore {
     public List<byte[]> blocksFromNonChainHeigth(long heigth) throws BlockStoreException {
         // Optimize for chain head
         List<byte[]> re = new ArrayList<byte[]>();
-        maybeConnect();
+
         PreparedStatement s = null;
         // log.info("find block hexStr : " + hash.toString());
         try {
-            s = getConnection().prepareStatement(SELECT_BLOCKS_NON_CHAIN_HEIGTH_SQL);
+            s = sparkSession.sql(SELECT_BLOCKS_NON_CHAIN_HEIGTH_SQL);
             s.setLong(1, heigth);
             ResultSet results = s.executeQuery();
             while (results.next()) {
@@ -940,7 +836,7 @@ public class SparkStore implements FullBlockStore {
         PreparedStatement s = null;
 
         try {
-            s = getConnection().prepareStatement("SELECT " + SELECT_MCMC_TEMPLATE + " from mcmc where hash = ?");
+            s = sparkSession.sql("SELECT " + SELECT_MCMC_TEMPLATE + " from mcmc where hash = ?");
             s.setBytes(1, hash.getBytes());
             ResultSet results = s.executeQuery();
             if (!results.next()) {
@@ -972,10 +868,10 @@ public class SparkStore implements FullBlockStore {
 
     public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
         List<BlockWrap> storedBlocks = new ArrayList<BlockWrap>();
-        maybeConnect();
+
         PreparedStatement s = null;
         try {
-            s = getConnection().prepareStatement(SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL);
+            s = sparkSession.sql(SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL);
             s.setBytes(1, hash.getBytes());
             s.setBytes(2, hash.getBytes());
             ResultSet resultSet = s.executeQuery();
@@ -1007,10 +903,10 @@ public class SparkStore implements FullBlockStore {
 
     public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
         List<BlockWrap> storedBlocks = new ArrayList<BlockWrap>();
-        maybeConnect();
+
         PreparedStatement s = null;
         try {
-            s = getConnection().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
+            s = sparkSession.sql(SELECT_SOLID_APPROVER_BLOCKS_SQL);
             s.setBytes(1, hash.getBytes());
             s.setBytes(2, hash.getBytes());
             ResultSet resultSet = s.executeQuery();
@@ -1041,10 +937,10 @@ public class SparkStore implements FullBlockStore {
 
     public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException {
         List<Sha256Hash> storedBlockHash = new ArrayList<Sha256Hash>();
-        maybeConnect();
+
         PreparedStatement s = null;
         try {
-            s = getConnection().prepareStatement(SELECT_SOLID_APPROVER_HASHES_SQL);
+            s = sparkSession.sql(SELECT_SOLID_APPROVER_HASHES_SQL);
             s.setBytes(1, hash.getBytes());
             s.setBytes(2, hash.getBytes());
             ResultSet results = s.executeQuery();
@@ -1075,10 +971,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public boolean getOutputConfirmation(Sha256Hash blockHash, Sha256Hash hash, long index) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement s = null;
         try {
-            s = getConnection().prepareStatement(
+            s = sparkSession.sql(
                     "SELECT  confirmed " + "FROM outputs WHERE hash = ? AND outputindex = ? AND blockhash = ? ");
             s.setBytes(1, hash.getBytes());
             // index is actually an unsigned int
@@ -1106,10 +1002,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public UTXO getTransactionOutput(Sha256Hash blockHash, Sha256Hash hash, long index) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement s = null;
         try {
-            s = getConnection().prepareStatement(SELECT_OUTPUTS_SQL);
+            s = sparkSession.sql(SELECT_OUTPUTS_SQL);
             s.setBytes(1, hash.getBytes());
             // index is actually an unsigned int
             s.setLong(2, index);
@@ -1162,10 +1058,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void addUnspentTransactionOutput(List<UTXO> utxos) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement s = null;
         try {
-            s = getConnection().prepareStatement(INSERT_OUTPUTS_SQL);
+            s = sparkSession.sql(INSERT_OUTPUTS_SQL);
             for (UTXO out : utxos) {
                 s.setBytes(1, out.getTxHash().getBytes());
                 // index is actually an unsigned int
@@ -1217,7 +1113,6 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void beginDatabaseBatchWrite() throws BlockStoreException {
-        maybeConnect();
 
         try {
             getConnection().setAutoCommit(false);
@@ -1278,7 +1173,7 @@ public class SparkStore implements FullBlockStore {
      *             If the tables couldn't be cleared and initialised.
      */
     public void resetStore() throws BlockStoreException {
-        maybeConnect();
+
         defaultDatabaseBatchWrite();
         try {
             deleteStore();
@@ -1296,7 +1191,6 @@ public class SparkStore implements FullBlockStore {
      *             If tables couldn't be deleted.
      */
     public void deleteStore() throws BlockStoreException {
-        maybeConnect();
 
         try {
             Statement s = getConnection().createStatement();
@@ -1319,9 +1213,9 @@ public class SparkStore implements FullBlockStore {
         PreparedStatement s = null;
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
-            maybeConnect();
+
             // Must be sorted for hash checkpoint
-            s = getConnection().prepareStatement(SELECT_ALL_OUTPUTS_TOKEN_SQL + " order by hash, outputindex ");
+            s = sparkSession.sql(SELECT_ALL_OUTPUTS_TOKEN_SQL + " order by hash, outputindex ");
             s.setString(1, tokenid);
             ResultSet results = s.executeQuery();
             while (results.next()) {
@@ -1350,9 +1244,9 @@ public class SparkStore implements FullBlockStore {
         PreparedStatement s = null;
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
-            maybeConnect();
+
             // Must be sorted for hash checkpoint
-            s = getConnection().prepareStatement(SELECT_TRANSACTION_OUTPUTS_SQL_BASE + "  where blockhash =?");
+            s = sparkSession.sql(SELECT_TRANSACTION_OUTPUTS_SQL_BASE + "  where blockhash =?");
             s.setString(1, blockhash);
             ResultSet results = s.executeQuery();
             while (results.next()) {
@@ -1380,8 +1274,8 @@ public class SparkStore implements FullBlockStore {
         PreparedStatement s = null;
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
-            maybeConnect();
-            s = getConnection().prepareStatement(SELECT_OPEN_TRANSACTION_OUTPUTS_SQL);
+
+            s = sparkSession.sql(SELECT_OPEN_TRANSACTION_OUTPUTS_SQL);
             for (Address address : addresses) {
                 s.setString(1, address.toString());
                 s.setString(2, address.toString());
@@ -1411,8 +1305,8 @@ public class SparkStore implements FullBlockStore {
         PreparedStatement s = null;
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
-            maybeConnect();
-            s = getConnection().prepareStatement(SELECT_OPEN_TRANSACTION_OUTPUTS_SQL);
+
+            s = sparkSession.sql(SELECT_OPEN_TRANSACTION_OUTPUTS_SQL);
 
             s.setString(1, address.toString());
             s.setString(2, address.toString());
@@ -1442,8 +1336,8 @@ public class SparkStore implements FullBlockStore {
         PreparedStatement s = null;
         List<UTXO> outputs = new ArrayList<UTXO>();
         try {
-            maybeConnect();
-            s = getConnection().prepareStatement(SELECT_OPEN_TRANSACTION_OUTPUTS_TOKEN_SQL);
+
+            s = sparkSession.sql(SELECT_OPEN_TRANSACTION_OUTPUTS_TOKEN_SQL);
             for (Address address : addresses) {
                 s.setString(1, address.toString());
                 s.setString(2, address.toString());
@@ -1473,9 +1367,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public BlockWrap getBlockWrap(Sha256Hash hash) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_SQL);
+            preparedStatement = sparkSession.sql(SELECT_BLOCKS_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1504,7 +1398,7 @@ public class SparkStore implements FullBlockStore {
     public List<UTXO> getOutputsHistory(String fromaddress, String toaddress, Long starttime, Long endtime)
             throws BlockStoreException {
         List<UTXO> outputs = new ArrayList<UTXO>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
             String sql = SELECT_TRANSACTION_OUTPUTS_SQL_BASE + "WHERE  confirmed=true ";
@@ -1521,7 +1415,7 @@ public class SparkStore implements FullBlockStore {
             if (endtime != null) {
                 sql += " AND time<=?";
             }
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             int i = 1;
             if (fromaddress != null && !"".equals(fromaddress.trim())) {
                 preparedStatement.setString(i++, fromaddress);
@@ -1561,10 +1455,10 @@ public class SparkStore implements FullBlockStore {
         Comparator<BlockWrap> comparator = Comparator.comparingLong((BlockWrap b) -> b.getBlock().getHeight())
                 .thenComparing((BlockWrap b) -> b.getBlock().getHash());
         TreeSet<BlockWrap> storedBlockHashes = new TreeSet<>(comparator);
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_TO_CONFIRM_SQL);
+            preparedStatement = sparkSession.sql(SELECT_BLOCKS_TO_CONFIRM_SQL);
             preparedStatement.setLong(1, cutoffHeight);
             preparedStatement.setLong(2, maxHeight);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1594,10 +1488,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public HashSet<BlockEvaluation> getBlocksToUnconfirm() throws BlockStoreException {
         HashSet<BlockEvaluation> storedBlockHashes = new HashSet<BlockEvaluation>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_TO_UNCONFIRM_SQL);
+            preparedStatement = sparkSession.sql(SELECT_BLOCKS_TO_UNCONFIRM_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
@@ -1624,10 +1518,10 @@ public class SparkStore implements FullBlockStore {
             throws BlockStoreException {
         PriorityQueue<BlockWrap> blocksByDescendingHeight = new PriorityQueue<BlockWrap>(
                 Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL);
+            preparedStatement = sparkSession.sql(SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL);
             preparedStatement.setLong(1, cutoffHeight);
             preparedStatement.setLong(2, maxHeight);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1658,10 +1552,10 @@ public class SparkStore implements FullBlockStore {
     public List<BlockWrap> getBlocksInMilestoneInterval(long minMilestone, long maxMilestone)
             throws BlockStoreException {
         List<BlockWrap> storedBlockHashes = new ArrayList<>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL);
+            preparedStatement = sparkSession.sql(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL);
             preparedStatement.setLong(1, minMilestone);
             preparedStatement.setLong(2, maxMilestone);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1693,10 +1587,10 @@ public class SparkStore implements FullBlockStore {
         // long currChainLength = getMaxConfirmedReward().getChainLength();
         long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF);
         List<BlockWrap> resultQueue = new ArrayList<BlockWrap>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL);
+            preparedStatement = sparkSession.sql(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL);
             preparedStatement.setLong(1, minChainLength);
             preparedStatement.setLong(2, currChainLength);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -1748,10 +1642,10 @@ public class SparkStore implements FullBlockStore {
     public void deleteMCMC(long chainlength) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         PreparedStatement deleteStatement = null;
-        maybeConnect();
+
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_MCMC_CHAINLENGHT_SQL);
-            deleteStatement = getConnection().prepareStatement(" delete from mcmc where hash = ?");
+            preparedStatement = sparkSession.sql(SELECT_MCMC_CHAINLENGHT_SQL);
+            deleteStatement = sparkSession.sql(" delete from mcmc where hash = ?");
             preparedStatement.setLong(1, chainlength);
             ResultSet results = preparedStatement.executeQuery();
             if (results.next()) {
@@ -1786,10 +1680,10 @@ public class SparkStore implements FullBlockStore {
     public void updateBlockEvaluationWeightAndDepth(List<DepthAndWeight> depthAndWeight) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         PreparedStatement insertStatement = null;
-        maybeConnect();
+
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL);
-            insertStatement = getConnection().prepareStatement(INSERT_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL);
+            insertStatement = sparkSession.sql(INSERT_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL);
 
             for (DepthAndWeight d : depthAndWeight) {
                 if (getMCMC(d.getBlockHash()) == null) {
@@ -1835,10 +1729,9 @@ public class SparkStore implements FullBlockStore {
     public void updateBlockEvaluationMilestone(Sha256Hash blockhash, long b) throws BlockStoreException {
 
         PreparedStatement preparedStatement = null;
-        maybeConnect();
 
         try {
-            preparedStatement = getConnection().prepareStatement(getUpdateBlockEvaluationMilestoneSQL());
+            preparedStatement = sparkSession.sql(getUpdateBlockEvaluationMilestoneSQL());
             preparedStatement.setLong(1, b);
             preparedStatement.setLong(2, System.currentTimeMillis());
             preparedStatement.setBytes(3, blockhash.getBytes());
@@ -1862,10 +1755,9 @@ public class SparkStore implements FullBlockStore {
     public void updateBlockEvaluationConfirmed(Sha256Hash blockhash, boolean b) throws BlockStoreException {
 
         PreparedStatement preparedStatement = null;
-        maybeConnect();
 
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_BLOCKEVALUATION_CONFIRMED_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_BLOCKEVALUATION_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -1888,10 +1780,10 @@ public class SparkStore implements FullBlockStore {
     public void updateBlockEvaluationRating(List<Rating> ratings) throws BlockStoreException {
 
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
 
-            preparedStatement = getConnection().prepareStatement(getUpdateBlockEvaluationRatingSQL());
+            preparedStatement = sparkSession.sql(getUpdateBlockEvaluationRatingSQL());
 
             for (Rating r : ratings) {
                 preparedStatement.setLong(1, r.getRating());
@@ -1917,9 +1809,9 @@ public class SparkStore implements FullBlockStore {
     public void updateBlockEvaluationSolid(Sha256Hash blockhash, long solid) throws BlockStoreException {
 
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_BLOCKEVALUATION_SOLID_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_BLOCKEVALUATION_SOLID_SQL);
             preparedStatement.setLong(1, solid);
             preparedStatement.setBytes(2, blockhash.getBytes());
             preparedStatement.executeUpdate();
@@ -1940,10 +1832,10 @@ public class SparkStore implements FullBlockStore {
     public long getHeightTransactions(List<Sha256Hash> txHashs) throws BlockStoreException {
 
         PreparedStatement s = null;
-        maybeConnect();
+
         long re = 0l;
         try {
-            s = getConnection().prepareStatement(SELECT_BLOCKS_SQL);
+            s = sparkSession.sql(SELECT_BLOCKS_SQL);
             for (Sha256Hash hash : txHashs) {
                 s.setBytes(1, hash.getBytes());
 
@@ -1972,12 +1864,12 @@ public class SparkStore implements FullBlockStore {
     public BlockEvaluation getTransactionOutputSpender(Sha256Hash blockHash, Sha256Hash hash, long index)
             throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
             UTXO u = getTransactionOutput(blockHash, hash, index);
             if (u == null || u.getSpenderBlockHash() == null)
                 return null;
-            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_SQL);
+            preparedStatement = sparkSession.sql(SELECT_BLOCKS_SQL);
             preparedStatement.setBytes(1, u.getSpenderBlockHash().getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
@@ -2002,10 +1894,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b,
             @Nullable Sha256Hash spenderBlockHash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(getUpdateOutputsSpentSQL());
+            preparedStatement = sparkSession.sql(getUpdateOutputsSpentSQL());
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, spenderBlockHash != null ? spenderBlockHash.getBytes() : null);
             preparedStatement.setBytes(3, prevTxHash.getBytes());
@@ -2031,10 +1923,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updateTransactionOutputConfirmed(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(getUpdateOutputsConfirmedSQL());
+            preparedStatement = sparkSession.sql(getUpdateOutputsConfirmedSQL());
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, prevTxHash.getBytes());
             preparedStatement.setLong(3, index);
@@ -2056,10 +1948,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void updateAllTransactionOutputsConfirmed(Sha256Hash prevBlockHash, boolean b) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_ALL_OUTPUTS_CONFIRMED_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_ALL_OUTPUTS_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, prevBlockHash.getBytes());
             preparedStatement.executeUpdate();
@@ -2079,11 +1971,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void updateTransactionOutputSpendPending(List<UTXO> utxos) throws BlockStoreException {
-        maybeConnect();
 
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(getUpdateOutputsSpendPendingSQL());
+            preparedStatement = sparkSession.sql(getUpdateOutputsSpendPendingSQL());
             for (UTXO u : utxos) {
                 preparedStatement.setBoolean(1, true);
                 preparedStatement.setLong(2, System.currentTimeMillis());
@@ -2112,7 +2003,7 @@ public class SparkStore implements FullBlockStore {
         List<Token> list = new ArrayList<Token>();
         if (tokenids.isEmpty())
             return list;
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
             String sql = SELECT_CONFIRMED_TOKENS_SQL;
@@ -2120,7 +2011,7 @@ public class SparkStore implements FullBlockStore {
                 sql += "  and tokenid in ( " + buildINList(tokenids) + " )";
             }
             sql += LIMIT_500;
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
 
@@ -2146,10 +2037,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<Token> getMarketTokenList() throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_MARKET_TOKENS_SQL);
+            preparedStatement = sparkSession.sql(SELECT_MARKET_TOKENS_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
@@ -2175,11 +2066,11 @@ public class SparkStore implements FullBlockStore {
 
     public Map<String, BigInteger> getTokenAmountMap() throws BlockStoreException {
         Map<String, BigInteger> map = new HashMap<String, BigInteger>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
 
-            preparedStatement = getConnection().prepareStatement(SELECT_TOKENS_ACOUNT_MAP_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TOKENS_ACOUNT_MAP_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
 
             while (resultSet.next()) {
@@ -2209,7 +2100,7 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<Token> getTokensListFromDomain(String domainname) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
             String sql = SELECT_CONFIRMED_TOKENS_SQL;
@@ -2217,7 +2108,7 @@ public class SparkStore implements FullBlockStore {
                 sql += " AND (domainname = '" + domainname + "' )";
             }
             sql += LIMIT_500;
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Token tokens = new Token();
@@ -2244,7 +2135,7 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<Token> getTokensList(String name) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
             String sql = SELECT_CONFIRMED_TOKENS_SQL;
@@ -2253,7 +2144,7 @@ public class SparkStore implements FullBlockStore {
                         + "%' OR domainname LIKE '%" + name + "%')";
             }
             sql += LIMIT_500;
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Token tokens = new Token();
@@ -2334,11 +2225,11 @@ public class SparkStore implements FullBlockStore {
             String tokenname, String description, String domainname, int signnumber, int tokentype, boolean tokenstop,
             Sha256Hash prevblockhash, byte[] tokenkeyvalues, Boolean revoked, String language, String classification,
             int decimals, String domainNameBlockHash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
 
-            preparedStatement = getConnection().prepareStatement(INSERT_TOKENS_SQL);
+            preparedStatement = sparkSession.sql(INSERT_TOKENS_SQL);
             preparedStatement.setBytes(1, blockhash.getBytes());
             preparedStatement.setBoolean(2, confirmed);
             preparedStatement.setString(3, tokenid);
@@ -2378,9 +2269,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public Sha256Hash getTokenPrevblockhash(Sha256Hash blockhash) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_PREVBLOCKHASH_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TOKEN_PREVBLOCKHASH_SQL);
             preparedStatement.setBytes(1, blockhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -2405,9 +2296,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public Sha256Hash getTokenSpender(String blockhash) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_SPENDER_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TOKEN_SPENDER_SQL);
             preparedStatement.setString(1, blockhash);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
@@ -2431,9 +2322,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public boolean getTokenSpent(Sha256Hash blockhash) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL);
             preparedStatement.setBytes(1, blockhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -2455,9 +2346,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public boolean getTokenConfirmed(Sha256Hash blockHash) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_CONFIRMED_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TOKEN_CONFIRMED_SQL);
             preparedStatement.setBytes(1, blockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -2479,9 +2370,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public boolean getTokenAnyConfirmed(String tokenid, long tokenIndex) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_ANY_CONFIRMED_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TOKEN_ANY_CONFIRMED_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setLong(2, tokenIndex);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -2503,10 +2394,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public boolean getTokennameAndDomain(String tokenname, String domainpre) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
             String sql = "SELECT confirmed FROM tokens WHERE tokenname = ? AND domainpredblockhash = ?  ";
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, tokenname);
             preparedStatement.setString(2, domainpre);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -2533,9 +2424,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public BlockWrap getTokenIssuingConfirmedBlock(String tokenid, long tokenIndex) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_ISSUING_CONFIRMED_BLOCK_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TOKEN_ISSUING_CONFIRMED_BLOCK_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setLong(2, tokenIndex);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -2561,9 +2452,9 @@ public class SparkStore implements FullBlockStore {
     public BlockWrap getDomainIssuingConfirmedBlock(String tokenName, String domainPred, long index)
             throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL);
+            preparedStatement = sparkSession.sql(SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL);
             preparedStatement.setString(1, tokenName);
             preparedStatement.setString(2, domainPred);
             preparedStatement.setLong(3, index);
@@ -2589,10 +2480,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<String> getDomainDescendantConfirmedBlocks(String domainPred) throws BlockStoreException {
         List<String> storedBlocks = new ArrayList<String>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_DOMAIN_DESCENDANT_CONFIRMED_BLOCKS_SQL);
+            preparedStatement = sparkSession.sql(SELECT_DOMAIN_DESCENDANT_CONFIRMED_BLOCKS_SQL);
             preparedStatement.setString(1, domainPred);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -2616,11 +2507,11 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updateTokenSpent(Sha256Hash blockhash, boolean b, Sha256Hash spenderBlockHash)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
 
-            preparedStatement = getConnection().prepareStatement(UPDATE_TOKEN_SPENT_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_TOKEN_SPENT_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, spenderBlockHash == null ? null : spenderBlockHash.getBytes());
             preparedStatement.setBytes(3, blockhash.getBytes());
@@ -2641,11 +2532,11 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void updateTokenConfirmed(Sha256Hash blockHash, boolean confirmed) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
 
-            preparedStatement = getConnection().prepareStatement(UPDATE_TOKEN_CONFIRMED_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_TOKEN_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, confirmed);
             preparedStatement.setBytes(2, blockHash.getBytes());
             preparedStatement.executeUpdate();
@@ -2694,10 +2585,10 @@ public class SparkStore implements FullBlockStore {
         }
         List<BlockEvaluationDisplay> result = new ArrayList<BlockEvaluationDisplay>();
         TXReward maxConfirmedReward = getMaxConfirmedReward();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
@@ -2736,13 +2627,12 @@ public class SparkStore implements FullBlockStore {
         sql += "SELECT hash,  " + " height, milestone, milestonelastupdate,  inserttime,  blocktype, solid, confirmed "
                 + "  FROM  blocks WHERE hash = ? ";
 
-        maybeConnect();
         TXReward maxConfirmedReward = getMaxConfirmedReward();
         PreparedStatement preparedStatement = null;
         try {
 
             for (String hash : blockhashs) {
-                preparedStatement = getConnection().prepareStatement(sql);
+                preparedStatement = sparkSession.sql(sql);
                 preparedStatement.setBytes(1, Utils.HEX.decode(hash));
                 ResultSet resultSet = preparedStatement.executeQuery();
                 while (resultSet.next()) {
@@ -2773,11 +2663,11 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<MultiSignAddress> getMultiSignAddressListByTokenidAndBlockHashHex(String tokenid,
             Sha256Hash prevblockhash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         List<MultiSignAddress> list = new ArrayList<MultiSignAddress>();
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_MULTISIGNADDRESS_SQL);
+            preparedStatement = sparkSession.sql(SELECT_MULTISIGNADDRESS_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setBytes(2, prevblockhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -2810,10 +2700,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void insertMultiSignAddress(MultiSignAddress multiSignAddress) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_MULTISIGNADDRESS_SQL);
+            preparedStatement = sparkSession.sql(INSERT_MULTISIGNADDRESS_SQL);
             preparedStatement.setString(1, multiSignAddress.getTokenid());
             preparedStatement.setString(2, multiSignAddress.getAddress());
             preparedStatement.setString(3, multiSignAddress.getPubKeyHex());
@@ -2838,10 +2728,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void deleteMultiSignAddress(String tokenid, String address) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(DELETE_MULTISIGNADDRESS_SQL);
+            preparedStatement = sparkSession.sql(DELETE_MULTISIGNADDRESS_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setString(2, address);
             preparedStatement.executeUpdate();
@@ -2861,10 +2751,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public int getCountMultiSignAddress(String tokenid) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(COUNT_MULTISIGNADDRESS_SQL);
+            preparedStatement = sparkSession.sql(COUNT_MULTISIGNADDRESS_SQL);
             preparedStatement.setString(1, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -2887,10 +2777,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public Token getCalMaxTokenIndex(String tokenid) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(COUNT_TOKENSINDEX_SQL);
+            preparedStatement = sparkSession.sql(COUNT_TOKENSINDEX_SQL);
             preparedStatement.setString(1, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
             Token tokens = new Token();
@@ -2919,11 +2809,11 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public Token getTokenByBlockHash(Sha256Hash blockhash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
 
-            preparedStatement = getConnection().prepareStatement(SELECT_TOKEN_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TOKEN_SQL);
             preparedStatement.setBytes(1, blockhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             Token tokens = null;
@@ -2949,10 +2839,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<Token> getTokenID(Set<String> tokenids) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(
+            preparedStatement = sparkSession.sql(
                     SELECT_TOKENS_SQL_TEMPLATE + " FROM tokens WHERE tokenid IN ( " + buildINList(tokenids) + " ) ");
 
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -2982,10 +2872,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<Token> getTokenID(String tokenid) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TOKENID_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TOKENID_SQL);
             preparedStatement.setString(1, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -3014,10 +2904,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public int getCountMultiSignByTokenIndexAndAddress(String tokenid, long tokenindex, String address)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_MULTISIGNBY_SQL);
+            preparedStatement = sparkSession.sql(SELECT_MULTISIGNBY_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setLong(2, tokenindex);
             preparedStatement.setString(3, address);
@@ -3043,10 +2933,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<MultiSign> getMultiSignListByAddress(String address) throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_MULTISIGN_ADDRESS_SQL);
+            preparedStatement = sparkSession.sql(SELECT_MULTISIGN_ADDRESS_SQL);
             preparedStatement.setString(1, address);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -3089,10 +2979,10 @@ public class SparkStore implements FullBlockStore {
     public List<MultiSign> getMultiSignListByTokenidAndAddress(final String tokenid, String address)
             throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_MULTISIGN_TOKENID_ADDRESS_SQL);
+            preparedStatement = sparkSession.sql(SELECT_MULTISIGN_TOKENID_ADDRESS_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setString(2, address);
 
@@ -3119,7 +3009,7 @@ public class SparkStore implements FullBlockStore {
     public List<MultiSign> getMultiSignListByTokenid(String tokenid, int tokenindex, Set<String> addresses,
             boolean isSign) throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         String sql = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE 1 = 1 ";
         if (addresses != null && !addresses.isEmpty()) {
@@ -3138,7 +3028,7 @@ public class SparkStore implements FullBlockStore {
         sql += " ORDER BY tokenid,tokenindex DESC";
         try {
             log.info("sql : " + sql);
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             if (tokenid != null && !tokenid.isEmpty()) {
                 preparedStatement.setString(1, tokenid.trim());
                 if (tokenindex != -1) {
@@ -3175,10 +3065,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public int getCountMultiSignAlready(String tokenid, long tokenindex, String address) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_COUNT_MULTISIGN_SQL);
+            preparedStatement = sparkSession.sql(SELECT_COUNT_MULTISIGN_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setLong(2, tokenindex);
             preparedStatement.setString(3, address);
@@ -3202,10 +3092,10 @@ public class SparkStore implements FullBlockStore {
     }
 
     public int countMultiSign(String tokenid, long tokenindex, int sign) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_COUNT_ALL_MULTISIGN_SQL);
+            preparedStatement = sparkSession.sql(SELECT_COUNT_ALL_MULTISIGN_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.setLong(2, tokenindex);
             preparedStatement.setInt(3, sign);
@@ -3235,10 +3125,9 @@ public class SparkStore implements FullBlockStore {
             return;
         }
 
-        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_MULTISIGN_SQL);
+            preparedStatement = sparkSession.sql(INSERT_MULTISIGN_SQL);
             preparedStatement.setString(1, multiSign.getTokenid());
             preparedStatement.setLong(2, multiSign.getTokenindex());
             preparedStatement.setString(3, multiSign.getAddress());
@@ -3263,10 +3152,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updateMultiSign(String tokenid, long tokenIndex, String address, byte[] blockhash, int sign)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_MULTISIGN_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_MULTISIGN_SQL);
             preparedStatement.setBytes(1, blockhash);
             preparedStatement.setInt(2, sign);
             preparedStatement.setString(3, tokenid);
@@ -3290,11 +3179,11 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<MultiSign> getMultiSignListByTokenid(String tokenid, long tokenindex) throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         String sql = SELECT_MULTISIGN_ADDRESS_ALL_SQL + " AND tokenid=? AND tokenindex = ?";
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, tokenid.trim());
             preparedStatement.setLong(2, tokenindex);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -3318,10 +3207,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void deleteMultiSign(String tokenid) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(DELETE_MULTISIGN_SQL);
+            preparedStatement = sparkSession.sql(DELETE_MULTISIGN_SQL);
             preparedStatement.setString(1, tokenid);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -3340,10 +3229,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public boolean getRewardSpent(Sha256Hash hash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_SPENT_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TX_REWARD_SPENT_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -3364,10 +3253,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public Sha256Hash getRewardSpender(Sha256Hash hash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_SPENDER_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TX_REWARD_SPENDER_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
@@ -3390,10 +3279,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public Sha256Hash getRewardPrevBlockHash(Sha256Hash blockHash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_PREVBLOCKHASH_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TX_REWARD_PREVBLOCKHASH_SQL);
             preparedStatement.setBytes(1, blockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -3414,10 +3303,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public long getRewardDifficulty(Sha256Hash blockHash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_DIFFICULTY_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TX_REWARD_DIFFICULTY_SQL);
             preparedStatement.setBytes(1, blockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -3438,10 +3327,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public long getRewardChainLength(Sha256Hash blockHash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_CHAINLENGTH_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TX_REWARD_CHAINLENGTH_SQL);
             preparedStatement.setBytes(1, blockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -3466,10 +3355,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public boolean getRewardConfirmed(Sha256Hash hash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_CONFIRMED_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TX_REWARD_CONFIRMED_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -3491,10 +3380,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void insertReward(Sha256Hash hash, Sha256Hash prevBlockHash, long difficulty, long chainLength)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_TX_REWARD_SQL);
+            preparedStatement = sparkSession.sql(INSERT_TX_REWARD_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             preparedStatement.setBoolean(2, false);
             preparedStatement.setBoolean(3, false);
@@ -3520,10 +3409,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void updateRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_TX_REWARD_CONFIRMED_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_TX_REWARD_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, hash.getBytes());
             preparedStatement.executeUpdate();
@@ -3544,10 +3433,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updateRewardSpent(Sha256Hash hash, boolean b, @Nullable Sha256Hash spenderBlockHash)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_TX_REWARD_SPENT_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_TX_REWARD_SPENT_SQL);
             preparedStatement.setBoolean(1, b);
             preparedStatement.setBytes(2, spenderBlockHash == null ? null : spenderBlockHash.getBytes());
             preparedStatement.setBytes(3, hash.getBytes());
@@ -3568,10 +3457,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public TXReward getRewardConfirmedAtHeight(long chainlength) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL);
             preparedStatement.setLong(1, chainlength);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -3595,10 +3484,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public TXReward getMaxConfirmedReward() throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
 
@@ -3622,10 +3511,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public ContractExecution getMaxConfirmedContractExecution() throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(CONTRACT_EXECUTION_SELECT_MAX_CONFIRMED_SQL);
+            preparedStatement = sparkSession.sql(CONTRACT_EXECUTION_SELECT_MAX_CONFIRMED_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 return setContractExecution(resultSet);
@@ -3647,10 +3536,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public List<TXReward> getAllConfirmedReward() throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             List<TXReward> list = new ArrayList<TXReward>();
             while (resultSet.next()) {
@@ -3689,10 +3578,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public List<Sha256Hash> getRewardBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_REWARD_WHERE_PREV_HASH_SQL);
+            preparedStatement = sparkSession.sql(SELECT_REWARD_WHERE_PREV_HASH_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             List<Sha256Hash> list = new ArrayList<Sha256Hash>();
@@ -3717,10 +3606,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_MULTISIGN1_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_MULTISIGN1_SQL);
             preparedStatement.setBytes(1, bytes);
             preparedStatement.setString(2, tokenid);
             preparedStatement.setLong(3, tokenindex);
@@ -3741,10 +3630,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void insertOutputsMulti(OutputsMulti outputsMulti) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_OUTPUTSMULTI_SQL);
+            preparedStatement = sparkSession.sql(INSERT_OUTPUTSMULTI_SQL);
             preparedStatement.setBytes(1, outputsMulti.getHash().getBytes());
             preparedStatement.setString(2, outputsMulti.getToAddress());
             preparedStatement.setLong(3, outputsMulti.getOutputIndex());
@@ -3766,11 +3655,11 @@ public class SparkStore implements FullBlockStore {
     }
 
     public List<OutputsMulti> queryOutputsMultiByHashAndIndex(byte[] hash, long index) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         List<OutputsMulti> list = new ArrayList<OutputsMulti>();
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_OUTPUTSMULTI_SQL);
+            preparedStatement = sparkSession.sql(SELECT_OUTPUTSMULTI_SQL);
             preparedStatement.setBytes(1, hash);
             preparedStatement.setLong(2, index);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -3801,10 +3690,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public UserData queryUserDataWithPubKeyAndDataclassname(String dataclassname, String pubKey)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_USERDATA_SQL);
+            preparedStatement = sparkSession.sql(SELECT_USERDATA_SQL);
             preparedStatement.setString(1, dataclassname);
             preparedStatement.setString(2, pubKey);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -3837,10 +3726,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void insertUserData(UserData userData) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_USERDATA_SQL);
+            preparedStatement = sparkSession.sql(INSERT_USERDATA_SQL);
             preparedStatement.setBytes(1, userData.getBlockhash().getBytes());
             preparedStatement.setString(2, userData.getDataclassname());
             preparedStatement.setBytes(3, userData.getData());
@@ -3867,7 +3756,7 @@ public class SparkStore implements FullBlockStore {
         if (pubKeyList.isEmpty()) {
             return new ArrayList<UserData>();
         }
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
             String sql = "select blockhash, dataclassname, data, pubKey, blocktype from userdata where blocktype = ? and pubKey in ";
@@ -3876,7 +3765,7 @@ public class SparkStore implements FullBlockStore {
                 stringBuffer.append(",'").append(str).append("'");
             sql += "(" + stringBuffer.substring(1) + ")";
 
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setLong(1, blocktype);
             ResultSet resultSet = preparedStatement.executeQuery();
             List<UserData> list = new ArrayList<UserData>();
@@ -3909,10 +3798,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void updateUserData(UserData userData) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_USERDATA_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_USERDATA_SQL);
             preparedStatement.setBytes(1, userData.getBlockhash().getBytes());
             preparedStatement.setBytes(2, userData.getData());
             preparedStatement.setString(3, userData.getDataclassname());
@@ -3936,10 +3825,10 @@ public class SparkStore implements FullBlockStore {
     public void insertPayPayMultiSign(PayMultiSign payMultiSign) throws BlockStoreException {
         String sql = "insert into paymultisign (orderid, tokenid, toaddress, blockhash, amount, minsignnumber,"
                 + " outputHashHex,  outputindex) values (?, ?, ?, ?, ?, ?, ?,?)";
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, payMultiSign.getOrderid());
             preparedStatement.setString(2, payMultiSign.getTokenid());
             preparedStatement.setString(3, payMultiSign.getToaddress());
@@ -3966,10 +3855,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void insertPayMultiSignAddress(PayMultiSignAddress payMultiSignAddress) throws BlockStoreException {
         String sql = "insert into paymultisignaddress (orderid, pubKey, sign, signInputData, signIndex) values (?, ?, ?, ?, ?)";
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, payMultiSignAddress.getOrderid());
             preparedStatement.setString(2, payMultiSignAddress.getPubKey());
             preparedStatement.setInt(3, payMultiSignAddress.getSign());
@@ -3994,10 +3883,10 @@ public class SparkStore implements FullBlockStore {
     public void updatePayMultiSignAddressSign(String orderid, String pubKey, int sign, byte[] signInputData)
             throws BlockStoreException {
         String sql = "update paymultisignaddress set sign = ?, signInputData = ? where orderid = ? and pubKey = ?";
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setInt(1, sign);
             preparedStatement.setBytes(2, signInputData);
             preparedStatement.setString(3, orderid);
@@ -4020,10 +3909,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public int getMaxPayMultiSignAddressSignIndex(String orderid) throws BlockStoreException {
         String sql = "SELECT MAX(signIndex) AS signIndex FROM paymultisignaddress WHERE orderid = ?";
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, orderid);
             ResultSet resultSet = preparedStatement.executeQuery();
             resultSet.next();
@@ -4045,10 +3934,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public PayMultiSign getPayMultiSignWithOrderid(String orderid) throws BlockStoreException {
         String sql = "select orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outputHashHex, outputindex from paymultisign where orderid = ?";
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, orderid.trim());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
@@ -4082,10 +3971,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<PayMultiSignAddress> getPayMultiSignAddressWithOrderid(String orderid) throws BlockStoreException {
         String sql = "select orderid, pubKey, sign, signInputData, signIndex from paymultisignaddress where orderid = ? ORDER BY signIndex ASC";
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, orderid.trim());
             ResultSet resultSet = preparedStatement.executeQuery();
             List<PayMultiSignAddress> list = new ArrayList<PayMultiSignAddress>();
@@ -4116,10 +4005,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updatePayMultiSignBlockhash(String orderid, byte[] blockhash) throws BlockStoreException {
         String sql = "update paymultisign set blockhash = ? where orderid = ?";
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setBytes(1, blockhash);
             preparedStatement.setString(2, orderid);
             preparedStatement.executeUpdate();
@@ -4150,10 +4039,10 @@ public class SparkStore implements FullBlockStore {
         for (String pubKey : pubKeys)
             stringBuffer.append(",'").append(pubKey).append("'");
         sql += " in (" + stringBuffer.substring(1) + ")";
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             List<PayMultiSign> list = new ArrayList<PayMultiSign>();
             while (resultSet.next()) {
@@ -4188,10 +4077,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public int getCountPayMultiSignAddressStatus(String orderid) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(
+            preparedStatement = sparkSession.sql(
                     "select count(*) as count from paymultisignaddress where orderid = ? and sign = 1");
             preparedStatement.setString(1, orderid);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -4219,10 +4108,9 @@ public class SparkStore implements FullBlockStore {
                 + " addresstargetable, blockhash, tokenid, fromaddress, memo, minimumsign, time, spent, confirmed, "
                 + " spendpending, spendpendingtime FROM outputs WHERE hash = ? and outputindex = ?";
 
-        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setBytes(1, hash);
             preparedStatement.setLong(2, outputindex);
             ResultSet results = preparedStatement.executeQuery();
@@ -4266,9 +4154,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public byte[] getSettingValue(String name) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
-        maybeConnect();
+
         try {
-            preparedStatement = getConnection().prepareStatement(getSelectSettingsSQL());
+            preparedStatement = sparkSession.sql(getSelectSettingsSQL());
             preparedStatement.setString(1, name);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (!resultSet.next()) {
@@ -4291,10 +4179,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void insertBatchBlock(Block block) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_BATCHBLOCK_SQL);
+            preparedStatement = sparkSession.sql(INSERT_BATCHBLOCK_SQL);
             preparedStatement.setBytes(1, block.getHash().getBytes());
             preparedStatement.setBytes(2, Gzip.compress(block.bitcoinSerialize()));
             preparedStatement.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis()));
@@ -4315,10 +4203,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void deleteBatchBlock(Sha256Hash hash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(DELETE_BATCHBLOCK_SQL);
+            preparedStatement = sparkSession.sql(DELETE_BATCHBLOCK_SQL);
             preparedStatement.setBytes(1, hash.getBytes());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -4337,10 +4225,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public List<BatchBlock> getBatchBlockList() throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_BATCHBLOCK_SQL);
+            preparedStatement = sparkSession.sql(SELECT_BATCHBLOCK_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             List<BatchBlock> list = new ArrayList<BatchBlock>();
             while (resultSet.next()) {
@@ -4368,10 +4256,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void insertSubtanglePermission(String pubkey, String userdatapubkey, String status)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_SUBTANGLE_PERMISSION_SQL);
+            preparedStatement = sparkSession.sql(INSERT_SUBTANGLE_PERMISSION_SQL);
             preparedStatement.setString(1, pubkey);
             preparedStatement.setString(2, userdatapubkey);
             preparedStatement.setString(3, status);
@@ -4392,10 +4280,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void deleteSubtanglePermission(String pubkey) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(DELETE_SUBTANGLE_PERMISSION_SQL);
+            preparedStatement = sparkSession.sql(DELETE_SUBTANGLE_PERMISSION_SQL);
             preparedStatement.setString(1, pubkey);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -4415,10 +4303,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updateSubtanglePermission(String pubkey, String userdataPubkey, String status)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(UPATE_ALL_SUBTANGLE_PERMISSION_SQL);
+            preparedStatement = sparkSession.sql(UPATE_ALL_SUBTANGLE_PERMISSION_SQL);
             preparedStatement.setString(1, status);
             preparedStatement.setString(2, userdataPubkey);
             preparedStatement.setString(3, pubkey);
@@ -4439,11 +4327,11 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public List<Map<String, String>> getAllSubtanglePermissionList() throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         List<Map<String, String>> list = new ArrayList<Map<String, String>>();
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_ALL_SUBTANGLE_PERMISSION_SQL);
+            preparedStatement = sparkSession.sql(SELECT_ALL_SUBTANGLE_PERMISSION_SQL);
 
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -4470,11 +4358,11 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public List<Map<String, String>> getSubtanglePermissionListByPubkey(String pubkey) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         List<Map<String, String>> list = new ArrayList<Map<String, String>>();
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_ALL_SUBTANGLE_PERMISSION_SQL);
+            preparedStatement = sparkSession.sql(SELECT_ALL_SUBTANGLE_PERMISSION_SQL);
             preparedStatement.setString(1, pubkey);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -4507,11 +4395,11 @@ public class SparkStore implements FullBlockStore {
         for (String pubKey : pubkeys)
             stringBuffer.append(",'").append(pubKey).append("'");
         sql += " in (" + stringBuffer.substring(1) + ")";
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         List<Map<String, String>> list = new ArrayList<Map<String, String>>();
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Map<String, String> map = new HashMap<String, String>();
@@ -4537,10 +4425,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public boolean getOrderConfirmed(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_ORDER_CONFIRMED_SQL);
+            preparedStatement = sparkSession.sql(SELECT_ORDER_CONFIRMED_SQL);
             preparedStatement.setBytes(1, txHash.getBytes());
             preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -4563,10 +4451,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public Sha256Hash getOrderSpender(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_ORDER_SPENDER_SQL);
+            preparedStatement = sparkSession.sql(SELECT_ORDER_SPENDER_SQL);
             preparedStatement.setBytes(1, txHash.getBytes());
             preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -4588,10 +4476,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public boolean getOrderSpent(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_ORDER_SPENT_SQL);
+            preparedStatement = sparkSession.sql(SELECT_ORDER_SPENT_SQL);
             preparedStatement.setBytes(1, txHash.getBytes());
             preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -4614,11 +4502,11 @@ public class SparkStore implements FullBlockStore {
     @Override
     public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         HashMap<Sha256Hash, OrderRecord> result = new HashMap<>();
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_ORDERS_BY_ISSUER_SQL);
+            preparedStatement = sparkSession.sql(SELECT_ORDERS_BY_ISSUER_SQL);
             preparedStatement.setBytes(1, issuingMatcherBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
@@ -4641,10 +4529,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public OrderRecord getOrder(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_ORDER_SQL);
+            preparedStatement = sparkSession.sql(SELECT_ORDER_SQL);
             preparedStatement.setBytes(1, txHash.getBytes());
             preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -4668,10 +4556,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void insertCancelOrder(OrderCancel orderCancel) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_OrderCancel_SQL);
+            preparedStatement = sparkSession.sql(INSERT_OrderCancel_SQL);
             preparedStatement.setBytes(1, orderCancel.getBlockHash().getBytes());
             preparedStatement.setBytes(2, orderCancel.getOrderBlockHash().getBytes());
         } catch (SQLException e) {
@@ -4695,10 +4583,9 @@ public class SparkStore implements FullBlockStore {
         if (records == null)
             return;
 
-        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_ORDER_SQL);
+            preparedStatement = sparkSession.sql(INSERT_ORDER_SQL);
             for (OrderRecord record : records) {
                 preparedStatement.setBytes(1, record.getBlockHash().getBytes());
                 preparedStatement.setBytes(2, record.getIssuingMatcherBlockHash().getBytes());
@@ -4743,10 +4630,9 @@ public class SparkStore implements FullBlockStore {
         if (records == null)
             return;
 
-        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_CONTRACT_EVENT_SQL);
+            preparedStatement = sparkSession.sql(INSERT_CONTRACT_EVENT_SQL);
             for (ContractEventRecord record : records) {
                 preparedStatement.setBytes(1, record.getBlockHash().getBytes());
 
@@ -4786,10 +4672,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updateOrderConfirmed(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_CONFIRMED_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_ORDER_CONFIRMED_SQL);
             preparedStatement.setBoolean(1, confirmed);
             preparedStatement.setBytes(2, initialBlockHash.getBytes());
             preparedStatement.setBytes(3, issuingMatcherBlockHash.getBytes());
@@ -4810,10 +4696,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void updateOrderConfirmed(Collection<OrderRecord> orderRecords, boolean confirm) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_CONFIRMED_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_ORDER_CONFIRMED_SQL);
             for (OrderRecord o : orderRecords) {
                 preparedStatement.setBoolean(1, confirm);
                 preparedStatement.setBytes(2, o.getBlockHash().getBytes());
@@ -4838,10 +4724,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updateOrderSpent(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, boolean spent,
             Sha256Hash spenderBlockHash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_SPENT_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_ORDER_SPENT_SQL);
             preparedStatement.setBoolean(1, spent);
             preparedStatement.setBytes(2, spenderBlockHash != null ? spenderBlockHash.getBytes() : null);
             preparedStatement.setBytes(3, initialBlockHash.getBytes());
@@ -4863,10 +4749,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_SPENT_SQL);
+            preparedStatement = sparkSession.sql(UPDATE_ORDER_SPENT_SQL);
             for (OrderRecord o : orderRecords) {
                 preparedStatement.setBoolean(1, o.isSpent());
                 preparedStatement.setBytes(2,
@@ -4896,7 +4782,6 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void prunedClosedOrders(Long beforetime) throws BlockStoreException {
 
-        maybeConnect();
         PreparedStatement deleteStatement = null;
 
         try {
@@ -4930,12 +4815,11 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void prunedBlocks(Long height, Long chain) throws BlockStoreException {
 
-        maybeConnect();
         PreparedStatement deleteStatement = null;
         PreparedStatement preparedStatement = null;
         try {
 
-            deleteStatement = getConnection().prepareStatement(" delete FROM blocks WHERE" + "   hash  = ? ");
+            deleteStatement = sparkSession.sql(" delete FROM blocks WHERE" + "   hash  = ? ");
 
             preparedStatement = getConnection()
                     .prepareStatement("  select distinct( blocks.hash) from  blocks  , outputs "
@@ -4980,10 +4864,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void prunedHistoryUTXO(Long maxRewardblock) throws BlockStoreException {
 
-        maybeConnect();
         PreparedStatement deleteStatement = null;
         try {
-            deleteStatement = getConnection().prepareStatement(" delete FROM outputs WHERE  spent=1 AND "
+            deleteStatement = sparkSession.sql(" delete FROM outputs WHERE  spent=1 AND "
                     + "spenderblockhash in (select hash from blocks where milestone < ? ) limit 1000 ");
             deleteStatement.setLong(1, maxRewardblock);
             deleteStatement.executeUpdate();
@@ -5009,7 +4892,6 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void prunedPriceTicker(Long beforetime) throws BlockStoreException {
 
-        maybeConnect();
         PreparedStatement deleteStatement = null;
         try {
 
@@ -5039,7 +4921,7 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<OrderRecord> getAllOpenOrdersSorted(List<String> addresses, String tokenid) throws BlockStoreException {
         List<OrderRecord> result = new ArrayList<>();
-        maybeConnect();
+
         String sql = SELECT_OPEN_ORDERS_SORTED_SQL;
         String orderby = " ORDER BY blockhash, collectinghash";
 
@@ -5055,7 +4937,7 @@ public class SparkStore implements FullBlockStore {
         PreparedStatement s = null;
         try {
             // log.debug(sql);
-            s = getConnection().prepareStatement(sql);
+            s = sparkSession.sql(sql);
             int i = 1;
 
             if (tokenid != null && !tokenid.trim().isEmpty()) {
@@ -5109,7 +4991,6 @@ public class SparkStore implements FullBlockStore {
         if (addresses == null || addresses.isEmpty())
             return new ArrayList<OrderRecord>();
 
-        maybeConnect();
         PreparedStatement s = null;
         try {
 
@@ -5120,7 +5001,7 @@ public class SparkStore implements FullBlockStore {
                     + OPENORDERHASH + " AND blockhash NOT IN ( SELECT blockhash FROM orders "
                     + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress" + myaddress + ")";
 
-            s = getConnection().prepareStatement(sql);
+            s = sparkSession.sql(sql);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 OrderRecord order = setOrder(resultSet);
@@ -5151,10 +5032,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException {
         List<UTXO> result = new ArrayList<>();
-        maybeConnect();
+
         PreparedStatement s = null;
         try {
-            s = getConnection().prepareStatement(SELECT_AVAILABLE_UTXOS_SORTED_SQL);
+            s = sparkSession.sql(SELECT_AVAILABLE_UTXOS_SORTED_SQL);
             ResultSet resultSet = s.executeQuery();
             while (resultSet.next()) {
                 // Parse it.
@@ -5203,7 +5084,7 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = getConnection()
@@ -5230,16 +5111,16 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void deleteMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {
         // delete only one, but anyone
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         PreparedStatement p2 = null;
         try {
-            preparedStatement = getConnection().prepareStatement(" select hash from myserverblocks where prevhash = ?");
+            preparedStatement = sparkSession.sql(" select hash from myserverblocks where prevhash = ?");
             preparedStatement.setBytes(1, prevhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
                 byte[] hash = resultSet.getBytes(1);
-                p2 = getConnection().prepareStatement(" delete  from  myserverblocks  where prevhash = ?  and hash =?");
+                p2 = sparkSession.sql(" delete  from  myserverblocks  where prevhash = ?  and hash =?");
                 p2.setBytes(1, prevhash.getBytes());
                 p2.setBytes(2, hash);
                 p2.executeUpdate();
@@ -5270,10 +5151,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public boolean existBlock(Sha256Hash hash) throws BlockStoreException {
 
-        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(" select hash from blocks where hash = ?");
+            preparedStatement = sparkSession.sql(" select hash from blocks where hash = ?");
             preparedStatement.setBytes(1, hash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             return resultSet.next();
@@ -5295,10 +5175,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public boolean existMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {
 
-        maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(" select hash from myserverblocks where prevhash = ?");
+            preparedStatement = sparkSession.sql(" select hash from myserverblocks where prevhash = ?");
             preparedStatement.setBytes(1, prevhash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             return resultSet.next();
@@ -5319,12 +5198,12 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void insertMatchingEvent(List<MatchResult> matchs) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         // log.debug("insertMatchingEvent: " + matchs.size());
         try {
 
-            preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_SQL);
+            preparedStatement = sparkSession.sql(INSERT_MATCHING_EVENT_SQL);
             for (MatchResult match : matchs) {
                 preparedStatement.setString(1, match.getTxhash());
                 preparedStatement.setString(2, match.getTokenid());
@@ -5351,12 +5230,12 @@ public class SparkStore implements FullBlockStore {
     }
 
     public void insertMatchingEventLast(List<MatchResult> matchs) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         PreparedStatement deleteStatement = null;
         try {
             for (MatchResult match : matchs) {
-                deleteStatement = getConnection().prepareStatement(DELETE_MATCHING_EVENT_LAST_BY_KEY);
+                deleteStatement = sparkSession.sql(DELETE_MATCHING_EVENT_LAST_BY_KEY);
                 deleteStatement.setString(1, match.getTokenid());
                 deleteStatement.setString(2, match.getBasetokenid());
                 deleteStatement.addBatch();
@@ -5364,7 +5243,7 @@ public class SparkStore implements FullBlockStore {
             deleteStatement.executeBatch();
 
             for (MatchResult match : matchs) {
-                preparedStatement = getConnection().prepareStatement(INSERT_MATCHING_EVENT_LAST_SQL);
+                preparedStatement = sparkSession.sql(INSERT_MATCHING_EVENT_LAST_SQL);
                 preparedStatement.setString(1, match.getTxhash());
                 preparedStatement.setString(2, match.getTokenid());
                 preparedStatement.setString(3, match.getBasetokenid());
@@ -5414,7 +5293,7 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<MatchLastdayResult> getLastMatchingEvents(Set<String> tokenIds, String basetoken)
             throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
             String sql = "SELECT  ml.txhash txhash,ml.tokenid tokenid ,ml.basetokenid basetokenid,  ml.price price, ml.executedQuantity executedQuantity,ml.inserttime inserttime, "
@@ -5424,7 +5303,7 @@ public class SparkStore implements FullBlockStore {
             if (tokenIds != null && !tokenIds.isEmpty()) {
                 sql += "  and ml.tokenid IN ( " + buildINList(tokenIds) + " )";
             }
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, basetoken);
             ResultSet resultSet = preparedStatement.executeQuery();
             List<MatchLastdayResult> list = new ArrayList<>();
@@ -5450,10 +5329,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void deleteMatchingEvents(String hash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(DELETE_MATCHING_EVENT_BY_HASH);
+            preparedStatement = sparkSession.sql(DELETE_MATCHING_EVENT_BY_HASH);
             preparedStatement.setString(1, Utils.HEX.encode(hash.getBytes()));
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -5472,10 +5351,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public Token queryDomainnameToken(Sha256Hash domainNameBlockHash) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TOKENS_BY_DOMAINNAME_SQL);
+            preparedStatement = sparkSession.sql(SELECT_TOKENS_BY_DOMAINNAME_SQL);
             preparedStatement.setBytes(1, domainNameBlockHash.getBytes());
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -5501,10 +5380,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public Token getTokensByDomainname(String domainname) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_TOKENS_BY_DOMAINNAME_SQL0);
+            preparedStatement = sparkSession.sql(SELECT_TOKENS_BY_DOMAINNAME_SQL0);
             preparedStatement.setString(1, domainname);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -5531,10 +5410,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<Sha256Hash> getWhereConfirmedNotMilestone() throws BlockStoreException {
         List<Sha256Hash> storedBlockHashes = new ArrayList<Sha256Hash>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_CONFIRMED_AND_NOT_MILESTONE_SQL);
+            preparedStatement = sparkSession.sql(SELECT_BLOCKS_CONFIRMED_AND_NOT_MILESTONE_SQL);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 storedBlockHashes.add(Sha256Hash.wrap(resultSet.getBytes(1)));
@@ -5561,7 +5440,7 @@ public class SparkStore implements FullBlockStore {
             return new ArrayList<OrderCancel>();
         }
         List<OrderCancel> orderCancels = new ArrayList<OrderCancel>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
             StringBuffer sql = new StringBuffer();
@@ -5599,7 +5478,7 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<MatchLastdayResult> getTimeBetweenMatchingEvents(String tokenid, String basetoken, Long startDate,
             Long endDate, int count) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
             String sql = SELECT_MATCHING_EVENT + " where  basetokenid = ? and  tokenid = ? ";
@@ -5609,7 +5488,7 @@ public class SparkStore implements FullBlockStore {
             sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
             // log.debug(sql + " tokenid = " +tokenid + " basetoken =" +
             // basetoken );
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, basetoken);
             preparedStatement.setString(2, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -5636,7 +5515,7 @@ public class SparkStore implements FullBlockStore {
     @Override
     public List<MatchLastdayResult> getTimeAVGBetweenMatchingEvents(String tokenid, String basetoken, Long startDate,
             Long endDate, int count) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
             String SELECT_AVG = "select tokenid,basetokenid,  avgprice, totalQuantity,matchday "
@@ -5646,7 +5525,7 @@ public class SparkStore implements FullBlockStore {
             sql += "  ORDER BY inserttime DESC " + "LIMIT   " + count;
             // log.debug(sql + " tokenid = " +tokenid + " basetoken =" +
             // basetoken );
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, basetoken);
             preparedStatement.setString(2, tokenid);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -5676,10 +5555,10 @@ public class SparkStore implements FullBlockStore {
 
     public void insertAccessPermission(String pubKey, String accessToken) throws BlockStoreException {
         String sql = "insert into access_permission (pubKey, accessToken, refreshTime) value (?,?,?)";
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, pubKey);
             preparedStatement.setString(2, accessToken);
             preparedStatement.setLong(3, System.currentTimeMillis());
@@ -5700,10 +5579,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public int getCountAccessPermissionByPubKey(String pubKey, String accessToken) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(
+            preparedStatement = sparkSession.sql(
                     "select count(1) as count from access_permission where pubKey = ? and accessToken = ?");
             preparedStatement.setString(1, pubKey);
             preparedStatement.setString(2, accessToken);
@@ -5729,10 +5608,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void insertAccessGrant(String address) throws BlockStoreException {
         String sql = "insert into access_grant (address, createTime) value (?,?)";
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, address);
             preparedStatement.setLong(2, System.currentTimeMillis());
             preparedStatement.executeUpdate();
@@ -5753,10 +5632,10 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void deleteAccessGrant(String address) throws BlockStoreException {
         String sql = "delete from access_grant where address = ?";
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             preparedStatement.setString(1, address);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
@@ -5775,7 +5654,7 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public int getCountAccessGrantByAddress(String address) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = getConnection()
@@ -5808,10 +5687,10 @@ public class SparkStore implements FullBlockStore {
         sql += " where solid=true and confirmed=false and height >= " + minHeigth;
         sql += " ORDER BY insertTime desc ";
         List<Block> result = new ArrayList<Block>();
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(sql);
+            preparedStatement = sparkSession.sql(sql);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
@@ -5836,10 +5715,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void insertChainBlockQueue(ChainBlockQueue chainBlockQueue) throws BlockStoreException {
-        maybeConnect();
+
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(INSERT_CHAINBLOCKQUEUE);
+            preparedStatement = sparkSession.sql(INSERT_CHAINBLOCKQUEUE);
             preparedStatement.setBytes(1, chainBlockQueue.getHash());
             preparedStatement.setBytes(2, chainBlockQueue.getBlock());
             preparedStatement.setLong(3, chainBlockQueue.getChainlength());
@@ -5870,7 +5749,7 @@ public class SparkStore implements FullBlockStore {
     public void deleteAllChainBlockQueue() throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(" delete from chainblockqueue ");
+            preparedStatement = sparkSession.sql(" delete from chainblockqueue ");
             preparedStatement.execute();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -5890,7 +5769,7 @@ public class SparkStore implements FullBlockStore {
     public void deleteChainBlockQueue(List<ChainBlockQueue> chainBlockQueues) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(" delete from chainblockqueue  where hash = ?");
+            preparedStatement = sparkSession.sql(" delete from chainblockqueue  where hash = ?");
 
             for (ChainBlockQueue chainBlockQueue : chainBlockQueues) {
                 preparedStatement.setBytes(1, chainBlockQueue.getHash());
@@ -5917,7 +5796,7 @@ public class SparkStore implements FullBlockStore {
         PreparedStatement s = null;
         List<ChainBlockQueue> list = new ArrayList<ChainBlockQueue>();
         try {
-            s = getConnection().prepareStatement(
+            s = sparkSession.sql(
                     SELECT_CHAINBLOCKQUEUE + " where orphan =? " + " order by chainlength asc" + " limit " + limit);
             s.setBoolean(1, orphan);
             ResultSet resultSet = s.executeQuery();
@@ -5970,7 +5849,7 @@ public class SparkStore implements FullBlockStore {
     public void deleteLockobject(String lockobjectid) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(" delete from lockobject  where lockobjectid = ?");
+            preparedStatement = sparkSession.sql(" delete from lockobject  where lockobjectid = ?");
             preparedStatement.setString(1, lockobjectid);
             preparedStatement.execute();
         } catch (SQLException e) {
@@ -5991,7 +5870,7 @@ public class SparkStore implements FullBlockStore {
     public void deleteAllLockobject() throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(" delete from lockobject ");
+            preparedStatement = sparkSession.sql(" delete from lockobject ");
             preparedStatement.execute();
         } catch (SQLException e) {
             throw new BlockStoreException(e);
@@ -6011,7 +5890,7 @@ public class SparkStore implements FullBlockStore {
     public void saveAvgPrice(AVGMatchResult matchResult) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(
+            preparedStatement = sparkSession.sql(
                     " insert into matchingdaily(matchday,tokenid,basetokenid,avgprice,totalQuantity,highprice,lowprice,inserttime) values(?,?,?,?,?,?,?,?) ");
             preparedStatement.setString(1, matchResult.getMatchday());
             preparedStatement.setString(2, matchResult.getTokenid());
@@ -6086,7 +5965,7 @@ public class SparkStore implements FullBlockStore {
     public void saveLastdayPrice(MatchResult matchResult) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = getConnection().prepareStatement(
+            preparedStatement = sparkSession.sql(
                     " insert into matchinglastday(tokenid,basetokenid,price,executedQuantity ,inserttime) values(?,?,?,?,? ) ");
 
             preparedStatement.setString(1, matchResult.getTokenid());
@@ -6227,7 +6106,7 @@ public class SparkStore implements FullBlockStore {
 
         String matchday = dateFormat.format(starttime);
         try {
-            preparedStatement = getConnection().prepareStatement(" select tokenid,basetokenid,sum(price),count(price),"
+            preparedStatement = sparkSession.sql(" select tokenid,basetokenid,sum(price),count(price),"
                     + "max(price),min(price),sum(executedQuantity)"
                     + " from matching where inserttime>=? and inserttime<=? group by tokenid,basetokenid  ");
             preparedStatement.setLong(1, starttime / 1000);
@@ -6349,14 +6228,14 @@ public class SparkStore implements FullBlockStore {
 
             // solid is result of validation of the block,
             + "    solid bigint NOT NULL,\n" + "    inserttime bigint NOT NULL,\n"
-            + "    CONSTRAINT blocks_pk PRIMARY KEY (hash) \n" + ") ENGINE=InnoDB ";
+            + "    CONSTRAINT blocks_pk PRIMARY KEY (hash) \n" + ")  ";
 
     private static final String CREATE_MCMC_TABLE = "CREATE TABLE mcmc (\n" + "    hash binary(32) NOT NULL,\n"
     // dynamic data
     // MCMC rating,depth,cumulativeweight
             + "    rating bigint NOT NULL,\n" + "    depth bigint NOT NULL,\n"
             + "    cumulativeweight bigint NOT NULL,\n" + "    CONSTRAINT mcmc_pk PRIMARY KEY (hash) \n"
-            + ") ENGINE=InnoDB ";
+            + ")  ";
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n"
             + "    blockhash binary(32) NOT NULL,\n" + "    hash binary(32) NOT NULL,\n"
@@ -6374,19 +6253,19 @@ public class SparkStore implements FullBlockStore {
             // this is indicator for wallet to minimize conflict, is set for
             // create at spender block
             + "    spendpending boolean NOT NULL,\n" + "    spendpendingtime bigint,\n"
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (blockhash, hash, outputindex) \n" + "   ) ENGINE=InnoDB \n";
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (blockhash, hash, outputindex) \n" + "   )  \n";
 
     // This is table for output with possible multi sign address
     private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n"
             + "    hash binary(32) NOT NULL,\n" + "    outputindex bigint NOT NULL,\n"
             + "    toaddress varchar(255) NOT NULL,\n"
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) \n" + ") ENGINE=InnoDB \n";
+            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) \n" + ")  \n";
 
     private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
             + "   blockhash binary(32) NOT NULL,\n" + "   confirmed boolean NOT NULL,\n"
             + "   spent boolean NOT NULL,\n" + "   spenderblockhash binary(32),\n"
             + "   prevblockhash binary(32) NOT NULL,\n" + "   difficulty bigint NOT NULL,\n"
-            + "   chainlength bigint NOT NULL,\n" + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
+            + "   chainlength bigint NOT NULL,\n" + "   PRIMARY KEY (blockhash) ) ";
 
     private static final String CREATE_ORDERS_TABLE = "CREATE TABLE orders (\n"
             // initial issuing block hash
@@ -6416,18 +6295,18 @@ public class SparkStore implements FullBlockStore {
             // returned or used for another orderoutput/output)
             + "    spent boolean NOT NULL,\n" + "    spenderblockhash  binary(32),\n"
             + "    CONSTRAINT orders_pk PRIMARY KEY (blockhash, collectinghash) " + " USING HASH \n"
-            + ") ENGINE=InnoDB \n";
+            + ")  \n";
 
     private static final String CREATE_ORDER_CANCEL_TABLE = "CREATE TABLE ordercancel (\n"
             + "   blockhash binary(32) NOT NULL,\n" + "   orderblockhash binary(32) NOT NULL,\n"
             + "   confirmed boolean NOT NULL,\n" + "   spent boolean NOT NULL,\n" + "   spenderblockhash binary(32),\n"
-            + "   time bigint NOT NULL,\n" + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
+            + "   time bigint NOT NULL,\n" + "   PRIMARY KEY (blockhash) ) ";
 
     private static final String CREATE_MATCHING_TABLE = "CREATE TABLE matching (\n"
             + "    id bigint NOT NULL AUTO_INCREMENT,\n" + "    txhash varchar(255) NOT NULL,\n"
             + "    tokenid varchar(255) NOT NULL,\n" + "    basetokenid varchar(255) NOT NULL,\n"
             + "    price bigint NOT NULL,\n" + "    executedQuantity bigint NOT NULL,\n"
-            + "    inserttime bigint NOT NULL,\n" + "    PRIMARY KEY (id) \n" + ") ENGINE=InnoDB\n";
+            + "    inserttime bigint NOT NULL,\n" + "    PRIMARY KEY (id) \n" + ") \n";
 
     private static final String CREATE_MATCHINGDAILY_TABLE = "CREATE TABLE matchingdaily (\n"
             + "    id bigint NOT NULL AUTO_INCREMENT,\n" + "    matchday varchar(255) NOT NULL,\n"
@@ -6435,18 +6314,18 @@ public class SparkStore implements FullBlockStore {
             + "    avgprice bigint NOT NULL,\n" + "    totalQuantity bigint NOT NULL,\n"
             + "    highprice bigint NOT NULL,\n" + "    lowprice bigint NOT NULL,\n" + "    open bigint NOT NULL,\n"
             + "    close bigint NOT NULL,\n" + "    matchinterval varchar(255) NOT NULL,\n"
-            + "    inserttime bigint NOT NULL,\n" + "    PRIMARY KEY (id) \n" + ") ENGINE=InnoDB\n";
+            + "    inserttime bigint NOT NULL,\n" + "    PRIMARY KEY (id) \n" + ") \n";
 
     private static final String CREATE_MATCHING_LAST_TABLE = "CREATE TABLE matchinglast (\n"
             + "    txhash varchar(255) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL,\n"
             + "    basetokenid varchar(255) NOT NULL,\n" + "    price bigint NOT NULL,\n"
             + "    executedQuantity bigint NOT NULL,\n" + "    inserttime bigint NOT NULL,\n"
-            + "    PRIMARY KEY ( tokenid,basetokenid) \n" + ") ENGINE=InnoDB\n";
+            + "    PRIMARY KEY ( tokenid,basetokenid) \n" + ") \n";
     private static final String CREATE_MATCHING_LAST_DAY_TABLE = "CREATE TABLE matchinglastday (\n"
             + "    txhash varchar(255) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL,\n"
             + "    basetokenid varchar(255) NOT NULL,\n" + "    price bigint NOT NULL,\n"
             + "    executedQuantity bigint NOT NULL,\n" + "    inserttime bigint NOT NULL,\n"
-            + "    PRIMARY KEY ( tokenid,basetokenid) \n" + ") ENGINE=InnoDB\n";
+            + "    PRIMARY KEY ( tokenid,basetokenid) \n" + ") \n";
 
     private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" + "    blockhash binary(32) NOT NULL,\n"
             + "    confirmed boolean NOT NULL,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
@@ -6457,53 +6336,53 @@ public class SparkStore implements FullBlockStore {
             + "    spenderblockhash  binary(32),\n" + "    tokenkeyvalues  mediumblob,\n" + "    revoked boolean   ,\n"
             + "    language char(2)   ,\n" + "    classification varchar(255)   ,\n"
             + "    domainpredblockhash varchar(255) NOT NULL,\n" + "    decimals int ,\n"
-            + "    PRIMARY KEY (blockhash) \n) ENGINE=InnoDB";
+            + "    PRIMARY KEY (blockhash) \n) ";
 
     // Helpers
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
             + "    blockhash binary(32) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    address varchar(255),\n" + "    pubKeyHex varchar(255),\n" + "    posIndex int(11),\n"
             + "    tokenHolder int(11) NOT NULL DEFAULT 0,\n"
-            + "    PRIMARY KEY (blockhash, tokenid, pubKeyHex) \n) ENGINE=InnoDB";
+            + "    PRIMARY KEY (blockhash, tokenid, pubKeyHex) \n) ";
 
     private static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
             + "    id varchar(255) NOT NULL  ,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    tokenindex bigint NOT NULL   ,\n" + "    address varchar(255),\n"
             + "    blockhash  mediumblob NOT NULL,\n" + "    sign int(11) NOT NULL,\n"
-            + "    PRIMARY KEY (id) \n) ENGINE=InnoDB";
+            + "    PRIMARY KEY (id) \n) ";
 
     private static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
             + "    orderid varchar(255) NOT NULL  ,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    toaddress varchar(255) NOT NULL,\n" + "    blockhash mediumblob NOT NULL,\n"
             + "    amount mediumblob ,\n" + "    minsignnumber bigint(20) ,\n" + "    outputHashHex varchar(255) ,\n"
-            + "    outputindex bigint ,\n" + "    PRIMARY KEY (orderid) \n) ENGINE=InnoDB";
+            + "    outputindex bigint ,\n" + "    PRIMARY KEY (orderid) \n) ";
 
     private static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"
             + "    orderid varchar(255) NOT NULL  ,\n" + "    pubKey varchar(255),\n" + "    sign int(11) NOT NULL,\n"
             + "    signIndex int(11) NOT NULL,\n" + "    signInputData mediumblob,\n"
-            + "    PRIMARY KEY (orderid, pubKey) \n) ENGINE=InnoDB";
+            + "    PRIMARY KEY (orderid, pubKey) \n) ";
 
     private static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n"
             + "    blockhash binary(32) NOT NULL,\n" + "    dataclassname varchar(255) NOT NULL,\n"
             + "    data mediumblob NOT NULL,\n" + "    pubKey varchar(255),\n" + "    blocktype bigint,\n"
-            + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ") ENGINE=InnoDB";
+            + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ") ";
 
     private static final String CREATE_BATCHBLOCK_TABLE = "CREATE TABLE batchblock (\n"
             + "    hash binary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n"
             + "    inserttime datetime NOT NULL,\n" + "   CONSTRAINT batchblock_pk PRIMARY KEY (hash)  \n"
-            + ") ENGINE=InnoDB";
+            + ") ";
 
     private static final String CREATE_SUBTANGLE_PERMISSION_TABLE = "CREATE TABLE subtangle_permission (\n"
             + "    pubkey varchar(255) NOT NULL,\n" + "    userdataPubkey varchar(255) NOT NULL,\n"
             + "    status varchar(255) NOT NULL,\n"
-            + "   CONSTRAINT subtangle_permission_pk PRIMARY KEY (pubkey) USING BTREE \n" + ") ENGINE=InnoDB";
+            + "   CONSTRAINT subtangle_permission_pk PRIMARY KEY (pubkey) USING BTREE \n" + ") ";
 
     /*
      * indicate of a server created block
      */
     private static final String CREATE_MYSERVERBLOCKS_TABLE = "CREATE TABLE myserverblocks (\n"
             + "    prevhash binary(32) NOT NULL,\n" + "    hash binary(32) NOT NULL,\n" + "    inserttime bigint,\n"
-            + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" + ") ENGINE=InnoDB";
+            + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" + ") ";
 
     private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
             + "   orderid varchar(255) NOT NULL,\n" + "   fromAddress varchar(255),\n"
@@ -6511,18 +6390,18 @@ public class SparkStore implements FullBlockStore {
             + "   toTokenHex varchar(255),\n" + "   toAmount varchar(255),\n" + "   data varbinary(5000) NOT NULL,\n"
             + "   toSign boolean,\n" + "   fromSign integer,\n" + "   toOrderId varchar(255),\n"
             + "   fromOrderId varchar(255),\n" + "   market varchar(255),\n" + "   memo varchar(255),\n"
-            + "   signInputData varbinary(5000),\n" + "   PRIMARY KEY (orderid) ) ENGINE=InnoDB";
+            + "   signInputData varbinary(5000),\n" + "   PRIMARY KEY (orderid) ) ";
 
     private static final String CREATE_EXCHANGE_MULTISIGN_TABLE = "CREATE TABLE exchange_multisign (\n"
             + "   orderid varchar(255) ,\n" + "   pubkey varchar(255),\n" + "   signInputData varbinary(5000),\n"
-            + "   sign integer\n" + "    ) ENGINE=InnoDB";
+            + "   sign integer\n" + "    ) ";
 
     private static final String CREATE_ACCESS_PERMISSION_TABLE = "CREATE TABLE access_permission (\n"
             + "   accessToken varchar(255) ,\n" + "   pubKey varchar(255),\n" + "   refreshTime bigint,\n"
-            + "   PRIMARY KEY (accessToken) ) ENGINE=InnoDB";
+            + "   PRIMARY KEY (accessToken) ) ";
 
     private static final String CREATE_ACCESS_GRANT_TABLE = "CREATE TABLE access_grant (\n"
-            + "   address varchar(255),\n" + "   createTime bigint,\n" + "   PRIMARY KEY (address) ) ENGINE=InnoDB";
+            + "   address varchar(255),\n" + "   createTime bigint,\n" + "   PRIMARY KEY (address) ) ";
 
     private static final String CREATE_CONTRACT_EVENT_TABLE = "CREATE TABLE contractevent (\n"
             // initial issuing block hash
@@ -6540,29 +6419,29 @@ public class SparkStore implements FullBlockStore {
             // true if used by a confirmed block (either
             // returned or used for another )
             + "    spent boolean NOT NULL,\n" + "    spenderblockhash  binary(32),\n"
-            + "    CONSTRAINT contractevent_pk PRIMARY KEY (blockhash) " + " USING HASH \n" + ") ENGINE=InnoDB \n";
+            + "    CONSTRAINT contractevent_pk PRIMARY KEY (blockhash) " + " USING HASH \n" + ")  \n";
 
     private static final String CREATE_CONTRACT_ACCOUNT_TABLE = "CREATE TABLE contractaccount (\n"
             + "    contracttokenid varchar(255)  NOT NULL,\n" + "    tokenid varchar(255)  NOT NULL,\n"
             + "    coinvalue mediumblob, \n"
             // block hash of the last execution block
             + "    blockhash binary(32) NOT NULL,\n"
-            + "    CONSTRAINT contractaccount_pk PRIMARY KEY (contracttokenid, tokenid) " + ") ENGINE=InnoDB \n";
+            + "    CONSTRAINT contractaccount_pk PRIMARY KEY (contracttokenid, tokenid) " + ")  \n";
 
     private static final String CREATE_CONTRACT_EXECUTION_TABLE = "CREATE TABLE contractexecution (\n"
             + "   blockhash binary(32) NOT NULL,\n" + "   contracttokenid varchar(255)  NOT NULL,\n"
             + "   confirmed boolean NOT NULL,\n" + "   spent boolean NOT NULL,\n" + "   spenderblockhash binary(32),\n"
             + "   prevblockhash binary(32) NOT NULL,\n" + "   difficulty bigint NOT NULL,\n"
             + "   chainlength bigint NOT NULL,\n" + "   resultdata blob NOT NULL,\n"
-            + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
+            + "   PRIMARY KEY (blockhash) ) ";
 
     private static final String CREATE_CHAINBLOCKQUEUE_TABLE = "CREATE TABLE chainblockqueue (\n"
             + "    hash binary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n" + "    chainlength bigint,\n "
             + "    orphan boolean,\n " + "    inserttime bigint NOT NULL,\n"
-            + "    CONSTRAINT chainblockqueue_pk PRIMARY KEY (hash)  \n" + ") ENGINE=InnoDB \n";
+            + "    CONSTRAINT chainblockqueue_pk PRIMARY KEY (hash)  \n" + ")  \n";
     private static final String CREATE_LOCKOBJECT_TABLE = "CREATE TABLE lockobject (\n"
             + "    lockobjectid varchar(255) NOT NULL,\n" + "    locktime bigint NOT NULL,\n"
-            + "    CONSTRAINT lockobject_pk PRIMARY KEY (lockobjectid)  \n" + ") ENGINE=InnoDB \n";
+            + "    CONSTRAINT lockobject_pk PRIMARY KEY (lockobjectid)  \n" + ")  \n";
 
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
@@ -6713,6 +6592,12 @@ public class SparkStore implements FullBlockStore {
 
     protected String getUpdateOutputsSpendPendingSQL() {
         return UPDATE_OUTPUTS_SPENDPENDING_SQL;
+    }
+
+    @Override
+    public void close() throws BlockStoreException {
+        // TODO Auto-generated method stub
+
     }
 
 }

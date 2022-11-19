@@ -27,7 +27,7 @@
 		</encoder>
 	</appender>
 
-	<root level="${LOGGING_LEVEL:-INFO}">
+	<root level="${LOGGING_LEVEL:-WARN}">
 		<appender-ref ref="stdout1" />
 		<appender-ref ref="FILE" />
 	</root>
@@ -35,6 +35,7 @@
 	<logger name="net.bigtangle" level="${LOGGING_LEVEL_BIGTANGLE:-DEBUG}" />
 
 	<logger name="org.apache.kafka" level="${LOGGING_LEVEL_KAFKA:-WARN}" />
+	<logger name="org.apache.spark" level="${LOGGING_LEVEL_SPARK:-WARN}" />
 
 	<logger name="org.apache.kafka.streams.KafkaStreams" level="INFO" />
 	<logger name="org.apache.kafka.clients.consumer.ConsumerConfig"

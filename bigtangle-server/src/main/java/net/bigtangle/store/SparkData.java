@@ -1,5 +1,7 @@
 package net.bigtangle.store;
 
+import org.apache.spark.sql.SparkSession;
+
 import io.delta.tables.DeltaTable;
 
 public class SparkData {
@@ -25,7 +27,14 @@ public class SparkData {
     public static DeltaTable userdata;
     public static DeltaTable batchblock;
     public static DeltaTable myserverblocks;
- 
+
     public static DeltaTable access_permission;
-    public static DeltaTable access_grant;
+    public static DeltaTable chainblockqueue;
+    public static DeltaTable lockobject;
+
+    public static void loadDeltaTable(SparkSession sparkSession, String directory) {
+        
+        blocks= DeltaTable.forPath(sparkSession, directory+ "blocks");
+        
+    }
 }
