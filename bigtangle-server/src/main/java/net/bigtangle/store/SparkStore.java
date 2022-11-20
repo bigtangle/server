@@ -8,11 +8,9 @@ package net.bigtangle.store;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -30,14 +28,19 @@ import java.util.TreeSet;
 
 import javax.annotation.Nullable;
 
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoder;
+import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.functions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
-import io.delta.tables.DeltaTable;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
@@ -77,11 +80,13 @@ import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.DepthAndWeight;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.Rating;
+import net.bigtangle.server.model.BlockModel;
+import net.bigtangle.server.model.UTXOModel;
 import net.bigtangle.utils.Gzip;
 
 /**
  * <p>
- * A generic full pruned block store for a relational database. This generic
+ * A generic full pruned block store for a spark. This generic
  * class requires certain table structures for the block store.
  * </p>
  * 
@@ -133,31 +138,28 @@ public class SparkStore implements FullBlockStore {
     protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
     protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
 
-    protected final String SELECT_BLOCKS_TEMPLATE = "  blocks.hash, block,  "
+    protected final String SELECT_BLOCKS_TEMPLATE = "  blocks.hash as hash, block, prevblockhash, prevbranchblockhash"
             + "  height, milestone, milestonelastupdate,  inserttime,   solid, confirmed";
 
-    protected final String SELECT_BLOCKS_SQL = " select " + SELECT_BLOCKS_TEMPLATE + " FROM blocks WHERE hash = ?"
-            + afterSelect();
+    protected final String SELECT_BLOCKS_SQL = " select " + SELECT_BLOCKS_TEMPLATE + " FROM blocks WHERE hash =  ";
 
     protected final String SELECT_BLOCKS_MILESTONE_SQL = "SELECT block, height FROM blocks WHERE height "
             + " >= (select min(height) from blocks where  milestone >= ? and  milestone <=?)"
             + " and height <= (select max(height) from blocks where  milestone >= ? and  milestone <=?) "
-            + afterSelect() + " order by height asc ";
+            + " order by height asc ";
 
     protected final String SELECT_MCMC_TEMPLATE = "  hash, rating, depth, cumulativeweight ";
 
     protected final String SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL = "SELECT " + SELECT_BLOCKS_TEMPLATE
             + "  , rating, depth, cumulativeweight "
-            + "  FROM blocks, mcmc WHERE blocks.hash= mcmc.hash and (prevblockhash = ? or prevbranchblockhash = ?) AND solid >= 0 "
-            + afterSelect();
+            + "  FROM blocks, mcmc WHERE blocks.hash= mcmc.hash and (prevblockhash = ? or prevbranchblockhash = ?) AND solid >= 0 ";
 
     protected final String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + " ,  rating, depth, cumulativeweight "
-            + " FROM blocks, mcmc WHERE blocks.hash= mcmc.hash and (prevblockhash = ? or prevbranchblockhash = ?) AND solid = 2 "
-            + afterSelect();
+            + " FROM blocks, mcmc WHERE blocks.hash= mcmc.hash and (prevblockhash = ? or prevbranchblockhash = ?) AND solid = 2 ";
 
     protected final String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT hash FROM blocks "
-            + "WHERE blocks.prevblockhash = ? or blocks.prevbranchblockhash = ?" + afterSelect();
+            + "WHERE blocks.prevblockhash = ? or blocks.prevbranchblockhash = ?";
 
     protected final String INSERT_BLOCKS_SQL = getInsert() + "  INTO blocks(hash,  height, block,  prevblockhash,"
             + "prevbranchblockhash,mineraddress,blocktype,  "
@@ -200,23 +202,23 @@ public class SparkStore implements FullBlockStore {
 
     protected final String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + " FROM blocks, mcmc  WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = false AND height > ?"
-            + " AND height <= ? AND mcmc.rating >= " + NetworkParameters.CONFIRMATION_UPPER_THRESHOLD + afterSelect();
+            + " AND height <= ? AND mcmc.rating >= " + NetworkParameters.CONFIRMATION_UPPER_THRESHOLD;
 
     protected final String SELECT_BLOCKS_TO_UNCONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + "  FROM blocks , mcmc WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = true AND mcmc.rating < "
-            + NetworkParameters.CONFIRMATION_LOWER_THRESHOLD + afterSelect();
+            + NetworkParameters.CONFIRMATION_LOWER_THRESHOLD;
 
     protected final String SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + "  FROM blocks WHERE milestone >= ? AND milestone <= ?" + afterSelect();
+            + "  FROM blocks WHERE milestone >= ? AND milestone <= ?";
 
     protected final String SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL = "SELECT   " + SELECT_BLOCKS_TEMPLATE
-            + " FROM blocks WHERE   height > ? AND height <= ? AND solid = 2 " + afterSelect();
+            + " FROM blocks WHERE   height > ? AND height <= ? AND solid = 2 ";
 
     protected final String SELECT_BLOCKS_CONFIRMED_AND_NOT_MILESTONE_SQL = "SELECT hash "
-            + "FROM blocks WHERE milestone = -1 AND confirmed = 1 " + afterSelect();
+            + "FROM blocks WHERE milestone = -1 AND confirmed = 1 ";
 
     protected final String SELECT_BLOCKS_NON_CHAIN_HEIGTH_SQL = "SELECT block "
-            + "FROM blocks WHERE milestone = -1 AND height >= ? " + afterSelect();
+            + "FROM blocks WHERE milestone = -1 AND height >= ? ";
 
     protected final String UPDATE_ORDER_SPENT_SQL = getUpdate() + " orders SET spent = ?, spenderblockhash = ? "
             + " WHERE blockhash = ? AND collectinghash = ?";
@@ -443,8 +445,7 @@ public class SparkStore implements FullBlockStore {
     protected String SELECT_EXCHANGE_SQL_A = "SELECT DISTINCT orderid, fromAddress, "
             + "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
             + "data, toSign, fromSign, toOrderId, fromOrderId, market,memo "
-            + "FROM exchange e WHERE (toSign = false OR fromSign = false) AND " + "(fromAddress = ? OR toAddress = ?) "
-            + afterSelect();
+            + "FROM exchange e WHERE (toSign = false OR fromSign = false) AND " + "(fromAddress = ? OR toAddress = ?) ";
 
     protected final String SELECT_CONTRACT_EXECUTION_SQL = "SELECT blockhash, contracttokenid confirmed, spent, "
             + "spenderblockhash, prevblockhash, difficulty, chainlength ";
@@ -586,8 +587,8 @@ public class SparkStore implements FullBlockStore {
      * @throws java.sql.SQLException
      */
     private boolean tablesExists() throws SQLException {
-    return   sparkSession.sql(getTablesExistSQL()).count() > 0 ;
-       
+        return sparkSession.sql(getTablesExistSQL()).count() > 0;
+
     }
 
     /**
@@ -619,13 +620,13 @@ public class SparkStore implements FullBlockStore {
      * initial ps.setBytes(2, "03".getBytes());
      */
     private void dbversion(String version) throws SQLException {
-       sparkSession.sql(getInsertSettingsSQL());
-     
+        sparkSession.sql(getInsertSettingsSQL());
+
     }
 
     protected void dbupdateversion(String version) throws SQLException {
-       sparkSession.sql(UPDATE_SETTINGS_SQL);
-      
+        sparkSession.sql(UPDATE_SETTINGS_SQL);
+
     }
 
     /*
@@ -716,28 +717,16 @@ public class SparkStore implements FullBlockStore {
     }
 
     protected void putUpdateStoredBlock(Block block, BlockEvaluation blockEvaluation) throws SQLException {
-      sparkSession.sql(INSERT_BLOCKS_SQL);
-            s.setBytes(1, block.getHash().getBytes());
-            s.setLong(2, block.getHeight());
-            s.setBytes(3, Gzip.compress(block.unsafeBitcoinSerialize()));
 
-            s.setBytes(4, block.getPrevBlockHash().getBytes());
-            s.setBytes(5, block.getPrevBranchBlockHash().getBytes());
-            s.setBytes(6, block.getMinerAddress());
-            s.setLong(7, block.getBlockType().ordinal());
+        List<BlockModel> models = new ArrayList<>();
 
-            int j = 1;
-            s.setLong(j + 7, blockEvaluation.getMilestone());
-            s.setLong(j + 8, blockEvaluation.getMilestoneLastUpdateTime());
+        models.add(BlockModel.from(block, blockEvaluation));
 
-            s.setLong(j + 9, blockEvaluation.getInsertTime());
+        Dataset source = sparkSession.createDataset(models, Encoders.bean(BlockModel.class));
 
-            s.setLong(j + 10, blockEvaluation.getSolid());
-            s.setBoolean(j + 11, blockEvaluation.isConfirmed());
+        SparkData.outputs.as("target").merge(source.as("source"), "target.hash = source.hash ").whenNotMatched()
+                .insertAll().execute();
 
-            s.executeUpdate();
-          
-        
     }
 
     @Override
@@ -755,11 +744,12 @@ public class SparkStore implements FullBlockStore {
     }
 
     public Block get(Sha256Hash hash) throws BlockStoreException {
- 
-
-            return params.getDefaultSerializer().makeZippedBlock(sparkSession.sql(SELECT_BLOCKS_SQL).first().getBytes(2));
-
-       
+        try {
+            return params.getDefaultSerializer().makeZippedBlock(sparkSession.sql(SELECT_BLOCKS_SQL + hash.getBytes())
+                    .as(Encoders.bean(BlockModel.class)).first().getBlock());
+        } catch (Exception ex) {
+            throw new BlockStoreException(ex);
+        }
     }
 
     public List<byte[]> blocksFromChainLength(long start, long end) throws BlockStoreException {
@@ -972,136 +962,30 @@ public class SparkStore implements FullBlockStore {
     @Override
     public boolean getOutputConfirmation(Sha256Hash blockHash, Sha256Hash hash, long index) throws BlockStoreException {
 
-        PreparedStatement s = null;
-        try {
-            s = sparkSession.sql(
-                    "SELECT  confirmed " + "FROM outputs WHERE hash = ? AND outputindex = ? AND blockhash = ? ");
-            s.setBytes(1, hash.getBytes());
-            // index is actually an unsigned int
-            s.setLong(2, index);
-            s.setBytes(3, blockHash.getBytes());
-            ResultSet results = s.executeQuery();
-            if (!results.next()) {
-                return false;
-            }
-            return results.getBoolean("confirmed");
-
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        return getTransactionOutput(blockHash, hash, index).isConfirmed();
     }
 
-    @Override
-    public UTXO getTransactionOutput(Sha256Hash blockHash, Sha256Hash hash, long index) throws BlockStoreException {
+    public UTXO getTransactionOutput(Sha256Hash blockHash, Sha256Hash hash, Long index) {
 
-        PreparedStatement s = null;
-        try {
-            s = sparkSession.sql(SELECT_OUTPUTS_SQL);
-            s.setBytes(1, hash.getBytes());
-            // index is actually an unsigned int
-            s.setLong(2, index);
-            s.setBytes(3, blockHash.getBytes());
-            ResultSet results = s.executeQuery();
-            if (!results.next()) {
-                return null;
-            }
-            return setUTXO(hash, index, results);
+        Dataset<UTXOModel> s = sparkSession.sql(SELECT_OUTPUTS_SQL + " where blockhash ='" + blockHash.getBytes()
+                + "' and hash='" + hash.getBytes() + "'and index=" + index).as(Encoders.bean(UTXOModel.class));
+        return s.first().toUTXO();
 
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    private UTXO setUTXO(Sha256Hash hash, long index, ResultSet results) throws SQLException {
-        // Parse it.
-        Coin coinvalue = new Coin(new BigInteger(results.getBytes("coinvalue")), results.getString("tokenid"));
-        byte[] scriptBytes = results.getBytes("scriptbytes");
-        boolean coinbase = results.getBoolean("coinbase");
-        String address = results.getString("toaddress");
-        Sha256Hash blockhash = Sha256Hash.wrap(results.getBytes("blockhash"));
-
-        String fromaddress = results.getString("fromaddress");
-        String memo = results.getString("memo");
-        boolean spent = results.getBoolean("spent");
-
-        Sha256Hash spenderblockhash = Sha256Hash.wrap(results.getBytes("spenderblockhash"));
-        boolean confirmed = results.getBoolean("confirmed");
-        boolean spendPending = results.getBoolean("spendpending");
-        long spendPendingTime = results.getLong("spendpendingtime");
-        String tokenid = results.getString("tokenid");
-        long minimumsign = results.getLong("minimumsign");
-        long time = results.getLong("time");
-        if (minimumsign > 1) {
-            address = results.getString("multitoaddress");
-        }
-        return new UTXO(hash, index, coinvalue, coinbase, new Script(scriptBytes), address, blockhash, fromaddress,
-                memo, tokenid, spent, confirmed, spendPending, minimumsign, spendPendingTime, time, spenderblockhash);
     }
 
     @Override
     public void addUnspentTransactionOutput(List<UTXO> utxos) throws BlockStoreException {
+        List<UTXOModel> utxomodels = new ArrayList<>();
 
-        PreparedStatement s = null;
-        try {
-            s = sparkSession.sql(INSERT_OUTPUTS_SQL);
-            for (UTXO out : utxos) {
-                s.setBytes(1, out.getTxHash().getBytes());
-                // index is actually an unsigned int
-                s.setLong(2, out.getIndex());
-                s.setBytes(3, out.getValue().getValue().toByteArray());
-                s.setBytes(4, out.getScript().getProgram());
-                s.setString(5, out.getAddress());
-                s.setLong(6, out.getScript().getScriptType().ordinal());
-                s.setBoolean(7, out.isCoinbase());
-                s.setBytes(8, out.getBlockHash() != null ? out.getBlockHash().getBytes() : null);
-                s.setString(9, Utils.HEX.encode(out.getValue().getTokenid()));
-                // if ((out.getFromaddress() == null ||
-                // "".equals(out.getFromaddress())) && !out.isCoinbase()) {
-                // log.debug(" no Fromaddress " + out.toString());
-                // }
-                s.setString(10, out.getFromaddress());
-                s.setString(11, out.getMemo());
-                s.setBoolean(12, out.isSpent());
-                s.setBoolean(13, out.isConfirmed());
-                s.setBoolean(14, out.isSpendPending());
-                s.setLong(15, out.getTime());
-                s.setLong(16, out.getSpendPendingTime());
-                s.setLong(17, out.getMinimumsign());
-                s.addBatch();
-            }
-            s.executeBatch();
-            s.close();
-        } catch (SQLException e) {
-            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
-                throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    if (s.getConnection() != null)
-                        s.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException(e);
-                }
-            }
+        for (UTXO out : utxos) {
+            utxomodels.add(UTXOModel.fromUTXO(out));
         }
+        Dataset source = sparkSession.createDataset(utxomodels, Encoders.bean(UTXOModel.class));
+
+        SparkData.outputs.as("target").merge(source.as("source"),
+                "target.blockhash = source.blockhash and target.hash = source.hash and target.index = source.index")
+                .whenNotMatched().insertAll().execute();
+//blockhash, hash, outputindex
     }
 
     @Override
@@ -1112,66 +996,10 @@ public class SparkStore implements FullBlockStore {
     }
 
     @Override
-    public void beginDatabaseBatchWrite() throws BlockStoreException {
-
-        try {
-            getConnection().setAutoCommit(false);
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        }
-    }
-
-    @Override
-    public void commitDatabaseBatchWrite() throws BlockStoreException {
-        try {
-            if (!getConnection().getAutoCommit())
-                getConnection().commit();
-            getConnection().setAutoCommit(true);
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        }
-    }
-
-    @Override
-    public void abortDatabaseBatchWrite() throws BlockStoreException {
-        try {
-            if (log.isDebugEnabled())
-                log.debug("Rollback database batch write with connection: " + getConnection().toString());
-
-            if (!getConnection().getAutoCommit()) {
-                getConnection().rollback();
-                getConnection().setAutoCommit(true);
-            } else {
-                log.warn("Warning: Rollback attempt without transaction");
-            }
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        }
-    }
-
-    @Override
-    public void defaultDatabaseBatchWrite() throws BlockStoreException {
-        try {
-            if (!getConnection().getAutoCommit()) {
-                getConnection().setAutoCommit(true);
-            }
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        }
-    }
-
-    @Override
     public NetworkParameters getParams() {
         return params;
     }
 
-    /**
-     * Resets the store by deleting the contents of the tables and
-     * reinitialising them.
-     * 
-     * @throws BlockStoreException
-     *             If the tables couldn't be cleared and initialised.
-     */
     public void resetStore() throws BlockStoreException {
 
         defaultDatabaseBatchWrite();
@@ -1184,184 +1012,40 @@ public class SparkStore implements FullBlockStore {
         }
     }
 
-    /**
-     * Deletes the store by deleting the tables within the database.
-     * 
-     * @throws BlockStoreException
-     *             If tables couldn't be deleted.
-     */
-    public void deleteStore() throws BlockStoreException {
-
-        try {
-            Statement s = getConnection().createStatement();
-            for (String sql : getDropTablesSQL()) {
-                log.info("drop table : " + sql);
-                s.addBatch(sql);
-            }
-            s.executeBatch();
-            s.close();
-        } catch (Exception e) {
-            log.info("drop table : ", e);
-        } finally {
-
-        }
-    }
-
     @Override
     public List<UTXO> getOpenAllOutputs(String tokenid) throws UTXOProviderException {
 
-        PreparedStatement s = null;
         List<UTXO> outputs = new ArrayList<UTXO>();
-        try {
 
-            // Must be sorted for hash checkpoint
-            s = sparkSession.sql(SELECT_ALL_OUTPUTS_TOKEN_SQL + " order by hash, outputindex ");
-            s.setString(1, tokenid);
-            ResultSet results = s.executeQuery();
-            while (results.next()) {
-                outputs.add(
-                        setUTXO(Sha256Hash.wrap(results.getBytes("hash")), results.getLong("outputindex"), results));
-            }
-            return outputs;
-        } catch (SQLException ex) {
-            throw new UTXOProviderException(ex);
-        } catch (BlockStoreException bse) {
-            throw new UTXOProviderException(bse);
-        } finally {
-            if (s != null)
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    //
-                }
+        // Must be sorted for hash checkpoint
+        Dataset<UTXOModel> s = sparkSession.sql(
+                SELECT_ALL_OUTPUTS_TOKEN_SQL + " order by hash, outputindex " + " where tokenid = '" + tokenid + "'")
+                .as(Encoders.bean(UTXOModel.class));
+
+        for (UTXOModel u : s.collectAsList()) {
+            outputs.add(u.toUTXO());
         }
+        return outputs;
 
     }
 
-    @Override
-    public List<UTXO> getOpenOutputsByBlockhash(String blockhash) throws UTXOProviderException {
-
-        PreparedStatement s = null;
-        List<UTXO> outputs = new ArrayList<UTXO>();
-        try {
-
-            // Must be sorted for hash checkpoint
-            s = sparkSession.sql(SELECT_TRANSACTION_OUTPUTS_SQL_BASE + "  where blockhash =?");
-            s.setString(1, blockhash);
-            ResultSet results = s.executeQuery();
-            while (results.next()) {
-                outputs.add(
-                        setUTXO(Sha256Hash.wrap(results.getBytes("hash")), results.getLong("outputindex"), results));
-            }
-            return outputs;
-        } catch (SQLException ex) {
-            throw new UTXOProviderException(ex);
-        } catch (BlockStoreException bse) {
-            throw new UTXOProviderException(bse);
-        } finally {
-            if (s != null)
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    //
-                }
-        }
-
-    }
-
-    @Override
-    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException {
-        PreparedStatement s = null;
-        List<UTXO> outputs = new ArrayList<UTXO>();
-        try {
-
-            s = sparkSession.sql(SELECT_OPEN_TRANSACTION_OUTPUTS_SQL);
-            for (Address address : addresses) {
-                s.setString(1, address.toString());
-                s.setString(2, address.toString());
-                ResultSet results = s.executeQuery();
-                while (results.next()) {
-                    outputs.add(setUTXO(Sha256Hash.wrap(results.getBytes("hash")), results.getLong("outputindex"),
-                            results));
-                }
-            }
-            return outputs;
-        } catch (SQLException ex) {
-            throw new UTXOProviderException(ex);
-        } catch (BlockStoreException bse) {
-            throw new UTXOProviderException(bse);
-        } finally {
-            if (s != null)
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    //
-                }
-        }
+    public String quotedString(String s) {
+        return "'" + s + "'";
     }
 
     @Override
     public List<UTXO> getOpenTransactionOutputs(String address) throws UTXOProviderException {
-        PreparedStatement s = null;
+
         List<UTXO> outputs = new ArrayList<UTXO>();
-        try {
 
-            s = sparkSession.sql(SELECT_OPEN_TRANSACTION_OUTPUTS_SQL);
-
-            s.setString(1, address.toString());
-            s.setString(2, address.toString());
-            ResultSet results = s.executeQuery();
-            while (results.next()) {
-                outputs.add(
-                        setUTXO(Sha256Hash.wrap(results.getBytes("hash")), results.getLong("outputindex"), results));
-            }
-            return outputs;
-        } catch (SQLException ex) {
-            throw new UTXOProviderException(ex);
-        } catch (BlockStoreException bse) {
-            throw new UTXOProviderException(bse);
-        } finally {
-            if (s != null)
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    //
-                }
+        Dataset<UTXOModel> s = sparkSession.sql(SELECT_OPEN_TRANSACTION_OUTPUTS_SQL
+                .replaceFirst("?", quotedString(address)).replaceFirst("?", quotedString(address)))
+                .as(Encoders.bean(UTXOModel.class));
+        for (UTXOModel u : s.collectAsList()) {
+            outputs.add(u.toUTXO());
         }
-    }
+        return outputs;
 
-    @Override
-    public List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid00)
-            throws UTXOProviderException {
-        PreparedStatement s = null;
-        List<UTXO> outputs = new ArrayList<UTXO>();
-        try {
-
-            s = sparkSession.sql(SELECT_OPEN_TRANSACTION_OUTPUTS_TOKEN_SQL);
-            for (Address address : addresses) {
-                s.setString(1, address.toString());
-                s.setString(2, address.toString());
-                s.setBytes(3, tokenid00);
-                ResultSet results = s.executeQuery();
-                while (results.next()) {
-                    outputs.add(setUTXO(Sha256Hash.wrap(results.getBytes("hash")), results.getLong("outputindex"),
-                            results));
-
-                }
-            }
-            return outputs;
-        } catch (SQLException ex) {
-            throw new UTXOProviderException(ex);
-        } catch (BlockStoreException bse) {
-            throw new UTXOProviderException(bse);
-        } finally {
-            if (s != null)
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    //
-                }
-        }
     }
 
     @Override
@@ -4080,8 +3764,8 @@ public class SparkStore implements FullBlockStore {
 
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = sparkSession.sql(
-                    "select count(*) as count from paymultisignaddress where orderid = ? and sign = 1");
+            preparedStatement = sparkSession
+                    .sql("select count(*) as count from paymultisignaddress where orderid = ? and sign = 1");
             preparedStatement.setString(1, orderid);
             ResultSet resultSet = preparedStatement.executeQuery();
             if (resultSet.next()) {
@@ -5582,8 +5266,8 @@ public class SparkStore implements FullBlockStore {
 
         PreparedStatement preparedStatement = null;
         try {
-            preparedStatement = sparkSession.sql(
-                    "select count(1) as count from access_permission where pubKey = ? and accessToken = ?");
+            preparedStatement = sparkSession
+                    .sql("select count(1) as count from access_permission where pubKey = ? and accessToken = ?");
             preparedStatement.setString(1, pubKey);
             preparedStatement.setString(2, accessToken);
             ResultSet resultSet = preparedStatement.executeQuery();
@@ -6234,8 +5918,7 @@ public class SparkStore implements FullBlockStore {
     // dynamic data
     // MCMC rating,depth,cumulativeweight
             + "    rating bigint NOT NULL,\n" + "    depth bigint NOT NULL,\n"
-            + "    cumulativeweight bigint NOT NULL,\n" + "    CONSTRAINT mcmc_pk PRIMARY KEY (hash) \n"
-            + ")  ";
+            + "    cumulativeweight bigint NOT NULL,\n" + "    CONSTRAINT mcmc_pk PRIMARY KEY (hash) \n" + ")  ";
 
     private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n"
             + "    blockhash binary(32) NOT NULL,\n" + "    hash binary(32) NOT NULL,\n"
@@ -6294,8 +5977,7 @@ public class SparkStore implements FullBlockStore {
             // true if used by a confirmed ordermatch block (either
             // returned or used for another orderoutput/output)
             + "    spent boolean NOT NULL,\n" + "    spenderblockhash  binary(32),\n"
-            + "    CONSTRAINT orders_pk PRIMARY KEY (blockhash, collectinghash) " + " USING HASH \n"
-            + ")  \n";
+            + "    CONSTRAINT orders_pk PRIMARY KEY (blockhash, collectinghash) " + " USING HASH \n" + ")  \n";
 
     private static final String CREATE_ORDER_CANCEL_TABLE = "CREATE TABLE ordercancel (\n"
             + "   blockhash binary(32) NOT NULL,\n" + "   orderblockhash binary(32) NOT NULL,\n"
@@ -6342,14 +6024,12 @@ public class SparkStore implements FullBlockStore {
     private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
             + "    blockhash binary(32) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    address varchar(255),\n" + "    pubKeyHex varchar(255),\n" + "    posIndex int(11),\n"
-            + "    tokenHolder int(11) NOT NULL DEFAULT 0,\n"
-            + "    PRIMARY KEY (blockhash, tokenid, pubKeyHex) \n) ";
+            + "    tokenHolder int(11) NOT NULL DEFAULT 0,\n" + "    PRIMARY KEY (blockhash, tokenid, pubKeyHex) \n) ";
 
     private static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
             + "    id varchar(255) NOT NULL  ,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
             + "    tokenindex bigint NOT NULL   ,\n" + "    address varchar(255),\n"
-            + "    blockhash  mediumblob NOT NULL,\n" + "    sign int(11) NOT NULL,\n"
-            + "    PRIMARY KEY (id) \n) ";
+            + "    blockhash  mediumblob NOT NULL,\n" + "    sign int(11) NOT NULL,\n" + "    PRIMARY KEY (id) \n) ";
 
     private static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
             + "    orderid varchar(255) NOT NULL  ,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
@@ -6369,8 +6049,7 @@ public class SparkStore implements FullBlockStore {
 
     private static final String CREATE_BATCHBLOCK_TABLE = "CREATE TABLE batchblock (\n"
             + "    hash binary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n"
-            + "    inserttime datetime NOT NULL,\n" + "   CONSTRAINT batchblock_pk PRIMARY KEY (hash)  \n"
-            + ") ";
+            + "    inserttime datetime NOT NULL,\n" + "   CONSTRAINT batchblock_pk PRIMARY KEY (hash)  \n" + ") ";
 
     private static final String CREATE_SUBTANGLE_PERMISSION_TABLE = "CREATE TABLE subtangle_permission (\n"
             + "    pubkey varchar(255) NOT NULL,\n" + "    userdataPubkey varchar(255) NOT NULL,\n"
@@ -6432,8 +6111,7 @@ public class SparkStore implements FullBlockStore {
             + "   blockhash binary(32) NOT NULL,\n" + "   contracttokenid varchar(255)  NOT NULL,\n"
             + "   confirmed boolean NOT NULL,\n" + "   spent boolean NOT NULL,\n" + "   spenderblockhash binary(32),\n"
             + "   prevblockhash binary(32) NOT NULL,\n" + "   difficulty bigint NOT NULL,\n"
-            + "   chainlength bigint NOT NULL,\n" + "   resultdata blob NOT NULL,\n"
-            + "   PRIMARY KEY (blockhash) ) ";
+            + "   chainlength bigint NOT NULL,\n" + "   resultdata blob NOT NULL,\n" + "   PRIMARY KEY (blockhash) ) ";
 
     private static final String CREATE_CHAINBLOCKQUEUE_TABLE = "CREATE TABLE chainblockqueue (\n"
             + "    hash binary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n" + "    chainlength bigint,\n "

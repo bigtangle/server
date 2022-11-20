@@ -102,34 +102,8 @@ public class OutputService {
         return candidates;
     }
 
-    public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(List<byte[]> pubKeyHashs,
-            byte[] tokenid, boolean excludeImmatureCoinbases, FullBlockStore store) {
-        LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
-        try {
-            for (UTXO output : getStoredOutputsFromUTXOProvider(pubKeyHashs, tokenid, store)) {
-                if (output.isSpent() || !output.isConfirmed())
-                    continue;
-                candidates.add(new FreeStandingTransactionOutput(networkParameters, output));
-            }
-        } catch (
-
-        UTXOProviderException e) {
-            throw new RuntimeException("UTXO provider error", e);
-        }
-        return candidates;
-    }
-
-    private List<UTXO> getStoredOutputsFromUTXOProvider(List<byte[]> pubKeyHashs, byte[] tokenid, FullBlockStore store)
-            throws UTXOProviderException {
-        List<Address> addresses = new ArrayList<Address>();
-        for (byte[] key : pubKeyHashs) {
-            Address address = new Address(networkParameters, key);
-            addresses.add(address);
-        }
-        List<UTXO> list = store.getOpenTransactionOutputs(addresses, tokenid);
-        return list;
-    }
-
+  
+   
     private List<UTXO> getStoredOutputsFromUTXOProvider(Set<byte[]> pubKeyHashs, FullBlockStore store)
             throws UTXOProviderException {
         List<UTXO> list = new ArrayList<UTXO>();
@@ -187,20 +161,7 @@ public class OutputService {
         return GetOutputsResponse.create(filterToken(outputs), getTokename(outputs, store));
     }
 
-    public GetOutputsResponse getAccountOutputsWithToken(byte[] pubKey, byte[] tokenid, FullBlockStore store)
-            throws BlockStoreException {
-        List<byte[]> pubKeyHashs = new ArrayList<byte[]>();
-        pubKeyHashs.add(pubKey);
-
-        List<UTXO> outputs = new ArrayList<UTXO>();
-        List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
-                tokenid, false, store);
-        for (TransactionOutput transactionOutput : transactionOutputs) {
-            FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
-            outputs.add(freeStandingTransactionOutput.getUTXO());
-        }
-        return GetOutputsResponse.create(outputs, getTokename(outputs, store));
-    }
+ 
 
     public AbstractResponse getOutputsWithHexStr(String hexStr, FullBlockStore store) throws BlockStoreException {
         UTXO output = getStoredOutputsWithHexStr(hexStr, store);
