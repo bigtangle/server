@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -641,7 +642,7 @@ public class DispatcherController {
     private void outputHistory(byte[] bodyByte, HttpServletResponse httpServletResponse, Stopwatch watch,
             FullBlockStore store)
             throws UnsupportedEncodingException, IOException, JsonParseException, JsonMappingException, Exception {
-        String reqStr = new String(bodyByte, "UTF-8");
+        String reqStr = new String(bodyByte, StandardCharsets.UTF_8);
         @SuppressWarnings("unchecked")
         Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
         String fromaddress = request.get("fromaddress") == null ? "" : request.get("fromaddress").toString();

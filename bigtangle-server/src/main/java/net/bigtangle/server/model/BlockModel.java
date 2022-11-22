@@ -1,9 +1,12 @@
 package net.bigtangle.server.model;
 
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Utils;
 import net.bigtangle.utils.Gzip;
 
 public class BlockModel implements Serializable {
@@ -12,12 +15,12 @@ public class BlockModel implements Serializable {
      * 
      */
     private static final long serialVersionUID = 1L;
-    byte[] hash;
+    String hash;
     Long height;
-    byte[] block;
-    byte[] prevblockhash;
-    byte[] prevbranchblockhash;
-    byte[] mineraddress;
+    String block;
+    String prevblockhash;
+    String prevbranchblockhash;
+    String mineraddress;
     Long blocktype;
     Long milestone;
     Long milestonelastupdate;
@@ -25,11 +28,11 @@ public class BlockModel implements Serializable {
     Long solid;
     Boolean confirmed;
 
-    public byte[] getHash() {
+    public String getHash() {
         return hash;
     }
 
-    public void setHash(byte[] hash) {
+    public void setHash(String hash) {
         this.hash = hash;
     }
 
@@ -41,35 +44,35 @@ public class BlockModel implements Serializable {
         this.height = height;
     }
 
-    public byte[] getBlock() {
+    public String getBlock() {
         return block;
     }
 
-    public void setBlock(byte[] block) {
+    public void setBlock(String block) {
         this.block = block;
     }
 
-    public byte[] getPrevblockhash() {
+    public String getPrevblockhash() {
         return prevblockhash;
     }
 
-    public void setPrevblockhash(byte[] prevblockhash) {
+    public void setPrevblockhash(String prevblockhash) {
         this.prevblockhash = prevblockhash;
     }
 
-    public byte[] getPrevbranchblockhash() {
+    public String getPrevbranchblockhash() {
         return prevbranchblockhash;
     }
 
-    public void setPrevbranchblockhash(byte[] prevbranchblockhash) {
+    public void setPrevbranchblockhash(String prevbranchblockhash) {
         this.prevbranchblockhash = prevbranchblockhash;
     }
 
-    public byte[] getMineraddress() {
+    public String getMineraddress() {
         return mineraddress;
     }
 
-    public void setMineraddress(byte[] mineraddress) {
+    public void setMineraddress(String mineraddress) {
         this.mineraddress = mineraddress;
     }
 
@@ -123,13 +126,13 @@ public class BlockModel implements Serializable {
 
     public static BlockModel from(Block block, BlockEvaluation blockEvaluation) {
         BlockModel s = new BlockModel();
-        s.setHash(block.getHash().getBytes());
+        s.setHash(Utils.HEX.encode(block.getHash().getBytes()));
         s.setHeight(block.getHeight());
-        s.setBlock(Gzip.compress(block.unsafeBitcoinSerialize()));
+        s.setBlock(Utils.HEX.encode(Gzip.compress(block.unsafeBitcoinSerialize())));
 
-        s.setPrevblockhash(block.getPrevBlockHash().getBytes());
-        s.setPrevbranchblockhash(block.getPrevBranchBlockHash().getBytes());
-        s.setMineraddress(block.getMinerAddress());
+        s.setPrevblockhash(Utils.HEX.encode(block.getPrevBlockHash().getBytes()));
+        s.setPrevbranchblockhash(new String(block.getPrevBranchBlockHash().getBytes()));
+        s.setMineraddress(Utils.HEX.encode(block.getMinerAddress()));
         s.setBlocktype(new Long(block.getBlockType().ordinal()));
 
         s.setMilestone(blockEvaluation.getMilestone());
@@ -143,4 +146,12 @@ public class BlockModel implements Serializable {
         return s;
     }
 
+    public BlockEvaluation toBlockEvaluation() {
+
+        BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(Utils.HEX.encode(getHash().getBytes())),
+                getHeight(), getMilestone(), getMilestonelastupdate(), getInserttime(), getSolid(), getConfirmed());
+        return blockEvaluation;
+
+    }
+     
 }

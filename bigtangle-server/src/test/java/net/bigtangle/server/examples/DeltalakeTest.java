@@ -34,7 +34,7 @@ public class DeltalakeTest {
         ;
 
         conf.set("spark.master", "local[*]").set("spark.driver.bindAddress", "localhost")
-                .set("spark.sql.shuffle.partitions", "3").set("spark.default.parallelism", "3")
+             //   .set("spark.sql.shuffle.partitions", "3").set("spark.default.parallelism", "3")
                 .set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
                 .set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
 
@@ -53,37 +53,46 @@ public class DeltalakeTest {
                 // .option("startingVersion", startingVersion.toString())
                 .load(path).orderBy("id");
     }
-
-   
+  
+    public void format() {
+    String sf1=String.format("name is =%s =%s ","'test'", 121234l);  
+    String sf2=String.format("value is %x",32L);  
+    String sf3=String.format("value is %32.12f",32.33434);//returns 12 char fractional part filling with 0  
+      
+    System.out.println(sf1);  
+    System.out.println(sf2);  
+    System.out.println(sf3);  
+    }
     public void deltalake2() throws IOException, InterruptedException {
      
-        String path = "/data/deltalake/blocks";
+        String path = "/data/deltalake/test";
         spark = createSession();
 
         String d = " USING DELTA " + "   LOCATION '" + "/data/deltalake/blocks" + "'";
         spark.sql(SparkStoreParameter.CREATE_BLOCKS_TABLE + d);
         DeltaTable table = DeltaTable.forPath(spark, path);
-        
+        spark.sql("update delta./data/deltalake/blocks  set marketplace = 'USA' where marketplace = 'US' ");
     }
+    
     @Test
     public void deltalake1() throws IOException, InterruptedException {
         try {
             // =============== Create table ===============
-            String path = "/data/deltalake/blocks";
+            String path = "/data/deltalake/test";
             spark = createSession();
-
-            String d = " USING DELTA " + "   LOCATION '" + "/data/deltalake/blocks" + "'";
-            spark.sql(SparkStoreParameter.CREATE_BLOCKS_TABLE + d);
-            DeltaTable table = DeltaTable.forPath(spark, path);
-            table.delete();
-            table.vacuum();
-            table.toDF().show();
-            spark.range(0, 10).selectExpr("CAST(id as INT) as id", "CAST(id as STRING) as name",
+ 
+            
+            spark.range(0, 100).selectExpr("CAST(id as INT) as id", "CAST(id as STRING) as name",
                     "CAST(id % 4 + 18 as INT) as age").write().format("delta").mode("append").save(path);  // v1
+           
 
             System.out.println("(v1) Initial Table");
-            spark.read().format("delta").load(path).orderBy("id").show();
-
+          //  table.toDF().show();
+            spark.sql("select * from delta.`" + path + "`" ).show();
+           // spark.sql(" insert into delta.`" + path + "` (id, name, age) VALUES ( 22, 'halo'. 89) ");
+            DeltaTable table = DeltaTable.forPath(spark, path);
+            table.toDF().show();
+            
             // table = DeltaTable.forPath(path);
 
             // =============== Perform UPDATE ===============
@@ -132,7 +141,10 @@ public class DeltalakeTest {
             System.out.println("(v5) Merged with a source table");
             readByTableName(6, path).show();
 
-        } finally {
+        }catch (Exception e) {
+           e.printStackTrace();
+        }
+        finally {
             spark.stop();
         }
     }

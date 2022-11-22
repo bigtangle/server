@@ -15,10 +15,10 @@ import net.bigtangle.script.Script;
 
 public class UTXOModel {
 
-    private byte[] coinvalue;
+    private String coinvalue;
 
-    private byte[] scriptbytes;
-    private byte[] hash;
+    private String scriptbytes;
+    private String hash;
     private Long outputindex;
     private boolean coinbase;
     private String toaddress;
@@ -33,32 +33,29 @@ public class UTXOModel {
 
     private String memo;
 
-    private byte[] blockhash;
+    private String blockhash;
     private boolean confirmed;
     private boolean spent;
-    private byte[] spenderblockhash;
+    private String spenderblockhash;
     // create time of the block output
     private Long time;
 
     private Long scriptType;
 
-    public static UTXOModel fromUTXO(UTXO out) {
+    public static UTXOModel fromUTXO(UTXO out)   {
         UTXOModel s = new UTXOModel();
 
-        s.setHash(out.getTxHash().getBytes());
+        s.setHash(Utils.HEX.encode(out.getTxHash().getBytes()));
         // index is actually an unsigned int
         s.setOutputindex(out.getIndex());
-        s.setCoinvalue(out.getValue().getValue().toByteArray());
-        s.setScriptbytes(out.getScript().getProgram());
+        s.setCoinvalue(Utils.HEX.encode(out.getValue().getValue().toByteArray()));
+        s.setScriptbytes(Utils.HEX.encode(out.getScript().getProgram()));
         s.setToaddress(out.getAddress());
         // s.setCoinbase( out.getScript().getScriptType().ordinal());
         s.setCoinbase(out.isCoinbase());
-        s.setBlockhash(out.getBlockHash() != null ? out.getBlockHash().getBytes() : null);
+        s.setBlockhash(Utils.HEX.encode(out.getBlockHash().getBytes() ));
         s.setTokenid(Utils.HEX.encode(out.getValue().getTokenid()));
-        // if ((out.getFromaddress() == null ||
-        // "".equals(out.getFromaddress())) && !out.isCoinbase()) {
-        // log.debug(" no Fromaddress " + out.toString());
-        // }
+ 
         s.setFromaddress(out.getFromaddress());
         s.setMemo(out.getMemo());
         s.setSpent(out.isSpent());
@@ -78,7 +75,7 @@ public class UTXOModel {
         // index is actually an unsigned int
         s.setIndex(getOutputindex());
         s.setValue(coinvalue);
-        s.setScript(new Script(getScriptbytes()));
+        s.setScript(new Script(getScriptbytes().getBytes()));
         s.setAddress(getToaddress());
         // s.setCoinbase( getScript().getScriptType().ordinal());
         s.setCoinbase(isCoinbase());
@@ -97,27 +94,27 @@ public class UTXOModel {
         return s;
     }
 
-    public byte[] getCoinvalue() {
+    public String getCoinvalue() {
         return coinvalue;
     }
 
-    public void setCoinvalue(byte[] coinvalue) {
+    public void setCoinvalue(String coinvalue) {
         this.coinvalue = coinvalue;
     }
 
-    public byte[] getScriptbytes() {
+    public String getScriptbytes() {
         return scriptbytes;
     }
 
-    public void setScriptbytes(byte[] scriptbytes) {
+    public void setScriptbytes(String scriptbytes) {
         this.scriptbytes = scriptbytes;
     }
 
-    public byte[] getHash() {
+    public String getHash() {
         return hash;
     }
 
-    public void setHash(byte[] hash) {
+    public void setHash(String hash) {
         this.hash = hash;
     }
 
@@ -201,11 +198,11 @@ public class UTXOModel {
         this.memo = memo;
     }
 
-    public byte[] getBlockhash() {
+    public String getBlockhash() {
         return blockhash;
     }
 
-    public void setBlockhash(byte[] blockhash) {
+    public void setBlockhash(String blockhash) {
         this.blockhash = blockhash;
     }
 
@@ -225,11 +222,11 @@ public class UTXOModel {
         this.spent = spent;
     }
 
-    public byte[] getSpenderblockhash() {
+    public String getSpenderblockhash() {
         return spenderblockhash;
     }
 
-    public void setSpenderblockhash(byte[] spenderblockhash) {
+    public void setSpenderblockhash(String spenderblockhash) {
         this.spenderblockhash = spenderblockhash;
     }
 
