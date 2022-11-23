@@ -1,6 +1,7 @@
 package net.bigtangle.server.model;
 
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TXReward;
 
 public class TXRewardModel extends SpentBlockModel implements java.io.Serializable {
 
@@ -31,6 +32,18 @@ public class TXRewardModel extends SpentBlockModel implements java.io.Serializab
         this.chainLength = chainLength;
     }
 
+    public TXReward toTXReward() {
+        TXReward t= new TXReward();
+        t.setBlockHash(Sha256Hash.wrap(getBlockhash()));
+        t.setConfirmed(isConfirmed());
+        t.setSpent(isSpent());
+        t.setPrevBlockHash(Sha256Hash.wrap(getPrevblockhash()) );
+        t.setSpenderBlockHash(Sha256Hash.wrap(getPrevblockhash()) );
+        t.setDifficulty( getDifficulty());
+        t.setChainLength(getChainLength());
+        return t;
+    }
+    
     public String getPrevblockhash() {
         return prevblockhash;
     }

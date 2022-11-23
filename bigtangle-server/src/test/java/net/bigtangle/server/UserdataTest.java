@@ -132,38 +132,6 @@ public class UserdataTest extends AbstractIntegrationTest {
 
     }
 
-    @Test
-    public void testExchangeUserdata() throws Exception {
-
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.Type.BLOCKTYPE_USERDATA);
-        ECKey outKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        makeTestToken(outKey, BigInteger.valueOf(1000 * 1000), new ArrayList<>(), 0);
-
-        Transaction transaction = new Transaction(networkParameters);
-        Contact contact = new Contact();
-        contact.setName("mytokenforexcahnge");
-        contact.setAddress(outKey.getPublicKeyAsHex());
-        ContactInfo contactInfo0 = new ContactInfo();
-        List<Contact> list = new ArrayList<Contact>();
-        list.add(contact);
-        contactInfo0.setContactList(list);
-
-        transaction.setDataClassName(DataClassName.CONTACTINFO.name());
-        transaction.setData(contactInfo0.toByteArray());
-
-        walletAppKit.wallet().saveUserdata(outKey, transaction,false);
-        makeRewardBlock();
-       byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.searchExchangeTokens.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response0, GetTokensResponse.class);
-
-        assertTrue(getTokensResponse.getTokens().stream().map(Token::getTokenid).collect(Collectors.toList())
-                .contains(outKey.getPublicKeyAsHex()));
-
-    }
+ 
 
 }

@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
 import net.bigtangle.utils.Gzip;
@@ -20,7 +21,7 @@ public class BlockModel implements Serializable {
     String prevblockhash;
     String prevbranchblockhash;
     String mineraddress;
-    Long blocktype;
+    Integer blocktype;
     Long milestone;
     Long milestonelastupdate;
     Long inserttime;
@@ -80,13 +81,7 @@ public class BlockModel implements Serializable {
         this.mineraddress = mineraddress;
     }
 
-    public Long getBlocktype() {
-        return blocktype;
-    }
-
-    public void setBlocktype(Long blocktype) {
-        this.blocktype = blocktype;
-    }
+    
 
     public Long getMilestone() {
         return milestone;
@@ -128,6 +123,16 @@ public class BlockModel implements Serializable {
         this.confirmed = confirmed;
     }
 
+    public Integer getBlocktype() {
+        return blocktype;
+    }
+
+
+    public void setBlocktype(Integer blocktype) {
+        this.blocktype = blocktype;
+    }
+
+
     public static BlockModel from(Block block, BlockEvaluation blockEvaluation) {
         BlockModel s = new BlockModel();
         s.setHash(block.getHash().toString());
@@ -137,7 +142,7 @@ public class BlockModel implements Serializable {
         s.setPrevblockhash( block.getPrevBlockHash().toString());
         s.setPrevbranchblockhash(block.getPrevBranchBlockHash().toString());
         s.setMineraddress(Utils.HEX.encode(block.getMinerAddress()));
-        s.setBlocktype(new Long(block.getBlockType().ordinal()));
+        s.setBlocktype( block.getBlockType().ordinal( ) );
 
         s.setMilestone(blockEvaluation.getMilestone());
         s.setMilestonelastupdate(blockEvaluation.getMilestoneLastUpdateTime());
@@ -152,9 +157,16 @@ public class BlockModel implements Serializable {
 
     public BlockEvaluation toBlockEvaluation() {
 
-        BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(Utils.HEX.encode(getHash().getBytes())),
+        BlockEvaluation blockEvaluation = BlockEvaluation.build(Sha256Hash.wrap(getHash()),
                 getHeight(), getMilestone(), getMilestonelastupdate(), getInserttime(), getSolid(), getConfirmed());
         return blockEvaluation;
+
+    }
+    public BlockEvaluationDisplay toBlockEvaluationDisplay( long latestchainnumber) {
+
+        return   BlockEvaluationDisplay.build(Sha256Hash.wrap(getHash()),
+                getHeight(), getMilestone(), getMilestonelastupdate(), getInserttime(), getBlocktype(), getSolid(), getConfirmed(), latestchainnumber);
+      
 
     }
 
