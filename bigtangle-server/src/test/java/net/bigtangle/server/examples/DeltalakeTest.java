@@ -88,7 +88,7 @@ public class DeltalakeTest {
 
             System.out.println("(v1) Initial Table");
           //  table.toDF().show();
-            spark.sql("select * from delta.`" + path + "`" ).show();
+            spark.sql("select test.id from delta.`" + path + "`" +" as test").show();
            // spark.sql(" insert into delta.`" + path + "` (id, name, age) VALUES ( 22, 'halo'. 89) ");
             DeltaTable table = DeltaTable.forPath(spark, path);
             table.toDF().show();

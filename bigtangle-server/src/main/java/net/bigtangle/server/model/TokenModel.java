@@ -4,9 +4,15 @@
  *******************************************************************************/
 package net.bigtangle.server.model;
 
+import java.io.IOException;
 import java.math.BigInteger;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.Utils;
 
 public class TokenModel implements java.io.Serializable {
@@ -58,7 +64,7 @@ public class TokenModel implements java.io.Serializable {
         tokenModels.setAmount(token.getAmount());
         tokenModels.tokenindex = token.getTokenindex();
         tokenModels.confirmed = token.isConfirmed();
-        tokenModels.prevblockhash = Utils.HEX.encode(token.getPrevblockhash().getBytes());
+        tokenModels.prevblockhash = token.getPrevblockhash().toString();
         tokenModels.tokenkeyvalues = Utils.HEX.encode(token.getTokenKeyValues().toByteArray());
         tokenModels.revoked = token.getRevoked();
         tokenModels.language = token.getLanguage();
@@ -66,6 +72,31 @@ public class TokenModel implements java.io.Serializable {
         tokenModels.decimals = token.getDecimals();
         tokenModels.domainname = token.getDomainName();
         tokenModels.domainnameblockHash = token.getDomainNameBlockHash();
+        return tokenModels;
+    }
+
+    public Token toToken() {
+        Token tokenModels = new Token();
+        tokenModels.setTokenid(getTokenid());
+        tokenModels.setTokenname(getTokenname());
+        tokenModels.setDescription(getDescription());
+        tokenModels.setTokenstop(getTokenstop());
+        tokenModels.setTokentype(getTokentype());
+        tokenModels.setSignnumber(getSignnumber());
+        tokenModels.setAmount(getAmount());
+        tokenModels.setTokenindex(getTokenindex());
+        tokenModels.setConfirmed(getConfirmed());
+        tokenModels.setPrevblockhash(Sha256Hash.wrap(getPrevblockhash()));
+        try {
+            tokenModels.setTokenKeyValues(TokenKeyValues.parse(Utils.HEX.decode(getTokenkeyvalues())));
+        } catch (Exception e) {
+        }
+        tokenModels.setRevoked(getRevoked());
+        tokenModels.setLanguage(getLanguage());
+        // tokenModels.classification = getClassification();
+        tokenModels.setDecimals(getDecimals());
+        tokenModels.setDomainName(getDomainname());
+        tokenModels.setDomainNameBlockHash(getDomainnameblockHash());
         return tokenModels;
     }
 

@@ -13,7 +13,7 @@ import net.bigtangle.script.Script;
  * 
  *******************************************************************************/
 
-public class UTXOModel {
+public class UTXOModel  extends SpentBlockModel {
 
     private String coinvalue;
 
@@ -35,10 +35,7 @@ public class UTXOModel {
 
     private String blockhash;
     private boolean confirmed;
-    private boolean spent;
-    private String spenderblockhash;
-    // create time of the block output
-    private Long time;
+ 
 
     private Long scriptType;
 
@@ -53,7 +50,7 @@ public class UTXOModel {
         s.setToaddress(out.getAddress());
         // s.setCoinbase( out.getScript().getScriptType().ordinal());
         s.setCoinbase(out.isCoinbase());
-        s.setBlockhash(Utils.HEX.encode(out.getBlockHash().getBytes() ));
+        s.setBlockhash(out.getBlockHash().toString());
         s.setTokenid(Utils.HEX.encode(out.getValue().getTokenid()));
  
         s.setFromaddress(out.getFromaddress());
@@ -213,31 +210,7 @@ public class UTXOModel {
     public void setConfirmed(boolean confirmed) {
         this.confirmed = confirmed;
     }
-
-    public boolean isSpent() {
-        return spent;
-    }
-
-    public void setSpent(boolean spent) {
-        this.spent = spent;
-    }
-
-    public String getSpenderblockhash() {
-        return spenderblockhash;
-    }
-
-    public void setSpenderblockhash(String spenderblockhash) {
-        this.spenderblockhash = spenderblockhash;
-    }
-
-    public Long getTime() {
-        return time;
-    }
-
-    public void setTime(Long time) {
-        this.time = time;
-    }
-
+ 
     public Long getScriptType() {
         return scriptType;
     }

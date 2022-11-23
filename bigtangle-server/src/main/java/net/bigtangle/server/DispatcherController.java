@@ -251,11 +251,6 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
             }
                 break;
-            case getOTCMarkets: {
-                AbstractResponse response = tokensService.getMarketTokensList(store);
-                this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
-            }
-                break;
             case getTokenById: {
                 String reqStr = new String(bodyByte, "UTF-8");
                 Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

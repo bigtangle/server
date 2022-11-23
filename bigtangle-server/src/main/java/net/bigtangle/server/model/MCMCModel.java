@@ -14,7 +14,7 @@ import net.bigtangle.core.Utils;
 /*
  * Evaluation of block, variable in time
  */
-public class MCMCModel implements Serializable {
+public class MCMCModel extends BlockModel implements Serializable {
 
     private static final long serialVersionUID = 8388463657969339286L;
 
@@ -30,8 +30,8 @@ public class MCMCModel implements Serializable {
     // Count of indirect approver blocks
     private Long cumulativeweight;
 
-    public BlockMCMC toBlockMCMC() throws SQLException {
-        return new BlockMCMC(Sha256Hash.wrap(Utils.HEX.encode(getBlockhash().getBytes())), getRating(), getDepth(),
+    public BlockMCMC toBlockMCMC()   {
+        return new BlockMCMC(Sha256Hash.wrap( getBlockhash() ), getRating(), getDepth(),
                 getCumulativeweight());
 
     }

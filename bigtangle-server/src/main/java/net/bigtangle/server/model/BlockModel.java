@@ -1,7 +1,6 @@
 package net.bigtangle.server.model;
 
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
@@ -28,6 +27,11 @@ public class BlockModel implements Serializable {
     Long solid;
     Boolean confirmed;
 
+    public byte[] getBlockBytes() {
+        return Utils.HEX.decode(block);
+    }
+
+    
     public String getHash() {
         return hash;
     }
@@ -126,12 +130,12 @@ public class BlockModel implements Serializable {
 
     public static BlockModel from(Block block, BlockEvaluation blockEvaluation) {
         BlockModel s = new BlockModel();
-        s.setHash(Utils.HEX.encode(block.getHash().getBytes()));
+        s.setHash(block.getHash().toString());
         s.setHeight(block.getHeight());
         s.setBlock(Utils.HEX.encode(Gzip.compress(block.unsafeBitcoinSerialize())));
 
-        s.setPrevblockhash(Utils.HEX.encode(block.getPrevBlockHash().getBytes()));
-        s.setPrevbranchblockhash(new String(block.getPrevBranchBlockHash().getBytes()));
+        s.setPrevblockhash( block.getPrevBlockHash().toString());
+        s.setPrevbranchblockhash(block.getPrevBranchBlockHash().toString());
         s.setMineraddress(Utils.HEX.encode(block.getMinerAddress()));
         s.setBlocktype(new Long(block.getBlockType().ordinal()));
 
@@ -153,5 +157,5 @@ public class BlockModel implements Serializable {
         return blockEvaluation;
 
     }
-     
+
 }
