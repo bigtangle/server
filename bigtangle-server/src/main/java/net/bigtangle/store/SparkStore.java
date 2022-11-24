@@ -42,7 +42,6 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockMCMC;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
@@ -78,9 +77,11 @@ import net.bigtangle.server.model.BlockModel;
 import net.bigtangle.server.model.MCMCModel;
 import net.bigtangle.server.model.MultiSignAddressModel;
 import net.bigtangle.server.model.MultiSignModel;
+import net.bigtangle.server.model.OutputsMultiModel;
 import net.bigtangle.server.model.TXRewardModel;
 import net.bigtangle.server.model.TokenModel;
 import net.bigtangle.server.model.UTXOModel;
+import net.bigtangle.server.model.UserDataModel;
 import net.bigtangle.utils.Gzip;
 
 /**
@@ -1741,9 +1742,8 @@ public class SparkStore implements FullBlockStore {
     public void updateRewardSpent(Sha256Hash hash, boolean b, @Nullable Sha256Hash spenderBlockHash)
             throws BlockStoreException {
 
-        sparkSession.sql(String.format(UPDATE_TX_REWARD_SPENT_SQL, b 
-                , quotedString(spenderBlockHash)
-                quotedString(hash))); 
+        sparkSession
+                .sql(String.format(UPDATE_TX_REWARD_SPENT_SQL, b, quotedString(spenderBlockHash), quotedString(hash)));
     }
 
     @Override
@@ -1775,91 +1775,48 @@ public class SparkStore implements FullBlockStore {
 
         return list;
 
-    } 
-
-   
+    }
 
     @Override
     public void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes)
             throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(UPDATE_MULTISIGN1_SQL);
-            preparedStatement.setBytes(1, bytes);
-            preparedStatement.setString(2, tokenid);
-            preparedStatement.setLong(3, tokenindex);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        sparkSession
+                .sql(String.format(UPDATE_MULTISIGN1_SQL, Utils.HEX.encode(bytes), quotedString(tokenid), tokenindex));
+
     }
 
     @Override
     public void insertOutputsMulti(OutputsMulti outputsMulti) throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(INSERT_OUTPUTSMULTI_SQL);
-            preparedStatement.setBytes(1, outputsMulti.getHash().getBytes());
-            preparedStatement.setString(2, outputsMulti.getToAddress());
-            preparedStatement.setLong(3, outputsMulti.getOutputIndex());
+        List<OutputsMultiModel> list = new ArrayList<OutputsMultiModel>();
+        OutputsMultiModel t = new OutputsMultiModel(outputsMulti.getHash(), outputsMulti.getToAddress(),
+                outputsMulti.getOutputIndex());
 
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
-                throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        list.add(t);
+
+        Dataset source = sparkSession.createDataset(list, Encoders.bean(OutputsMultiModel.class));
+        SparkData.outputs.as("target")
+                .merge(source.as("source"), "target.hash = source.hash and  target.outputindex = source.outputindex ")
+                .whenMatched().updateAll().whenNotMatched().insertAll().execute();
+
     }
 
     public List<OutputsMulti> queryOutputsMultiByHashAndIndex(byte[] hash, long index) throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
         List<OutputsMulti> list = new ArrayList<OutputsMulti>();
-        try {
-            preparedStatement = sparkSession.sql(SELECT_OUTPUTSMULTI_SQL);
-            preparedStatement.setBytes(1, hash);
-            preparedStatement.setLong(2, index);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                Sha256Hash sha256Hash = Sha256Hash.of(resultSet.getBytes("hash"));
-                String address = resultSet.getString("toaddress");
-                long outputindex = resultSet.getLong("outputindex");
 
-                OutputsMulti outputsMulti = new OutputsMulti(sha256Hash, address, outputindex);
-                list.add(outputsMulti);
-            }
-            return list;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
+        Dataset<OutputsMultiModel> s = sparkSession
+                .sql(String.format(SELECT_OUTPUTSMULTI_SQL, Utils.HEX.encode(hash), index))
+                .as(Encoders.bean(OutputsMultiModel.class));
+
+        for (OutputsMultiModel m : s.collectAsList()) {
+            Sha256Hash sha256Hash = Sha256Hash.wrap(m.getHash());
+
+            OutputsMulti outputsMulti = new OutputsMulti(sha256Hash, m.getToaddress(), m.getOutputindex());
+            list.add(outputsMulti);
         }
+        return list;
 
     }
 
@@ -1867,63 +1824,25 @@ public class SparkStore implements FullBlockStore {
     public UserData queryUserDataWithPubKeyAndDataclassname(String dataclassname, String pubKey)
             throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(SELECT_USERDATA_SQL);
-            preparedStatement.setString(1, dataclassname);
-            preparedStatement.setString(2, pubKey);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (!resultSet.next()) {
+        Dataset<UserDataModel> s = sparkSession
+                .sql(String.format(SELECT_USERDATA_SQL, quotedString(dataclassname), quotedString(pubKey)))
+                .as(Encoders.bean(UserDataModel.class)); 
+            if (!s.isEmpty()) {
                 return null;
             }
-            UserData userData = new UserData();
-            Sha256Hash blockhash = resultSet.getBytes("blockhash") != null
-                    %s Sha256Hash.wrap(resultSet.getBytes("blockhash"))
-                    : null;
-            userData.setBlockhash(blockhash);
-            userData.setData(resultSet.getBytes("data"));
-            userData.setDataclassname(resultSet.getString("dataclassname"));
-            userData.setPubKey(resultSet.getString("pubKey"));
-            userData.setBlocktype(resultSet.getLong("blocktype"));
-            return userData;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+           return s.first().toUserData();
+        
     }
 
     @Override
-    public void insertUserData(UserData userData) throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(INSERT_USERDATA_SQL);
-            preparedStatement.setBytes(1, userData.getBlockhash().getBytes());
-            preparedStatement.setString(2, userData.getDataclassname());
-            preparedStatement.setBytes(3, userData.getData());
-            preparedStatement.setString(4, userData.getPubKey());
-            preparedStatement.setLong(5, userData.getBlocktype());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+    public void insertUserData(UserData userData) throws BlockStoreException { 
+        List<UserDataModel> list = new ArrayList<>(); 
+        list.add( UserDataModel.from(userData )); 
+        Dataset source = sparkSession.createDataset(list, Encoders.bean(UserDataModel.class));
+        SparkData.outputs.as("target")
+                .merge(source.as("source"), "target.dataclassname = source.dataclassname and  target.pubkey = source.pubkey ")
+                .whenMatched().updateAll().whenNotMatched().insertAll().execute();
+ 
     }
 
     @Override
@@ -1935,7 +1854,7 @@ public class SparkStore implements FullBlockStore {
 
         PreparedStatement preparedStatement = null;
         try {
-            String sql = "select blockhash, dataclassname, data, pubKey, blocktype from userdata where blocktype = %s and pubKey in ";
+            String sql = "select blockhash, dataclassname, data, pubkey, blocktype from userdata where blocktype = %s and pubkey in ";
             StringBuffer stringBuffer = new StringBuffer();
             for (String str : pubKeyList)
                 stringBuffer.append(",'").append(str).append("'");
@@ -4382,258 +4301,8 @@ public class SparkStore implements FullBlockStore {
         }
     }
 
-    protected String getDuplicateKeyErrorCode() {
-        return "23000";
-    }
-
-    private static final String MYSQL_DUPLICATE_KEY_ERROR_CODE = "23000";
-    private static final String DATABASE_DRIVER_CLASS = "com.mysql.jdbc.Driver";
-    public static final String DATABASE_CONNECTION_URL_PREFIX = "jdbc:mysql://"; // "jdbc:log4jdbc:mysql://";
-
-    // create table SQL
-    private static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) NOT NULL,\n"
-            + "    settingvalue blob,\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" + ")\n";
-
-    private static final String CREATE_BLOCKS_TABLE = "CREATE TABLE blocks (\n" + "    hash binary(32) NOT NULL,\n"
-            + "    height bigint NOT NULL,\n" + "    block mediumblob NOT NULL,\n"
-            + "    prevblockhash  binary(32) NOT NULL,\n" + "    prevbranchblockhash  binary(32) NOT NULL,\n"
-            + "    mineraddress binary(20) NOT NULL,\n" + "    blocktype bigint NOT NULL,\n"
-            // reward block chain length is here milestone
-            + "    milestone bigint NOT NULL,\n" + "    milestonelastupdate bigint NOT NULL,\n"
-            + "    confirmed boolean NOT NULL,\n"
-
-            // solid is result of validation of the block,
-            + "    solid bigint NOT NULL,\n" + "    inserttime bigint NOT NULL,\n"
-            + "    CONSTRAINT blocks_pk PRIMARY KEY (hash) \n" + ")  ";
-
-    private static final String CREATE_MCMC_TABLE = "CREATE TABLE mcmc (\n" + "    hash binary(32) NOT NULL,\n"
-    // dynamic data
-    // MCMC rating,depth,cumulativeweight
-            + "    rating bigint NOT NULL,\n" + "    depth bigint NOT NULL,\n"
-            + "    cumulativeweight bigint NOT NULL,\n" + "    CONSTRAINT mcmc_pk PRIMARY KEY (hash) \n" + ")  ";
-
-    private static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n"
-            + "    blockhash binary(32) NOT NULL,\n" + "    hash binary(32) NOT NULL,\n"
-            + "    outputindex bigint NOT NULL,\n" + "    coinvalue mediumblob NOT NULL,\n"
-            + "    scriptbytes mediumblob NOT NULL,\n" + "    toaddress varchar(255),\n"
-            + "    addresstargetable bigint,\n" + "    coinbase boolean,\n" + "    tokenid varchar(255),\n"
-            + "    fromaddress varchar(255),\n" + "    memo MEDIUMTEXT,\n" + "    minimumsign bigint NOT NULL,\n"
-            + "    time bigint,\n"
-            // begin the derived value of the output from block
-            // this is for track the spent, spent = true means spenderblock is
-            // confirmed
-            + "    spent boolean NOT NULL,\n" + "    spenderblockhash  binary(32),\n"
-            // confirmed = the block of this output is confirmed
-            + "    confirmed boolean NOT NULL,\n"
-            // this is indicator for wallet to minimize conflict, is set for
-            // create at spender block
-            + "    spendpending boolean NOT NULL,\n" + "    spendpendingtime bigint,\n"
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (blockhash, hash, outputindex) \n" + "   )  \n";
-
-    // This is table for output with possible multi sign address
-    private static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n"
-            + "    hash binary(32) NOT NULL,\n" + "    outputindex bigint NOT NULL,\n"
-            + "    toaddress varchar(255) NOT NULL,\n"
-            + "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) \n" + ")  \n";
-
-    private static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n"
-            + "   blockhash binary(32) NOT NULL,\n" + "   confirmed boolean NOT NULL,\n"
-            + "   spent boolean NOT NULL,\n" + "   spenderblockhash binary(32),\n"
-            + "   prevblockhash binary(32) NOT NULL,\n" + "   difficulty bigint NOT NULL,\n"
-            + "   chainlength bigint NOT NULL,\n" + "   PRIMARY KEY (blockhash) ) ";
-
-    private static final String CREATE_ORDERS_TABLE = "CREATE TABLE orders (\n"
-            // initial issuing block hash
-            + "    blockhash binary(32) NOT NULL,\n"
-            // ZEROHASH if confirmed by order blocks,
-            // issuing ordermatch blockhash if issued by ordermatch block
-            + "    collectinghash binary(32) NOT NULL,\n" + "    offercoinvalue bigint NOT NULL,\n"
-            + "    offertokenid varchar(255),\n" + "   targetcoinvalue bigint,\n" + "    targettokenid varchar(255),\n"
-            // buy or sell
-            + "    side varchar(255),\n"
-            // public address
-            + "    beneficiaryaddress varchar(255),\n"
-            // the pubkey that will receive the targettokens
-            // on completion or returned tokens on cancels
-            + "    beneficiarypubkey binary(33),\n"
-            // order is valid untill this time
-            + "    validToTime bigint,\n"
-            // a number used to track operations on the
-            // order, e.g. increasing by one when refreshing
-            // order is valid after this time
-            + "    validFromTime bigint,\n"
-            // order base token
-            + "    orderbasetoken varchar(255),\n" + "    tokendecimals int ,\n" + "   price bigint,\n"
-            // true iff a order block of this order is confirmed
-            + "    confirmed boolean NOT NULL,\n"
-            // true if used by a confirmed ordermatch block (either
-            // returned or used for another orderoutput/output)
-            + "    spent boolean NOT NULL,\n" + "    spenderblockhash  binary(32),\n"
-            + "    CONSTRAINT orders_pk PRIMARY KEY (blockhash, collectinghash) " + " USING HASH \n" + ")  \n";
-
-    private static final String CREATE_ORDER_CANCEL_TABLE = "CREATE TABLE ordercancel (\n"
-            + "   blockhash binary(32) NOT NULL,\n" + "   orderblockhash binary(32) NOT NULL,\n"
-            + "   confirmed boolean NOT NULL,\n" + "   spent boolean NOT NULL,\n" + "   spenderblockhash binary(32),\n"
-            + "   time bigint NOT NULL,\n" + "   PRIMARY KEY (blockhash) ) ";
-
-    private static final String CREATE_MATCHING_TABLE = "CREATE TABLE matching (\n"
-            + "    id bigint NOT NULL AUTO_INCREMENT,\n" + "    txhash varchar(255) NOT NULL,\n"
-            + "    tokenid varchar(255) NOT NULL,\n" + "    basetokenid varchar(255) NOT NULL,\n"
-            + "    price bigint NOT NULL,\n" + "    executedQuantity bigint NOT NULL,\n"
-            + "    inserttime bigint NOT NULL,\n" + "    PRIMARY KEY (id) \n" + ") \n";
-
-    private static final String CREATE_MATCHINGDAILY_TABLE = "CREATE TABLE matchingdaily (\n"
-            + "    id bigint NOT NULL AUTO_INCREMENT,\n" + "    matchday varchar(255) NOT NULL,\n"
-            + "    tokenid varchar(255) NOT NULL,\n" + "    basetokenid varchar(255) NOT NULL,\n"
-            + "    avgprice bigint NOT NULL,\n" + "    totalQuantity bigint NOT NULL,\n"
-            + "    highprice bigint NOT NULL,\n" + "    lowprice bigint NOT NULL,\n" + "    open bigint NOT NULL,\n"
-            + "    close bigint NOT NULL,\n" + "    matchinterval varchar(255) NOT NULL,\n"
-            + "    inserttime bigint NOT NULL,\n" + "    PRIMARY KEY (id) \n" + ") \n";
-
-    private static final String CREATE_MATCHING_LAST_TABLE = "CREATE TABLE matchinglast (\n"
-            + "    txhash varchar(255) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL,\n"
-            + "    basetokenid varchar(255) NOT NULL,\n" + "    price bigint NOT NULL,\n"
-            + "    executedQuantity bigint NOT NULL,\n" + "    inserttime bigint NOT NULL,\n"
-            + "    PRIMARY KEY ( tokenid,basetokenid) \n" + ") \n";
-    private static final String CREATE_MATCHING_LAST_DAY_TABLE = "CREATE TABLE matchinglastday (\n"
-            + "    txhash varchar(255) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL,\n"
-            + "    basetokenid varchar(255) NOT NULL,\n" + "    price bigint NOT NULL,\n"
-            + "    executedQuantity bigint NOT NULL,\n" + "    inserttime bigint NOT NULL,\n"
-            + "    PRIMARY KEY ( tokenid,basetokenid) \n" + ") \n";
-
-    private static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" + "    blockhash binary(32) NOT NULL,\n"
-            + "    confirmed boolean NOT NULL,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
-            + "    tokenindex bigint NOT NULL   ,\n" + "    amount mediumblob ,\n" + "    tokenname varchar(100) ,\n"
-            + "    description varchar(5000) ,\n" + "    domainname varchar(100) ,\n"
-            + "    signnumber bigint NOT NULL   ,\n" + "    tokentype int(11),\n" + "    tokenstop boolean,\n"
-            + "    prevblockhash binary(32),\n" + "    spent boolean NOT NULL,\n"
-            + "    spenderblockhash  binary(32),\n" + "    tokenkeyvalues  mediumblob,\n" + "    revoked boolean   ,\n"
-            + "    language char(2)   ,\n" + "    classification varchar(255)   ,\n"
-            + "    domainpredblockhash varchar(255) NOT NULL,\n" + "    decimals int ,\n"
-            + "    PRIMARY KEY (blockhash) \n) ";
-
-    // Helpers
-    private static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
-            + "    blockhash binary(32) NOT NULL,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
-            + "    address varchar(255),\n" + "    pubKeyHex varchar(255),\n" + "    posIndex int(11),\n"
-            + "    tokenHolder int(11) NOT NULL DEFAULT 0,\n" + "    PRIMARY KEY (blockhash, tokenid, pubKeyHex) \n) ";
-
-    private static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
-            + "    id varchar(255) NOT NULL  ,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
-            + "    tokenindex bigint NOT NULL   ,\n" + "    address varchar(255),\n"
-            + "    blockhash  mediumblob NOT NULL,\n" + "    sign int(11) NOT NULL,\n" + "    PRIMARY KEY (id) \n) ";
-
-    private static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
-            + "    orderid varchar(255) NOT NULL  ,\n" + "    tokenid varchar(255) NOT NULL  ,\n"
-            + "    toaddress varchar(255) NOT NULL,\n" + "    blockhash mediumblob NOT NULL,\n"
-            + "    amount mediumblob ,\n" + "    minsignnumber bigint(20) ,\n" + "    outputHashHex varchar(255) ,\n"
-            + "    outputindex bigint ,\n" + "    PRIMARY KEY (orderid) \n) ";
-
-    private static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"
-            + "    orderid varchar(255) NOT NULL  ,\n" + "    pubKey varchar(255),\n" + "    sign int(11) NOT NULL,\n"
-            + "    signIndex int(11) NOT NULL,\n" + "    signInputData mediumblob,\n"
-            + "    PRIMARY KEY (orderid, pubKey) \n) ";
-
-    private static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n"
-            + "    blockhash binary(32) NOT NULL,\n" + "    dataclassname varchar(255) NOT NULL,\n"
-            + "    data mediumblob NOT NULL,\n" + "    pubKey varchar(255),\n" + "    blocktype bigint,\n"
-            + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ") ";
-
-    private static final String CREATE_BATCHBLOCK_TABLE = "CREATE TABLE batchblock (\n"
-            + "    hash binary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n"
-            + "    inserttime datetime NOT NULL,\n" + "   CONSTRAINT batchblock_pk PRIMARY KEY (hash)  \n" + ") ";
-
-    private static final String CREATE_SUBTANGLE_PERMISSION_TABLE = "CREATE TABLE subtangle_permission (\n"
-            + "    pubkey varchar(255) NOT NULL,\n" + "    userdataPubkey varchar(255) NOT NULL,\n"
-            + "    status varchar(255) NOT NULL,\n"
-            + "   CONSTRAINT subtangle_permission_pk PRIMARY KEY (pubkey) USING BTREE \n" + ") ";
-
-    /*
-     * indicate of a server created block
-     */
-    private static final String CREATE_MYSERVERBLOCKS_TABLE = "CREATE TABLE myserverblocks (\n"
-            + "    prevhash binary(32) NOT NULL,\n" + "    hash binary(32) NOT NULL,\n" + "    inserttime bigint,\n"
-            + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" + ") ";
-
-    private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
-            + "   orderid varchar(255) NOT NULL,\n" + "   fromAddress varchar(255),\n"
-            + "   fromTokenHex varchar(255),\n" + "   fromAmount varchar(255),\n" + "   toAddress varchar(255),\n"
-            + "   toTokenHex varchar(255),\n" + "   toAmount varchar(255),\n" + "   data varbinary(5000) NOT NULL,\n"
-            + "   toSign boolean,\n" + "   fromSign integer,\n" + "   toOrderId varchar(255),\n"
-            + "   fromOrderId varchar(255),\n" + "   market varchar(255),\n" + "   memo varchar(255),\n"
-            + "   signInputData varbinary(5000),\n" + "   PRIMARY KEY (orderid) ) ";
-
-    private static final String CREATE_EXCHANGE_MULTISIGN_TABLE = "CREATE TABLE exchange_multisign (\n"
-            + "   orderid varchar(255) ,\n" + "   pubkey varchar(255),\n" + "   signInputData varbinary(5000),\n"
-            + "   sign integer\n" + "    ) ";
-
-    private static final String CREATE_ACCESS_PERMISSION_TABLE = "CREATE TABLE access_permission (\n"
-            + "   accessToken varchar(255) ,\n" + "   pubKey varchar(255),\n" + "   refreshTime bigint,\n"
-            + "   PRIMARY KEY (accessToken) ) ";
-
-    private static final String CREATE_ACCESS_GRANT_TABLE = "CREATE TABLE access_grant (\n"
-            + "   address varchar(255),\n" + "   createTime bigint,\n" + "   PRIMARY KEY (address) ) ";
-
-    private static final String CREATE_CONTRACT_EVENT_TABLE = "CREATE TABLE contractevent (\n"
-            // initial issuing block hash
-            + "    blockhash binary(32) NOT NULL,\n" + "    contracttokenid varchar(255),\n"
-            + "   targetcoinvalue mediumblob,\n" + "    targettokenid varchar(255),\n"
-            // public address
-            + "    beneficiaryaddress varchar(255),\n"
-            // the pubkey that will receive the targettokens
-            // on completion or returned tokens on cancels
-            + "    beneficiarypubkey binary(33),\n"
-            // valid until this time
-            + "    validToTime bigint,\n" + "    validFromTime bigint,\n"
-            // true iff a order block of this order is confirmed
-            + "    confirmed boolean NOT NULL,\n"
-            // true if used by a confirmed block (either
-            // returned or used for another )
-            + "    spent boolean NOT NULL,\n" + "    spenderblockhash  binary(32),\n"
-            + "    CONSTRAINT contractevent_pk PRIMARY KEY (blockhash) " + " USING HASH \n" + ")  \n";
-
-    private static final String CREATE_CONTRACT_ACCOUNT_TABLE = "CREATE TABLE contractaccount (\n"
-            + "    contracttokenid varchar(255)  NOT NULL,\n" + "    tokenid varchar(255)  NOT NULL,\n"
-            + "    coinvalue mediumblob, \n"
-            // block hash of the last execution block
-            + "    blockhash binary(32) NOT NULL,\n"
-            + "    CONSTRAINT contractaccount_pk PRIMARY KEY (contracttokenid, tokenid) " + ")  \n";
-
-    private static final String CREATE_CONTRACT_EXECUTION_TABLE = "CREATE TABLE contractexecution (\n"
-            + "   blockhash binary(32) NOT NULL,\n" + "   contracttokenid varchar(255)  NOT NULL,\n"
-            + "   confirmed boolean NOT NULL,\n" + "   spent boolean NOT NULL,\n" + "   spenderblockhash binary(32),\n"
-            + "   prevblockhash binary(32) NOT NULL,\n" + "   difficulty bigint NOT NULL,\n"
-            + "   chainlength bigint NOT NULL,\n" + "   resultdata blob NOT NULL,\n" + "   PRIMARY KEY (blockhash) ) ";
-
-    private static final String CREATE_CHAINBLOCKQUEUE_TABLE = "CREATE TABLE chainblockqueue (\n"
-            + "    hash binary(32) NOT NULL,\n" + "    block mediumblob NOT NULL,\n" + "    chainlength bigint,\n "
-            + "    orphan boolean,\n " + "    inserttime bigint NOT NULL,\n"
-            + "    CONSTRAINT chainblockqueue_pk PRIMARY KEY (hash)  \n" + ")  \n";
-    private static final String CREATE_LOCKOBJECT_TABLE = "CREATE TABLE lockobject (\n"
-            + "    lockobjectid varchar(255) NOT NULL,\n" + "    locktime bigint NOT NULL,\n"
-            + "    CONSTRAINT lockobject_pk PRIMARY KEY (lockobjectid)  \n" + ")  \n";
-
-    // Some indexes to speed up stuff
-    private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
-    private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING HASH";
-    private static final String CREATE_OUTPUTS_FROMADDRESS_INDEX = "CREATE INDEX outputs_fromaddress_idx ON outputs (fromaddress) USING HASH";
-
-    private static final String CREATE_PREVBRANCH_HASH_INDEX = "CREATE INDEX blocks_prevbranchblockhash_idx ON blocks (prevbranchblockhash) USING HASH";
-    private static final String CREATE_PREVTRUNK_HASH_INDEX = "CREATE INDEX blocks_prevblockhash_idx ON blocks (prevblockhash) USING HASH";
-
-    private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
-    private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
-
-    private static final String CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX orders_collectinghash_idx ON orders (collectinghash) USING btree";
-    private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone)  USING btree ";
-    private static final String CREATE_BLOCKS_HEIGHT_INDEX = "CREATE INDEX blocks_height_idx ON blocks (height)  USING btree ";
-    private static final String CREATE_TXREARD_CHAINLENGTH_INDEX = "CREATE INDEX txreard_chainlength_idx ON txreward (chainlength)  USING btree ";
-    private static final String CREATE_CONTRACT_EVENT_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractevent_contracttokenid_idx ON contractevent (contracttokenid) USING btree";
-    private static final String CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractexecution_contracttokenid_idx ON contractexecution (contracttokenid) USING btree";
-    private static final String CREATE_ORDERS_SPENT_TABLE_INDEX = "CREATE INDEX orders_spent_idx ON orders (confirmed, spent) ";
-    private static final String CREATE_MATCHING_TOKEN_TABLE_INDEX = "CREATE INDEX matching_inserttime_idx ON matching (inserttime) ";
-
-    private static final String CREATE_TOKEN_TOKENID_TABLE_INDEX = "CREATE INDEX tokens_tokenid_idx ON tokens (tokenid) ";
+ 
+    
 
     protected List<String> getCreateTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();

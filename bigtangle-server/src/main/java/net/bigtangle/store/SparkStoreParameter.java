@@ -171,8 +171,9 @@ public class SparkStoreParameter {
 
     public static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n"
             + "    blockhash string ,\n" + "    dataclassname varchar(255) ,\n"
-            + "    data string ,\n" + "    pubKey varchar(255),\n" + "    blocktype bigint,\n"
-            + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubKey) USING BTREE \n" + ") ";
+            + "    data string ,\n" + "    pubkey varchar(255),\n" + "    blocktype bigint \n"
+         //   + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubkey) USING BTREE"
+            + " \n" + ") ";
 
     public static final String CREATE_BATCHBLOCK_TABLE = "CREATE TABLE batchblock (\n"
             + "    hash string ,\n" + "    block string ,\n"
