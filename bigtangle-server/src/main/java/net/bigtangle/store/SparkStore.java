@@ -21,7 +21,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeSet;
@@ -67,7 +66,6 @@ import net.bigtangle.core.ordermatch.MatchLastdayResult;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.data.BatchBlock;
 import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.DepthAndWeight;
@@ -77,7 +75,11 @@ import net.bigtangle.server.model.BlockModel;
 import net.bigtangle.server.model.MCMCModel;
 import net.bigtangle.server.model.MultiSignAddressModel;
 import net.bigtangle.server.model.MultiSignModel;
+import net.bigtangle.server.model.OrderCancelModel;
+import net.bigtangle.server.model.OrderRecordModel;
 import net.bigtangle.server.model.OutputsMultiModel;
+import net.bigtangle.server.model.PayMultiSignAddressModel;
+import net.bigtangle.server.model.PayMultiSignModel;
 import net.bigtangle.server.model.TXRewardModel;
 import net.bigtangle.server.model.TokenModel;
 import net.bigtangle.server.model.UTXOModel;
@@ -1826,23 +1828,24 @@ public class SparkStore implements FullBlockStore {
 
         Dataset<UserDataModel> s = sparkSession
                 .sql(String.format(SELECT_USERDATA_SQL, quotedString(dataclassname), quotedString(pubKey)))
-                .as(Encoders.bean(UserDataModel.class)); 
-            if (!s.isEmpty()) {
-                return null;
-            }
-           return s.first().toUserData();
-        
+                .as(Encoders.bean(UserDataModel.class));
+        if (!s.isEmpty()) {
+            return null;
+        }
+        return s.first().toUserData();
+
     }
 
     @Override
-    public void insertUserData(UserData userData) throws BlockStoreException { 
-        List<UserDataModel> list = new ArrayList<>(); 
-        list.add( UserDataModel.from(userData )); 
+    public void insertUserData(UserData userData) throws BlockStoreException {
+        List<UserDataModel> list = new ArrayList<>();
+        list.add(UserDataModel.from(userData));
         Dataset source = sparkSession.createDataset(list, Encoders.bean(UserDataModel.class));
         SparkData.outputs.as("target")
-                .merge(source.as("source"), "target.dataclassname = source.dataclassname and  target.pubkey = source.pubkey ")
+                .merge(source.as("source"),
+                        "target.dataclassname = source.dataclassname and  target.pubkey = source.pubkey ")
                 .whenMatched().updateAll().whenNotMatched().insertAll().execute();
- 
+
     }
 
     @Override
@@ -1851,127 +1854,53 @@ public class SparkStore implements FullBlockStore {
         if (pubKeyList.isEmpty()) {
             return new ArrayList<UserData>();
         }
+        String sql = "select blockhash, dataclassname, data, pubkey, blocktype from userdata where blocktype = %s and pubkey in ";
+        StringBuffer stringBuffer = new StringBuffer();
+        for (String str : pubKeyList)
+            stringBuffer.append(",'").append(str).append("'");
+        sql += "(" + stringBuffer.substring(1) + ")";
 
-        PreparedStatement preparedStatement = null;
-        try {
-            String sql = "select blockhash, dataclassname, data, pubkey, blocktype from userdata where blocktype = %s and pubkey in ";
-            StringBuffer stringBuffer = new StringBuffer();
-            for (String str : pubKeyList)
-                stringBuffer.append(",'").append(str).append("'");
-            sql += "(" + stringBuffer.substring(1) + ")";
+        Dataset<UserDataModel> s = sparkSession.sql(String.format(sql, blocktype))
+                .as(Encoders.bean(UserDataModel.class));
 
-            preparedStatement = sparkSession.sql(sql);
-            preparedStatement.setLong(1, blocktype);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            List<UserData> list = new ArrayList<UserData>();
-            while (resultSet.next()) {
-                UserData userData = new UserData();
-                Sha256Hash blockhash = resultSet.getBytes("blockhash") != null
-                        %s Sha256Hash.wrap(resultSet.getBytes("blockhash"))
-                        : null;
-                userData.setBlockhash(blockhash);
-                userData.setData(resultSet.getBytes("data"));
-                userData.setDataclassname(resultSet.getString("dataclassname"));
-                userData.setPubKey(resultSet.getString("pubKey"));
-                userData.setBlocktype(resultSet.getLong("blocktype"));
-                list.add(userData);
-            }
-            return list;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
+        List<UserData> list = new ArrayList<UserData>();
+        for (UserDataModel m : s.collectAsList()) {
+            list.add(m.toUserData());
         }
+        return list;
+
     }
 
     @Override
     public void updateUserData(UserData userData) throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(UPDATE_USERDATA_SQL);
-            preparedStatement.setBytes(1, userData.getBlockhash().getBytes());
-            preparedStatement.setBytes(2, userData.getData());
-            preparedStatement.setString(3, userData.getDataclassname());
-            preparedStatement.setString(4, userData.getPubKey());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        List<UserDataModel> list = new ArrayList<>();
+        list.add(UserDataModel.from(userData));
+        Dataset source = sparkSession.createDataset(list, Encoders.bean(UserDataModel.class));
+        SparkData.outputs.as("target")
+                .merge(source.as("source"),
+                        "target.dataclassname = source.dataclassname and  target.pubkey = source.pubkey ")
+                .whenMatched().updateAll().whenNotMatched().insertAll().execute();
+
     }
 
     @Override
     public void insertPayPayMultiSign(PayMultiSign payMultiSign) throws BlockStoreException {
-        String sql = "insert into paymultisign (orderid, tokenid, toaddress, blockhash, amount, minsignnumber,"
-                + " outputHashHex,  outputindex) values (%s, %s, %s, %s, %s, %s, %s,%s)";
+        List<PayMultiSignModel> list = new ArrayList<>();
+        list.add(PayMultiSignModel.from(payMultiSign));
+        Dataset source = sparkSession.createDataset(list, Encoders.bean(PayMultiSignModel.class));
+        SparkData.outputs.as("target").merge(source.as("source"), "target.orderid = source.orderid  ").whenMatched()
+                .updateAll().whenNotMatched().insertAll().execute();
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(sql);
-            preparedStatement.setString(1, payMultiSign.getOrderid());
-            preparedStatement.setString(2, payMultiSign.getTokenid());
-            preparedStatement.setString(3, payMultiSign.getToaddress());
-            preparedStatement.setBytes(4, payMultiSign.getBlockhash());
-            preparedStatement.setBytes(5, payMultiSign.getAmount().toByteArray());
-            preparedStatement.setLong(6, payMultiSign.getMinsignnumber());
-            preparedStatement.setString(7, payMultiSign.getOutputHashHex());
-            preparedStatement.setLong(8, payMultiSign.getOutputindex());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
     }
 
     @Override
     public void insertPayMultiSignAddress(PayMultiSignAddress payMultiSignAddress) throws BlockStoreException {
-        String sql = "insert into paymultisignaddress (orderid, pubKey, sign, signInputData, signIndex) values (%s, %s, %s, %s, %s)";
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(sql);
-            preparedStatement.setString(1, payMultiSignAddress.getOrderid());
-            preparedStatement.setString(2, payMultiSignAddress.getPubKey());
-            preparedStatement.setInt(3, payMultiSignAddress.getSign());
-            preparedStatement.setBytes(4, payMultiSignAddress.getSignInputData());
-            preparedStatement.setInt(5, payMultiSignAddress.getSignIndex());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        List<PayMultiSignAddressModel> list = new ArrayList<>();
+        list.add(PayMultiSignAddressModel.from(payMultiSignAddress));
+        Dataset source = sparkSession.createDataset(list, Encoders.bean(PayMultiSignAddressModel.class));
+        SparkData.outputs.as("target").merge(source.as("source"), "target.orderid = source.orderid  ").whenMatched()
+                .updateAll().whenNotMatched().insertAll().execute();
     }
 
     @Override
@@ -1979,146 +1908,9 @@ public class SparkStore implements FullBlockStore {
             throws BlockStoreException {
         String sql = "update paymultisignaddress set sign = %s, signInputData = %s where orderid = %s and pubKey = %s";
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(sql);
-            preparedStatement.setInt(1, sign);
-            preparedStatement.setBytes(2, signInputData);
-            preparedStatement.setString(3, orderid);
-            preparedStatement.setString(4, pubKey);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
+        sparkSession.sql(
+                String.format(sql, sign, Utils.HEX.encode(signInputData), quotedString(orderid), quotedString(pubKey)));
 
-    @Override
-    public int getMaxPayMultiSignAddressSignIndex(String orderid) throws BlockStoreException {
-        String sql = "SELECT MAX(signIndex) AS signIndex FROM paymultisignaddress WHERE orderid = %s";
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(sql);
-            preparedStatement.setString(1, orderid);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            return resultSet.getInt(1);
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public PayMultiSign getPayMultiSignWithOrderid(String orderid) throws BlockStoreException {
-        String sql = "select orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outputHashHex, outputindex from paymultisign where orderid = %s";
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(sql);
-            preparedStatement.setString(1, orderid.trim());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (!resultSet.next()) {
-                return null;
-            }
-            PayMultiSign payMultiSign = new PayMultiSign();
-            payMultiSign.setAmount(new BigInteger(resultSet.getBytes("amount")));
-            payMultiSign.setBlockhash(resultSet.getBytes("blockhash"));
-            payMultiSign.setMinsignnumber(resultSet.getLong("minsignnumber"));
-            payMultiSign.setOrderid(resultSet.getString("orderid"));
-            payMultiSign.setToaddress(resultSet.getString("toaddress"));
-            payMultiSign.setTokenid(resultSet.getString("tokenid"));
-            payMultiSign.setBlockhashHex(Utils.HEX.encode(payMultiSign.getBlockhash()));
-            payMultiSign.setOutputHashHex(resultSet.getString("outputHashHex"));
-            payMultiSign.setOutputindex(resultSet.getLong("outputindex"));
-            return payMultiSign;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<PayMultiSignAddress> getPayMultiSignAddressWithOrderid(String orderid) throws BlockStoreException {
-        String sql = "select orderid, pubKey, sign, signInputData, signIndex from paymultisignaddress where orderid = %s ORDER BY signIndex ASC";
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(sql);
-            preparedStatement.setString(1, orderid.trim());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            List<PayMultiSignAddress> list = new ArrayList<PayMultiSignAddress>();
-            while (resultSet.next()) {
-                PayMultiSignAddress payMultiSignAddress = new PayMultiSignAddress();
-                payMultiSignAddress.setOrderid(resultSet.getString("orderid"));
-                payMultiSignAddress.setPubKey(resultSet.getString("pubKey"));
-                payMultiSignAddress.setSign(resultSet.getInt("sign"));
-                payMultiSignAddress.setSignInputData(resultSet.getBytes("signInputData"));
-                payMultiSignAddress.setSignIndex(resultSet.getInt("signIndex"));
-                list.add(payMultiSignAddress);
-            }
-            return list;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void updatePayMultiSignBlockhash(String orderid, byte[] blockhash) throws BlockStoreException {
-        String sql = "update paymultisign set blockhash = %s where orderid = %s";
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(sql);
-            preparedStatement.setBytes(1, blockhash);
-            preparedStatement.setString(2, orderid);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
     }
 
     @Override
@@ -2135,66 +1927,27 @@ public class SparkStore implements FullBlockStore {
             stringBuffer.append(",'").append(pubKey).append("'");
         sql += " in (" + stringBuffer.substring(1) + ")";
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(sql);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            List<PayMultiSign> list = new ArrayList<PayMultiSign>();
-            while (resultSet.next()) {
-                PayMultiSign payMultiSign = new PayMultiSign();
-                payMultiSign.setAmount(new BigInteger(resultSet.getBytes("amount")));
-                payMultiSign.setBlockhash(resultSet.getBytes("blockhash"));
-                payMultiSign.setMinsignnumber(resultSet.getLong("minsignnumber"));
-                payMultiSign.setOrderid(resultSet.getString("orderid"));
-                payMultiSign.setToaddress(resultSet.getString("toaddress"));
-                payMultiSign.setTokenid(resultSet.getString("tokenid"));
-                payMultiSign.setBlockhashHex(Utils.HEX.encode(payMultiSign.getBlockhash()));
-                payMultiSign.setOutputHashHex(resultSet.getString("outputHashHex"));
-                payMultiSign.setOutputindex(resultSet.getLong("outputindex"));
-                payMultiSign.setSign(resultSet.getInt("sign"));
-                payMultiSign.setSigncount(resultSet.getInt("signcount"));
-                list.add(payMultiSign);
-            }
-            return list;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
+        Dataset<PayMultiSignModel> s = sparkSession.sql(sql).as(Encoders.bean(PayMultiSignModel.class));
+
+        List<PayMultiSign> list = new ArrayList<PayMultiSign>();
+        for (PayMultiSignModel p : s.collectAsList()) {
+            list.add(p.toPayMultiSign());
         }
+        return list;
+
     }
 
     @Override
     public int getCountPayMultiSignAddressStatus(String orderid) throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession
-                    .sql("select count(*) as count from paymultisignaddress where orderid = %s and sign = 1");
-            preparedStatement.setString(1, orderid);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return resultSet.getInt("count");
-            }
-            return 0;
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
+        String sql = "select count(*) as count from paymultisignaddress where orderid = %s and sign = 1";
+        Dataset<Row> s = sparkSession.sql(String.format(sql, quotedString(orderid)));
+
+        if (!s.isEmpty()) {
+            return s.first().getInt(0);
         }
+        return 0;
+
     }
 
     @Override
@@ -2203,474 +1956,97 @@ public class SparkStore implements FullBlockStore {
                 + " addresstargetable, blockhash, tokenid, fromaddress, memo, minimumsign, time, spent, confirmed, "
                 + " spendpending, spendpendingtime FROM outputs WHERE hash = %s and outputindex = %s";
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(sql);
-            preparedStatement.setBytes(1, hash);
-            preparedStatement.setLong(2, outputindex);
-            ResultSet results = preparedStatement.executeQuery();
-            if (!results.next()) {
+        Dataset<UTXOModel> s = sparkSession.sql(String.format(sql, quotedString(hash), outputindex))
+                .as(Encoders.bean(UTXOModel.class));
+
+        if (!s.isEmpty()) {
+            return null;
+        } 
+        return s.first().toUTXO();
+
+    }
+
+    @Override
+    public String getSettingValue(String name) throws BlockStoreException {
+      
+           
+            Dataset<Row> s = sparkSession.sql(String.format(getSelectSettingsSQL(), quotedString(name) ));
+
+            if (!s.isEmpty()) {
                 return null;
             }
-            // Parse it.
-            Coin amount = new Coin(new BigInteger(results.getBytes("coinvalue")), results.getString("tokenid"));
-            byte[] scriptBytes = results.getBytes("scriptbytes");
-            boolean coinbase = results.getBoolean("coinbase");
-            String address = results.getString("toaddress");
-            Sha256Hash blockhash = Sha256Hash.wrap(results.getBytes("blockhash"));
-            Sha256Hash spenderblockhash = Sha256Hash.wrap(results.getBytes("spenderblockhash"));
-            String fromaddress = results.getString("fromaddress");
-            String memo = results.getString("memo");
-            boolean spent = results.getBoolean("spent");
-            boolean confirmed = results.getBoolean("confirmed");
-            boolean spendPending = results.getBoolean("spendpending");
-            String tokenid = results.getString("tokenid");
-
-            // long outputindex = results.getLong("outputindex");
-
-            UTXO utxo = new UTXO(Sha256Hash.wrap(hash), outputindex, amount, coinbase, new Script(scriptBytes), address,
-                    blockhash, fromaddress, memo, tokenid, spent, confirmed, spendPending, 0,
-                    results.getLong("spendpendingtime"), results.getLong("time"), spenderblockhash);
-            return utxo;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+            return s.first().getString(0);
+      
     }
 
-    @Override
-    public byte[] getSettingValue(String name) throws BlockStoreException {
-        PreparedStatement preparedStatement = null;
-
-        try {
-            preparedStatement = sparkSession.sql(getSelectSettingsSQL());
-            preparedStatement.setString(1, name);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (!resultSet.next()) {
-                return null;
-            }
-            return resultSet.getBytes(1);
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void insertBatchBlock(Block block) throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(INSERT_BATCHBLOCK_SQL);
-            preparedStatement.setBytes(1, block.getHash().getBytes());
-            preparedStatement.setBytes(2, Gzip.compress(block.bitcoinSerialize()));
-            preparedStatement.setTimestamp(3, new java.sql.Timestamp(System.currentTimeMillis()));
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void deleteBatchBlock(Sha256Hash hash) throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(DELETE_BATCHBLOCK_SQL);
-            preparedStatement.setBytes(1, hash.getBytes());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<BatchBlock> getBatchBlockList() throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(SELECT_BATCHBLOCK_SQL);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            List<BatchBlock> list = new ArrayList<BatchBlock>();
-            while (resultSet.next()) {
-                BatchBlock batchBlock = new BatchBlock();
-                batchBlock.setHash(Sha256Hash.wrap(resultSet.getBytes("hash")));
-                batchBlock.setBlock(Gzip.decompressOut(resultSet.getBytes("block")));
-                batchBlock.setInsertTime(resultSet.getDate("inserttime"));
-                list.add(batchBlock);
-            }
-            return list;
-        } catch (Exception ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void insertSubtanglePermission(String pubkey, String userdatapubkey, String status)
-            throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(INSERT_SUBTANGLE_PERMISSION_SQL);
-            preparedStatement.setString(1, pubkey);
-            preparedStatement.setString(2, userdatapubkey);
-            preparedStatement.setString(3, status);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void deleteSubtanglePermission(String pubkey) throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(DELETE_SUBTANGLE_PERMISSION_SQL);
-            preparedStatement.setString(1, pubkey);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void updateSubtanglePermission(String pubkey, String userdataPubkey, String status)
-            throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(UPATE_ALL_SUBTANGLE_PERMISSION_SQL);
-            preparedStatement.setString(1, status);
-            preparedStatement.setString(2, userdataPubkey);
-            preparedStatement.setString(3, pubkey);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<Map<String, String>> getAllSubtanglePermissionList() throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        List<Map<String, String>> list = new ArrayList<Map<String, String>>();
-        try {
-            preparedStatement = sparkSession.sql(SELECT_ALL_SUBTANGLE_PERMISSION_SQL);
-
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                Map<String, String> map = new HashMap<String, String>();
-                map.put("pubkey", resultSet.getString("pubkey"));
-                map.put("userdataPubkey", resultSet.getString("userdataPubkey"));
-                map.put("status", resultSet.getString("status"));
-                list.add(map);
-            }
-            return list;
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<Map<String, String>> getSubtanglePermissionListByPubkey(String pubkey) throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        List<Map<String, String>> list = new ArrayList<Map<String, String>>();
-        try {
-            preparedStatement = sparkSession.sql(SELECT_ALL_SUBTANGLE_PERMISSION_SQL);
-            preparedStatement.setString(1, pubkey);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                Map<String, String> map = new HashMap<String, String>();
-                map.put("pubkey", resultSet.getString("pubkey"));
-                map.put("userdataPubkey", resultSet.getString("userdataPubkey"));
-                map.put("status", resultSet.getString("status"));
-                list.add(map);
-            }
-            return list;
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public List<Map<String, String>> getSubtanglePermissionListByPubkeys(List<String> pubkeys)
-            throws BlockStoreException {
-        String sql = SELECT_SUBTANGLE_PERMISSION_BY_PUBKEYS_SQL + " AND pubkey ";
-        StringBuffer stringBuffer = new StringBuffer();
-        for (String pubKey : pubkeys)
-            stringBuffer.append(",'").append(pubKey).append("'");
-        sql += " in (" + stringBuffer.substring(1) + ")";
-
-        PreparedStatement preparedStatement = null;
-        List<Map<String, String>> list = new ArrayList<Map<String, String>>();
-        try {
-            preparedStatement = sparkSession.sql(sql);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                Map<String, String> map = new HashMap<String, String>();
-                map.put("pubkey", resultSet.getString("pubkey"));
-                map.put("userdataPubkey", resultSet.getString("userdataPubkey"));
-                map.put("status", resultSet.getString("status"));
-                list.add(map);
-            }
-            return list;
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
+ 
+ 
 
     @Override
     public boolean getOrderConfirmed(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(SELECT_ORDER_CONFIRMED_SQL);
-            preparedStatement.setBytes(1, txHash.getBytes());
-            preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            return resultSet.getBoolean(1);
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        return sparkSession.sql(String.format(SELECT_ORDER_CONFIRMED_SQL, quotedString(txHash),
+                quotedString(issuingMatcherBlockHash)  )).first().getBoolean(0);
+  
     }
 
     @Override
     public Sha256Hash getOrderSpender(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash)
             throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(SELECT_ORDER_SPENDER_SQL);
-            preparedStatement.setBytes(1, txHash.getBytes());
-            preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            return resultSet.getBytes(1) == null %s null : Sha256Hash.wrap(resultSet.getBytes(1));
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        return Sha256Hash.wrap(sparkSession.sql(String.format(SELECT_ORDER_SPENDER_SQL, quotedString(txHash),
+                quotedString(issuingMatcherBlockHash)  )).first().getString(0));
+       
     }
 
     @Override
     public boolean getOrderSpent(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(SELECT_ORDER_SPENT_SQL);
-            preparedStatement.setBytes(1, txHash.getBytes());
-            preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            resultSet.next();
-            return resultSet.getBoolean(1);
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        return sparkSession.sql(String.format(SELECT_ORDER_SPENT_SQL, quotedString(txHash),
+                quotedString(issuingMatcherBlockHash)  )).first().getBoolean(0);
+  
+        
     }
 
     @Override
     public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
             throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
+        Dataset<OrderRecordModel> s = sparkSession.sql(String.format(SELECT_ORDERS_BY_ISSUER_SQL,  
+                quotedString(issuingMatcherBlockHash)  ))     .as(Encoders.bean(OrderRecordModel.class));
+;
         HashMap<Sha256Hash, OrderRecord> result = new HashMap<>();
-        try {
-            preparedStatement = sparkSession.sql(SELECT_ORDERS_BY_ISSUER_SQL);
-            preparedStatement.setBytes(1, issuingMatcherBlockHash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                result.put(Sha256Hash.wrap(resultSet.getBytes(1)), setOrder(resultSet));
+      
+            for(OrderRecordModel p:s.collectAsList()) {
+                result.put(Sha256Hash.wrap(p.getBlockhash()), p.toOrderRecord());
             }
             return result;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        
     }
 
     @Override
     public OrderRecord getOrder(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(SELECT_ORDER_SQL);
-            preparedStatement.setBytes(1, txHash.getBytes());
-            preparedStatement.setBytes(2, issuingMatcherBlockHash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (!resultSet.next())
+
+        Dataset<OrderRecordModel> s = sparkSession.sql(String.format(SELECT_ORDER_SQL,  quotedString(txHash),
+                quotedString(issuingMatcherBlockHash)  ))     .as(Encoders.bean(OrderRecordModel.class));
+  
+            if (!s.isEmpty())
                 return null;
 
-            return setOrder(resultSet);
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+            return s.first().toOrderRecord();
+       
     }
 
     @Override
     public void insertCancelOrder(OrderCancel orderCancel) throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(INSERT_OrderCancel_SQL);
-            preparedStatement.setBytes(1, orderCancel.getBlockHash().getBytes());
-            preparedStatement.setBytes(2, orderCancel.getOrderBlockHash().getBytes());
-        } catch (SQLException e) {
-            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
-                throw new BlockStoreException(e);
-
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        List<OrderCancelModel> list = new ArrayList<>();
+        list.add(OrderCancelModel.from(orderCancel));
+        Dataset source = sparkSession.createDataset(list, Encoders.bean(OrderCancelModel.class));
+        SparkData.outputs.as("target").merge(source.as("source"), "target.orderblockhash = source.orderblockhash  ").whenMatched()
+                .updateAll().whenNotMatched().insertAll().execute();
+ 
     }
 
     @Override
@@ -2678,46 +2054,16 @@ public class SparkStore implements FullBlockStore {
         if (records == null)
             return;
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(INSERT_ORDER_SQL);
-            for (OrderRecord record : records) {
-                preparedStatement.setBytes(1, record.getBlockHash().getBytes());
-                preparedStatement.setBytes(2, record.getIssuingMatcherBlockHash().getBytes());
-                preparedStatement.setLong(3, record.getOfferValue());
-                preparedStatement.setString(4, record.getOfferTokenid());
-                preparedStatement.setBoolean(5, record.isConfirmed());
-                preparedStatement.setBoolean(6, record.isSpent());
-                preparedStatement.setBytes(7,
-                        record.getSpenderBlockHash() != null %s record.getSpenderBlockHash().getBytes() : null);
-                preparedStatement.setLong(8, record.getTargetValue());
-                preparedStatement.setString(9, record.getTargetTokenid());
-                preparedStatement.setBytes(10, record.getBeneficiaryPubKey());
-                preparedStatement.setLong(11, record.getValidToTime());
-                preparedStatement.setLong(12, record.getValidFromTime());
-                preparedStatement.setString(13, record.getSide() == null %s null : record.getSide().name());
-                preparedStatement.setString(14, record.getBeneficiaryAddress());
-                preparedStatement.setString(15, record.getOrderBaseToken());
-                preparedStatement.setLong(16, record.getPrice());
-                preparedStatement.setInt(17, record.getTokenDecimals());
-                preparedStatement.addBatch();
-            }
-            preparedStatement.executeBatch();
-
-        } catch (SQLException e) {
-            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
-                throw new BlockStoreException(e);
-
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
+        List<OrderRecordModel> list = new ArrayList<>();
+        for (OrderRecord record : records) {
+        list.add(OrderRecordModel.from(record));
         }
+        
+        Dataset source = sparkSession.createDataset(list, Encoders.bean(OrderRecordModel.class));
+        SparkData.outputs.as("target").merge(source.as("source"), "target.orderblockhash = source.orderblockhash and"
+                + "target.issuingmatcherblockHash = source.issuingmatcherblockHash  ").whenMatched()
+                .updateAll().whenNotMatched().insertAll().execute();
+   
     }
 
     @Override
@@ -3065,20 +2411,7 @@ public class SparkStore implements FullBlockStore {
             }
         }
     }
-
-    private OrderRecord setOrder(ResultSet resultSet) throws SQLException {
-        return new OrderRecord(Sha256Hash.wrap(resultSet.getBytes("blockhash")),
-                Sha256Hash.wrap(resultSet.getBytes("collectinghash")), resultSet.getLong("offercoinvalue"),
-                resultSet.getString("offertokenid"), resultSet.getBoolean("confirmed"), resultSet.getBoolean("spent"),
-                resultSet.getBytes("spenderblockhash") == null %s null
-                        : Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")),
-                resultSet.getLong("targetcoinvalue"), resultSet.getString("targetTokenid"),
-                resultSet.getBytes("beneficiarypubkey"), resultSet.getLong("validToTime"),
-                resultSet.getLong("validFromTime"), resultSet.getString("side"),
-                resultSet.getString("beneficiaryaddress"), resultSet.getString("orderbasetoken"),
-                resultSet.getLong("price"), resultSet.getInt("tokendecimals"));
-
-    }
+ 
 
     @Override
     public List<OrderRecord> getMyClosedOrders(List<String> addresses) throws BlockStoreException {
@@ -3177,72 +2510,7 @@ public class SparkStore implements FullBlockStore {
         }
     }
 
-    @Override
-    public void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime) throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = getConnection()
-                    .prepareStatement(" insert into myserverblocks (prevhash, hash, inserttime) values (%s,%s,%s) ");
-            preparedStatement.setBytes(1, prevhash.getBytes());
-            preparedStatement.setBytes(2, hash.getBytes());
-            preparedStatement.setLong(3, inserttime);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
-                throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
-
-    @Override
-    public void deleteMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {
-        // delete only one, but anyone
-
-        PreparedStatement preparedStatement = null;
-        PreparedStatement p2 = null;
-        try {
-            preparedStatement = sparkSession.sql(" select hash from myserverblocks where prevhash = %s");
-            preparedStatement.setBytes(1, prevhash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                byte[] hash = resultSet.getBytes(1);
-                p2 = sparkSession.sql(" delete  from  myserverblocks  where prevhash = %s  and hash =%s");
-                p2.setBytes(1, prevhash.getBytes());
-                p2.setBytes(2, hash);
-                p2.executeUpdate();
-            }
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-            if (p2 != null) {
-                try {
-                    p2.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-
-    }
-
+ 
     @Override
     public boolean existBlock(Sha256Hash hash) throws BlockStoreException {
 
@@ -3267,29 +2535,7 @@ public class SparkStore implements FullBlockStore {
 
     }
 
-    @Override
-    public boolean existMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(" select hash from myserverblocks where prevhash = %s");
-            preparedStatement.setBytes(1, prevhash.getBytes());
-            ResultSet resultSet = preparedStatement.executeQuery();
-            return resultSet.next();
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-
-    }
+ 
 
     @Override
     public void insertMatchingEvent(List<MatchResult> matchs) throws BlockStoreException {
@@ -4301,9 +3547,6 @@ public class SparkStore implements FullBlockStore {
         }
     }
 
- 
-    
-
     protected List<String> getCreateTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.addAll(getCreateTablesSQL1());
@@ -4366,48 +3609,14 @@ public class SparkStore implements FullBlockStore {
 
     }
 
-    protected List<String> getCreateIndexesSQL() {
-        List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.addAll(getCreateIndexesSQL1());
-        sqlStatements.addAll(getCreateIndexesSQL2());
-        return sqlStatements;
-    }
-
-    protected List<String> getCreateIndexesSQL1() {
-        List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(CREATE_OUTPUTS_ADDRESS_MULTI_INDEX);
-        sqlStatements.add(CREATE_BLOCKS_HEIGHT_INDEX);
-        sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
-        sqlStatements.add(CREATE_PREVBRANCH_HASH_INDEX);
-        sqlStatements.add(CREATE_PREVTRUNK_HASH_INDEX);
-        sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
-        sqlStatements.add(CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX);
-        sqlStatements.add(CREATE_BLOCKS_MILESTONE_INDEX);
-        sqlStatements.add(CREATE_TXREARD_CHAINLENGTH_INDEX);
-        sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
-        return sqlStatements;
-    }
-
-    protected List<String> getCreateIndexesSQL2() {
-        List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(CREATE_OUTPUTS_FROMADDRESS_INDEX);
-        sqlStatements.add(CREATE_CONTRACT_EVENT_CONTRACTTOKENID_TABLE_INDEX);
-        sqlStatements.add(CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX);
-        sqlStatements.add(CREATE_ORDERS_SPENT_TABLE_INDEX);
-        sqlStatements.add(CREATE_MATCHING_TOKEN_TABLE_INDEX);
-        sqlStatements.add(CREATE_TOKEN_TOKENID_TABLE_INDEX);
-        return sqlStatements;
-    }
+   
 
     protected List<String> getCreateSchemeSQL() {
         // do nothing
         return Collections.emptyList();
     }
 
-    protected String getDatabaseDriverClass() {
-        return DATABASE_DRIVER_CLASS;
-    }
-
+  
     protected String getUpdateSettingsSLQ() {
         // return UPDATE_SETTINGS_SQL;
         return getUpdate() + " settings SET settingvalue = %s WHERE name = %s";
