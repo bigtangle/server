@@ -216,23 +216,23 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             + "FROM blocks WHERE milestone = -1 AND height >= ? " + afterSelect();
 
     protected final String UPDATE_ORDER_SPENT_SQL = getUpdate() + " orders SET spent = ?, spenderblockhash = ? "
-            + " WHERE blockhash = ? AND collectinghash = ?";
+            + " WHERE blockhash = ? AND issuingmatcherblockhash = ?";
     protected final String UPDATE_ORDER_CONFIRMED_SQL = getUpdate() + " orders SET confirmed = ? "
-            + " WHERE blockhash = ? AND collectinghash = ?";
+            + " WHERE blockhash = ? AND issuingmatcherblockhash = ?";
 
-    protected final String ORDER_TEMPLATE = "  blockhash, collectinghash, offercoinvalue, offertokenid, "
+    protected final String ORDER_TEMPLATE = "  blockhash, issuingmatcherblockhash, offercoinvalue, offertokenid, "
             + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, "
             + "beneficiarypubkey, validToTime, validFromTime, side , beneficiaryaddress, orderbasetoken, price, tokendecimals ";
     protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT " + ORDER_TEMPLATE
-            + " FROM orders WHERE collectinghash = ?";
+            + " FROM orders WHERE issuingmatcherblockhash = ?";
 
-    protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM orders WHERE blockhash = ? AND collectinghash = ?";
-    protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM orders WHERE blockhash = ? AND collectinghash = ?";
-    protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM orders WHERE blockhash = ? AND collectinghash = ?";
+    protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM orders WHERE blockhash = ? AND issuingmatcherblockhash = ?";
+    protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM orders WHERE blockhash = ? AND issuingmatcherblockhash = ?";
+    protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM orders WHERE blockhash = ? AND issuingmatcherblockhash = ?";
     protected final String SELECT_ORDER_SQL = "SELECT " + ORDER_TEMPLATE
-            + " FROM orders WHERE blockhash = ? AND collectinghash = ?";
+            + " FROM orders WHERE blockhash = ? AND issuingmatcherblockhash = ?";
     protected final String INSERT_ORDER_SQL = getInsert()
-            + "  INTO orders (blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, "
+            + "  INTO orders (blockhash, issuingmatcherblockhash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, "
             + "targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, validFromTime, side, beneficiaryaddress, orderbasetoken, price, tokendecimals) "
             + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,  ?,?,?,?,?,?,?)";
     protected final String INSERT_CONTRACT_EVENT_SQL = getInsert()
@@ -409,7 +409,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String SELECT_SUBTANGLE_PERMISSION_BY_PUBKEYS_SQL = "SELECT   pubkey, userdataPubkey , status FROM subtangle_permission WHERE 1=1 ";
 
     protected final String SELECT_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
-            + " FROM orders ORDER BY blockhash, collectinghash";
+            + " FROM orders ORDER BY blockhash, issuingmatcherblockhash";
 
     protected final String SELECT_OPEN_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
             + " FROM orders WHERE confirmed=1 AND spent=0 ";
@@ -417,7 +417,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     protected final String SELECT_MY_REMAINING_OPEN_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
             + " WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? ";
     protected final String SELECT_MY_INITIAL_OPEN_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
-            + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress=? AND collectinghash=" + OPENORDERHASH
+            + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress=? AND issuingmatcherblockhash=" + OPENORDERHASH
             + " AND blockhash IN ( SELECT blockhash FROM orders "
             + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? )";
     // TODO remove test
@@ -4978,7 +4978,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         List<OrderRecord> result = new ArrayList<>();
         maybeConnect();
         String sql = SELECT_OPEN_ORDERS_SORTED_SQL;
-        String orderby = " ORDER BY blockhash, collectinghash";
+        String orderby = " ORDER BY blockhash, issuingmatcherblockhash";
 
         if (tokenid != null && !tokenid.trim().isEmpty()) {
             sql += " AND (offertokenid=? or targettokenid=?)";
@@ -5027,7 +5027,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
     private OrderRecord setOrder(ResultSet resultSet) throws SQLException {
         return new OrderRecord(Sha256Hash.wrap(resultSet.getBytes("blockhash")),
-                Sha256Hash.wrap(resultSet.getBytes("collectinghash")), resultSet.getLong("offercoinvalue"),
+                Sha256Hash.wrap(resultSet.getBytes("issuingmatcherblockhash")), resultSet.getLong("offercoinvalue"),
                 resultSet.getString("offertokenid"), resultSet.getBoolean("confirmed"), resultSet.getBoolean("spent"),
                 resultSet.getBytes("spenderblockhash") == null ? null
                         : Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")),
@@ -5052,7 +5052,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             String myaddress = " in (" + buildINList(addresses) + ")";
 
             String sql = "SELECT " + ORDER_TEMPLATE + " FROM orders "
-                    + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress" + myaddress + " AND collectinghash="
+                    + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress" + myaddress + " AND issuingmatcherblockhash="
                     + OPENORDERHASH + " AND blockhash NOT IN ( SELECT blockhash FROM orders "
                     + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress" + myaddress + ")";
 

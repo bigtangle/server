@@ -19,7 +19,7 @@ public class OrderRecordModel extends SpentBlockModel {
     private static final long serialVersionUID = -2331665478149550684L;
 
     // order matching block
-    private String issuingmatcherblockHash;
+    private String issuingmatcherblockhash;
     private long offercoinvalue;
     private String offertokenid;
 
@@ -60,11 +60,11 @@ public class OrderRecordModel extends SpentBlockModel {
     }
 
     public String getIssuingmatcherblockHash() {
-        return issuingmatcherblockHash;
+        return issuingmatcherblockhash;
     }
 
-    public void setIssuingmatcherblockHash(String issuingmatcherblockHash) {
-        this.issuingmatcherblockHash = issuingmatcherblockHash;
+    public void setIssuingmatcherblockHash(String issuingmatcherblockhash) {
+        this.issuingmatcherblockhash = issuingmatcherblockhash;
     }
 
   

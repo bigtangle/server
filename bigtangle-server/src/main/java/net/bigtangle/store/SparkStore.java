@@ -224,23 +224,23 @@ public class SparkStore implements FullBlockStore {
             + "FROM blocks WHERE milestone = -1 AND height >= %s ";
 
     protected final String UPDATE_ORDER_SPENT_SQL = getUpdate() + " orders SET spent = %s, spenderblockhash = %s "
-            + " WHERE blockhash = %s AND collectinghash = %s";
+            + " WHERE blockhash = %s AND issuingmatcherblockhash = %s";
     protected final String UPDATE_ORDER_CONFIRMED_SQL = getUpdate() + " orders SET confirmed = %s "
-            + " WHERE blockhash = %s AND collectinghash = %s";
+            + " WHERE blockhash = %s AND issuingmatcherblockhash = %s";
 
-    protected final String ORDER_TEMPLATE = "  blockhash, collectinghash, offercoinvalue, offertokenid, "
+    protected final String ORDER_TEMPLATE = "  blockhash, issuingmatcherblockhash, offercoinvalue, offertokenid, "
             + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, "
             + "beneficiarypubkey, validToTime, validFromTime, side , beneficiaryaddress, orderbasetoken, price, tokendecimals ";
     protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT " + ORDER_TEMPLATE
-            + " FROM orders WHERE collectinghash = %s";
+            + " FROM orders WHERE issuingmatcherblockhash = %s";
 
-    protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM orders WHERE blockhash = %s AND collectinghash = %s";
-    protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM orders WHERE blockhash = %s AND collectinghash = %s";
-    protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM orders WHERE blockhash = %s AND collectinghash = %s";
+    protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM orders WHERE blockhash = %s AND issuingmatcherblockhash = %s";
+    protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM orders WHERE blockhash = %s AND issuingmatcherblockhash = %s";
+    protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM orders WHERE blockhash = %s AND issuingmatcherblockhash = %s";
     protected final String SELECT_ORDER_SQL = "SELECT " + ORDER_TEMPLATE
-            + " FROM orders WHERE blockhash = %s AND collectinghash = %s";
+            + " FROM orders WHERE blockhash = %s AND issuingmatcherblockhash = %s";
     protected final String INSERT_ORDER_SQL = getInsert()
-            + "  INTO orders (blockhash, collectinghash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, "
+            + "  INTO orders (blockhash, issuingmatcherblockhash, offercoinvalue, offertokenid, confirmed, spent, spenderblockhash, "
             + "targetcoinvalue, targettokenid, beneficiarypubkey, validToTime, validFromTime, side, beneficiaryaddress, orderbasetoken, price, tokendecimals) "
             + " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s,  %s,%s,%s,%s,%s,%s,%s)";
     protected final String INSERT_CONTRACT_EVENT_SQL = getInsert()
@@ -416,7 +416,7 @@ public class SparkStore implements FullBlockStore {
     protected final String SELECT_SUBTANGLE_PERMISSION_BY_PUBKEYS_SQL = "SELECT   pubkey, userdataPubkey , status FROM subtangle_permission WHERE 1=1 ";
 
     protected final String SELECT_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
-            + " FROM orders ORDER BY blockhash, collectinghash";
+            + " FROM orders ORDER BY blockhash, issuingmatcherblockhash";
 
     protected final String SELECT_OPEN_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
             + " FROM orders WHERE confirmed=1 AND spent=0 ";
@@ -424,7 +424,7 @@ public class SparkStore implements FullBlockStore {
     protected final String SELECT_MY_REMAINING_OPEN_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
             + " WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=%s ";
     protected final String SELECT_MY_INITIAL_OPEN_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
-            + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress=%s AND collectinghash=" + OPENORDERHASH
+            + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress=%s AND issuingmatcherblockhash=" + OPENORDERHASH
             + " AND blockhash IN ( SELECT blockhash FROM orders "
             + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=%s )";
     // TODO remove test
@@ -1961,81 +1961,80 @@ public class SparkStore implements FullBlockStore {
 
         if (!s.isEmpty()) {
             return null;
-        } 
+        }
         return s.first().toUTXO();
 
     }
 
     @Override
     public String getSettingValue(String name) throws BlockStoreException {
-      
-           
-            Dataset<Row> s = sparkSession.sql(String.format(getSelectSettingsSQL(), quotedString(name) ));
 
-            if (!s.isEmpty()) {
-                return null;
-            }
-            return s.first().getString(0);
-      
+        Dataset<Row> s = sparkSession.sql(String.format(getSelectSettingsSQL(), quotedString(name)));
+
+        if (!s.isEmpty()) {
+            return null;
+        }
+        return s.first().getString(0);
+
     }
-
- 
- 
 
     @Override
     public boolean getOrderConfirmed(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
 
-        return sparkSession.sql(String.format(SELECT_ORDER_CONFIRMED_SQL, quotedString(txHash),
-                quotedString(issuingMatcherBlockHash)  )).first().getBoolean(0);
-  
+        return sparkSession.sql(
+                String.format(SELECT_ORDER_CONFIRMED_SQL, quotedString(txHash), quotedString(issuingMatcherBlockHash)))
+                .first().getBoolean(0);
+
     }
 
     @Override
     public Sha256Hash getOrderSpender(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash)
             throws BlockStoreException {
 
-        return Sha256Hash.wrap(sparkSession.sql(String.format(SELECT_ORDER_SPENDER_SQL, quotedString(txHash),
-                quotedString(issuingMatcherBlockHash)  )).first().getString(0));
-       
+        return Sha256Hash.wrap(sparkSession.sql(
+                String.format(SELECT_ORDER_SPENDER_SQL, quotedString(txHash), quotedString(issuingMatcherBlockHash)))
+                .first().getString(0));
+
     }
 
     @Override
     public boolean getOrderSpent(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
 
-        return sparkSession.sql(String.format(SELECT_ORDER_SPENT_SQL, quotedString(txHash),
-                quotedString(issuingMatcherBlockHash)  )).first().getBoolean(0);
-  
-        
+        return sparkSession
+                .sql(String.format(SELECT_ORDER_SPENT_SQL, quotedString(txHash), quotedString(issuingMatcherBlockHash)))
+                .first().getBoolean(0);
+
     }
 
     @Override
     public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
             throws BlockStoreException {
 
-        Dataset<OrderRecordModel> s = sparkSession.sql(String.format(SELECT_ORDERS_BY_ISSUER_SQL,  
-                quotedString(issuingMatcherBlockHash)  ))     .as(Encoders.bean(OrderRecordModel.class));
-;
+        Dataset<OrderRecordModel> s = sparkSession
+                .sql(String.format(SELECT_ORDERS_BY_ISSUER_SQL, quotedString(issuingMatcherBlockHash)))
+                .as(Encoders.bean(OrderRecordModel.class));
+        ;
         HashMap<Sha256Hash, OrderRecord> result = new HashMap<>();
-      
-            for(OrderRecordModel p:s.collectAsList()) {
-                result.put(Sha256Hash.wrap(p.getBlockhash()), p.toOrderRecord());
-            }
-            return result;
-        
+
+        for (OrderRecordModel p : s.collectAsList()) {
+            result.put(Sha256Hash.wrap(p.getBlockhash()), p.toOrderRecord());
+        }
+        return result;
+
     }
 
     @Override
     public OrderRecord getOrder(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
 
+        Dataset<OrderRecordModel> s = sparkSession
+                .sql(String.format(SELECT_ORDER_SQL, quotedString(txHash), quotedString(issuingMatcherBlockHash)))
+                .as(Encoders.bean(OrderRecordModel.class));
 
-        Dataset<OrderRecordModel> s = sparkSession.sql(String.format(SELECT_ORDER_SQL,  quotedString(txHash),
-                quotedString(issuingMatcherBlockHash)  ))     .as(Encoders.bean(OrderRecordModel.class));
-  
-            if (!s.isEmpty())
-                return null;
+        if (!s.isEmpty())
+            return null;
 
-            return s.first().toOrderRecord();
-       
+        return s.first().toOrderRecord();
+
     }
 
     @Override
@@ -2044,9 +2043,9 @@ public class SparkStore implements FullBlockStore {
         List<OrderCancelModel> list = new ArrayList<>();
         list.add(OrderCancelModel.from(orderCancel));
         Dataset source = sparkSession.createDataset(list, Encoders.bean(OrderCancelModel.class));
-        SparkData.outputs.as("target").merge(source.as("source"), "target.orderblockhash = source.orderblockhash  ").whenMatched()
-                .updateAll().whenNotMatched().insertAll().execute();
- 
+        SparkData.outputs.as("target").merge(source.as("source"), "target.orderblockhash = source.orderblockhash  ")
+                .whenMatched().updateAll().whenNotMatched().insertAll().execute();
+
     }
 
     @Override
@@ -2056,165 +2055,75 @@ public class SparkStore implements FullBlockStore {
 
         List<OrderRecordModel> list = new ArrayList<>();
         for (OrderRecord record : records) {
-        list.add(OrderRecordModel.from(record));
+            list.add(OrderRecordModel.from(record));
         }
-        
+
         Dataset source = sparkSession.createDataset(list, Encoders.bean(OrderRecordModel.class));
-        SparkData.outputs.as("target").merge(source.as("source"), "target.orderblockhash = source.orderblockhash and"
-                + "target.issuingmatcherblockHash = source.issuingmatcherblockHash  ").whenMatched()
-                .updateAll().whenNotMatched().insertAll().execute();
-   
-    }
+        SparkData.outputs.as("target")
+                .merge(source.as("source"),
+                        "target.orderblockhash = source.orderblockhash and"
+                                + "target.issuingmatcherblockhash = source.issuingmatcherblockhash  ")
+                .whenMatched().updateAll().whenNotMatched().insertAll().execute();
 
-    @Override
-    public void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException {
-        if (records == null)
-            return;
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(INSERT_CONTRACT_EVENT_SQL);
-            for (ContractEventRecord record : records) {
-                preparedStatement.setBytes(1, record.getBlockHash().getBytes());
-
-                preparedStatement.setString(2, record.getContractTokenid());
-                preparedStatement.setBoolean(3, record.isConfirmed());
-                preparedStatement.setBoolean(4, record.isSpent());
-                preparedStatement.setBytes(5,
-                        record.getSpenderBlockHash() != null %s record.getSpenderBlockHash().getBytes() : null);
-                preparedStatement.setBytes(6, record.getTargetValue().toByteArray());
-                preparedStatement.setString(7, record.getTargetTokenid());
-                preparedStatement.setBytes(8, record.getBeneficiaryPubKey());
-                preparedStatement.setLong(9, record.getValidToTime());
-                preparedStatement.setLong(10, record.getValidFromTime());
-
-                preparedStatement.setString(11, record.getBeneficiaryAddress());
-
-                preparedStatement.addBatch();
-            }
-            preparedStatement.executeBatch();
-
-        } catch (SQLException e) {
-            if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
-                throw new BlockStoreException(e);
-
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
     }
 
     @Override
     public void updateOrderConfirmed(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
             throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(UPDATE_ORDER_CONFIRMED_SQL);
-            preparedStatement.setBoolean(1, confirmed);
-            preparedStatement.setBytes(2, initialBlockHash.getBytes());
-            preparedStatement.setBytes(3, issuingMatcherBlockHash.getBytes());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        sparkSession.sql(String.format(UPDATE_ORDER_CONFIRMED_SQL, confirmed, quotedString(initialBlockHash),
+                quotedString(issuingMatcherBlockHash)));
+
     }
 
     @Override
     public void updateOrderConfirmed(Collection<OrderRecord> orderRecords, boolean confirm) throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(UPDATE_ORDER_CONFIRMED_SQL);
-            for (OrderRecord o : orderRecords) {
-                preparedStatement.setBoolean(1, confirm);
-                preparedStatement.setBytes(2, o.getBlockHash().getBytes());
-                preparedStatement.setBytes(3, o.getIssuingMatcherBlockHash().getBytes());
-                preparedStatement.addBatch();
-            }
-            preparedStatement.executeBatch();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-    }
+        if (orderRecords == null || orderRecords.isEmpty())
+            return;
 
-    @Override
-    public void updateOrderSpent(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, boolean spent,
-            Sha256Hash spenderBlockHash) throws BlockStoreException {
-
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(UPDATE_ORDER_SPENT_SQL);
-            preparedStatement.setBoolean(1, spent);
-            preparedStatement.setBytes(2, spenderBlockHash != null %s spenderBlockHash.getBytes() : null);
-            preparedStatement.setBytes(3, initialBlockHash.getBytes());
-            preparedStatement.setBytes(4, issuingMatcherBlockHash.getBytes());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
+        List<OrderRecordModel> list = new ArrayList<>();
+        for (OrderRecord record : orderRecords) {
+            list.add(OrderRecordModel.from(record));
         }
+
+        Dataset source = sparkSession.createDataset(list, Encoders.bean(OrderRecordModel.class));
+        SparkData.outputs.as("target")
+                .merge(source.as("source"),
+                        "target.orderblockhash = source.orderblockhash and"
+                                + "target.issuingmatcherblockhash = source.issuingmatcherblockhash  ")
+                .whenMatched().update(new HashMap<String, Column>() {
+                    {
+                        put("confirmed", functions.col("source.confirmed"));
+
+                    }
+                }).execute();
+
     }
 
     @Override
     public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException {
 
-        PreparedStatement preparedStatement = null;
-        try {
-            preparedStatement = sparkSession.sql(UPDATE_ORDER_SPENT_SQL);
-            for (OrderRecord o : orderRecords) {
-                preparedStatement.setBoolean(1, o.isSpent());
-                preparedStatement.setBytes(2,
-                        o.getSpenderBlockHash() != null %s o.getSpenderBlockHash().getBytes() : null);
-                preparedStatement.setBytes(3, o.getBlockHash().getBytes());
-                preparedStatement.setBytes(4, o.getIssuingMatcherBlockHash().getBytes());
-                preparedStatement.addBatch();
-            }
-            preparedStatement.executeBatch();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-            if (preparedStatement != null) {
-                try {
-                    preparedStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
+        if (orderRecords == null || orderRecords.isEmpty())
+            return;
+
+        List<OrderRecordModel> list = new ArrayList<>();
+        for (OrderRecord record : orderRecords) {
+            list.add(OrderRecordModel.from(record));
         }
+
+        Dataset source = sparkSession.createDataset(list, Encoders.bean(OrderRecordModel.class));
+        SparkData.outputs.as("target")
+                .merge(source.as("source"),
+                        "target.orderblockhash = source.orderblockhash and"
+                                + "target.issuingmatcherblockhash = source.issuingmatcherblockhash  ")
+                .whenMatched().update(new HashMap<String, Column>() {
+                    {
+                        put("spent", functions.col("source.spent"));
+
+                    }
+                }).execute();
+
     }
 
     /*
@@ -2223,27 +2132,8 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void prunedClosedOrders(Long beforetime) throws BlockStoreException {
 
-        PreparedStatement deleteStatement = null;
-
-        try {
-
-            deleteStatement = getConnection()
-                    .prepareStatement(" delete FROM orders WHERE  spent=1 AND validToTime < %s limit 1000 ");
-            deleteStatement.setLong(1, beforetime - 100 * NetworkParameters.ORDER_TIMEOUT_MAX);
-            deleteStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-
-            if (deleteStatement != null) {
-                try {
-                    deleteStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        sparkSession.sql(String.format(" delete FROM orders WHERE  spent=1 AND validtotime < %s limit 1000 ",
+                beforetime - 100 * NetworkParameters.ORDER_TIMEOUT_MAX));
 
     }
 
@@ -2256,45 +2146,13 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void prunedBlocks(Long height, Long chain) throws BlockStoreException {
 
-        PreparedStatement deleteStatement = null;
-        PreparedStatement preparedStatement = null;
-        try {
-
-            deleteStatement = sparkSession.sql(" delete FROM blocks WHERE" + "   hash  = %s ");
-
-            preparedStatement = getConnection()
-                    .prepareStatement("  select distinct( blocks.hash) from  blocks  , outputs "
-                            + " where spenderblockhash = blocks.hash    "
-                            + "  and blocks.milestone < %s and blocks.milestone !=0  " + " and ( blocks.blocktype = "
-                            + Block.Type.BLOCKTYPE_TRANSFER.ordinal() + " or blocks.blocktype = "
-                            + Block.Type.BLOCKTYPE_ORDER_OPEN.ordinal() + " or blocks.blocktype = "
-                            + Block.Type.BLOCKTYPE_REWARD.ordinal() + "  ) limit 1000 ");
-            // preparedStatement.setLong(1, height);
-            preparedStatement.setLong(1, chain);
-
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-                deleteStatement.setBytes(1, resultSet.getBytes(1));
-                deleteStatement.addBatch();
-                ;
-            }
-
-            // log.debug(deleteStatement.toString());
-            int[] r = deleteStatement.executeBatch();
-            log.debug(" deleteStatement.executeBatch() count = " + r.length);
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-
-            if (deleteStatement != null) {
-                try {
-                    deleteStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
+        sparkSession
+                .sql(" delete FROM blocks WHERE   hash    in (  select distinct( blocks.hash) from  blocks  , outputs "
+                        + " where spenderblockhash = blocks.hash    " + "  and blocks.milestone < " + chain
+                        + "and blocks.milestone !=0  " + " and ( blocks.blocktype = "
+                        + Block.Type.BLOCKTYPE_TRANSFER.ordinal() + " or blocks.blocktype = "
+                        + Block.Type.BLOCKTYPE_ORDER_OPEN.ordinal() + " or blocks.blocktype = "
+                        + Block.Type.BLOCKTYPE_REWARD.ordinal() + "  ) limit 1000 ) ");
 
     }
 
@@ -2305,26 +2163,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void prunedHistoryUTXO(Long maxRewardblock) throws BlockStoreException {
 
-        PreparedStatement deleteStatement = null;
-        try {
-            deleteStatement = sparkSession.sql(" delete FROM outputs WHERE  spent=1 AND "
-                    + "spenderblockhash in (select hash from blocks where milestone < %s ) limit 1000 ");
-            deleteStatement.setLong(1, maxRewardblock);
-            deleteStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-
-            if (deleteStatement != null) {
-                try {
-                    deleteStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-
+        sparkSession.sql(" delete FROM outputs WHERE  spent=1 AND "
+                + "spenderblockhash in (select hash from blocks where milestone < " + maxRewardblock
+                + " ) limit 1000 ");
     }
 
     /*
@@ -2333,30 +2174,9 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void prunedPriceTicker(Long beforetime) throws BlockStoreException {
 
-        PreparedStatement deleteStatement = null;
-        try {
+        long minTime = Math.min(beforetime, System.currentTimeMillis() / 1000 - 60 * 24 * 60 * 60);
 
-            long minTime = Math.min(beforetime, System.currentTimeMillis() / 1000 - 60 * 24 * 60 * 60);
-            deleteStatement = getConnection()
-                    .prepareStatement(" delete FROM matching WHERE inserttime < %s  limit 1000 ");
-            deleteStatement.setLong(1, minTime);
-            // System.currentTimeMillis() / 1000 - 10 *
-            // NetworkParameters.ORDER_TIMEOUT_MAX);
-            deleteStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new BlockStoreException(e);
-        } finally {
-
-            if (deleteStatement != null) {
-                try {
-                    deleteStatement.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
-        }
-
+        sparkSession.sql(" delete FROM matching WHERE inserttime < " + minTime + "  limit 1000 ");
     }
 
     @Override
@@ -2364,10 +2184,10 @@ public class SparkStore implements FullBlockStore {
         List<OrderRecord> result = new ArrayList<>();
 
         String sql = SELECT_OPEN_ORDERS_SORTED_SQL;
-        String orderby = " ORDER BY blockhash, collectinghash";
+        String orderby = " ORDER BY blockhash, issuingmatcherblockhash";
 
         if (tokenid != null && !tokenid.trim().isEmpty()) {
-            sql += " AND (offertokenid=%s or targettokenid=%s)";
+            sql += " AND (offertokenid=" + quotedString(tokenid) + " or targettokenid= " + quotedString(tokenid) + ")";
         }
         if (addresses != null && !addresses.isEmpty()) {
             sql += " AND beneficiaryaddress in (";
@@ -2375,43 +2195,13 @@ public class SparkStore implements FullBlockStore {
             sql += buildINList(addresses) + ")";
         }
         sql += orderby;
-        PreparedStatement s = null;
-        try {
-            // log.debug(sql);
-            s = sparkSession.sql(sql);
-            int i = 1;
-
-            if (tokenid != null && !tokenid.trim().isEmpty()) {
-                s.setString(i++, tokenid);
-                s.setString(i++, tokenid);
-            }
-            ResultSet resultSet = s.executeQuery();
-            while (resultSet.next()) {
-                OrderRecord order = setOrder(resultSet);
-                result.add(order);
-            }
-            return result;
-        } catch (SQLException ex) {
-            throw new BlockStoreException(ex);
-        } catch (ProtocolException e) {
-            // Corrupted database.
-            throw new BlockStoreException(e);
-        } catch (VerificationException e) {
-            // Should not be able to happen unless the database contains bad
-            // blocks.
-            throw new BlockStoreException(e);
-        } finally {
-            if (s != null) {
-                try {
-                    s.close();
-                } catch (SQLException e) {
-                    // throw new BlockStoreException("Could not close
-                    // statement");
-                }
-            }
+        Dataset<OrderRecordModel> s = sparkSession.sql(sql).as(Encoders.bean(OrderRecordModel.class)); 
+        for (OrderRecordModel m : s.collectAsList()) { 
+            result.add(m.toOrderRecord());
         }
+        return result;
+
     }
- 
 
     @Override
     public List<OrderRecord> getMyClosedOrders(List<String> addresses) throws BlockStoreException {
@@ -2425,7 +2215,7 @@ public class SparkStore implements FullBlockStore {
             String myaddress = " in (" + buildINList(addresses) + ")";
 
             String sql = "SELECT " + ORDER_TEMPLATE + " FROM orders "
-                    + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress" + myaddress + " AND collectinghash="
+                    + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress" + myaddress + " AND issuingmatcherblockhash="
                     + OPENORDERHASH + " AND blockhash NOT IN ( SELECT blockhash FROM orders "
                     + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress" + myaddress + ")";
 
@@ -2510,7 +2300,6 @@ public class SparkStore implements FullBlockStore {
         }
     }
 
- 
     @Override
     public boolean existBlock(Sha256Hash hash) throws BlockStoreException {
 
@@ -2534,8 +2323,6 @@ public class SparkStore implements FullBlockStore {
         }
 
     }
-
- 
 
     @Override
     public void insertMatchingEvent(List<MatchResult> matchs) throws BlockStoreException {
@@ -3609,14 +3396,11 @@ public class SparkStore implements FullBlockStore {
 
     }
 
-   
-
     protected List<String> getCreateSchemeSQL() {
         // do nothing
         return Collections.emptyList();
     }
 
-  
     protected String getUpdateSettingsSLQ() {
         // return UPDATE_SETTINGS_SQL;
         return getUpdate() + " settings SET settingvalue = %s WHERE name = %s";

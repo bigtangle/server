@@ -67,7 +67,7 @@ select count(*) from outputs where confirmed=1 and spent=0 and tokenid = "02a717
 select * from orders where confirmed=1 and spent=0 and offertokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
 select * from outputs where blockhash = 0x000051e704d8ca112b077308fc2873e0062cb0530bab4757ccc1bb03779c2209;
 
-select * from txreward join orders on txreward.blockhash=orders.collectinghash order by toheight desc  ;
+select * from txreward join orders on txreward.blockhash=orders.issuingmatcherblockhash order by toheight desc  ;
 
 
 select * from blocks where blocktype> 9 and milestone =  37 ;
@@ -78,7 +78,7 @@ select * from orders  where orderbasetoken !='bc' limit 1 ;
 
 
 select * from multisign
-select count(*) from orders where collectinghash= 0x0000000000000000000000000000000000000000000000000000000000000000   
+select count(*) from orders where issuingmatcherblockhash= 0x0000000000000000000000000000000000000000000000000000000000000000   
 
  
 select * from txreward  order by chainlength desc ;
@@ -129,13 +129,13 @@ WHERE blocks.height <= 99999999 AND blocks.milestone = 1 AND orders.spent = 0;
              FROM blocks INNER JOIN orders ON orders.blockhash=blocks.hash
              WHERE   orders.confirmed = 0  
             AND orders.spent = 0 AND 
-            orders.collectinghash=
+            orders.issuingmatcherblockhash=
             '0x0000000000000000000000000000000000000000000000000000000000000000'
  
  SELECT blockhash, height
              FROM blocks INNER JOIN orders ON orders.blockhash=blocks.hash
              WHERE    
-            orders.collectinghash=
+            orders.issuingmatcherblockhash=
             '0x0000000000000000000000000000000000000000000000000000000000000000'           
             
 select * from vm_deposit ;

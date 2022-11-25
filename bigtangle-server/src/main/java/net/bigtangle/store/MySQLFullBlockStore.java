@@ -117,7 +117,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    blockhash binary(32) NOT NULL,\n" 
                 // ZEROHASH if confirmed by order blocks,
                 // issuing ordermatch blockhash if issued by ordermatch block
-            + "    collectinghash binary(32) NOT NULL,\n" 
+            + "    issuingmatcherblockhash binary(32) NOT NULL,\n" 
             + "    offercoinvalue bigint NOT NULL,\n" 
             + "    offertokenid varchar(255),\n" 
              + "   targetcoinvalue bigint,\n" 
@@ -145,7 +145,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             // returned or used for another orderoutput/output)
             + "    spent boolean NOT NULL,\n" 
             + "    spenderblockhash  binary(32),\n" 
-            + "    CONSTRAINT orders_pk PRIMARY KEY (blockhash, collectinghash) "
+            + "    CONSTRAINT orders_pk PRIMARY KEY (blockhash, issuingmatcherblockhash) "
             + " USING HASH \n" + ") ENGINE=InnoDB \n";
 
     private static final String CREATE_ORDER_CANCEL_TABLE = "CREATE TABLE ordercancel (\n"
@@ -384,7 +384,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
     private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
     private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
 
-    private static final String CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX orders_collectinghash_idx ON orders (collectinghash) USING btree";
+    private static final String CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX orders_collectinghash_idx ON orders (issuingmatcherblockhash) USING btree";
     private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone)  USING btree ";
     private static final String CREATE_BLOCKS_HEIGHT_INDEX = "CREATE INDEX blocks_height_idx ON blocks (height)  USING btree ";
     private static final String CREATE_TXREARD_CHAINLENGTH_INDEX = "CREATE INDEX txreard_chainlength_idx ON txreward (chainlength)  USING btree ";

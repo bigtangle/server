@@ -82,7 +82,7 @@ public class SparkStoreParameter {
             + "    blockhash string ,\n"
             // ZEROHASH if confirmed by order blocks,
             // issuing ordermatch blockhash if issued by ordermatch block
-            + "    issuingmatcherblockHash string ,\n" + "    offercoinvalue bigint ,\n"
+            + "    issuingmatcherblockhash string ,\n" + "    offercoinvalue bigint ,\n"
             + "    offertokenid varchar(255),\n" + "   targetcoinvalue bigint,\n" + "    targettokenid varchar(255),\n"
             // buy or sell
             + "    side varchar(255),\n"
@@ -104,7 +104,7 @@ public class SparkStoreParameter {
             // true if used by a confirmed ordermatch block (either
             // returned or used for another orderoutput/output)
             + "    spent boolean ,\n" + "    spenderblockhash  string \n"
-          //  + "    CONSTRAINT orders_pk PRIMARY KEY (blockhash, collectinghash) " + " USING HASH \n"
+          //  + "    CONSTRAINT orders_pk PRIMARY KEY (blockhash, issuingmatcherblockhash) " + " USING HASH \n"
             + ")  \n";
 
     public static final String CREATE_ORDER_CANCEL_TABLE = "CREATE TABLE ordercancel (\n"
@@ -267,7 +267,7 @@ public class SparkStoreParameter {
     public static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
     public static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
 
-    public static final String CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX orders_collectinghash_idx ON orders (collectinghash) USING btree";
+    public static final String CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX orders_collectinghash_idx ON orders (issuingmatcherblockhash) USING btree";
     public static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone)  USING btree ";
     public static final String CREATE_BLOCKS_HEIGHT_INDEX = "CREATE INDEX blocks_height_idx ON blocks (height)  USING btree ";
     public static final String CREATE_TXREARD_CHAINLENGTH_INDEX = "CREATE INDEX txreard_chainlength_idx ON txreward (chainlength)  USING btree ";
