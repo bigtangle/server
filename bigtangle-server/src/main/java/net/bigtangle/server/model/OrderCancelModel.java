@@ -6,6 +6,7 @@
 package net.bigtangle.server.model;
 
 import net.bigtangle.core.OrderCancel;
+import net.bigtangle.core.Sha256Hash;
 
 /**
  *
@@ -24,10 +25,17 @@ public class OrderCancelModel extends SpentBlockModel {
     }
 
     public static OrderCancelModel from(OrderCancel orderCancel) {
-        OrderCancelModel p= new OrderCancelModel();
-        p.setOrderblockhash(orderCancel.getOrderBlockHash().toString()) ;
+        OrderCancelModel p = new OrderCancelModel();
+        p.setOrderblockhash(orderCancel.getOrderBlockHash().toString());
+        p.fromSpentBlock(orderCancel);
         return p;
     }
 
-     
+    public OrderCancel toOrderCancel() {
+        OrderCancel p = new OrderCancel();
+        toSpentBlock(p);
+        p.setOrderBlockHash(Sha256Hash.wrap(getOrderblockhash()));
+        return null;
+    }
+
 }

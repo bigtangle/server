@@ -454,7 +454,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
  
     public  void updateDatabse() throws BlockStoreException, SQLException  {
     
-       byte[] settingValue = getSettingValue("version");
+      String settingValue = getSettingValue("version");
        String ver = "";
        if(settingValue!=null) ver= new String(settingValue);
        

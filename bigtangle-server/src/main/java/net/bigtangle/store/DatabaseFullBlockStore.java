@@ -4227,7 +4227,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public byte[] getSettingValue(String name) throws BlockStoreException {
+    public String getSettingValue(String name) throws BlockStoreException {
         PreparedStatement preparedStatement = null;
         maybeConnect();
         try {
@@ -4237,7 +4237,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             if (!resultSet.next()) {
                 return null;
             }
-            return resultSet.getBytes(1);
+            return resultSet.getString(1);
         } catch (SQLException e) {
             throw new BlockStoreException(e);
         } finally {
@@ -5616,7 +5616,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public int getCountAccessPermissionByPubKey(String pubKey, String accessToken) throws BlockStoreException {
+    public long getCountAccessPermissionByPubKey(String pubKey, String accessToken) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {
@@ -5688,7 +5688,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
     }
 
     @Override
-    public int getCountAccessGrantByAddress(String address) throws BlockStoreException {
+    public long getCountAccessGrantByAddress(String address) throws BlockStoreException {
         maybeConnect();
         PreparedStatement preparedStatement = null;
         try {

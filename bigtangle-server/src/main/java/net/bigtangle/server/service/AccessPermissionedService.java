@@ -33,9 +33,9 @@ public class AccessPermissionedService {
         return SessionRandomNumResponse.create(verifyHex);
     }
 
-    public int checkSessionRandomNumResp(String pubKey, String accessToken,FullBlockStore store) {
+    public long checkSessionRandomNumResp(String pubKey, String accessToken,FullBlockStore store) {
         try {
-            int count =  store .getCountAccessPermissionByPubKey(pubKey, accessToken);
+            long count =  store .getCountAccessPermissionByPubKey(pubKey, accessToken);
             return count;
         } catch (Exception e) {
             return 0;

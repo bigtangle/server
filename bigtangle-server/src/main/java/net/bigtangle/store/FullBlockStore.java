@@ -355,7 +355,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     List<UserData> getUserDataListWithBlocktypePubKeyList(int blocktype, List<String> pubKeyList)
             throws BlockStoreException;
 
-    byte[] getSettingValue(String name) throws BlockStoreException;
+    String getSettingValue(String name) throws BlockStoreException;
 
     Token getCalMaxTokenIndex(String tokenid) throws BlockStoreException;
 
@@ -421,13 +421,13 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     void insertAccessPermission(String pubKey, String accessToken) throws BlockStoreException;
 
-    int getCountAccessPermissionByPubKey(String pubKey, String accessToken) throws BlockStoreException;
+    long getCountAccessPermissionByPubKey(String pubKey, String accessToken) throws BlockStoreException;
 
     void insertAccessGrant(String address) throws BlockStoreException;
 
     void deleteAccessGrant(String address) throws BlockStoreException;
 
-    int getCountAccessGrantByAddress(String address) throws BlockStoreException;
+    long getCountAccessGrantByAddress(String address) throws BlockStoreException;
 
     List<Token> getTokensListFromDomain(String domainname) throws BlockStoreException;
 

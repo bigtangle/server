@@ -34,9 +34,9 @@ public class AccessGrantService {
         store .deleteAccessGrant(address.toBase58());
     }
 
-    public int getCountAccessGrantByAddress(String address, FullBlockStore store) {
+    public long getCountAccessGrantByAddress(String address, FullBlockStore store) {
         try {
-            int count =  store.getCountAccessGrantByAddress(address);
+            long count =  store.getCountAccessGrantByAddress(address);
             return count;
         } catch (Exception e) {
             return 0;

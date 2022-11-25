@@ -724,7 +724,7 @@ public class DispatcherController {
             return true;
         }
 
-        int count = this.accessGrantService.getCountAccessGrantByAddress(address, store);
+        long count = this.accessGrantService.getCountAccessGrantByAddress(address, store);
         if (count == 0) {
             AbstractResponse resp = ErrorResponse.create(100);
             resp.setMessage("no auth");
@@ -774,7 +774,7 @@ public class DispatcherController {
             flag = key.verify(buf, signature);
 
             if (flag) {
-                int count = this.accessPermissionedService.checkSessionRandomNumResp(pubkey, accessToken, store);
+                long count = this.accessPermissionedService.checkSessionRandomNumResp(pubkey, accessToken, store);
                 flag = count > 0;
             }
             if (flag) {
