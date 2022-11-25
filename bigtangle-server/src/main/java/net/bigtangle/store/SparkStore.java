@@ -526,7 +526,11 @@ public class SparkStore implements FullBlockStore {
      * @throws java.sql.SQLException
      */
     private boolean tablesExists() throws SQLException {
+        try {
         return sparkSession.sql(getTablesExistSQL()).count() > 0;
+        }catch (Exception e) {
+         return false;
+        }
 
     }
 

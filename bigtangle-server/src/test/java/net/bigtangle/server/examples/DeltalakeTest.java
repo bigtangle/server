@@ -63,18 +63,20 @@ public class DeltalakeTest {
     System.out.println(sf2);  
     System.out.println(sf3);  
     }
-    public void deltalake2() throws IOException, InterruptedException {
-     
-        String path = "/data/deltalake/test";
-        spark = createSession();
-
-        String d = " USING DELTA " + "   LOCATION '" + "/data/deltalake/blocks" + "'";
-        spark.sql(SparkStoreParameter.CREATE_BLOCKS_TABLE + d);
-        DeltaTable table = DeltaTable.forPath(spark, path);
-        spark.sql("update delta./data/deltalake/blocks  set marketplace = 'USA' where marketplace = 'US' ");
-    }
     
     @Test
+    public void deltalake2() throws IOException, InterruptedException {
+     
+        String path = "/data/deltalake/settings";
+        spark = createSession();
+
+        String d = " USING DELTA " + "   LOCATION '" + path + "'";
+        spark.sql(SparkStoreParameter.CREATE_SETTINGS_TABLE + d);
+        DeltaTable table = DeltaTable.forPath(spark, path);
+        spark.sql("select * from  delta.`/data/deltalake/settings`  as settings   ").show();
+    }
+    
+   
     public void deltalake1() throws IOException, InterruptedException {
         try {
             // =============== Create table ===============

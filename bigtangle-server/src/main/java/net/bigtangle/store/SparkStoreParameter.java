@@ -19,7 +19,7 @@ public class SparkStoreParameter {
 
  
     // create table SQL
-    public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name varchar(32) ,\n"
+    public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name string ,\n"
             + "    settingvalue string"
             //+ ",\n" + "    CONSTRAINT setting_pk PRIMARY KEY (name)  \n" 
             + ")\n";
@@ -46,9 +46,9 @@ public class SparkStoreParameter {
     public static final String CREATE_OUTPUT_TABLE = "CREATE TABLE outputs (\n"
             + "    blockhash string ,\n" + "    hash string ,\n"
             + "    outputindex bigint ,\n" + "    coinvalue string ,\n"
-            + "    scriptbytes string ,\n" + "    toaddress varchar(255),\n"
-            + "    addresstargetable bigint,\n" + "    coinbase boolean,\n" + "    tokenid varchar(255),\n"
-            + "    fromaddress varchar(255),\n" + "    memo string,\n" + "    minimumsign bigint ,\n"
+            + "    scriptbytes string ,\n" + "    toaddress string,\n"
+            + "    addresstargetable bigint,\n" + "    coinbase boolean,\n" + "    tokenid string,\n"
+            + "    fromaddress string,\n" + "    memo string,\n" + "    minimumsign bigint ,\n"
             + "    time bigint,\n"
             // begin the derived value of the output from block
             // this is for track the spent, spent = true means spenderblock is
@@ -65,7 +65,7 @@ public class SparkStoreParameter {
     // This is table for output with possible multi sign address
     public static final String CREATE_OUTPUT_MULTI_TABLE = "CREATE TABLE outputsmulti (\n"
             + "    hash string ,\n" + "    outputindex bigint ,\n"
-            + "    toaddress varchar(255) "
+            + "    toaddress string "
             //+ ",\n" "    CONSTRAINT outputs_pk PRIMARY KEY (hash, outputindex, toaddress) \n" 
             + ")  \n";
 
@@ -83,14 +83,14 @@ public class SparkStoreParameter {
             // ZEROHASH if confirmed by order blocks,
             // issuing ordermatch blockhash if issued by ordermatch block
             + "    issuingmatcherblockhash string ,\n" + "    offercoinvalue bigint ,\n"
-            + "    offertokenid varchar(255),\n" + "   targetcoinvalue bigint,\n" + "    targettokenid varchar(255),\n"
+            + "    offertokenid string,\n" + "   targetcoinvalue bigint,\n" + "    targettokenid string,\n"
             // buy or sell
-            + "    side varchar(255),\n"
+            + "    side string,\n"
             // public address
-            + "    beneficiaryaddress varchar(255),\n"
+            + "    beneficiaryaddress string,\n"
             // the pubkey that will receive the targettokens
             // on completion or returned tokens on cancels
-            + "    beneficiarypubkey string(33),\n"
+            + "    beneficiarypubkey string,\n"
             // order is valid untill this time
             + "    validtotime bigint,\n"
             // a number used to track operations on the
@@ -98,7 +98,7 @@ public class SparkStoreParameter {
             // order is valid after this time
             + "    validfromtime bigint,\n"
             // order base token
-            + "    orderbasetoken varchar(255),\n" + "    tokendecimals int ,\n" + "   price bigint,\n"
+            + "    orderbasetoken string,\n" + "    tokendecimals int ,\n" + "   price bigint,\n"
             // true iff a order block of this order is confirmed
             + "    confirmed boolean ,\n"
             // true if used by a confirmed ordermatch block (either
@@ -115,109 +115,109 @@ public class SparkStoreParameter {
                     + ") ";
 
     public static final String CREATE_MATCHING_TABLE = "CREATE TABLE matching (\n"
-            + "    id bigint  AUTO_INCREMENT,\n" + "    txhash varchar(255) ,\n"
-            + "    tokenid varchar(255) ,\n" + "    basetokenid varchar(255) ,\n"
+            + "    id bigint  AUTO_INCREMENT,\n" + "    txhash string ,\n"
+            + "    tokenid string ,\n" + "    basetokenid string ,\n"
             + "    price bigint ,\n" + "    executedQuantity bigint ,\n"
             + "    inserttime bigint "
             //+ ",\n" + "    PRIMARY KEY (id) \n" 
             + ") \n";
 
     public static final String CREATE_MATCHINGDAILY_TABLE = "CREATE TABLE matchingdaily (\n"
-            + "    id bigint  AUTO_INCREMENT,\n" + "    matchday varchar(255) ,\n"
-            + "    tokenid varchar(255) ,\n" + "    basetokenid varchar(255) ,\n"
+            + "    id bigint  AUTO_INCREMENT,\n" + "    matchday string ,\n"
+            + "    tokenid string ,\n" + "    basetokenid string ,\n"
             + "    avgprice bigint ,\n" + "    totalQuantity bigint ,\n"
             + "    highprice bigint ,\n" + "    lowprice bigint ,\n" + "    open bigint ,\n"
-            + "    close bigint ,\n" + "    matchinterval varchar(255) ,\n"
+            + "    close bigint ,\n" + "    matchinterval string ,\n"
             + "    inserttime bigint "
             //+ ",\n" + "    PRIMARY KEY (id) \n" 
             + ") \n";
 
     public static final String CREATE_MATCHING_LAST_TABLE = "CREATE TABLE matchinglast (\n"
-            + "    txhash varchar(255) ,\n" + "    tokenid varchar(255) ,\n"
-            + "    basetokenid varchar(255) ,\n" + "    price bigint ,\n"
+            + "    txhash string ,\n" + "    tokenid string ,\n"
+            + "    basetokenid string ,\n" + "    price bigint ,\n"
             + "    executedQuantity bigint ,\n" + "    inserttime bigint  \n"
            // + "    PRIMARY KEY ( tokenid,basetokenid) \n" 
             + ") \n";
     public static final String CREATE_MATCHING_LAST_DAY_TABLE = "CREATE TABLE matchinglastday (\n"
-            + "    txhash varchar(255) ,\n" + "    tokenid varchar(255) ,\n"
-            + "    basetokenid varchar(255) ,\n" + "    price bigint ,\n"
+            + "    txhash string ,\n" + "    tokenid string ,\n"
+            + "    basetokenid string ,\n" + "    price bigint ,\n"
             + "    executedQuantity bigint ,\n" + "    inserttime bigint  \n"
           //  + "    PRIMARY KEY ( tokenid,basetokenid) \n"
             + ") \n";
 
     public static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" + "    blockhash string ,\n"
-            + "    confirmed boolean ,\n" + "    tokenid varchar(255)   ,\n"
+            + "    confirmed boolean ,\n" + "    tokenid string   ,\n"
             + "    tokenindex bigint    ,\n" + "    amount string ,\n" + "    tokenname varchar(100) ,\n"
             + "    description varchar(5000) ,\n" + "    domainname varchar(100) ,\n"
             + "    signnumber bigint    ,\n" + "    tokentype int(11),\n" + "    tokenstop boolean,\n"
             + "    prevblockhash string,\n" + "    spent boolean ,\n"
             + "    spenderblockhash  string,\n" + "    tokenkeyvalues  string,\n" + "    revoked boolean   ,\n"
-            + "    language char(2)   ,\n" + "    classification varchar(255)   ,\n"
-            + "    domainpredblockhash varchar(255) ,\n" + "    decimals int  \n"
+            + "    language char(2)   ,\n" + "    classification string   ,\n"
+            + "    domainpredblockhash string ,\n" + "    decimals int  \n"
            // + "    PRIMARY KEY (blockhash)"
             + " \n) ";
 
     // Helpers
     public static final String CREATE_MULTISIGNADDRESS_TABLE = "CREATE TABLE multisignaddress (\n"
-            + "    blockhash string ,\n" + "    tokenid varchar(255)   ,\n"
-            + "    address varchar(255),\n" + "    pubkeyhex varchar(255),\n" + "    posindex int(11) \n"
+            + "    blockhash string ,\n" + "    tokenid string   ,\n"
+            + "    address string,\n" + "    pubkeyhex string,\n" + "    posindex int(11) \n"
             + "    tokenholder int(11)  DEFAULT 0 \n" 
             //+ "    PRIMARY KEY (blockhash, tokenid, pubkeyhex) "
                     + "\n) ";
 
     public static final String CREATE_MULTISIGN_TABLE = "CREATE TABLE multisign (\n"
-            + "    id varchar(255)   ,\n" + "    tokenid varchar(255)   ,\n"
-            + "    tokenindex bigint    ,\n" + "    address varchar(255),\n"
+            + "    id string   ,\n" + "    tokenid string   ,\n"
+            + "    tokenindex bigint    ,\n" + "    address string,\n"
             + "    blockhash  string ,\n" + "    sign int(11)  \n" 
             //+ "    PRIMARY KEY (id) "
                     + "\n) ";
 
     public static final String CREATE_PAYMULTISIGN_TABLE = "CREATE TABLE paymultisign (\n"
-            + "    orderid varchar(255)   ,\n" + "    tokenid varchar(255)   ,\n"
-            + "    toaddress varchar(255) ,\n" + "    blockhash string ,\n"
-            + "    amount string ,\n" + "    minsignnumber bigint(20) ,\n" + "    outputhashhex varchar(255) ,\n"
+            + "    orderid string   ,\n" + "    tokenid string   ,\n"
+            + "    toaddress string ,\n" + "    blockhash string ,\n"
+            + "    amount string ,\n" + "    minsignnumber bigint(20) ,\n" + "    outputhashhex string ,\n"
             + "    outputindex bigint \n" 
             //+ "    PRIMARY KEY (orderid) "
                     + "\n) ";
 
     public static final String CREATE_PAYMULTISIGNADDRESS_TABLE = "CREATE TABLE paymultisignaddress (\n"
-            + "    orderid varchar(255)   ,\n" + "    pubkey varchar(255),\n" + "    sign int(11) ,\n"
+            + "    orderid string   ,\n" + "    pubkey string,\n" + "    sign int(11) ,\n"
             + "    signIndex int(11) ,\n" + "    signInputData string \n"
            // + "    PRIMARY KEY (orderid, pubKey)"
             + "\n) ";
 
     public static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n"
-            + "    blockhash string ,\n" + "    dataclassname varchar(255) ,\n"
-            + "    data string ,\n" + "    pubkey varchar(255),\n" + "    blocktype bigint \n"
+            + "    blockhash string ,\n" + "    dataclassname string ,\n"
+            + "    data string ,\n" + "    pubkey string,\n" + "    blocktype bigint \n"
          //   + "   CONSTRAINT userdata_pk PRIMARY KEY (dataclassname, pubkey) USING BTREE"
             + " \n" + ") ";
 
  
 
     public static final String CREATE_SUBTANGLE_PERMISSION_TABLE = "CREATE TABLE subtangle_permission (\n"
-            + "    pubkey varchar(255) ,\n" + "    userdataPubkey varchar(255) ,\n"
-            + "    status varchar(255) \n"
+            + "    pubkey string ,\n" + "    userdataPubkey string ,\n"
+            + "    status string \n"
          //   + "   CONSTRAINT subtangle_permission_pk PRIMARY KEY (pubkey) USING BTREE \n"
             + ") ";
 
     
  
     public static final String CREATE_ACCESS_PERMISSION_TABLE = "CREATE TABLE access_permission (\n"
-            + "   accessToken varchar(255) ,\n" + "   pubKey varchar(255),\n" + "   refreshTime bigint \n"
+            + "   accessToken string ,\n" + "   pubKey string,\n" + "   refreshTime bigint \n"
          //   + "   PRIMARY KEY (accessToken) "
             + ") ";
 
     public static final String CREATE_ACCESS_GRANT_TABLE = "CREATE TABLE access_grant (\n"
-            + "   address varchar(255),\n" + "   createTime bigint n" 
+            + "   address string,\n" + "   createTime bigint n" 
             //+ "   PRIMARY KEY (address) "
                     + ") ";
 
     public static final String CREATE_CONTRACT_EVENT_TABLE = "CREATE TABLE contractevent (\n"
             // initial issuing block hash
-            + "    blockhash string ,\n" + "    contracttokenid varchar(255),\n"
-            + "   targetcoinvalue string,\n" + "    targettokenid varchar(255),\n"
+            + "    blockhash string ,\n" + "    contracttokenid string,\n"
+            + "   targetcoinvalue string,\n" + "    targettokenid string,\n"
             // public address
-            + "    beneficiaryaddress varchar(255),\n"
+            + "    beneficiaryaddress string,\n"
             // the pubkey that will receive the targettokens
             // on completion or returned tokens on cancels
             + "    beneficiarypubkey string,\n"
@@ -232,7 +232,7 @@ public class SparkStoreParameter {
             + ")  \n";
 
     public static final String CREATE_CONTRACT_ACCOUNT_TABLE = "CREATE TABLE contractaccount (\n"
-            + "    contracttokenid varchar(255)  ,\n" + "    tokenid varchar(255)  ,\n"
+            + "    contracttokenid string  ,\n" + "    tokenid string  ,\n"
             + "    coinvalue string, \n"
             // block hash of the last execution block
             + "    blockhash string  \n"
@@ -240,7 +240,7 @@ public class SparkStoreParameter {
             + ")  \n";
 
     public static final String CREATE_CONTRACT_EXECUTION_TABLE = "CREATE TABLE contractexecution (\n"
-            + "   blockhash string ,\n" + "   contracttokenid varchar(255)  ,\n"
+            + "   blockhash string ,\n" + "   contracttokenid string  ,\n"
             + "   confirmed boolean ,\n" + "   spent boolean ,\n" + "   spenderblockhash string,\n"
             + "   prevblockhash string ,\n" + "   difficulty bigint ,\n"
             + "   chainlength bigint ,\n" + "   resultdata string  \n" 
@@ -252,7 +252,7 @@ public class SparkStoreParameter {
             + "    orphan boolean,\n " + "    inserttime bigint ,\n"
             + "    CONSTRAINT chainblockqueue_pk PRIMARY KEY (hash)  \n" + ")  \n";
     public static final String CREATE_LOCKOBJECT_TABLE = "CREATE TABLE lockobject (\n"
-            + "    lockobjectid varchar(255) ,\n" + "    locktime bigint  \n"
+            + "    lockobjectid string ,\n" + "    locktime bigint  \n"
          //  + "    CONSTRAINT lockobject_pk PRIMARY KEY (lockobjectid)  \n" 
             + ")  \n";
 
