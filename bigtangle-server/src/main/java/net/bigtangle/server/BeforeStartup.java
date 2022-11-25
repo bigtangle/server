@@ -5,8 +5,8 @@
 package net.bigtangle.server;
 
 import javax.annotation.PostConstruct;
-import javax.sql.DataSource;
 
+import org.apache.spark.sql.SparkSession;
 import org.bitcoin.Secp256k1Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +17,9 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.kafka.BlockStreamHandler;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.config.SparkConfig;
 import net.bigtangle.server.service.SyncBlockService;
-import net.bigtangle.store.MySQLFullBlockStore;
+import net.bigtangle.store.SparkStore;
 
 @Component
 public class BeforeStartup {
@@ -33,8 +34,9 @@ public class BeforeStartup {
         
         // set false in test
         if (serverConfiguration.getCreatetable()) {
-            MySQLFullBlockStore store = new MySQLFullBlockStore(networkParameters,
-                    dataSource.getConnection());
+         //   MySQLFullBlockStore store = new MySQLFullBlockStore(networkParameters,
+         //           dataSource.getConnection());
+            SparkStore store = new SparkStore(networkParameters, sparkSession, sparkConfig.getAppPath());
             try {
                 store.create();
                 // update tables to new version after initial setup
@@ -71,10 +73,13 @@ public class BeforeStartup {
     private ServerConfiguration serverConfiguration;
     @Autowired
     NetworkParameters networkParameters;
-    @Autowired
-    protected transient DataSource dataSource;
+    //@Autowired
+    //protected transient DataSource dataSource;
 
     @Autowired
     BlockStreamHandler blockStreamHandler;
-  
+    @Autowired
+    SparkSession sparkSession;
+    @Autowired
+    SparkConfig sparkConfig;
 }

@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import net.bigtangle.docker.DockerHelper;
 import net.bigtangle.docker.ResultExecution;
 import net.bigtangle.docker.ShellExecute;
-import net.bigtangle.server.config.DBStoreConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 
 /*
@@ -27,27 +26,8 @@ public class DockerService {
     @Autowired
     private ServerConfiguration serverConfiguration;
 
-    @Autowired
-    private DBStoreConfiguration dbStoreConfiguration;
-
-    /*
-     * create a executable file on the vm and calculate the sha256sum
-     */
-    public String mysqldumpCheck(Long chain) {
-        String file = "/var/lib/mysql/bigtangle-database-chain-" + chain + ".sql.gz";
-        String re = " mysqldump --complete-insert --skip-dump-date -u " + dbStoreConfiguration.getUsername() + " -p"
-                + dbStoreConfiguration.getPassword() + " --databases " + dbStoreConfiguration.getDbName()
-                + "  | gzip -c >  " + file;
-          re += " && sha256sum " + file + " | echo ";
-        return re;
-    }
-
-    public String importDB() {
-        return "  docker exec " + serverConfiguration.getDockerDBHost() + " /bin/sh -c \" " + " mysql -u "
-                + dbStoreConfiguration.getUsername() + " -p" + dbStoreConfiguration.getPassword() + " --databases "
-                + dbStoreConfiguration.getDbName() + " < " + "/temp/" + "bigtangle-database.sql" + "\"";
-    }
-
+ 
+ 
     public ResultExecution dockerExec(String command) throws IOException, InterruptedException {
 
         return dockerExec(serverConfiguration.getDockerDBHost(), command);

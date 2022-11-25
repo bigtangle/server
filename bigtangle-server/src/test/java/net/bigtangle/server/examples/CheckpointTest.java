@@ -36,16 +36,7 @@ public class CheckpointTest extends AbstractIntegrationTest {
     private DockerService dockerService;
   
 
-    @Test
-    public void testCreateDumpSQL() throws Exception { 
- 
-         ResultExecution re = dockerService.dockerExec(dockerService.mysqldumpCheck(1l)
-                 ) ;
-       log.debug(re.toString());
-       String hash = re.getResult().split(" ")[0];
-       assertTrue(hash.equals("034b92c696a4b33871e08ea238e6f3ad730eda8517e30de44823bcc8ce979f2f"));
-    
-    }
+  
 
     public void testServerURL() throws Exception {
         HashMap<String, String> requestParam = new HashMap<String, String>();

@@ -14,13 +14,13 @@ server:
   permissionadmin: ${PERMISSIONADMIN:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
   myserverblockOnly: ${MYSERVERBLOCKONLY:false}
   createtable: false
-db:
-  dbtype: ${DBTYPE:mysql}
-  hostname: ${DB_HOSTNAME:localhost}
-  port: ${DB_PORT:3306}
-  dbName: ${DB_NAME:info}
-  username: ${DB_USERNAME:root}
-  password: ${DB_PASSWORD:test1234}
+  
+spark:
+  appname: ${DBTYPE:mysql}
+  home: ${DB_HOSTNAME:localhost}
+  masteruri: ${DB_PORT:local}
+  apppath: ${DB_NAME:/data/deltalake}
+
 
 
 service:
