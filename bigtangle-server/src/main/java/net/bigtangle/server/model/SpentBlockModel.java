@@ -35,7 +35,7 @@ public class SpentBlockModel {
         setConfirmed(s.isConfirmed());
         setBlockhash(s.getBlockHash().toString());
         setTime(s.getTime());
-        setSpenderblockhash(s.getSpenderBlockHash().toString());
+        setSpenderblockhash(s.getSpenderBlockHash()==null?null:s.getSpenderBlockHash().toString());
 
     }
 

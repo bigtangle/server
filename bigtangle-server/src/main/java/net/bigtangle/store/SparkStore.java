@@ -13,7 +13,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -80,6 +79,7 @@ import net.bigtangle.server.model.OrderRecordModel;
 import net.bigtangle.server.model.OutputsMultiModel;
 import net.bigtangle.server.model.PayMultiSignAddressModel;
 import net.bigtangle.server.model.PayMultiSignModel;
+import net.bigtangle.server.model.SettingModel;
 import net.bigtangle.server.model.TXRewardModel;
 import net.bigtangle.server.model.TokenModel;
 import net.bigtangle.server.model.UTXOModel;
@@ -96,338 +96,272 @@ import net.bigtangle.utils.Gzip;
 @SuppressWarnings(value = { "rawtypes", "unchecked", "serial" })
 public class SparkStore implements FullBlockStore {
 
-    private static final String OPENORDERHASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
+    private static String OPENORDERHASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
-    private static final String LIMIT_500 = " limit 500 ";
+    private static String LIMIT_500 = " limit 500 ";
 
-    private static final Logger log = LoggerFactory.getLogger(SparkStore.class);
+    private static Logger log = LoggerFactory.getLogger(SparkStore.class);
 
-    public static final String VERSION_SETTING = "version";
+    public static String VERSION_SETTING = "version";
+    public static String location;
 
-    // Drop table SQL.
-    private static String DROP_SETTINGS_TABLE = "DROP TABLE IF EXISTS settings";
-    private static String DROP_BLOCKS_TABLE = "DROP TABLE IF EXISTS blocks";
-    private static String DROP_OPEN_OUTPUT_TABLE = "DROP TABLE IF EXISTS outputs";
-    private static String DROP_OUTPUTSMULTI_TABLE = "DROP TABLE IF EXISTS outputsmulti";
-    private static String DROP_TOKENS_TABLE = "DROP TABLE IF EXISTS tokens";
-    private static String DROP_MATCHING_TABLE = "DROP TABLE IF EXISTS matching";
-    private static String DROP_MULTISIGNADDRESS_TABLE = "DROP TABLE IF EXISTS multisignaddress";
-    private static String DROP_MULTISIGNBY_TABLE = "DROP TABLE IF EXISTS multisignby";
-    private static String DROP_MULTISIGN_TABLE = "DROP TABLE IF EXISTS multisign";
-    private static String DROP_TX_REWARDS_TABLE = "DROP TABLE IF EXISTS txreward";
-    private static String DROP_USERDATA_TABLE = "DROP TABLE IF EXISTS userdata";
-    private static String DROP_PAYMULTISIGN_TABLE = "DROP TABLE IF EXISTS paymultisign";
-    private static String DROP_PAYMULTISIGNADDRESS_TABLE = "DROP TABLE IF EXISTS paymultisignaddress";
-    private static String DROP_CONTRACT_EXECUTION_TABLE = "DROP TABLE IF EXISTS contractexecution";
-    private static String DROP_ORDERCANCEL_TABLE = "DROP TABLE IF EXISTS ordercancel";
-    private static String DROP_BATCHBLOCK_TABLE = "DROP TABLE IF EXISTS batchblock";
-    private static String DROP_SUBTANGLE_PERMISSION_TABLE = "DROP TABLE IF EXISTS subtangle_permission";
-    private static String DROP_ORDERS_TABLE = "DROP TABLE IF EXISTS orders";
+    /*
+     * delta lake table name
+     */
+    public static String tablename(String name) {
+        return "delta.`" + location + "/" + name + "`" + " as " + name + " ";
+    }
 
-    private static String DROP_MYSERVERBLOCKS_TABLE = "DROP TABLE IF EXISTS myserverblocks";
-    private static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
-    private static String DROP_EXCHANGEMULTI_TABLE = "DROP TABLE exchange_multisign";
-    private static String DROP_ACCESS_PERMISSION_TABLE = "DROP TABLE access_permission";
-    private static String DROP_ACCESS_GRANT_TABLE = "DROP TABLE access_grant";
-    private static String DROP_CONTRACT_EVENT_TABLE = "DROP TABLE contractevent";
-    private static String DROP_CONTRACT_ACCOUNT_TABLE = "DROP TABLE contractaccount";
-    private static String DROP_CHAINBLOCKQUEUE_TABLE = "DROP TABLE chainblockqueue";
-    private static String DROP_MCMC_TABLE = "DROP TABLE mcmc";
-    private static String DROP_LOCKOBJECT_TABLE = "DROP TABLE lockobject";
-    private static String DROP_MATCHING_LAST_TABLE = "DROP TABLE matchinglast";
-    private static String DROP_MATCHINGDAILY_TABLE = "DROP TABLE matchingdaily";
-    private static String DROP_MATCHINGLASTDAY_TABLE = "DROP TABLE matchinglastday";
+    public static String tablename2(String name) {
+        return "delta.`" + location + "/" + name + "`";
+    }
+
     // Queries SQL.
-    protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = %s";
+    private String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM " + tablename("settings") + " WHERE name = %s";
 
-    protected final String SELECT_BLOCKS_TEMPLATE = "  blocks.hash as hash, block, prevblockhash, prevbranchblockhash"
+    private String SELECT_BLOCKS_TEMPLATE = "  blocks.hash as hash, block, prevblockhash, prevbranchblockhash"
             + "  height, milestone, milestonelastupdate,  inserttime,   solid, confirmed";
 
-    protected final String SELECT_BLOCKS_SQL = " select " + SELECT_BLOCKS_TEMPLATE + " FROM blocks WHERE hash =  ";
+    private String SELECT_BLOCKS_SQL = " select " + SELECT_BLOCKS_TEMPLATE + " FROM " + tablename("blocks")
+            + " WHERE hash =  ";
 
-    protected final String SELECT_BLOCKS_MILESTONE_SQL = " select " + SELECT_BLOCKS_TEMPLATE
-            + "  FROM blocks WHERE height "
-            + " >= (select min(height) from blocks where  milestone >= %s and  milestone <=%s)"
-            + " and height <= (select max(height) from blocks where  milestone >= %s and  milestone <=%s) "
-            + " order by height asc ";
+    private String SELECT_BLOCKS_MILESTONE_SQL = " select " + SELECT_BLOCKS_TEMPLATE + "  FROM " + tablename("blocks")
+            + " WHERE height " + " >= (select min(height) from blocks where  milestone >= %s and  milestone <=%s)"
+            + " and height <= (select max(height) from " + tablename("blocks")
+            + " where  milestone >= %s and  milestone <=%s) " + " order by height asc ";
 
-    protected final String SELECT_MCMC_TEMPLATE = "  hash, rating, depth, cumulativeweight ";
+    private String SELECT_MCMC_TEMPLATE = "  hash, rating, depth, cumulativeweight ";
 
-    protected final String SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL = "SELECT " + SELECT_BLOCKS_TEMPLATE
-            + "  , rating, depth, cumulativeweight "
-            + "  FROM blocks, mcmc WHERE blocks.hash= mcmc.hash and (prevblockhash = %s or prevbranchblockhash = %s) AND solid >= 0 ";
+    private String SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL = "SELECT " + SELECT_BLOCKS_TEMPLATE
+            + "  , rating, depth, cumulativeweight " + "  FROM " + tablename("blocks") + ", " + tablename("mcmc")
+            + " WHERE blocks.hash= mcmc.hash and (prevblockhash = %s or prevbranchblockhash = %s) AND solid >= 0 ";
 
-    protected final String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + " ,  rating, depth, cumulativeweight "
-            + " FROM blocks, mcmc WHERE blocks.hash= mcmc.hash and (prevblockhash = %s or prevbranchblockhash = %s) AND solid = 2 ";
+    private String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
+            + " ,  rating, depth, cumulativeweight " + tablename("blocks") + ", " + tablename("mcmc")
+            + " WHERE blocks.hash= mcmc.hash and (prevblockhash = %s or prevbranchblockhash = %s) AND solid = 2 ";
 
-    protected final String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT hash FROM blocks "
-            + "WHERE blocks.prevblockhash = %s or blocks.prevbranchblockhash = %s";
+    private String SELECT_SOLID_APPROVER_HASHES_SQL = "SELECT hash FROM " + tablename("blocks")
+            + " WHERE blocks.prevblockhash = %s or blocks.prevbranchblockhash = %s";
 
-    protected final String SELECT_OUTPUTS_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress,"
+    private String SELECT_OUTPUTS_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress,"
             + " addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, "
-            + "spendpending , spendpendingtime, minimumsign, time, spenderblockhash FROM outputs WHERE hash = %s AND outputindex = %s AND blockhash = %s ";
+            + "spendpending , spendpendingtime, minimumsign, time, spenderblockhash FROM " + tablename("outputs")
+            + " WHERE hash = %s AND outputindex = %s AND blockhash = %s ";
 
-    protected final String SELECT_TRANSACTION_OUTPUTS_SQL_BASE = "SELECT " + "outputs.hash, coinvalue, scriptbytes, "
+    private String SELECT_TRANSACTION_OUTPUTS_SQL_BASE = "SELECT " + "outputs.hash, coinvalue, scriptbytes, "
             + " outputs.outputindex, coinbase, " + "  outputs.toaddress  as  toaddress,"
             + " outputsmulti.toaddress  as multitoaddress, " + "  addresstargetable, blockhash, tokenid, "
             + " fromaddress, memo, spent, confirmed, "
-            + "spendpending,spendpendingtime,  minimumsign, time , spenderblockhash "
-            + " FROM outputs LEFT JOIN outputsmulti " + " ON outputs.hash = outputsmulti.hash"
+            + "spendpending,spendpendingtime,  minimumsign, time , spenderblockhash " + " FROM " + tablename("outputs")
+            + " LEFT JOIN " + tablename("outputsmulti") + " ON outputs.hash = outputsmulti.hash"
             + " AND outputs.outputindex = outputsmulti.outputindex ";
 
-    protected final String SELECT_OPEN_TRANSACTION_OUTPUTS_SQL = SELECT_TRANSACTION_OUTPUTS_SQL_BASE
+    private String SELECT_OPEN_TRANSACTION_OUTPUTS_SQL = SELECT_TRANSACTION_OUTPUTS_SQL_BASE
             + " WHERE  confirmed=true and spent= false and outputs.toaddress = %s " + " OR outputsmulti.toaddress = %s";
-
-    protected final String SELECT_OPEN_TRANSACTION_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
-            + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress as toaddress , addresstargetable,"
-            + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime, minimumsign, time , spenderblockhash"
-            + " , outputsmulti.toaddress  as multitoaddress" + " FROM outputs LEFT JOIN outputsmulti "
-            + " ON outputs.hash = outputsmulti.hash AND outputs.outputindex = outputsmulti.outputindex "
-            + " WHERE   (outputs.toaddress = %s " + " OR outputsmulti.toaddress = %s) " + " AND tokenid = %s";
-    protected final String SELECT_ALL_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
+    private String SELECT_ALL_OUTPUTS_TOKEN_SQL = "SELECT " + " outputs.hash, coinvalue, "
             + " scriptbytes, outputs.outputindex, coinbase, outputs.toaddress, addresstargetable,"
             + " blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending, spendpendingtime , minimumsign, time , spenderblockhash"
-            + " FROM outputs  WHERE  confirmed=true and spent= false and tokenid = %s";
+            + " FROM " + tablename("outputs") + "  WHERE  confirmed=true and spent= false and tokenid = %s";
 
     // Tables exist SQL.
-    protected final String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM settings WHERE 1 = 2";
+    private String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM " + tablename("settings") + " WHERE 1 = 2";
 
-    protected final String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + " FROM blocks, mcmc  WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = false AND height > %s"
+    private String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE + " FROM " + tablename("blocks")
+            + ", " + tablename("mcmc")
+            + "  WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = false AND height > %s"
             + " AND height <= %s AND mcmc.rating >= " + NetworkParameters.CONFIRMATION_UPPER_THRESHOLD;
 
-    protected final String SELECT_BLOCKS_TO_UNCONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + "  FROM blocks , mcmc WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = true AND mcmc.rating < "
+    private String SELECT_BLOCKS_TO_UNCONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE + "  FROM " + tablename("blocks")
+            + ", " + tablename("mcmc")
+            + " WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = true AND mcmc.rating < "
             + NetworkParameters.CONFIRMATION_LOWER_THRESHOLD;
 
-    protected final String SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
-            + "  FROM blocks WHERE milestone >= %s AND milestone <= %s";
+    private String SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE + "  FROM "
+            + tablename("blocks") + " WHERE milestone >= %s AND milestone <= %s";
 
-    protected final String SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL = "SELECT   " + SELECT_BLOCKS_TEMPLATE
-            + " FROM blocks WHERE   height > %s AND height <= %s AND solid = 2 ";
+    private String SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL = "SELECT   " + SELECT_BLOCKS_TEMPLATE + " FROM "
+            + tablename("blocks") + " WHERE   height > %s AND height <= %s AND solid = 2 ";
 
-    protected final String SELECT_BLOCKS_CONFIRMED_AND_NOT_MILESTONE_SQL = "SELECT hash "
+    private String SELECT_BLOCKS_CONFIRMED_AND_NOT_MILESTONE_SQL = "SELECT hash "
             + "FROM blocks WHERE milestone = -1 AND confirmed = 1 ";
 
-    protected final String SELECT_BLOCKS_NON_CHAIN_HEIGTH_SQL = "SELECT block "
-            + "FROM blocks WHERE milestone = -1 AND height >= %s ";
+    private String SELECT_BLOCKS_NON_CHAIN_HEIGTH_SQL = "SELECT block " + "FROM " + tablename("blocks")
+            + " WHERE milestone = -1 AND height >= %s ";
 
-    protected final String UPDATE_ORDER_SPENT_SQL = getUpdate() + " orders SET spent = %s, spenderblockhash = %s "
-            + " WHERE blockhash = %s AND issuingmatcherblockhash = %s";
-    protected final String UPDATE_ORDER_CONFIRMED_SQL = getUpdate() + " orders SET confirmed = %s "
+    private String UPDATE_ORDER_CONFIRMED_SQL = getUpdate() + " orders SET confirmed = %s "
             + " WHERE blockhash = %s AND issuingmatcherblockhash = %s";
 
-    protected final String ORDER_TEMPLATE = "  blockhash, issuingmatcherblockhash, offercoinvalue, offertokenid, "
+    private String ORDER_TEMPLATE = "  blockhash, issuingmatcherblockhash, offercoinvalue, offertokenid, "
             + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, "
-            + "beneficiarypubkey, validToTime, validFromTime, side , beneficiaryaddress, orderbasetoken, price, tokendecimals ";
-    protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT " + ORDER_TEMPLATE
-            + " FROM orders WHERE issuingmatcherblockhash = %s";
+            + "beneficiarypubkey, validtotime, validfromtime, side , beneficiaryaddress, orderbasetoken, "
+            + "price, tokendecimals ";
+    private String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT " + ORDER_TEMPLATE + " FROM " + tablename("orders")
+            + " WHERE issuingmatcherblockhash = %s";
 
-    protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM orders WHERE blockhash = %s AND issuingmatcherblockhash = %s";
-    protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM orders WHERE blockhash = %s AND issuingmatcherblockhash = %s";
-    protected final String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM orders WHERE blockhash = %s AND issuingmatcherblockhash = %s";
-    protected final String SELECT_ORDER_SQL = "SELECT " + ORDER_TEMPLATE
-            + " FROM orders WHERE blockhash = %s AND issuingmatcherblockhash = %s";
+    private String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM " + tablename("orders")
+            + " WHERE blockhash = %s AND issuingmatcherblockhash = %s";
+    private String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM " + tablename("orders")
+            + " WHERE blockhash = %s AND issuingmatcherblockhash = %s";
+    private String SELECT_ORDER_SPENDER_SQL = "SELECT spenderblockhash FROM " + tablename("orders")
+            + " WHERE blockhash = %s AND issuingmatcherblockhash = %s";
+    private String SELECT_ORDER_SQL = "SELECT " + ORDER_TEMPLATE + " FROM " + tablename("orders")
+            + " WHERE blockhash = %s AND issuingmatcherblockhash = %s";
 
-    protected String SELECT_TOKENS_SQL_TEMPLATE = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, domainname, signnumber,tokentype, tokenstop ,"
+    private String SELECT_TOKENS_SQL_TEMPLATE = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, domainname, signnumber,tokentype, tokenstop ,"
             + "tokenkeyvalues, revoked,language,classification,decimals, domainpredblockhash ";
 
-    protected final String SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL = "SELECT spent FROM tokens WHERE blockhash = %s";
-
-    protected final String SELECT_TOKEN_CONFIRMED_SQL = "SELECT confirmed FROM tokens WHERE blockhash = %s";
-
-    protected final String SELECT_TOKEN_ANY_CONFIRMED_SQL = "SELECT confirmed FROM tokens WHERE tokenid = %s AND tokenindex = %s AND confirmed = true";
-
-    protected final String SELECT_TOKEN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE tokenid = %s AND tokenindex = %s AND confirmed = true";
-
-    protected final String SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM tokens WHERE tokenname = %s AND domainpredblockhash = %s AND tokenindex = %s AND confirmed = true";
-
-    protected final String SELECT_DOMAIN_DESCENDANT_CONFIRMED_BLOCKS_SQL = "SELECT blockhash FROM tokens WHERE domainpredblockhash = %s AND confirmed = true";
-
-    protected final String SELECT_TOKEN_SPENDER_SQL = "SELECT spenderblockhash FROM tokens WHERE blockhash = %s";
-
-    protected final String SELECT_TOKEN_PREVBLOCKHASH_SQL = "SELECT prevblockhash FROM tokens WHERE blockhash = %s";
-
-    protected final String SELECT_TOKEN_SQL = SELECT_TOKENS_SQL_TEMPLATE + " FROM tokens WHERE blockhash = %s";
-
-    protected final String SELECT_TOKENID_SQL = SELECT_TOKENS_SQL_TEMPLATE + " FROM tokens WHERE tokenid = %s";
-
-    protected final String UPDATE_TOKEN_SPENT_SQL = getUpdate() + " tokens SET spent = %s, spenderblockhash = %s "
+    private String SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL = "SELECT spent FROM " + tablename("tokens")
             + " WHERE blockhash = %s";
 
-    protected final String UPDATE_TOKEN_CONFIRMED_SQL = getUpdate() + " tokens SET confirmed = %s "
+    private String SELECT_TOKEN_CONFIRMED_SQL = "SELECT confirmed FROM " + tablename("tokens")
             + " WHERE blockhash = %s";
 
-    protected final String SELECT_CONFIRMED_TOKENS_SQL = SELECT_TOKENS_SQL_TEMPLATE
-            + " FROM tokens WHERE confirmed = true";
+    private String SELECT_TOKEN_ANY_CONFIRMED_SQL = "SELECT confirmed FROM " + tablename("tokens")
+            + " WHERE tokenid = %s AND tokenindex = %s AND confirmed = true";
 
-    protected final String SELECT_MARKET_TOKENS_SQL = SELECT_TOKENS_SQL_TEMPLATE
-            + " FROM tokens WHERE tokentype = 1 and confirmed = true";
+    private String SELECT_TOKEN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM " + tablename("tokens")
+            + " WHERE tokenid = %s AND tokenindex = %s AND confirmed = true";
 
-    protected final String SELECT_TOKENS_ACOUNT_MAP_SQL = "SELECT tokenid, amount  as amount "
-            + "FROM tokens WHERE confirmed = true ";
+    private String SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM " + tablename("tokens")
+            + " WHERE tokenname = %s AND domainpredblockhash = %s AND tokenindex = %s AND confirmed = true";
 
-    protected final String COUNT_TOKENSINDEX_SQL = "SELECT blockhash, tokenindex FROM tokens"
+    private String SELECT_DOMAIN_DESCENDANT_CONFIRMED_BLOCKS_SQL = "SELECT blockhash FROM " + tablename("tokens")
+            + " WHERE domainpredblockhash = %s AND confirmed = true";
+
+    private String SELECT_TOKEN_SPENDER_SQL = "SELECT spenderblockhash FROM " + tablename("tokens")
+            + " WHERE blockhash = %s";
+
+    private String SELECT_TOKEN_PREVBLOCKHASH_SQL = "SELECT prevblockhash FROM " + tablename("tokens")
+            + " WHERE blockhash = %s";
+
+    private String SELECT_TOKEN_SQL = SELECT_TOKENS_SQL_TEMPLATE + " FROM " + tablename("tokens")
+            + " WHERE blockhash = %s";
+
+    private String SELECT_TOKENID_SQL = SELECT_TOKENS_SQL_TEMPLATE + " FROM " + tablename("tokens")
+            + " WHERE tokenid = %s";
+
+    private String UPDATE_TOKEN_SPENT_SQL = getUpdate() + " " + tablename("tokens")
+            + " SET spent = %s, spenderblockhash = %s " + " WHERE blockhash = %s";
+
+    private String UPDATE_TOKEN_CONFIRMED_SQL = getUpdate() + " " + tablename("tokens") + " SET confirmed = %s "
+            + " WHERE blockhash = %s";
+
+    private String SELECT_CONFIRMED_TOKENS_SQL = SELECT_TOKENS_SQL_TEMPLATE + " FROM tokens WHERE confirmed = true";
+
+    private String COUNT_TOKENSINDEX_SQL = "SELECT blockhash, tokenindex FROM " + tablename("tokens")
             + " WHERE tokenid = %s AND confirmed = true ORDER BY tokenindex DESC limit 1";
 
-    protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL = "SELECT blockhash, tokenid FROM tokens WHERE blockhash = %s limit 1";
+    private String SELECT_TOKENS_BY_DOMAINNAME_SQL = "SELECT blockhash, tokenid FROM " + tablename("tokens")
+            + " WHERE blockhash = %s limit 1";
 
-    protected final String SELECT_TOKENS_BY_DOMAINNAME_SQL0 = "SELECT blockhash, tokenid "
-            + "FROM tokens WHERE tokenname = %s  AND confirmed = true limit 1";
+    private String SELECT_TOKENS_BY_DOMAINNAME_SQL0 = "SELECT blockhash, tokenid " + "FROM " + tablename("tokens")
+            + " WHERE tokenname = %s  AND confirmed = true limit 1";
 
-    protected final String UPDATE_SETTINGS_SQL = getUpdate() + " settings SET settingvalue = %s WHERE name = %s";
+    private String UPDATE_OUTPUTS_SPENT_SQL = getUpdate() + tablename("outputs")
+            + " SET spent = %s, spenderblockhash = %s WHERE hash = %s AND outputindex= %s AND blockhash = %s";
 
-    protected final String UPDATE_OUTPUTS_SPENT_SQL = getUpdate()
-            + " outputs SET spent = %s, spenderblockhash = %s WHERE hash = %s AND outputindex= %s AND blockhash = %s";
+    private String UPDATE_OUTPUTS_CONFIRMED_SQL = getUpdate() + tablename("outputs")
+            + " SET confirmed = %s WHERE hash = %s AND outputindex= %s AND blockhash = %s";
 
-    protected final String UPDATE_OUTPUTS_CONFIRMED_SQL = getUpdate()
-            + " outputs SET confirmed = %s WHERE hash = %s AND outputindex= %s AND blockhash = %s";
+    private String UPDATE_ALL_OUTPUTS_CONFIRMED_SQL = getUpdate() + tablename("outputs")
+            + " SET confirmed = %s WHERE blockhash = %s";
 
-    protected final String UPDATE_ALL_OUTPUTS_CONFIRMED_SQL = getUpdate()
-            + " outputs SET confirmed = %s WHERE blockhash = %s";
+    private String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate() + tablename("outputs")
+            + " SET spendpending = %s, spendpendingtime=%s WHERE hash = %s AND outputindex= %s AND blockhash = %s";
 
-    protected final String UPDATE_OUTPUTS_SPENDPENDING_SQL = getUpdate()
-            + " outputs SET spendpending = %s, spendpendingtime=%s WHERE hash = %s AND outputindex= %s AND blockhash = %s";
+    private String SELECT_MCMC_CHAINLENGHT_SQL = "  select mcmc.hash " + " from " + tablename("blocks") + ", "
+            + tablename("mcmc") + " where mcmc.hash=blocks.hash and milestone < %s  and milestone > 0  ";
 
-    protected final String UPDATE_BLOCKEVALUATION_WEIGHT_AND_DEPTH_SQL = getUpdate()
-            + " mcmc SET cumulativeweight = %s, depth = %s WHERE hash = %s";
+    private String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate() + tablename2("blocks")
+            + " SET milestone = %s, milestonelastupdate= %s  WHERE hash = %s";
 
-    protected final String SELECT_MCMC_CHAINLENGHT_SQL = "  select mcmc.hash "
-            + " from blocks, mcmc where mcmc.hash=blocks.hash and milestone < %s  and milestone > 0  ";
+    private String UPDATE_BLOCKEVALUATION_CONFIRMED_SQL = getUpdate() + tablename2("blocks")
+            + " SET confirmed = %s WHERE hash = %s";
 
-    protected final String UPDATE_BLOCKEVALUATION_MILESTONE_SQL = getUpdate()
-            + " blocks SET milestone = %s, milestonelastupdate= %s  WHERE hash = %s";
+    private String UPDATE_BLOCKEVALUATION_RATING_SQL = getUpdate() + tablename("mcmc")
+            + " SET rating = %s WHERE hash = %s";
 
-    protected final String UPDATE_BLOCKEVALUATION_CONFIRMED_SQL = getUpdate()
-            + " blocks SET confirmed = %s WHERE hash = %s";
+    private String UPDATE_BLOCKEVALUATION_SOLID_SQL = getUpdate() + tablename("blocks")
+            + " SET solid = %s WHERE hash = %s";
 
-    protected final String UPDATE_BLOCKEVALUATION_RATING_SQL = getUpdate() + " mcmc SET rating = %s WHERE hash = %s";
+    private String SELECT_MULTISIGNADDRESS_SQL = "SELECT blockhash, tokenid, address, pubkeyhex, posindex, tokenholder FROM "
+            + tablename("multisignaddress") + " WHERE tokenid = %s AND blockhash = %s";
+    private String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM " + tablename("multisignaddress")
+            + " WHERE tokenid = %s AND address = %s";
 
-    protected final String UPDATE_BLOCKEVALUATION_SOLID_SQL = getUpdate() + " blocks SET solid = %s WHERE hash = %s";
+    private String SELECT_MULTISIGN_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM "
+            + tablename("multisign") + " WHERE address = %s ORDER BY tokenindex ASC";
+    private String SELECT_MULTISIGN_TOKENID_ADDRESS_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM "
+            + tablename("multisign") + " WHERE tokenid = %s and address = %s ORDER BY tokenindex ASC";
 
-    protected final String SELECT_MULTISIGNADDRESS_SQL = "SELECT blockhash, tokenid, address, pubkeyhex, posindex, tokenholder FROM multisignaddress WHERE tokenid = %s AND blockhash = %s";
-    protected final String DELETE_MULTISIGNADDRESS_SQL = "DELETE FROM multisignaddress WHERE tokenid = %s AND address = %s";
-    protected final String COUNT_MULTISIGNADDRESS_SQL = "SELECT COUNT(*) as count FROM multisignaddress WHERE tokenid = %s";
+    private String UPDATE_MULTISIGN_SQL = "UPDATE " + tablename("multisign")
+            + " SET blockhash = %s, sign = %s WHERE tokenid = %s AND tokenindex = %s AND address = %s";
+    private String UPDATE_MULTISIGN1_SQL = "UPDATE multisign SET blockhash = %s WHERE tokenid = %s AND tokenindex = %s";
+    private String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = %s AND tokenindex = %s AND address = %s ";
 
-    protected final String INSERT_MULTISIGNBY_SQL = "INSERT INTO multisignby (tokenid, tokenindex, address) VALUES (%s, %s, %s)";
-    protected final String SELECT_MULTISIGNBY_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = %s AND tokenindex = %s AND address = %s";
-    protected final String SELECT_MULTISIGNBY0_SQL = "SELECT COUNT(*) as count FROM multisignby WHERE tokenid = %s AND tokenindex = %s";
-
-    protected final String SELECT_MULTISIGN_ALL_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign,(select count(ms1.sign) from multisign ms1 where ms1.tokenid=tokenid and tokenindex=ms1.tokenindex and ms1.sign!=0 ) as count FROM multisign  WHERE 1=1 ";
-    protected final String SELECT_MULTISIGN_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE address = %s ORDER BY tokenindex ASC";
-    protected final String SELECT_MULTISIGN_TOKENID_ADDRESS_SQL = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE tokenid = %s and address = %s ORDER BY tokenindex ASC";
-
-    protected final String INSERT_MULTISIGN_SQL = "INSERT INTO multisign (tokenid, tokenindex, address, blockhash, sign, id) VALUES (%s, %s, %s, %s, %s, %s)";
-    protected final String UPDATE_MULTISIGN_SQL = "UPDATE multisign SET blockhash = %s, sign = %s WHERE tokenid = %s AND tokenindex = %s AND address = %s";
-    protected final String UPDATE_MULTISIGN1_SQL = "UPDATE multisign SET blockhash = %s WHERE tokenid = %s AND tokenindex = %s";
-    protected final String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = %s AND tokenindex = %s AND address = %s ";
-    protected final String SELECT_COUNT_ALL_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = %s AND tokenindex = %s  AND sign=%s";
-
-    protected final String DELETE_MULTISIGN_SQL = "DELETE FROM multisign WHERE tokenid = %s";
-
-    protected final String SELECT_COUNT_MULTISIGN_SIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = %s AND tokenindex = %s AND sign = %s";
+    private String DELETE_MULTISIGN_SQL = "DELETE FROM multisign WHERE tokenid = %s";
 
     /* REWARD */
-    protected final String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = "SELECT blockhash, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward"
-            + " WHERE confirmed = 1 AND chainlength=(SELECT MAX(chainlength) FROM txreward WHERE confirmed=1)";
-    protected final String SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL = "SELECT blockhash, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward"
-            + " WHERE confirmed = 1 AND chainlength=%s";
-    protected final String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, confirmed, "
-            + "spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM txreward "
+    private String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = "SELECT blockhash, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM "
+            + tablename("txreward") + " WHERE confirmed = 1 AND chainlength=(SELECT MAX(chainlength) FROM "
+            + tablename("txreward") + " WHERE confirmed=1)";
+    private String SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL = "SELECT blockhash, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM "
+            + tablename("txreward") + " WHERE confirmed = 1 AND chainlength=%s";
+    private String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, confirmed, "
+            + "spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM " + tablename("txreward")
             + "WHERE confirmed = 1 order by chainlength ";
-    protected final String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM txreward WHERE blockhash = ?";
-    protected final String SELECT_TX_REWARD_CHAINLENGTH_SQL = "SELECT chainlength "
-            + "FROM txreward WHERE blockhash = %s";
-    protected final String SELECT_TX_REWARD_DIFFICULTY_SQL = "SELECT difficulty "
-            + "FROM txreward WHERE blockhash = %s";
-    protected final String SELECT_TX_REWARD_SPENT_SQL = "SELECT spent " + "FROM txreward WHERE blockhash = %s";
-    protected final String SELECT_TX_REWARD_SPENDER_SQL = "SELECT spenderblockhash "
-            + "FROM txreward WHERE blockhash = %s";
-    protected final String SELECT_TX_REWARD_PREVBLOCKHASH_SQL = "SELECT prevblockhash "
-            + "FROM txreward WHERE blockhash = %s";
-    protected final String SELECT_REWARD_WHERE_PREV_HASH_SQL = "SELECT blockhash "
-            + "FROM txreward WHERE prevblockhash = %s";
-    protected final String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE txreward SET confirmed = %s WHERE blockhash = %s";
-    protected final String UPDATE_TX_REWARD_SPENT_SQL = "UPDATE txreward SET spent = %s, spenderblockhash = %s WHERE blockhash = %s";
+    private String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM " + tablename("txreward")
+            + " WHERE blockhash = ?";
+    private String SELECT_TX_REWARD_CHAINLENGTH_SQL = "SELECT chainlength " + "FROM " + tablename("txreward")
+            + " WHERE blockhash = %s";
+    private String SELECT_TX_REWARD_DIFFICULTY_SQL = "SELECT difficulty " + "FROM " + tablename("txreward")
+            + " WHERE blockhash = %s";
+    private String SELECT_TX_REWARD_SPENT_SQL = "SELECT spent " + "FROM " + tablename("txreward")
+            + " WHERE blockhash = %s";
+    private String SELECT_TX_REWARD_SPENDER_SQL = "SELECT spenderblockhash " + "FROM " + tablename("txreward")
+            + " WHERE blockhash = %s";
+    private String SELECT_TX_REWARD_PREVBLOCKHASH_SQL = "SELECT prevblockhash " + "FROM " + tablename("txreward")
+            + " WHERE blockhash = %s";
+    private String UPDATE_TX_REWARD_CONFIRMED_SQL = "UPDATE " + tablename("txreward")
+            + " SET confirmed = %s WHERE blockhash = %s";
+    private String UPDATE_TX_REWARD_SPENT_SQL = "UPDATE " + tablename("txreward")
+            + " SET spent = %s, spenderblockhash = %s WHERE blockhash = %s";
 
     /* MATCHING EVENTS */
-    protected final String SELECT_MATCHING_EVENT = "SELECT txhash, tokenid,basetokenid,  price, executedQuantity, inserttime "
-            + "FROM matching ";
-    protected final String DELETE_MATCHING_EVENT_BY_HASH = "DELETE FROM matching WHERE txhash = %s";
-    // lastest MATCHING EVENTS
-    protected final String SELECT_MATCHING_EVENT_LAST = "SELECT txhash, tokenid,basetokenid,  price, executedQuantity, inserttime "
-            + "FROM matchinglast ";
-    protected final String DELETE_MATCHING_EVENT_LAST_BY_KEY = "DELETE FROM matchinglast WHERE tokenid = %s and basetokenid=%s";
+    private String SELECT_MATCHING_EVENT = "SELECT txhash, tokenid,basetokenid,  price, executedQuantity, inserttime "
+            + "FROM " + tablename("matching");
+    private String DELETE_MATCHING_EVENT_BY_HASH = "DELETE FROM " + tablename("matching") + " WHERE txhash = %s";
 
     /* OTHER */
-    protected final String INSERT_OUTPUTSMULTI_SQL = "insert into outputsmulti (hash, toaddress, outputindex) values (%s, %s, %s)";
-    protected final String SELECT_OUTPUTSMULTI_SQL = "select hash, toaddress, outputindex from outputsmulti where hash=%s and outputindex=%s";
+    private String SELECT_OUTPUTSMULTI_SQL = "select hash, toaddress, outputindex from " + tablename("outputsmulti")
+            + " where hash=%s and outputindex=%s";
 
-    protected final String SELECT_USERDATA_SQL = "SELECT blockhash, dataclassname, data, pubKey, blocktype FROM userdata WHERE dataclassname = %s and pubKey = %s";
-    protected final String INSERT_USERDATA_SQL = "INSERT INTO userdata (blockhash, dataclassname, data, pubKey, blocktype) VALUES (%s, %s, %s, %s, %s)";
-    protected final String UPDATE_USERDATA_SQL = "UPDATE userdata SET blockhash = %s, data = %s WHERE dataclassname = %s and pubKey = %s";
+    private String SELECT_USERDATA_SQL = "SELECT blockhash, dataclassname, data, pubkey, blocktype FROM "
+            + tablename("userdata") + " WHERE dataclassname = %s and pubkey = %s";
 
-    protected final String INSERT_BATCHBLOCK_SQL = "INSERT INTO batchblock (hash, block, inserttime) VALUE (%s, %s, %s)";
-    protected final String DELETE_BATCHBLOCK_SQL = "DELETE FROM batchblock WHERE hash = %s";
-    protected final String SELECT_BATCHBLOCK_SQL = "SELECT hash, block, inserttime FROM batchblock order by inserttime ASC";
-    protected final String INSERT_SUBTANGLE_PERMISSION_SQL = "INSERT INTO  subtangle_permission (pubkey, userdataPubkey , status) VALUE (%s, %s, %s)";
+    private String SELECT_OPEN_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE + " FROM " + tablename("orders")
+            + " WHERE confirmed=1 AND spent=0 ";
 
-    protected final String DELETE_SUBTANGLE_PERMISSION_SQL = "DELETE FROM  subtangle_permission WHERE pubkey=%s";
-    protected final String UPATE_ALL_SUBTANGLE_PERMISSION_SQL = "UPDATE   subtangle_permission set status=%s ,userdataPubkey=%s WHERE  pubkey=%s ";
-
-    protected final String SELECT_ALL_SUBTANGLE_PERMISSION_SQL = "SELECT   pubkey, userdataPubkey , status FROM subtangle_permission ";
-
-    protected final String SELECT_SUBTANGLE_PERMISSION_BY_PUBKEYS_SQL = "SELECT   pubkey, userdataPubkey , status FROM subtangle_permission WHERE 1=1 ";
-
-    protected final String SELECT_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
-            + " FROM orders ORDER BY blockhash, issuingmatcherblockhash";
-
-    protected final String SELECT_OPEN_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
-            + " FROM orders WHERE confirmed=1 AND spent=0 ";
-
-    protected final String SELECT_MY_REMAINING_OPEN_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
-            + " WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=%s ";
-    protected final String SELECT_MY_INITIAL_OPEN_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
-            + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress=%s AND issuingmatcherblockhash=" + OPENORDERHASH
-            + " AND blockhash IN ( SELECT blockhash FROM orders "
-            + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=%s )";
     // TODO remove test
-    protected final String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
+    private String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
             + "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending,spendpendingtime, minimumsign, time, hash, outputindex, spenderblockhash "
-            + " FROM outputs WHERE confirmed=1 AND spent=0 ORDER BY hash, outputindex";
+            + " FROM " + tablename("outputs") + " WHERE confirmed=1 AND spent=0 ORDER BY hash, outputindex";
 
-    protected final String SELECT_ORDERCANCEL_SQL = "SELECT blockhash, orderblockhash, confirmed, spent, spenderblockhash,time FROM ordercancel WHERE 1 = 1";
+    private String SELECT_ORDERCANCEL_SQL = "SELECT blockhash, orderblockhash, confirmed, spent, spenderblockhash,time FROM "
+            + tablename("ordercancel") + " WHERE 1 = 1";
 
-    protected final String SELECT_CONTRACT_EXECUTION_SQL = "SELECT blockhash, contracttokenid confirmed, spent, "
-            + "spenderblockhash, prevblockhash, difficulty, chainlength ";
+    private String ChainBlockQueueColumn = " hash, block, chainlength, orphan, inserttime";
+    private String SELECT_CHAINBLOCKQUEUE = " select " + ChainBlockQueueColumn + " from "
+            + tablename("chainblockqueue");
 
-    protected final String CONTRACT_EXECUTION_SELECT_MAX_CONFIRMED_SQL = SELECT_CONTRACT_EXECUTION_SQL
-            + " FROM contractexecution" + " WHERE confirmed = 1 AND  contracttokenid = %s "
-            + " AND chainlength=(SELECT MAX(chainlength) FROM contractexecution WHERE confirmed=1 and contracttokenid=%s)";
+    private NetworkParameters params;
+    private SparkSession sparkSession;
+    // private String location;
 
-    protected final String BlockPrototype_SELECT_SQL = "   select prevblockhash, prevbranchblockhash, "
-            + " inserttime from blockprototype   ";
-    protected final String BlockPrototype_DELETE_SQL = "   delete from blockprototype  where  prevblockhash =%s and prevbranchblockhash=%s  ";
-
-    protected final String ChainBlockQueueColumn = " hash, block, chainlength, orphan, inserttime";
-    protected final String SELECT_CHAINBLOCKQUEUE = " select " + ChainBlockQueueColumn + " from chainblockqueue  ";
-
-    protected NetworkParameters params;
-    protected SparkSession sparkSession;
-    protected String location;
-
-    public SparkStore(NetworkParameters params, SparkSession sparkSession, String location) {
+    public SparkStore(NetworkParameters params, SparkSession sparkSession) {
         this.params = params;
         this.sparkSession = sparkSession;
-        this.location = location;
-    }
-
-    /*
-     * delta llake table name
-     */
-    public String tablename(String name) throws BlockStoreException {
-        return "delta.`" + location + "/" + name + "`" + " as " + name;
+        // this.location = location;
     }
 
     public void create() throws BlockStoreException {
@@ -445,11 +379,7 @@ public class SparkStore implements FullBlockStore {
         }
     }
 
-    protected String afterSelect() {
-        return "";
-    }
-
-    protected String getUpdate() {
+    private String getUpdate() {
         return "update ";
     }
 
@@ -458,58 +388,8 @@ public class SparkStore implements FullBlockStore {
      * 
      * @return The SQL prepared statement.
      */
-    protected String getTablesExistSQL() {
+    private String getTablesExistSQL() {
         return SELECT_CHECK_TABLES_EXIST_SQL;
-    }
-
-    /**
-     * Get the SQL to drop all the tables (DDL).
-     * 
-     * @return The SQL drop statements.
-     */
-    protected List<String> getDropTablesSQL() {
-        List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(DROP_SETTINGS_TABLE);
-        sqlStatements.add(DROP_BLOCKS_TABLE);
-        sqlStatements.add(DROP_OPEN_OUTPUT_TABLE);
-        sqlStatements.add(DROP_OUTPUTSMULTI_TABLE);
-        sqlStatements.add(DROP_TOKENS_TABLE);
-        sqlStatements.add(DROP_MATCHING_TABLE);
-        sqlStatements.add(DROP_MULTISIGNADDRESS_TABLE);
-        sqlStatements.add(DROP_MULTISIGNBY_TABLE);
-        sqlStatements.add(DROP_MULTISIGN_TABLE);
-        sqlStatements.add(DROP_TX_REWARDS_TABLE);
-        sqlStatements.add(DROP_USERDATA_TABLE);
-        sqlStatements.add(DROP_PAYMULTISIGN_TABLE);
-        sqlStatements.add(DROP_PAYMULTISIGNADDRESS_TABLE);
-        sqlStatements.add(DROP_CONTRACT_EXECUTION_TABLE);
-        sqlStatements.add(DROP_ORDERCANCEL_TABLE);
-        sqlStatements.add(DROP_BATCHBLOCK_TABLE);
-        sqlStatements.add(DROP_SUBTANGLE_PERMISSION_TABLE);
-        sqlStatements.add(DROP_ORDERS_TABLE);
-        sqlStatements.add(DROP_MYSERVERBLOCKS_TABLE);
-        sqlStatements.add(DROP_EXCHANGE_TABLE);
-        sqlStatements.add(DROP_EXCHANGEMULTI_TABLE);
-        sqlStatements.add(DROP_ACCESS_PERMISSION_TABLE);
-        sqlStatements.add(DROP_ACCESS_GRANT_TABLE);
-        sqlStatements.add(DROP_CONTRACT_EVENT_TABLE);
-        sqlStatements.add(DROP_CONTRACT_ACCOUNT_TABLE);
-        sqlStatements.add(DROP_CHAINBLOCKQUEUE_TABLE);
-        sqlStatements.add(DROP_MCMC_TABLE);
-        sqlStatements.add(DROP_LOCKOBJECT_TABLE);
-        sqlStatements.add(DROP_MATCHING_LAST_TABLE);
-        sqlStatements.add(DROP_MATCHINGDAILY_TABLE);
-        sqlStatements.add(DROP_MATCHINGLASTDAY_TABLE);
-        return sqlStatements;
-    }
-
-    /**
-     * Get the SQL to select a setting coinvalue.
-     * 
-     * @return The SQL select statement.
-     */
-    protected String getSelectSettingsSQL() {
-        return SELECT_SETTINGS_SQL;
     }
 
     /**
@@ -527,9 +407,9 @@ public class SparkStore implements FullBlockStore {
      */
     private boolean tablesExists() throws SQLException {
         try {
-        return sparkSession.sql(getTablesExistSQL()).count() > 0;
-        }catch (Exception e) {
-         return false;
+            return sparkSession.sql(getTablesExistSQL()).count() > 0;
+        } catch (Exception e) {
+            return false;
         }
 
     }
@@ -542,40 +422,35 @@ public class SparkStore implements FullBlockStore {
      * @throws BlockStoreException
      *             If the block store could not be created.
      */
-    private synchronized void createTables() throws SQLException, BlockStoreException {
+    private synchronized void createTables() throws BlockStoreException {
         try {
-            // beginDatabaseBatchWrite();
-            // create all the database tables
-            updateTables(getCreateTablesSQL());
-            // insert the initial settings for this store
-            dbversion("05");
-            createNewStore(params);
-
+            SparkData.createDeltaTable(sparkSession, location);
         } catch (Exception e) {
             log.error("", e);
             // this.abortDatabaseBatchWrite();
         }
-    }
-
-    /*
-     * initial ps.setBytes(2, "03".getBytes());
-     */
-    private void dbversion(String version) throws SQLException {
-
-    }
-
-    protected void dbupdateversion(String version) throws SQLException {
-        sparkSession.sql(UPDATE_SETTINGS_SQL);
+        SparkData.loadDeltaTable(sparkSession, location);
+        // insert the initial settings for this store
+        saveSettings("05");
+        createNewStore(params);
 
     }
 
     /*
-     * check version and update the tables
+     * 
      */
-    protected synchronized void updateTables(List<String> sqls) throws SQLException, BlockStoreException {
-        for (String sql : sqls) {
-            sparkSession.sql(sql + " USING DELTA " + "   LOCATION '" + location + "'");
-        }
+    public void saveSettings(String version) {
+
+        List<SettingModel> models = new ArrayList<>();
+        SettingModel m = new SettingModel();
+        m.setName("version");
+        m.setSettingvalue(version);
+        models.add(m);
+
+        Dataset source = sparkSession.createDataset(models, Encoders.bean(SettingModel.class));
+
+        SparkData.settings.as("target").merge(source.as("source"), "target.name = source.name ").whenMatched()
+                .updateAll().whenNotMatched().insertAll().execute();
 
     }
 
@@ -655,7 +530,7 @@ public class SparkStore implements FullBlockStore {
         }
     }
 
-    protected void putUpdateStoredBlock(Block block, BlockEvaluation blockEvaluation) throws SQLException {
+    private void putUpdateStoredBlock(Block block, BlockEvaluation blockEvaluation) throws SQLException {
 
         List<BlockModel> models = new ArrayList<>();
 
@@ -748,7 +623,7 @@ public class SparkStore implements FullBlockStore {
         try {
             List<BlockWrap> storedBlocks = new ArrayList<BlockWrap>();
             Dataset<MCMCModel> s = sparkSession
-                    .sql(String.format(SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL, hash.toString(), hash.toString()))
+                    .sql(String.format(SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL, quotedString(hash) , quotedString(hash)))
                     .as(Encoders.bean(MCMCModel.class));
             for (MCMCModel b : s.collectAsList()) {
                 BlockEvaluation blockEvaluation = b.toBlockEvaluation();
@@ -803,10 +678,11 @@ public class SparkStore implements FullBlockStore {
         return getTransactionOutput(blockHash, hash, index).isConfirmed();
     }
 
-    public UTXO getTransactionOutput(Sha256Hash blockHash, Sha256Hash hash, Long index) {
+    @Override
+    public UTXO getTransactionOutput(Sha256Hash blockHash, Sha256Hash hash, long index) {
 
-        Dataset<UTXOModel> s = sparkSession.sql(SELECT_OUTPUTS_SQL + " where blockhash ='" + blockHash.getBytes()
-                + "' and hash='" + hash.getBytes() + "'and index=" + index).as(Encoders.bean(UTXOModel.class));
+        Dataset<UTXOModel> s = sparkSession.sql(SELECT_OUTPUTS_SQL + " where blockhash ='" + quotedString(blockHash)
+                + "' and hash='" + quotedString(hash) + "'and outputindex=" + index).as(Encoders.bean(UTXOModel.class));
         return s.first().toUTXO();
 
     }
@@ -821,9 +697,9 @@ public class SparkStore implements FullBlockStore {
         Dataset source = sparkSession.createDataset(utxomodels, Encoders.bean(UTXOModel.class));
 
         SparkData.outputs.as("target").merge(source.as("source"),
-                "target.blockhash = source.blockhash and target.hash = source.hash and target.index = source.index")
+                "target.blockhash = source.blockhash and target.hash = source.hash and target.outputindex = source.outputindex")
                 .whenNotMatched().insertAll().whenMatched().updateAll().execute();
-//blockhash, hash, outputindex
+
     }
 
     @Override
@@ -841,13 +717,9 @@ public class SparkStore implements FullBlockStore {
     public void resetStore() throws BlockStoreException {
 
         defaultDatabaseBatchWrite();
-        try {
-            deleteStore();
-            createTables();
-        } catch (SQLException ex) {
-            log.warn("Warning: deleteStore", ex);
-            throw new RuntimeException(ex);
-        }
+        deleteStore();
+        createTables();
+
     }
 
     @Override
@@ -1051,7 +923,7 @@ public class SparkStore implements FullBlockStore {
 
         Dataset source = sparkSession.createDataset(depthAndWeight, Encoders.bean(DepthAndWeight.class));
 
-        SparkData.mcmc.as("target").merge(source, "target.blockhash = souce.blockHash").whenMatched()
+        SparkData.mcmc.as("target").merge(source, "target.hash = souce.hash").whenMatched()
                 .update(new HashMap<String, Column>() {
                     {
                         put("depth", functions.col("source.depth"));
@@ -1059,7 +931,7 @@ public class SparkStore implements FullBlockStore {
                     }
                 }).whenNotMatched().insert(new HashMap<String, Column>() {
                     {
-                        put("blockhash", functions.col("souce.blockHash"));
+                        put("hash", functions.col("source.hash"));
                         put("depth", functions.col("source.depth"));
                         put("weight", functions.col("source.weight"));
                         // put("rating", functions.expr("0"));
@@ -1072,14 +944,14 @@ public class SparkStore implements FullBlockStore {
     public void updateBlockEvaluationMilestone(Sha256Hash blockhash, long b) throws BlockStoreException {
 
         sparkSession.sql(String.format(getUpdateBlockEvaluationMilestoneSQL(), b, System.currentTimeMillis(),
-                blockhash.toString()));
+                quotedString(blockhash)));
 
     }
 
     @Override
     public void updateBlockEvaluationConfirmed(Sha256Hash blockhash, boolean b) throws BlockStoreException {
 
-        sparkSession.sql(String.format(UPDATE_BLOCKEVALUATION_CONFIRMED_SQL, b, blockhash.toString()));
+        sparkSession.sql(String.format(UPDATE_BLOCKEVALUATION_CONFIRMED_SQL, b, quotedString(blockhash)));
 
     }
 
@@ -1088,13 +960,13 @@ public class SparkStore implements FullBlockStore {
         List<MCMCModel> m = new ArrayList<>();
         for (Rating r : ratings) {
             MCMCModel a = new MCMCModel();
-            a.setBlock(r.toString());
+            a.setHash(r.toString());
             a.setRating(r.getRating());
             m.add(a);
         }
         Dataset source = sparkSession.createDataset(m, Encoders.bean(MCMCModel.class));
 
-        SparkData.mcmc.as("target").merge(source, "target.blockhash = souce.blockhash").whenMatched()
+        SparkData.mcmc.as("target").merge(source, "target.hash = souce.hash").whenMatched()
                 .update(new HashMap<String, Column>() {
                     {
                         put("rating", functions.col("source.rating"));
@@ -1102,7 +974,7 @@ public class SparkStore implements FullBlockStore {
                     }
                 }).whenNotMatched().insert(new HashMap<String, Column>() {
                     {
-                        put("blockhash", functions.col("souce.blockhash"));
+                        put("hash", functions.col("souce.hash"));
                         put("rating", functions.col("source.rating"));
 
                     }
@@ -1113,7 +985,7 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updateBlockEvaluationSolid(Sha256Hash blockhash, long solid) throws BlockStoreException {
 
-        sparkSession.sql(String.format(UPDATE_BLOCKEVALUATION_SOLID_SQL, solid, blockhash.toString()));
+        sparkSession.sql(String.format(UPDATE_BLOCKEVALUATION_SOLID_SQL, solid, quotedString(blockhash)));
 
     }
 
@@ -1123,7 +995,8 @@ public class SparkStore implements FullBlockStore {
         UTXO u = getTransactionOutput(blockHash, hash, index);
         if (u == null || u.getSpenderBlockHash() == null)
             return null;
-        Dataset<BlockModel> b = sparkSession.sql(String.format(SELECT_BLOCKS_SQL, u.getSpenderBlockHash().toString()))
+        Dataset<BlockModel> b = sparkSession
+                .sql(String.format(SELECT_BLOCKS_SQL, quotedString(u.getSpenderBlockHash())))
                 .as(Encoders.bean(BlockModel.class));
         if (b.isEmpty()) {
             return null;
@@ -1137,16 +1010,16 @@ public class SparkStore implements FullBlockStore {
     public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b,
             @Nullable Sha256Hash spenderBlockHash) throws BlockStoreException {
         sparkSession.sql(String.format(getUpdateOutputsSpentSQL(), b,
-                spenderBlockHash != null ? spenderBlockHash.toString() : null, prevTxHash.toString(), index,
-                prevBlockHash.toString()));
+              quotedString(spenderBlockHash) , quotedString(prevTxHash ), index,
+              quotedString(  prevBlockHash )));
 
     }
 
     @Override
     public void updateTransactionOutputConfirmed(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b)
             throws BlockStoreException {
-        sparkSession.sql(String.format(getUpdateOutputsConfirmedSQL(), b, prevTxHash.toString(), index,
-                prevBlockHash.toString()));
+        sparkSession.sql(String.format(getUpdateOutputsConfirmedSQL(), b, quotedString(prevTxHash ), index,
+                quotedString( prevBlockHash)));
     }
 
     @Override
@@ -1227,7 +1100,7 @@ public class SparkStore implements FullBlockStore {
     @Override
     public Sha256Hash getTokenPrevblockhash(Sha256Hash blockhash) throws BlockStoreException {
 
-        return Sha256Hash.wrap(sparkSession.sql(String.format(SELECT_TOKEN_PREVBLOCKHASH_SQL, blockhash.toString()))
+        return Sha256Hash.wrap(sparkSession.sql(String.format(SELECT_TOKEN_PREVBLOCKHASH_SQL, quotedString(blockhash )))
                 .first().getString(0));
 
     }
@@ -1235,20 +1108,20 @@ public class SparkStore implements FullBlockStore {
     @Override
     public Sha256Hash getTokenSpender(String blockhash) throws BlockStoreException {
         return Sha256Hash.wrap(
-                sparkSession.sql(String.format(SELECT_TOKEN_SPENDER_SQL, blockhash.toString())).first().getString(0));
+                sparkSession.sql(String.format(SELECT_TOKEN_SPENDER_SQL, quotedString(blockhash ))).first().getString(0));
 
     }
 
     @Override
     public boolean getTokenSpent(Sha256Hash blockhash) throws BlockStoreException {
-        return sparkSession.sql(String.format(SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL, blockhash.toString())).first()
+        return sparkSession.sql(String.format(SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL,quotedString( blockhash ))).first()
                 .getBoolean(0);
 
     }
 
     @Override
     public boolean getTokenConfirmed(Sha256Hash blockHash) throws BlockStoreException {
-        return sparkSession.sql(String.format(SELECT_TOKEN_CONFIRMED_SQL, blockHash.toString())).first().getBoolean(0);
+        return sparkSession.sql(String.format(SELECT_TOKEN_CONFIRMED_SQL, quotedString(blockHash))).first().getBoolean(0);
 
     }
 
@@ -1478,7 +1351,7 @@ public class SparkStore implements FullBlockStore {
 
     }
 
-    public List<MultiSign> getMultiSignListByTokenidAndAddress(final String tokenid, String address)
+    public List<MultiSign> getMultiSignListByTokenidAndAddress(String tokenid, String address)
             throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
 
@@ -1612,14 +1485,14 @@ public class SparkStore implements FullBlockStore {
     public Sha256Hash getRewardPrevBlockHash(Sha256Hash blockHash) throws BlockStoreException {
 
         return Sha256Hash.wrap(
-                sparkSession.sql(String.format(SELECT_TX_REWARD_PREVBLOCKHASH_SQL, quotedString(blockHash.toString())))
+                sparkSession.sql(String.format(SELECT_TX_REWARD_PREVBLOCKHASH_SQL, quotedString(blockHash)))
                         .first().getString(0));
     }
 
     @Override
     public long getRewardDifficulty(Sha256Hash blockHash) throws BlockStoreException {
 
-        return sparkSession.sql(String.format(SELECT_TX_REWARD_DIFFICULTY_SQL, quotedString(blockHash.toString())))
+        return sparkSession.sql(String.format(SELECT_TX_REWARD_DIFFICULTY_SQL, quotedString(blockHash)))
                 .first().getLong(0);
 
     }
@@ -1895,7 +1768,7 @@ public class SparkStore implements FullBlockStore {
     @Override
     public String getSettingValue(String name) throws BlockStoreException {
 
-        Dataset<Row> s = sparkSession.sql(String.format(getSelectSettingsSQL(), quotedString(name)));
+        Dataset<Row> s = sparkSession.sql(String.format(SELECT_SETTINGS_SQL, quotedString(name)));
 
         if (!s.isEmpty()) {
             return null;
@@ -2490,52 +2363,6 @@ public class SparkStore implements FullBlockStore {
 
     }
 
-    protected List<String> getCreateTablesSQL() {
-        List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.addAll(getCreateTablesSQL1());
-        sqlStatements.addAll(getCreateTablesSQL2());
-        return sqlStatements;
-    }
-
-    protected List<String> getCreateTablesSQL1() {
-        List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(SparkStoreParameter.CREATE_BLOCKS_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_OUTPUT_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_OUTPUT_MULTI_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_TOKENS_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_MATCHING_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_MULTISIGNADDRESS_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_MULTISIGN_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_TX_REWARD_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_USERDATA_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_PAYMULTISIGN_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_PAYMULTISIGNADDRESS_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_ORDER_CANCEL_TABLE);
-
-        sqlStatements.add(SparkStoreParameter.CREATE_SUBTANGLE_PERMISSION_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_ORDERS_TABLE);
-
-        sqlStatements.add(SparkStoreParameter.CREATE_SETTINGS_TABLE);
-
-        sqlStatements.add(SparkStoreParameter.CREATE_MCMC_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_MATCHING_LAST_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_MATCHING_LAST_DAY_TABLE);
-        return sqlStatements;
-    }
-
-    protected List<String> getCreateTablesSQL2() {
-        List<String> sqlStatements = new ArrayList<String>();
-        sqlStatements.add(SparkStoreParameter.CREATE_ACCESS_PERMISSION_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_ACCESS_GRANT_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_CONTRACT_EVENT_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_CONTRACT_ACCOUNT_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_CONTRACT_EXECUTION_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_CHAINBLOCKQUEUE_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_LOCKOBJECT_TABLE);
-        sqlStatements.add(SparkStoreParameter.CREATE_MATCHINGDAILY_TABLE);
-        return sqlStatements;
-    }
-
     public void updateDatabse() throws BlockStoreException, SQLException {
 
         String settingValue = getSettingValue("version");
@@ -2544,40 +2371,28 @@ public class SparkStore implements FullBlockStore {
             ver = new String(settingValue);
 
         if ("03".equals(ver)) {
-            updateTables(getCreateTablesSQL2());
-
-            dbupdateversion("05");
+            createTables();
+            saveSettings("05");
         }
-
-    }
-
-    protected List<String> getCreateSchemeSQL() {
-        // do nothing
-        return Collections.emptyList();
-    }
-
-    protected String getUpdateSettingsSLQ() {
-        // return UPDATE_SETTINGS_SQL;
-        return getUpdate() + " settings SET settingvalue = %s WHERE name = %s";
     }
 
     public String getUpdateBlockEvaluationMilestoneSQL() {
         return UPDATE_BLOCKEVALUATION_MILESTONE_SQL;
     }
 
-    protected String getUpdateBlockEvaluationRatingSQL() {
+    private String getUpdateBlockEvaluationRatingSQL() {
         return UPDATE_BLOCKEVALUATION_RATING_SQL;
     }
 
-    protected String getUpdateOutputsSpentSQL() {
+    private String getUpdateOutputsSpentSQL() {
         return UPDATE_OUTPUTS_SPENT_SQL;
     }
 
-    protected String getUpdateOutputsConfirmedSQL() {
+    private String getUpdateOutputsConfirmedSQL() {
         return UPDATE_OUTPUTS_CONFIRMED_SQL;
     }
 
-    protected String getUpdateOutputsSpendPendingSQL() {
+    private String getUpdateOutputsSpendPendingSQL() {
         return UPDATE_OUTPUTS_SPENDPENDING_SQL;
     }
 
@@ -2595,12 +2410,6 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid) throws UTXOProviderException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public UTXO getTransactionOutput(Sha256Hash blockHash, Sha256Hash txHash, long index) throws BlockStoreException {
         // TODO Auto-generated method stub
         return null;
     }

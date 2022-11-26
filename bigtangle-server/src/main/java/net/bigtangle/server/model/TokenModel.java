@@ -4,18 +4,14 @@
  *******************************************************************************/
 package net.bigtangle.server.model;
 
-import java.io.IOException;
 import java.math.BigInteger;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.Utils;
 
-public class TokenModel implements java.io.Serializable {
+public class TokenModel  extends SpentBlockModel implements java.io.Serializable {
 
     private static final long serialVersionUID = 6992138619113601243L;
 
@@ -38,7 +34,7 @@ public class TokenModel implements java.io.Serializable {
     // indicator of the prev token index blockhash
     private String prevblockhash;
 
-    private BigInteger amount;
+    private String amount;
     private Integer decimals = 0; // number of decimals for the token, default
     // integer
     // classification of a token, can be null, optional for query only
@@ -61,43 +57,49 @@ public class TokenModel implements java.io.Serializable {
         tokenModels.setTokenstop(token.isTokenstop());
         tokenModels.setTokentype(token.getTokentype());
         tokenModels.setSignnumber(token.getSignnumber());
-        tokenModels.setAmount(token.getAmount());
+        tokenModels.setAmount(token.getAmount().toString());
         tokenModels.tokenindex = token.getTokenindex();
         tokenModels.confirmed = token.isConfirmed();
-        tokenModels.prevblockhash = token.getPrevblockhash().toString();
+        tokenModels.prevblockhash = token.getPrevblockhash()==null? null:token.getPrevblockhash().toString();
+        if(token.getTokenKeyValues()!=null) {
         tokenModels.tokenkeyvalues = Utils.HEX.encode(token.getTokenKeyValues().toByteArray());
+        }
         tokenModels.revoked = token.getRevoked();
         tokenModels.language = token.getLanguage();
         // tokenModels.classification = token.getClassification();
         tokenModels.decimals = token.getDecimals();
         tokenModels.domainname = token.getDomainName();
         tokenModels.domainnameblockHash = token.getDomainNameBlockHash();
+        tokenModels.  fromSpentBlock(token);
         return tokenModels;
     }
 
     public Token toToken() {
-        Token tokenModels = new Token();
-        tokenModels.setTokenid(getTokenid());
-        tokenModels.setTokenname(getTokenname());
-        tokenModels.setDescription(getDescription());
-        tokenModels.setTokenstop(getTokenstop());
-        tokenModels.setTokentype(getTokentype());
-        tokenModels.setSignnumber(getSignnumber());
-        tokenModels.setAmount(getAmount());
-        tokenModels.setTokenindex(getTokenindex());
-        tokenModels.setConfirmed(getConfirmed());
-        tokenModels.setPrevblockhash(Sha256Hash.wrap(getPrevblockhash()));
+        Token token = new Token();
+        token.setTokenid(getTokenid());
+        token.setTokenname(getTokenname());
+        token.setDescription(getDescription());
+        token.setTokenstop(getTokenstop());
+        token.setTokentype(getTokentype());
+        token.setSignnumber(getSignnumber());
+        token.setAmount(new BigInteger(getAmount()));
+        token.setTokenindex(getTokenindex());
+        token.setConfirmed(getConfirmed());
+        token.setPrevblockhash(Sha256Hash.wrap(getPrevblockhash()));
         try {
-            tokenModels.setTokenKeyValues(TokenKeyValues.parse(Utils.HEX.decode(getTokenkeyvalues())));
+            if(getTokenkeyvalues()!=null) {
+            token.setTokenKeyValues(TokenKeyValues.parse(Utils.HEX.decode(getTokenkeyvalues())));
+            }
         } catch (Exception e) {
         }
-        tokenModels.setRevoked(getRevoked());
-        tokenModels.setLanguage(getLanguage());
+        token.setRevoked(getRevoked());
+        token.setLanguage(getLanguage());
         // tokenModels.classification = getClassification();
-        tokenModels.setDecimals(getDecimals());
-        tokenModels.setDomainName(getDomainname());
-        tokenModels.setDomainNameBlockHash(getDomainnameblockHash());
-        return tokenModels;
+        token.setDecimals(getDecimals());
+        token.setDomainName(getDomainname());
+        token.setDomainNameBlockHash(getDomainnameblockHash());
+        toSpentBlock(token);
+        return token;
     }
 
     public String getTokenid() {
@@ -188,11 +190,13 @@ public class TokenModel implements java.io.Serializable {
         this.prevblockhash = prevblockhash;
     }
 
-    public BigInteger getAmount() {
+ 
+
+    public String getAmount() {
         return amount;
     }
 
-    public void setAmount(BigInteger amount) {
+    public void setAmount(String amount) {
         this.amount = amount;
     }
 

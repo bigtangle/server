@@ -36,7 +36,8 @@ public class BeforeStartup {
         if (serverConfiguration.getCreatetable()) {
          //   MySQLFullBlockStore store = new MySQLFullBlockStore(networkParameters,
          //           dataSource.getConnection());
-            SparkStore store = new SparkStore(networkParameters, sparkSession, sparkConfig.getAppPath());
+            SparkStore.location= sparkConfig.getAppPath();
+            SparkStore store = new SparkStore(networkParameters, sparkSession);
             try {
                 store.create();
                 // update tables to new version after initial setup

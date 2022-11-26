@@ -41,6 +41,7 @@ public class TXRewardModel extends SpentBlockModel implements java.io.Serializab
         t.setSpenderBlockHash(Sha256Hash.wrap(getPrevblockhash()) );
         t.setDifficulty( getDifficulty());
         t.setChainLength(getChainLength());
+        toSpentBlock(t);
         return t;
     }
     

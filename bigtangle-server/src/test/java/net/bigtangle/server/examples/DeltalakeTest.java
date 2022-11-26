@@ -6,17 +6,16 @@ import java.util.HashMap;
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoder;
-import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.functions;
 import org.junit.Test;
 
 import io.delta.tables.DeltaTable;
-import net.bigtangle.core.Block;
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.params.TestParams;
+import net.bigtangle.store.SparkData;
 import net.bigtangle.store.SparkStore;
-import net.bigtangle.store.SparkStoreParameter;
 
 public class DeltalakeTest {
 
@@ -65,15 +64,30 @@ public class DeltalakeTest {
     }
     
     @Test
-    public void deltalake2() throws IOException, InterruptedException {
+    public void deltalake2() throws IOException, InterruptedException, BlockStoreException  {
      
-        String path = "/data/deltalake/settings";
+        String path = "/data/deltalake"  ;
         spark = createSession();
 
-        String d = " USING DELTA " + "   LOCATION '" + path + "'";
-        spark.sql(SparkStoreParameter.CREATE_SETTINGS_TABLE + d);
-        DeltaTable table = DeltaTable.forPath(spark, path);
+        
+      //  SparkData.createDeltaTable(spark, "/data/deltalake");
+       // DeltaTable table = DeltaTable.forPath(spark, path);
+      //  SparkData.loadDeltaTable(spark, "/data/deltalake");
+        SparkStore.location= path;
+     
+        SparkStore s=new SparkStore(TestParams.get(),spark);
+        s.create( );
+        /*s.saveSettings("03");
+        
         spark.sql("select * from  delta.`/data/deltalake/settings`  as settings   ").show();
+        
+        s.saveSettings("05");
+        
+        spark.sql("select * from  delta.`/data/deltalake/settings`  as settings   ").show();
+     
+      
+            */
+        
     }
     
    

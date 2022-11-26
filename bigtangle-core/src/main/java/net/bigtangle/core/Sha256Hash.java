@@ -244,6 +244,7 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
 
     @Override
     public String toString() {
+        if(bytes==null) return null;
         return Utils.HEX.encode(bytes);
     }
 

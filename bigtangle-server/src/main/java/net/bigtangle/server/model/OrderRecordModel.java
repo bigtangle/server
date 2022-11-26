@@ -5,13 +5,8 @@
 
 package net.bigtangle.server.model;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Arrays;
-
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Side;
 import net.bigtangle.core.Utils;
 
 public class OrderRecordModel extends SpentBlockModel {
@@ -199,6 +194,7 @@ public class OrderRecordModel extends SpentBlockModel {
         p.setOrderbasetoken(record.getOrderBaseToken());
         p.setPrice(record.getPrice());
         p.setTokendecimals(record.getTokenDecimals());
+        p.fromSpentBlock(record);
         return p;
     }
 

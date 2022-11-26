@@ -5,11 +5,9 @@
 package net.bigtangle.server.model;
 
 import java.io.Serializable;
-import java.sql.SQLException;
 
 import net.bigtangle.core.BlockMCMC;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Utils;
 
 /*
  * Evaluation of block, variable in time
@@ -18,8 +16,7 @@ public class MCMCModel extends BlockModel implements Serializable {
 
     private static final long serialVersionUID = 8388463657969339286L;
 
-    // Hash of corresponding block
-    private String blockhash;
+   
 
     // Percentage of MCMC selected tips approving this block
     private Long rating;
@@ -31,18 +28,11 @@ public class MCMCModel extends BlockModel implements Serializable {
     private Long cumulativeweight;
 
     public BlockMCMC toBlockMCMC()   {
-        return new BlockMCMC(Sha256Hash.wrap( getBlockhash() ), getRating(), getDepth(),
+        return new BlockMCMC(Sha256Hash.wrap( getHash() ), getRating(), getDepth(),
                 getCumulativeweight());
 
     }
-
-    public String getBlockhash() {
-        return blockhash;
-    }
-
-    public void setBlockhash(String blockhash) {
-        this.blockhash = blockhash;
-    }
+ 
 
     public Long getRating() {
         return rating;

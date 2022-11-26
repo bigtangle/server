@@ -61,7 +61,7 @@ public class UTXOModel  extends SpentBlockModel {
         s.setTime(out.getTime());
         s.setSpendpendingtime(out.getSpendPendingTime());
         s.setMinimumsign(out.getMinimumsign());
-
+        s.fromSpentBlock(out);
         return s;
     }
 
@@ -87,7 +87,7 @@ public class UTXOModel  extends SpentBlockModel {
         s.setTime(getTime());
         s.setSpendPendingTime(getSpendpendingtime());
         s.setMinimumsign(getMinimumsign());
-
+        toSpentBlock(s);
         return s;
     }
 

@@ -22,8 +22,8 @@ public class StoreService {
     protected NetworkParameters networkParameters;
 
     public FullBlockStore getStore() throws BlockStoreException {
-
-        return new SparkStore(networkParameters, sparkSession, sparkConfig.getAppPath());
+        SparkStore.location=sparkConfig.getAppPath();
+        return new SparkStore(networkParameters, sparkSession);
 
     }
 
