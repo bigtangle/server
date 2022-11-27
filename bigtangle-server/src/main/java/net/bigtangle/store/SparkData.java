@@ -224,7 +224,7 @@ public class SparkData {
     public static final String CREATE_TOKENS_TABLE = "CREATE TABLE tokens (\n" + "    blockhash string ,\n"
             + "    confirmed boolean ,\n" + "    tokenid string   ,\n" + "    tokenindex bigint    ,\n"
             + "    amount string ,\n" + "    tokenname string ,\n" + "    description string ,\n"
-            + "    domainname string ,\n" + "    signnumber bigint    ,\n" + "    tokentype int,\n"
+            + "    domainname string ,\n" + "    signnumber int    ,\n" + "    tokentype int,\n"
             + "    tokenstop boolean,\n" + "    prevblockhash string,\n" + "    spent boolean ,\n"
             + "    spenderblockhash  string,\n" + "    tokenkeyvalues  string,\n" + "    revoked boolean   ,\n"
             + "    language string   ,\n" + "    classification string   ,\n"  
