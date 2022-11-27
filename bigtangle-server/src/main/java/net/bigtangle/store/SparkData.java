@@ -98,6 +98,14 @@ public class SparkData {
         }
     }
 
+    public static void deleteDeltaTable(SparkSession spark ) {
+        for(String key: getDropTablesSQL()) {
+   //     String d = " USING DELTA " + "   LOCATION '" + directory+"/"+key+ "'";
+        spark.sql( key );
+        }
+    }
+
+    
     // create table SQL
     public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name string ,\n"
             + "    settingvalue string"
@@ -327,7 +335,7 @@ public class SparkData {
      * 
      * @return The SQL drop statements.
      */
-    protected List<String> getDropTablesSQL() {
+    static List<String> getDropTablesSQL() {
         List<String> sqlStatements = new ArrayList<String>();
         sqlStatements.add(DROP_SETTINGS_TABLE);
         sqlStatements.add(DROP_BLOCKS_TABLE);

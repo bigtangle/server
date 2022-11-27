@@ -37,7 +37,7 @@ public class UTXOModel  extends SpentBlockModel {
     private boolean confirmed;
  
 
-    private Long scriptType;
+   // private Long scriptType;
 
     public static UTXOModel fromUTXO(UTXO out)   {
         UTXOModel s = new UTXOModel();
@@ -45,10 +45,10 @@ public class UTXOModel  extends SpentBlockModel {
         s.setHash(Utils.HEX.encode(out.getTxHash().getBytes()));
         // index is actually an unsigned int
         s.setOutputindex(out.getIndex());
-        s.setCoinvalue(Utils.HEX.encode(out.getValue().getValue().toByteArray()));
+        s.setCoinvalue(out.getValue().getValue().toString());
         s.setScriptbytes(Utils.HEX.encode(out.getScript().getProgram()));
         s.setToaddress(out.getAddress());
-        // s.setCoinbase( out.getScript().getScriptType().ordinal());
+        s.setCoinbase( out.isCoinbase());
         s.setCoinbase(out.isCoinbase());
         s.setBlockhash(out.getBlockHash().toString());
         s.setTokenid(Utils.HEX.encode(out.getValue().getTokenid()));
@@ -72,9 +72,9 @@ public class UTXOModel  extends SpentBlockModel {
         // index is actually an unsigned int
         s.setIndex(getOutputindex());
         s.setValue(coinvalue);
-        s.setScript(new Script(getScriptbytes().getBytes()));
+        s.setScript(new Script(Utils.HEX.decode(getScriptbytes() )));
         s.setAddress(getToaddress());
-        // s.setCoinbase( getScript().getScriptType().ordinal());
+         s.setCoinbase( isCoinbase());
         s.setCoinbase(isCoinbase());
         s.setBlockHash(Sha256Hash.wrap(getBlockhash()));
         s.setTokenId(getTokenid());
@@ -211,12 +211,5 @@ public class UTXOModel  extends SpentBlockModel {
         this.confirmed = confirmed;
     }
  
-    public Long getScriptType() {
-        return scriptType;
-    }
-
-    public void setScriptType(Long scriptType) {
-        this.scriptType = scriptType;
-    }
-
+ 
 }

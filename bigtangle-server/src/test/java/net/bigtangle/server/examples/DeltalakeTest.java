@@ -76,7 +76,7 @@ public class DeltalakeTest {
         SparkStore.location= path;
      
         SparkStore s=new SparkStore(TestParams.get(),spark);
-        s.create( );
+        s.resetStore();
         /*s.saveSettings("03");
         
         spark.sql("select * from  delta.`/data/deltalake/settings`  as settings   ").show();

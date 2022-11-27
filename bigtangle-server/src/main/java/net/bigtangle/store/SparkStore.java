@@ -722,11 +722,16 @@ public class SparkStore implements FullBlockStore {
     public void resetStore() throws BlockStoreException {
 
         defaultDatabaseBatchWrite();
-        deleteStore();
+
+        
         createTables();
 
     }
+    @Override
+    public void deleteStore() throws BlockStoreException {
+        SparkData.deleteDeltaTable(sparkSession);
 
+    }
     @Override
     public List<UTXO> getOpenAllOutputs(String tokenid) throws UTXOProviderException {
 
@@ -2448,11 +2453,6 @@ public class SparkStore implements FullBlockStore {
 
     }
 
-    @Override
-    public void deleteStore() throws BlockStoreException {
-        // TODO Auto-generated method stub
-
-    }
 
     @Override
     public void updateOrderSpent(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean spent,
