@@ -1129,7 +1129,7 @@ public class FullBlockGraph {
                     // Initialize MCMC
                     if (blockStore.getMCMC(block.getHash()) == null) {
                         ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
-                        depthAndWeight.add(new DepthAndWeight(block.getHash(), 1, 0));
+                        depthAndWeight.add(new DepthAndWeight(block.getHash().toString(), 1, 0));
                         blockStore.updateBlockEvaluationWeightAndDepth(depthAndWeight);
                     }
                 } finally {

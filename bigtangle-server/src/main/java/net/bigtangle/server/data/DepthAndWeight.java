@@ -1,23 +1,22 @@
 package net.bigtangle.server.data;
 
-import net.bigtangle.core.Sha256Hash;
-
 public class DepthAndWeight {
-    private Sha256Hash blockHash;
+    private String hash;
     private  long weight;
     private long depth;
     
-    public DepthAndWeight(Sha256Hash blockHash, long weight, long depth) {
+  
+    public DepthAndWeight(String hash, long weight, long depth) {
         super();
-        this.blockHash = blockHash;
+        this.hash = hash;
         this.weight = weight;
         this.depth = depth;
     }
-    public Sha256Hash getBlockHash() {
-        return blockHash;
+    public String getHash() {
+        return hash;
     }
-    public void setBlockHash(Sha256Hash blockHash) {
-        this.blockHash = blockHash;
+    public void setHash(String hash) {
+        this.hash = hash;
     }
     public long getWeight() {
         return weight;

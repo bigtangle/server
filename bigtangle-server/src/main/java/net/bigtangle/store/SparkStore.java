@@ -72,6 +72,7 @@ import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.Rating;
 import net.bigtangle.server.model.BlockModel;
 import net.bigtangle.server.model.MCMCModel;
+import net.bigtangle.server.model.BlockMCMCModel;
 import net.bigtangle.server.model.MultiSignAddressModel;
 import net.bigtangle.server.model.MultiSignModel;
 import net.bigtangle.server.model.OrderCancelModel;
@@ -164,7 +165,7 @@ public class SparkStore implements FullBlockStore {
             + " FROM " + tablename("outputs") + "  WHERE  confirmed=true and spent= false and tokenid = %s";
 
     // Tables exist SQL.
-    private String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM " + tablename("settings") + " WHERE 1 = 2";
+    private String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM " + tablename("settings");
 
     private String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE + " FROM " + tablename("blocks")
             + ", " + tablename("mcmc")
@@ -482,7 +483,7 @@ public class SparkStore implements FullBlockStore {
 
             // insert MCMC table
             ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
-            depthAndWeight.add(new DepthAndWeight(params.getGenesisBlock().getHash(), 1, 0));
+            depthAndWeight.add(new DepthAndWeight(params.getGenesisBlock().getHash().toString(), 1, 0));
             updateBlockEvaluationWeightAndDepth(depthAndWeight);
 
         } catch (VerificationException e) {
@@ -615,17 +616,17 @@ public class SparkStore implements FullBlockStore {
     public BlockMCMC getMCMC(Sha256Hash hash) throws BlockStoreException {
 
         return sparkSession.sql("SELECT " + SELECT_MCMC_TEMPLATE + " from mcmc where hash =  " + quotedString(hash))
-                .as(Encoders.bean(MCMCModel.class)).first().toBlockMCMC();
+                .as(Encoders.bean(BlockMCMCModel.class)).first().toBlockMCMC();
 
     }
 
     public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
         try {
             List<BlockWrap> storedBlocks = new ArrayList<BlockWrap>();
-            Dataset<MCMCModel> s = sparkSession
-                    .sql(String.format(SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL, quotedString(hash) , quotedString(hash)))
-                    .as(Encoders.bean(MCMCModel.class));
-            for (MCMCModel b : s.collectAsList()) {
+            Dataset<BlockMCMCModel> s = sparkSession
+                    .sql(String.format(SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL, quotedString(hash), quotedString(hash)))
+                    .as(Encoders.bean(BlockMCMCModel.class));
+            for (BlockMCMCModel b : s.collectAsList()) {
                 BlockEvaluation blockEvaluation = b.toBlockEvaluation();
                 BlockMCMC mcmc = b.toBlockMCMC();
                 Block block = params.getDefaultSerializer().makeZippedBlock(b.getBlockBytes());
@@ -643,10 +644,10 @@ public class SparkStore implements FullBlockStore {
     public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
         try {
             List<BlockWrap> storedBlocks = new ArrayList<BlockWrap>();
-            Dataset<MCMCModel> s = sparkSession
+            Dataset<BlockMCMCModel> s = sparkSession
                     .sql(String.format(SELECT_SOLID_APPROVER_BLOCKS_SQL, hash.toString(), hash.toString()))
-                    .as(Encoders.bean(MCMCModel.class));
-            for (MCMCModel b : s.collectAsList()) {
+                    .as(Encoders.bean(BlockMCMCModel.class));
+            for (BlockMCMCModel b : s.collectAsList()) {
                 BlockEvaluation blockEvaluation = b.toBlockEvaluation();
                 BlockMCMC mcmc = b.toBlockMCMC();
                 Block block = params.getDefaultSerializer().makeZippedBlock(b.getBlockBytes());
@@ -818,10 +819,10 @@ public class SparkStore implements FullBlockStore {
                 .thenComparing((BlockWrap b) -> b.getBlock().getHash());
         try {
             TreeSet<BlockWrap> storedBlockHashes = new TreeSet<>(comparator);
-            Dataset<MCMCModel> s = sparkSession
+            Dataset<BlockMCMCModel> s = sparkSession
                     .sql(String.format(SELECT_BLOCKS_TO_CONFIRM_SQL, cutoffHeight, maxHeight))
-                    .as(Encoders.bean(MCMCModel.class));
-            for (MCMCModel b : s.collectAsList()) {
+                    .as(Encoders.bean(BlockMCMCModel.class));
+            for (BlockMCMCModel b : s.collectAsList()) {
                 BlockEvaluation blockEvaluation = b.toBlockEvaluation();
                 BlockMCMC mcmc = b.toBlockMCMC();
                 Block block = params.getDefaultSerializer().makeZippedBlock(b.getBlockBytes());
@@ -840,8 +841,9 @@ public class SparkStore implements FullBlockStore {
         HashSet<BlockEvaluation> storedBlockHashes = new HashSet<BlockEvaluation>();
         try {
 
-            Dataset<MCMCModel> s = sparkSession.sql(SELECT_BLOCKS_TO_UNCONFIRM_SQL).as(Encoders.bean(MCMCModel.class));
-            for (MCMCModel b : s.collectAsList()) {
+            Dataset<BlockMCMCModel> s = sparkSession.sql(SELECT_BLOCKS_TO_UNCONFIRM_SQL)
+                    .as(Encoders.bean(BlockMCMCModel.class));
+            for (BlockMCMCModel b : s.collectAsList()) {
                 BlockEvaluation blockEvaluation = b.toBlockEvaluation();
                 Block block = params.getDefaultSerializer().makeZippedBlock(b.getBlockBytes());
                 if (verifyHeader(block)) {
@@ -863,10 +865,10 @@ public class SparkStore implements FullBlockStore {
 
         try {
 
-            Dataset<MCMCModel> s = sparkSession
+            Dataset<BlockMCMCModel> s = sparkSession
                     .sql(String.format(SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL, cutoffHeight, maxHeight))
-                    .as(Encoders.bean(MCMCModel.class));
-            for (MCMCModel b : s.collectAsList()) {
+                    .as(Encoders.bean(BlockMCMCModel.class));
+            for (BlockMCMCModel b : s.collectAsList()) {
                 BlockEvaluation blockEvaluation = b.toBlockEvaluation();
                 BlockMCMC mcmc = b.toBlockMCMC();
                 Block block = params.getDefaultSerializer().makeZippedBlock(b.getBlockBytes());
@@ -887,10 +889,10 @@ public class SparkStore implements FullBlockStore {
 
         try {
 
-            Dataset<MCMCModel> s = sparkSession
+            Dataset<BlockMCMCModel> s = sparkSession
                     .sql(String.format(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL, minMilestone, maxMilestone))
-                    .as(Encoders.bean(MCMCModel.class));
-            for (MCMCModel b : s.collectAsList()) {
+                    .as(Encoders.bean(BlockMCMCModel.class));
+            for (BlockMCMCModel b : s.collectAsList()) {
                 BlockEvaluation blockEvaluation = b.toBlockEvaluation();
                 BlockMCMC mcmc = b.toBlockMCMC();
                 Block block = params.getDefaultSerializer().makeZippedBlock(b.getBlockBytes());
@@ -921,20 +923,17 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updateBlockEvaluationWeightAndDepth(List<DepthAndWeight> depthAndWeight) throws BlockStoreException {
 
-        Dataset source = sparkSession.createDataset(depthAndWeight, Encoders.bean(DepthAndWeight.class));
+        List<MCMCModel> mcmc = new ArrayList<>();
+        for (DepthAndWeight m : depthAndWeight) {
+            mcmc.add(MCMCModel.from(m));
+        }
+        Dataset source = sparkSession.createDataset(mcmc, Encoders.bean(MCMCModel.class));
 
-        SparkData.mcmc.as("target").merge(source, "target.hash = souce.hash").whenMatched()
+        SparkData.mcmc.as("target").merge(source.as("source"), "target.hash = source.hash").whenMatched()
                 .update(new HashMap<String, Column>() {
                     {
                         put("depth", functions.col("source.depth"));
-                        put("weight", functions.col("source.weight"));
-                    }
-                }).whenNotMatched().insert(new HashMap<String, Column>() {
-                    {
-                        put("hash", functions.col("source.hash"));
-                        put("depth", functions.col("source.depth"));
-                        put("weight", functions.col("source.weight"));
-                        // put("rating", functions.expr("0"));
+                        put("cumulativeweight", functions.col("source.cumulativeweight"));
                     }
                 }).execute();
 
@@ -966,17 +965,10 @@ public class SparkStore implements FullBlockStore {
         }
         Dataset source = sparkSession.createDataset(m, Encoders.bean(MCMCModel.class));
 
-        SparkData.mcmc.as("target").merge(source, "target.hash = souce.hash").whenMatched()
+        SparkData.mcmc.as("target").merge(source.as("source"),"target.hash = source.hash").whenMatched()
                 .update(new HashMap<String, Column>() {
                     {
                         put("rating", functions.col("source.rating"));
-
-                    }
-                }).whenNotMatched().insert(new HashMap<String, Column>() {
-                    {
-                        put("hash", functions.col("souce.hash"));
-                        put("rating", functions.col("source.rating"));
-
                     }
                 }).execute();
 
@@ -1009,17 +1001,16 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b,
             @Nullable Sha256Hash spenderBlockHash) throws BlockStoreException {
-        sparkSession.sql(String.format(getUpdateOutputsSpentSQL(), b,
-              quotedString(spenderBlockHash) , quotedString(prevTxHash ), index,
-              quotedString(  prevBlockHash )));
+        sparkSession.sql(String.format(getUpdateOutputsSpentSQL(), b, quotedString(spenderBlockHash),
+                quotedString(prevTxHash), index, quotedString(prevBlockHash)));
 
     }
 
     @Override
     public void updateTransactionOutputConfirmed(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b)
             throws BlockStoreException {
-        sparkSession.sql(String.format(getUpdateOutputsConfirmedSQL(), b, quotedString(prevTxHash ), index,
-                quotedString( prevBlockHash)));
+        sparkSession.sql(String.format(getUpdateOutputsConfirmedSQL(), b, quotedString(prevTxHash), index,
+                quotedString(prevBlockHash)));
     }
 
     @Override
@@ -1100,28 +1091,29 @@ public class SparkStore implements FullBlockStore {
     @Override
     public Sha256Hash getTokenPrevblockhash(Sha256Hash blockhash) throws BlockStoreException {
 
-        return Sha256Hash.wrap(sparkSession.sql(String.format(SELECT_TOKEN_PREVBLOCKHASH_SQL, quotedString(blockhash )))
+        return Sha256Hash.wrap(sparkSession.sql(String.format(SELECT_TOKEN_PREVBLOCKHASH_SQL, quotedString(blockhash)))
                 .first().getString(0));
 
     }
 
     @Override
     public Sha256Hash getTokenSpender(String blockhash) throws BlockStoreException {
-        return Sha256Hash.wrap(
-                sparkSession.sql(String.format(SELECT_TOKEN_SPENDER_SQL, quotedString(blockhash ))).first().getString(0));
+        return Sha256Hash.wrap(sparkSession.sql(String.format(SELECT_TOKEN_SPENDER_SQL, quotedString(blockhash)))
+                .first().getString(0));
 
     }
 
     @Override
     public boolean getTokenSpent(Sha256Hash blockhash) throws BlockStoreException {
-        return sparkSession.sql(String.format(SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL,quotedString( blockhash ))).first()
+        return sparkSession.sql(String.format(SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL, quotedString(blockhash))).first()
                 .getBoolean(0);
 
     }
 
     @Override
     public boolean getTokenConfirmed(Sha256Hash blockHash) throws BlockStoreException {
-        return sparkSession.sql(String.format(SELECT_TOKEN_CONFIRMED_SQL, quotedString(blockHash))).first().getBoolean(0);
+        return sparkSession.sql(String.format(SELECT_TOKEN_CONFIRMED_SQL, quotedString(blockHash))).first()
+                .getBoolean(0);
 
     }
 
@@ -1484,16 +1476,15 @@ public class SparkStore implements FullBlockStore {
     @Override
     public Sha256Hash getRewardPrevBlockHash(Sha256Hash blockHash) throws BlockStoreException {
 
-        return Sha256Hash.wrap(
-                sparkSession.sql(String.format(SELECT_TX_REWARD_PREVBLOCKHASH_SQL, quotedString(blockHash)))
-                        .first().getString(0));
+        return Sha256Hash.wrap(sparkSession
+                .sql(String.format(SELECT_TX_REWARD_PREVBLOCKHASH_SQL, quotedString(blockHash))).first().getString(0));
     }
 
     @Override
     public long getRewardDifficulty(Sha256Hash blockHash) throws BlockStoreException {
 
-        return sparkSession.sql(String.format(SELECT_TX_REWARD_DIFFICULTY_SQL, quotedString(blockHash)))
-                .first().getLong(0);
+        return sparkSession.sql(String.format(SELECT_TX_REWARD_DIFFICULTY_SQL, quotedString(blockHash))).first()
+                .getLong(0);
 
     }
 

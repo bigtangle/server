@@ -187,7 +187,7 @@ public class MCMCService {
             // Update and dereference
             // TODO reduce the update
             // if (currentBlock.getBlockEvaluation().getMilestone() < 0) {
-            depthAndWeight.add(new DepthAndWeight(currentBlock.getBlockHash(), approvers.get(currentBlockHash).size(),
+            depthAndWeight.add(new DepthAndWeight(currentBlock.getBlockHash().toString(), approvers.get(currentBlockHash).size(),
                     depths.get(currentBlockHash)));
 
             approvers.remove(currentBlockHash);

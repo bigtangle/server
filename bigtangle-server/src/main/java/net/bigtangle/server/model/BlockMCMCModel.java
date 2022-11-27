@@ -7,20 +7,17 @@ package net.bigtangle.server.model;
 import java.io.Serializable;
 
 import net.bigtangle.core.BlockMCMC;
-import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Utils;
-import net.bigtangle.server.data.DepthAndWeight;
 
 /*
  * Evaluation of block, variable in time
  */
-public class MCMCModel   implements Serializable {
+public class BlockMCMCModel extends BlockModel implements Serializable {
 
     private static final long serialVersionUID = 8388463657969339286L;
 
    
-    private String hash ;
+
     // Percentage of MCMC selected tips approving this block
     private Long rating;
 
@@ -30,23 +27,12 @@ public class MCMCModel   implements Serializable {
     // Count of indirect approver blocks
     private Long cumulativeweight;
 
-  
-    public static MCMCModel from(DepthAndWeight m) {
-        MCMCModel model = new MCMCModel();
-        model.setHash(m.getHash());
-        model.setDepth(m.getDepth());
-        model.setCumulativeweight(m.getWeight());
-        return model;
-    }
+    public BlockMCMC toBlockMCMC()   {
+        return new BlockMCMC(Sha256Hash.wrap( getHash() ), getRating(), getDepth(),
+                getCumulativeweight());
 
-  
-    public String getHash() {
-        return hash;
     }
-
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
+ 
 
     public Long getRating() {
         return rating;
