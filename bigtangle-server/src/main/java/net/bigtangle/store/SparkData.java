@@ -228,7 +228,7 @@ public class SparkData {
             + "    tokenstop boolean,\n" + "    prevblockhash string,\n" + "    spent boolean ,\n"
             + "    spenderblockhash  string,\n" + "    tokenkeyvalues  string,\n" + "    revoked boolean   ,\n"
             + "    language string   ,\n" + "    classification string   ,\n"  
-            + "    decimals int  \n"
+            + "    decimals int , domainnameblockhash string \n"
             // + " PRIMARY KEY (blockhash)"
             + " \n) ";
 

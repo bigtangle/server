@@ -24,7 +24,7 @@ public class TokenModel  extends SpentBlockModel implements java.io.Serializable
     private String description;
 
     private String domainname;
-    private String domainnameblockHash;
+    private String domainnameblockhash;
     // number of signature
     private Integer signnumber;
     // difference type of token
@@ -48,7 +48,8 @@ public class TokenModel  extends SpentBlockModel implements java.io.Serializable
     // customer data as json for communication between systems
     // It can be saved in a NoSQL database as key value pair for query
     private String tokenkeyvalues;
-
+     
+    
     public static TokenModel fromToken(Token token) {
         TokenModel tokenModels = new TokenModel();
         tokenModels.setTokenid(token.getTokenid());
@@ -69,7 +70,7 @@ public class TokenModel  extends SpentBlockModel implements java.io.Serializable
         // tokenModels.classification = token.getClassification();
         tokenModels.decimals = token.getDecimals();
         tokenModels.domainname = token.getDomainName();
-        tokenModels.domainnameblockHash = token.getDomainNameBlockHash();
+        tokenModels.domainnameblockhash = token.getDomainNameBlockHash();
         tokenModels.  fromSpentBlock(token);
         return tokenModels;
     }
@@ -97,7 +98,7 @@ public class TokenModel  extends SpentBlockModel implements java.io.Serializable
         // tokenModels.classification = getClassification();
         token.setDecimals(getDecimals());
         token.setDomainName(getDomainname());
-        token.setDomainNameBlockHash(getDomainnameblockHash());
+        token.setDomainNameBlockHash(getDomainnameblockhash());
         toSpentBlock(token);
         return token;
     }
@@ -142,12 +143,14 @@ public class TokenModel  extends SpentBlockModel implements java.io.Serializable
         this.domainname = domainname;
     }
 
-    public String getDomainnameblockHash() {
-        return domainnameblockHash;
+     
+
+    public String getDomainnameblockhash() {
+        return domainnameblockhash;
     }
 
-    public void setDomainnameblockHash(String domainnameblockHash) {
-        this.domainnameblockHash = domainnameblockHash;
+    public void setDomainnameblockhash(String domainnameblockhash) {
+        this.domainnameblockhash = domainnameblockhash;
     }
 
     public Boolean getConfirmed() {

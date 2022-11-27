@@ -209,7 +209,7 @@ public class SparkStore implements FullBlockStore {
             + " WHERE blockhash = %s AND issuingmatcherblockhash = %s";
 
     private String SELECT_TOKENS_SQL_TEMPLATE = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, domainname, signnumber,tokentype, tokenstop ,"
-            + "tokenkeyvalues, revoked,language,classification,decimals, domainpredblockhash ";
+            + "tokenkeyvalues, revoked,language,classification,decimals, domainnameblockhash ";
 
     private String SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL = "SELECT spent FROM " + tablename("tokens")
             + " WHERE blockhash = %s";
@@ -224,10 +224,10 @@ public class SparkStore implements FullBlockStore {
             + " WHERE tokenid = %s AND tokenindex = %s AND confirmed = true";
 
     private String SELECT_DOMAIN_ISSUING_CONFIRMED_BLOCK_SQL = "SELECT blockhash FROM " + tablename("tokens")
-            + " WHERE tokenname = %s AND domainpredblockhash = %s AND tokenindex = %s AND confirmed = true";
+            + " WHERE tokenname = %s AND domainnameblockhash = %s AND tokenindex = %s AND confirmed = true";
 
     private String SELECT_DOMAIN_DESCENDANT_CONFIRMED_BLOCKS_SQL = "SELECT blockhash FROM " + tablename("tokens")
-            + " WHERE domainpredblockhash = %s AND confirmed = true";
+            + " WHERE domainnameblockhash = %s AND confirmed = true";
 
     private String SELECT_TOKEN_SPENDER_SQL = "SELECT spenderblockhash FROM " + tablename("tokens")
             + " WHERE blockhash = %s";
@@ -247,7 +247,9 @@ public class SparkStore implements FullBlockStore {
     private String UPDATE_TOKEN_CONFIRMED_SQL = getUpdate() + " " + tablename("tokens") + " SET confirmed = %s "
             + " WHERE blockhash = %s";
 
-    private String SELECT_CONFIRMED_TOKENS_SQL = SELECT_TOKENS_SQL_TEMPLATE + " FROM tokens WHERE confirmed = true";
+    private String SELECT_CONFIRMED_TOKENS_SQL = SELECT_TOKENS_SQL_TEMPLATE + " FROM "
+            + tablename("tokens")
+            + " WHERE confirmed = true";
 
     private String COUNT_TOKENSINDEX_SQL = "SELECT blockhash, tokenindex FROM " + tablename("tokens")
             + " WHERE tokenid = %s AND confirmed = true ORDER BY tokenindex DESC limit 1";
@@ -1138,7 +1140,7 @@ public class SparkStore implements FullBlockStore {
     public boolean getTokennameAndDomain(String tokenname, String domainpre) throws BlockStoreException {
 
         String sql = "SELECT confirmed FROM " + tablename("tokens")
-                + " WHERE tokenname = %s AND domainpredblockhash = %s  ";
+                + " WHERE tokenname = %s AND domainnameblockhash = %s  ";
 
         return sparkSession.sql(String.format(sql, quotedString(tokenname), quotedString(domainpre))).first()
                 .getBoolean(0);
