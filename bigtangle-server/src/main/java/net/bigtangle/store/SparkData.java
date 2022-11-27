@@ -35,77 +35,83 @@ public class SparkData {
     public static DeltaTable lockobject;
 
     public static void loadDeltaTable(SparkSession sparkSession, String directory) {
-        blocks = DeltaTable.forPath(sparkSession, directory + "/"+ "blocks");
-        settings = DeltaTable.forPath(sparkSession, directory + "/"+ "settings");
-        mcmc = DeltaTable.forPath(sparkSession, directory + "/"+ "mcmc");
-        outputs = DeltaTable.forPath(sparkSession, directory + "/"+ "outputs");
-        outputsmulti = DeltaTable.forPath(sparkSession, directory + "/"+ "outputsmulti");
-        txreward = DeltaTable.forPath(sparkSession, directory + "/"+ "txreward");
-        orders = DeltaTable.forPath(sparkSession, directory + "/"+ "orders");
-        ordercancel = DeltaTable.forPath(sparkSession, directory + "/"+ "ordercancel");
-        matching = DeltaTable.forPath(sparkSession, directory + "/"+ "matching");
-        matchingdaily = DeltaTable.forPath(sparkSession, directory + "/"+ "matchingdaily");
+        blocks = DeltaTable.forPath(sparkSession, directory + "/" + "blocks");
+        settings = DeltaTable.forPath(sparkSession, directory + "/" + "settings");
+        mcmc = DeltaTable.forPath(sparkSession, directory + "/" + "mcmc");
+        outputs = DeltaTable.forPath(sparkSession, directory + "/" + "outputs");
+        outputsmulti = DeltaTable.forPath(sparkSession, directory + "/" + "outputsmulti");
+        txreward = DeltaTable.forPath(sparkSession, directory + "/" + "txreward");
+        orders = DeltaTable.forPath(sparkSession, directory + "/" + "orders");
+        ordercancel = DeltaTable.forPath(sparkSession, directory + "/" + "ordercancel");
+        matching = DeltaTable.forPath(sparkSession, directory + "/" + "matching");
+        matchingdaily = DeltaTable.forPath(sparkSession, directory + "/" + "matchingdaily");
 
-        matchinglast = DeltaTable.forPath(sparkSession, directory + "/"+ "matchinglast");
-        matchinglastday = DeltaTable.forPath(sparkSession, directory + "/"+ "matchinglastday");
-        tokens = DeltaTable.forPath(sparkSession, directory + "/"+ "tokens");
-        multisignaddress = DeltaTable.forPath(sparkSession, directory + "/"+ "multisignaddress");
+        matchinglast = DeltaTable.forPath(sparkSession, directory + "/" + "matchinglast");
+        matchinglastday = DeltaTable.forPath(sparkSession, directory + "/" + "matchinglastday");
+        tokens = DeltaTable.forPath(sparkSession, directory + "/" + "tokens");
+        multisignaddress = DeltaTable.forPath(sparkSession, directory + "/" + "multisignaddress");
 
-        multisign = DeltaTable.forPath(sparkSession, directory + "/"+ "multisign");
-        paymultisign = DeltaTable.forPath(sparkSession, directory + "/"+ "paymultisign");
-        paymultisignaddress = DeltaTable.forPath(sparkSession, directory + "/"+ "paymultisignaddress");
-        userdata = DeltaTable.forPath(sparkSession, directory + "/"+ "userdata");
-      //  access_permission = DeltaTable.forPath(sparkSession, directory + "/"+ "access_permission");
-        chainblockqueue = DeltaTable.forPath(sparkSession, directory + "/"+ "chainblockqueue");
-        lockobject = DeltaTable.forPath(sparkSession, directory + "/"+ "lockobject");
+        multisign = DeltaTable.forPath(sparkSession, directory + "/" + "multisign");
+        paymultisign = DeltaTable.forPath(sparkSession, directory + "/" + "paymultisign");
+        paymultisignaddress = DeltaTable.forPath(sparkSession, directory + "/" + "paymultisignaddress");
+        userdata = DeltaTable.forPath(sparkSession, directory + "/" + "userdata");
+        // access_permission = DeltaTable.forPath(sparkSession, directory + "/"+
+        // "access_permission");
+        chainblockqueue = DeltaTable.forPath(sparkSession, directory + "/" + "chainblockqueue");
+        lockobject = DeltaTable.forPath(sparkSession, directory + "/" + "lockobject");
     }
+
     public static Map<String, String> getCreateTablesSQL1() {
-        Map<String, String> sqlStatements = new HashMap<String,String>();
-        sqlStatements.put("blocks",CREATE_BLOCKS_TABLE);
-        sqlStatements.put("outputs",CREATE_OUTPUT_TABLE);
-        sqlStatements.put( "outputsmulti", CREATE_OUTPUT_MULTI_TABLE);
-        sqlStatements.put("tokens",CREATE_TOKENS_TABLE);
-        sqlStatements.put("matching",CREATE_MATCHING_TABLE);
-        sqlStatements.put("multisignaddress",CREATE_MULTISIGNADDRESS_TABLE);
-        sqlStatements.put( "multisign",CREATE_MULTISIGN_TABLE);
-        sqlStatements.put("txreward",CREATE_TX_REWARD_TABLE);
-        sqlStatements.put("userdata",CREATE_USERDATA_TABLE);
-        sqlStatements.put("paymultisign",CREATE_PAYMULTISIGN_TABLE);
-        sqlStatements.put("paymultisignaddress",CREATE_PAYMULTISIGNADDRESS_TABLE);
-        sqlStatements.put("ordercancel",CREATE_ORDER_CANCEL_TABLE);
-      //  sqlStatements.put(CREATE_SUBTANGLE_PERMISSION_TABLE);
-        sqlStatements.put("orders",CREATE_ORDERS_TABLE);
-        sqlStatements.put("settings",CREATE_SETTINGS_TABLE);
-        sqlStatements.put("mcmc",CREATE_MCMC_TABLE);
-        sqlStatements.put("matchinglast",CREATE_MATCHING_LAST_TABLE);
-        sqlStatements.put("matchinglastday",CREATE_MATCHING_LAST_DAY_TABLE);
-        sqlStatements.put("matchingdaily",CREATE_MATCHINGDAILY_TABLE);
-      //  sqlStatements.put(CREATE_ACCESS_PERMISSION_TABLE);
-      //  sqlStatements.put(CREATE_ACCESS_GRANT_TABLE);
-      //  sqlStatements.put(CREATE_CONTRACT_EVENT_TABLE);
-      //  sqlStatements.put(CREATE_CONTRACT_ACCOUNT_TABLE);
-      //  sqlStatements.put(CREATE_CONTRACT_EXECUTION_TABLE);
-        sqlStatements.put("chainblockqueue",CREATE_CHAINBLOCKQUEUE_TABLE);
-        sqlStatements.put("lockobject",CREATE_LOCKOBJECT_TABLE);
- 
+        Map<String, String> sqlStatements = new HashMap<String, String>();
+        sqlStatements.put("blocks", CREATE_BLOCKS_TABLE);
+        sqlStatements.put("outputs", CREATE_OUTPUT_TABLE);
+        sqlStatements.put("outputsmulti", CREATE_OUTPUT_MULTI_TABLE);
+        sqlStatements.put("tokens", CREATE_TOKENS_TABLE);
+        sqlStatements.put("matching", CREATE_MATCHING_TABLE);
+        sqlStatements.put("multisignaddress", CREATE_MULTISIGNADDRESS_TABLE);
+        sqlStatements.put("multisign", CREATE_MULTISIGN_TABLE);
+        sqlStatements.put("txreward", CREATE_TX_REWARD_TABLE);
+        sqlStatements.put("userdata", CREATE_USERDATA_TABLE);
+        sqlStatements.put("paymultisign", CREATE_PAYMULTISIGN_TABLE);
+        sqlStatements.put("paymultisignaddress", CREATE_PAYMULTISIGNADDRESS_TABLE);
+        sqlStatements.put("ordercancel", CREATE_ORDER_CANCEL_TABLE);
+        // sqlStatements.put(CREATE_SUBTANGLE_PERMISSION_TABLE);
+        sqlStatements.put("orders", CREATE_ORDERS_TABLE);
+        sqlStatements.put("settings", CREATE_SETTINGS_TABLE);
+        sqlStatements.put("mcmc", CREATE_MCMC_TABLE);
+        sqlStatements.put("matchinglast", CREATE_MATCHING_LAST_TABLE);
+        sqlStatements.put("matchinglastday", CREATE_MATCHING_LAST_DAY_TABLE);
+        sqlStatements.put("matchingdaily", CREATE_MATCHINGDAILY_TABLE);
+        // sqlStatements.put(CREATE_ACCESS_PERMISSION_TABLE);
+        // sqlStatements.put(CREATE_ACCESS_GRANT_TABLE);
+        // sqlStatements.put(CREATE_CONTRACT_EVENT_TABLE);
+        // sqlStatements.put(CREATE_CONTRACT_ACCOUNT_TABLE);
+        // sqlStatements.put(CREATE_CONTRACT_EXECUTION_TABLE);
+        sqlStatements.put("chainblockqueue", CREATE_CHAINBLOCKQUEUE_TABLE);
+        sqlStatements.put("lockobject", CREATE_LOCKOBJECT_TABLE);
+
         return sqlStatements;
     }
-    
+
     public static void createDeltaTable(SparkSession spark, String directory) {
-        for(String key: getCreateTablesSQL1().keySet()) {
-        String d = " USING DELTA " + "   LOCATION '" + directory+"/"+key+ "'";
-        spark.sql(getCreateTablesSQL1().get(key) + d);
+        for (String key : getCreateTablesSQL1().keySet()) {
+            String d = " USING DELTA " + "   LOCATION '" + directory + "/" + key + "'";
+            spark.sql(getCreateTablesSQL1().get(key) + d);
         }
     }
 
-    public static void deleteDeltaTable(SparkSession spark ) {
-        for(String key: getDropTablesSQL()) {
-   //     String d = " USING DELTA " + "   LOCATION '" + directory+"/"+key+ "'";
-        spark.sql( key );
+    public static void deleteDeltaTable(SparkSession spark) {
+        for (String key : getDropTablesSQL()) {
+            // String d = " USING DELTA " + " LOCATION '" + directory+"/"+key+
+            // "'";
+            try {
+                spark.sql(key);
+            } catch (Exception e) {
+                // e.printStackTrace();
+            }
         }
     }
 
-    
     // create table SQL
     public static final String CREATE_SETTINGS_TABLE = "CREATE TABLE settings (\n" + "    name string ,\n"
             + "    settingvalue string"
@@ -202,10 +208,10 @@ public class SparkData {
             // + ",\n" + " PRIMARY KEY (id) \n"
             + ") \n";
 
-    public static final String CREATE_MATCHINGDAILY_TABLE = "CREATE TABLE matchingdaily (\n"
-            + "    id bigint ,\n" + "    matchday string ,\n" + "    tokenid string ,\n"
-            + "    basetokenid string ,\n" + "    avgprice bigint ,\n" + "    totalQuantity bigint ,\n"
-            + "    highprice bigint ,\n" + "    lowprice bigint ,\n" + "    open bigint ,\n" + "    close bigint ,\n"
+    public static final String CREATE_MATCHINGDAILY_TABLE = "CREATE TABLE matchingdaily (\n" + "    id bigint ,\n"
+            + "    matchday string ,\n" + "    tokenid string ,\n" + "    basetokenid string ,\n"
+            + "    avgprice bigint ,\n" + "    totalQuantity bigint ,\n" + "    highprice bigint ,\n"
+            + "    lowprice bigint ,\n" + "    open bigint ,\n" + "    close bigint ,\n"
             + "    matchinterval string ,\n" + "    inserttime bigint "
             // + ",\n" + " PRIMARY KEY (id) \n"
             + ") \n";
@@ -227,7 +233,7 @@ public class SparkData {
             + "    domainname string ,\n" + "    signnumber int    ,\n" + "    tokentype int,\n"
             + "    tokenstop boolean,\n" + "    prevblockhash string,\n" + "    spent boolean ,\n"
             + "    spenderblockhash  string,\n" + "    tokenkeyvalues  string,\n" + "    revoked boolean   ,\n"
-            + "    language string   ,\n" + "    classification string   ,\n"  
+            + "    language string   ,\n" + "    classification string   ,\n"
             + "    decimals int , domainnameblockhash string \n"
             // + " PRIMARY KEY (blockhash)"
             + " \n) ";
@@ -318,18 +324,14 @@ public class SparkData {
 
     public static final String CREATE_CHAINBLOCKQUEUE_TABLE = "CREATE TABLE chainblockqueue (\n" + "    hash string ,\n"
             + "    block string ,\n" + "    chainlength bigint,\n " + "    orphan boolean,\n "
-            + "    inserttime bigint \n" 
-          //  + "    CONSTRAINT chainblockqueue_pk PRIMARY KEY (hash)  \n" 
+            + "    inserttime bigint \n"
+            // + " CONSTRAINT chainblockqueue_pk PRIMARY KEY (hash) \n"
             + ")  \n";
     public static final String CREATE_LOCKOBJECT_TABLE = "CREATE TABLE lockobject (\n" + "    lockobjectid string ,\n"
             + "    locktime bigint  \n"
             // + " CONSTRAINT lockobject_pk PRIMARY KEY (lockobjectid) \n"
             + ")  \n";
 
-  
- 
-   
-  
     /**
      * Get the SQL to drop all the tables (DDL).
      * 
@@ -350,15 +352,15 @@ public class SparkData {
         sqlStatements.add(DROP_USERDATA_TABLE);
         sqlStatements.add(DROP_PAYMULTISIGN_TABLE);
         sqlStatements.add(DROP_PAYMULTISIGNADDRESS_TABLE);
-        sqlStatements.add(DROP_CONTRACT_EXECUTION_TABLE);
+        // sqlStatements.add(DROP_CONTRACT_EXECUTION_TABLE);
         sqlStatements.add(DROP_ORDERCANCEL_TABLE);
-        sqlStatements.add(DROP_BATCHBLOCK_TABLE);
-        sqlStatements.add(DROP_SUBTANGLE_PERMISSION_TABLE);
+        // sqlStatements.add(DROP_BATCHBLOCK_TABLE);
+        // sqlStatements.add(DROP_SUBTANGLE_PERMISSION_TABLE);
         sqlStatements.add(DROP_ORDERS_TABLE);
-        sqlStatements.add(DROP_ACCESS_PERMISSION_TABLE);
-        sqlStatements.add(DROP_ACCESS_GRANT_TABLE);
-        sqlStatements.add(DROP_CONTRACT_EVENT_TABLE);
-        sqlStatements.add(DROP_CONTRACT_ACCOUNT_TABLE);
+        // sqlStatements.add(DROP_ACCESS_PERMISSION_TABLE);
+        // sqlStatements.add(DROP_ACCESS_GRANT_TABLE);
+        // sqlStatements.add(DROP_CONTRACT_EVENT_TABLE);
+        // sqlStatements.add(DROP_CONTRACT_ACCOUNT_TABLE);
         sqlStatements.add(DROP_CHAINBLOCKQUEUE_TABLE);
         sqlStatements.add(DROP_MCMC_TABLE);
         sqlStatements.add(DROP_LOCKOBJECT_TABLE);

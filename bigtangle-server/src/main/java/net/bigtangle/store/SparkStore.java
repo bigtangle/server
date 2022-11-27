@@ -723,9 +723,7 @@ public class SparkStore implements FullBlockStore {
 
     public void resetStore() throws BlockStoreException {
 
-        defaultDatabaseBatchWrite();
-
-        
+        deleteStore();
         createTables();
 
     }
