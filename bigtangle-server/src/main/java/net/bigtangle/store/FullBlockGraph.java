@@ -136,7 +136,7 @@ public class FullBlockGraph {
 
     @Autowired
     private OutputService outputService;
-    
+
     public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
         boolean added;
         if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
@@ -242,9 +242,9 @@ public class FullBlockGraph {
         // save the block
         try {
             store.beginDatabaseBatchWrite();
-            ChainBlockQueue chainBlockQueue = new ChainBlockQueue(block.getHash().getBytes(),
-                    Gzip.compress(block.unsafeBitcoinSerialize()), block.getLastMiningRewardBlock(), orphan,
-                    block.getTimeSeconds());
+            ChainBlockQueue chainBlockQueue = new ChainBlockQueue(block.getHash().toString(),
+                    Utils.HEX.encode(Gzip.compress(block.unsafeBitcoinSerialize())), block.getLastMiningRewardBlock(),
+                    orphan, block.getTimeSeconds());
             store.insertChainBlockQueue(chainBlockQueue);
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
@@ -287,11 +287,12 @@ public class FullBlockGraph {
             store.beginDatabaseBatchWrite();
 
             // It can be down lock for update of this on database
-            Block block = networkParameters.getDefaultSerializer().makeBlock(chainBlockQueue.getBlock());
+            Block block = networkParameters.getDefaultSerializer()
+                    .makeBlock(Utils.HEX.decode(chainBlockQueue.getBlock()));
 
             // Check the block is partially formally valid and fulfills PoW
             block.verifyHeader();
-         //   block.verifyTransactions();
+            // block.verifyTransactions();
 
             SolidityState solidityState = validatorService.checkChainSolidity(block, true, store);
 
@@ -339,10 +340,10 @@ public class FullBlockGraph {
         // Check the block is partially formally valid and fulfills PoW
 
         block.verifyHeader();
-          block.verifyTransactions();
+        block.verifyTransactions();
 
-          //allow non chain block predecessors not solid
-        SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid, blockStore,false);
+        // allow non chain block predecessors not solid
+        SolidityState solidityState = validatorService.checkSolidity(block, !allowUnsolid, blockStore, false);
         if (solidityState.isFailState()) {
             log.debug(solidityState.toString());
         }
@@ -723,8 +724,9 @@ public class FullBlockGraph {
                 // Sanity check
                 if (prevOut == null)
                     throw new RuntimeException("Attempted to spend a non-existent output!");
-            //FIXME transaction check at connected    if (prevOut.isSpent())
-            //        throw new RuntimeException("Attempted to spend an already spent output!");
+                // FIXME transaction check at connected if (prevOut.isSpent())
+                // throw new RuntimeException("Attempted to spend an already
+                // spent output!");
 
                 blockStore.updateTransactionOutputSpent(prevOut.getBlockHash(), prevOut.getTxHash(), prevOut.getIndex(),
                         true, block.getBlockHash());
@@ -1203,9 +1205,9 @@ public class FullBlockGraph {
                         }
                     }
                 }
-                //reset cache
+                // reset cache
                 outputService.evictTransactionOutputs(fromAddress);
-                outputService.evictTransactionOutputs( getScriptAddress(script));
+                outputService.evictTransactionOutputs(getScriptAddress(script));
             }
             blockStore.addUnspentTransactionOutput(utxos);
         }
@@ -1982,7 +1984,7 @@ public class FullBlockGraph {
                     log.info("updateConfirmedDo time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
                 }
 
-             cleanUp(maxConfirmedReward, store);
+                cleanUp(maxConfirmedReward, store);
                 if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
                     log.info("cleanUp time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
                 }
@@ -2001,15 +2003,16 @@ public class FullBlockGraph {
     }
 
     public void cleanUp(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
-    //TODO    cleanUpDo(maxConfirmedReward, store);
+        // TODO cleanUpDo(maxConfirmedReward, store);
     }
+
     public void cleanUpDo(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
 
         Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
-        log.info(" prunedClosedOrders until block " +""+  rewardblock );
+        log.info(" prunedClosedOrders until block " + "" + rewardblock);
         store.prunedClosedOrders(rewardblock.getTimeSeconds());
-        //max keep 500 blockchain as spendblock number
-      //  store.prunedHistoryUTXO(rewardblock.getLastMiningRewardBlock()- 500);
+        // max keep 500 blockchain as spendblock number
+        // store.prunedHistoryUTXO(rewardblock.getLastMiningRewardBlock()- 500);
         // store.prunedPriceTicker(rewardblock.getTimeSeconds() - 30 *
         // DaySeconds);
 

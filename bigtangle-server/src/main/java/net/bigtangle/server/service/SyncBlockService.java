@@ -542,7 +542,7 @@ public class SyncBlockService {
     private void tryConnectingOrphans(ChainBlockQueue orphanBlock, long cut, FullBlockStore store)
             throws VerificationException, BlockStoreException {
         // Look up the blocks previous.
-        Block block = networkParameters.getDefaultSerializer().makeBlock(orphanBlock.getBlock());
+        Block block = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(orphanBlock.getBlock()));
 
         // remove too old OrphanBlock and cutoff chain length
         if (System.currentTimeMillis() - orphanBlock.getInserttime() * 1000 > 2 * 60 * 60 * 1000

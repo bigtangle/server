@@ -147,7 +147,7 @@ public class SparkData {
 
     public static final String CREATE_TX_REWARD_TABLE = "CREATE TABLE txreward (\n" + "   blockhash string ,\n"
             + "   confirmed boolean ,\n" + "   spent boolean ,\n" + "   spenderblockhash string,\n"
-            + "   prevblockhash string ,\n" + "   difficulty bigint ,\n" + "   chainlength bigint "
+            + "   prevblockhash string ,\n" + "   difficulty bigint ,\n" + "   chainlength bigint,  time bigint "
             // + ",\n" + " PRIMARY KEY (blockhash) "
             + ") ";
 

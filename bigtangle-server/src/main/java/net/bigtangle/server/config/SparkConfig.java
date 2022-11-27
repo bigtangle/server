@@ -11,8 +11,6 @@ import org.springframework.context.annotation.Configuration;
 
 public class SparkConfig {
 
- 
-
     @Value("${spark.appname:bigtangle}")
     private String appName;
 
@@ -24,31 +22,18 @@ public class SparkConfig {
 
     @Value("${spark.apppath:/data/deltalake}")
     private String appPath;
-    
-    @Bean
-    public SparkConf sparkConf() {
-        SparkConf sparkConf = new SparkConf()
-                .setAppName(appName)
-                .setSparkHome(sparkHome)
-                .setMaster(masterUri);
-
-        return sparkConf;
-    }
-
-    @Bean
-    public JavaSparkContext javaSparkContext() {
-        return new JavaSparkContext(sparkConf());
-    }
 
     @Bean
     public SparkSession sparkSession() {
-        return SparkSession
-                .builder()
-                .sparkContext(javaSparkContext().sc())
-                .appName(appName)
-                .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-                .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-                .getOrCreate();
+        SparkConf conf = new SparkConf();
+
+        conf.set("spark.master", "local[*]").set("spark.driver.bindAddress", "localhost")
+                // .set("spark.sql.shuffle.partitions",
+                // "3").set("spark.default.parallelism", "3")
+                .set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+                .set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
+
+        return SparkSession.builder().appName("test").config(conf).getOrCreate();
     }
 
     public String getAppName() {
@@ -82,6 +67,5 @@ public class SparkConfig {
     public void setAppPath(String appPath) {
         this.appPath = appPath;
     }
-    
-    
+
 }

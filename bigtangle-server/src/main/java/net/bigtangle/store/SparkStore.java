@@ -297,19 +297,22 @@ public class SparkStore implements FullBlockStore {
 
     private String UPDATE_MULTISIGN_SQL = "UPDATE " + tablename("multisign")
             + " SET blockhash = %s, sign = %s WHERE tokenid = %s AND tokenindex = %s AND address = %s";
-    private String UPDATE_MULTISIGN1_SQL = "UPDATE multisign SET blockhash = %s WHERE tokenid = %s AND tokenindex = %s";
-    private String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM multisign WHERE tokenid = %s AND tokenindex = %s AND address = %s ";
+    private String UPDATE_MULTISIGN1_SQL = "UPDATE " + tablename("multisign")
+            + " SET blockhash = %s WHERE tokenid = %s AND tokenindex = %s";
+    private String SELECT_COUNT_MULTISIGN_SQL = "SELECT COUNT(*) as count FROM " + tablename("multisign")
+            + " WHERE tokenid = %s AND tokenindex = %s AND address = %s ";
 
-    private String DELETE_MULTISIGN_SQL = "DELETE FROM multisign WHERE tokenid = %s";
+    private String DELETE_MULTISIGN_SQL = "DELETE FROM " + tablename("multisign") + " WHERE tokenid = %s";
 
     /* REWARD */
-    private String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = "SELECT blockhash, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM "
-            + tablename("txreward") + " WHERE confirmed = 1 AND chainlength=(SELECT MAX(chainlength) FROM "
-            + tablename("txreward") + " WHERE confirmed=1)";
-    private String SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL = "SELECT blockhash, confirmed, spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM "
-            + tablename("txreward") + " WHERE confirmed = 1 AND chainlength=%s";
-    private String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = "SELECT blockhash, confirmed, "
-            + "spent, spenderblockhash, prevblockhash, difficulty, chainlength FROM " + tablename("txreward")
+    private String TXREWARD_TEMPLATE = "SELECT blockhash, confirmed, "
+            + "spent, spenderblockhash, prevblockhash, difficulty, chainlength, time FROM " + tablename("txreward");
+    private String SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL = TXREWARD_TEMPLATE
+            + " WHERE confirmed = 1 AND chainlength=(SELECT MAX(chainlength) FROM " + tablename("txreward")
+            + " WHERE confirmed=1)";
+    private String SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL = TXREWARD_TEMPLATE
+            + " WHERE confirmed = 1 AND chainlength=%s";
+    private String SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL = TXREWARD_TEMPLATE
             + "WHERE confirmed = 1 order by chainlength ";
     private String SELECT_TX_REWARD_CONFIRMED_SQL = "SELECT confirmed " + "FROM " + tablename("txreward")
             + " WHERE blockhash = ?";
@@ -370,6 +373,7 @@ public class SparkStore implements FullBlockStore {
         try {
             // Create tables if needed
             if (!tablesExists()) {
+                log.info("create table");
                 createTables();
             } else {
                 log.info("setting table   Exists");
@@ -615,8 +619,8 @@ public class SparkStore implements FullBlockStore {
 
     public BlockMCMC getMCMC(Sha256Hash hash) throws BlockStoreException {
 
-        return sparkSession.sql("SELECT " + SELECT_MCMC_TEMPLATE + " from mcmc where hash =  " + quotedString(hash))
-                .as(Encoders.bean(BlockMCMCModel.class)).first().toBlockMCMC();
+        return sparkSession.sql("SELECT " + SELECT_MCMC_TEMPLATE + " from " + tablename("mcmc") + " where hash =  "
+                + quotedString(hash)).as(Encoders.bean(BlockMCMCModel.class)).first().toBlockMCMC();
 
     }
 
@@ -916,7 +920,8 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void deleteMCMC(long chainlength) throws BlockStoreException {
-        sparkSession.sql(String.format(" delete from mcmc where hash  in " + SELECT_MCMC_CHAINLENGHT_SQL, chainlength));
+        sparkSession.sql(String.format(
+                " delete from " + tablename("mcmc") + " where hash  in " + SELECT_MCMC_CHAINLENGHT_SQL, chainlength));
 
     }
 
@@ -965,7 +970,7 @@ public class SparkStore implements FullBlockStore {
         }
         Dataset source = sparkSession.createDataset(m, Encoders.bean(MCMCModel.class));
 
-        SparkData.mcmc.as("target").merge(source.as("source"),"target.hash = source.hash").whenMatched()
+        SparkData.mcmc.as("target").merge(source.as("source"), "target.hash = source.hash").whenMatched()
                 .update(new HashMap<String, Column>() {
                     {
                         put("rating", functions.col("source.rating"));
@@ -1127,7 +1132,8 @@ public class SparkStore implements FullBlockStore {
     @Override
     public boolean getTokennameAndDomain(String tokenname, String domainpre) throws BlockStoreException {
 
-        String sql = "SELECT confirmed FROM tokens WHERE tokenname = %s AND domainpredblockhash = %s  ";
+        String sql = "SELECT confirmed FROM " + tablename("tokens")
+                + " WHERE tokenname = %s AND domainpredblockhash = %s  ";
 
         return sparkSession.sql(String.format(sql, quotedString(tokenname), quotedString(domainpre))).first()
                 .getBoolean(0);
@@ -1227,7 +1233,7 @@ public class SparkStore implements FullBlockStore {
         }
         String sql = "";
 
-        sql += SELECT_BLOCKS_TEMPLATE + "  FROM  blocks WHERE hash =  ";
+        sql += SELECT_BLOCKS_TEMPLATE + "  FROM  " + tablename("blocks") + " WHERE hash =  ";
 
         TXReward maxConfirmedReward = getMaxConfirmedReward();
 
@@ -1363,7 +1369,8 @@ public class SparkStore implements FullBlockStore {
             boolean isSign) throws BlockStoreException {
         List<MultiSign> list = new ArrayList<MultiSign>();
 
-        String sql = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE 1 = 1 ";
+        String sql = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM " + tablename("multisign")
+                + " WHERE 1 = 1 ";
         if (addresses != null && !addresses.isEmpty()) {
             sql += " AND address IN( " + buildINList(addresses) + " ) ";
         }
@@ -1644,7 +1651,8 @@ public class SparkStore implements FullBlockStore {
         if (pubKeyList.isEmpty()) {
             return new ArrayList<UserData>();
         }
-        String sql = "select blockhash, dataclassname, data, pubkey, blocktype from userdata where blocktype = %s and pubkey in ";
+        String sql = "select blockhash, dataclassname, data, pubkey, blocktype from " + tablename("userdata")
+                + " where blocktype = %s and pubkey in ";
         StringBuffer stringBuffer = new StringBuffer();
         for (String str : pubKeyList)
             stringBuffer.append(",'").append(str).append("'");
@@ -1696,7 +1704,8 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void updatePayMultiSignAddressSign(String orderid, String pubKey, int sign, byte[] signInputData)
             throws BlockStoreException {
-        String sql = "update paymultisignaddress set sign = %s, signInputData = %s where orderid = %s and pubKey = %s";
+        String sql = "update " + tablename("paymultisignaddress")
+                + " set sign = %s, signInputData = %s where orderid = %s and pubKey = %s";
 
         sparkSession.sql(
                 String.format(sql, sign, Utils.HEX.encode(signInputData), quotedString(orderid), quotedString(pubKey)));
@@ -1709,9 +1718,10 @@ public class SparkStore implements FullBlockStore {
             return new ArrayList<PayMultiSign>();
         }
         String sql = "SELECT paymultisign.orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outputHashHex,"
-                + "outputindex, sign,(select count(1) from  paymultisignaddress t where t.orderid=paymultisign.orderid AND sign!=0) as signcount "
-                + " FROM paymultisign LEFT JOIN paymultisignaddress ON paymultisign.orderid = paymultisignaddress.orderid "
-                + " WHERE paymultisignaddress.pubKey ";
+                + "outputindex, sign,(select count(1) from  " + tablename("paymultisignaddress")
+                + " where paymultisignaddress.orderid=paymultisign.orderid AND sign!=0) as signcount " + " FROM "
+                + tablename("paymultisign") + " LEFT JOIN " + tablename("paymultisignaddress")
+                + " ON paymultisign.orderid = paymultisignaddress.orderid " + " WHERE paymultisignaddress.pubkey ";
         StringBuffer stringBuffer = new StringBuffer();
         for (String pubKey : pubKeys)
             stringBuffer.append(",'").append(pubKey).append("'");
@@ -1730,7 +1740,8 @@ public class SparkStore implements FullBlockStore {
     @Override
     public int getCountPayMultiSignAddressStatus(String orderid) throws BlockStoreException {
 
-        String sql = "select count(*) as count from paymultisignaddress where orderid = %s and sign = 1";
+        String sql = "select count(*) as count from " + tablename("paymultisignaddress")
+                + " where orderid = %s and sign = 1";
         Dataset<Row> s = sparkSession.sql(String.format(sql, quotedString(orderid)));
 
         if (!s.isEmpty()) {
@@ -1744,7 +1755,8 @@ public class SparkStore implements FullBlockStore {
     public UTXO getOutputsWithHexStr(byte[] hash, long outputindex) throws BlockStoreException {
         String sql = "SELECT coinvalue, scriptbytes, coinbase, toaddress,"
                 + " addresstargetable, blockhash, tokenid, fromaddress, memo, minimumsign, time, spent, confirmed, "
-                + " spendpending, spendpendingtime FROM outputs WHERE hash = %s and outputindex = %s";
+                + " spendpending, spendpendingtime FROM " + tablename("outputs")
+                + " WHERE hash = %s and outputindex = %s";
 
         Dataset<UTXOModel> s = sparkSession.sql(String.format(sql, quotedString(hash), outputindex))
                 .as(Encoders.bean(UTXOModel.class));
@@ -1885,7 +1897,6 @@ public class SparkStore implements FullBlockStore {
                 .whenMatched().update(new HashMap<String, Column>() {
                     {
                         put("confirmed", functions.col("source.confirmed"));
-
                     }
                 }).execute();
 
@@ -1910,7 +1921,6 @@ public class SparkStore implements FullBlockStore {
                 .whenMatched().update(new HashMap<String, Column>() {
                     {
                         put("spent", functions.col("source.spent"));
-
                     }
                 }).execute();
 
@@ -1922,7 +1932,8 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void prunedClosedOrders(Long beforetime) throws BlockStoreException {
 
-        sparkSession.sql(String.format(" delete FROM orders WHERE  spent=1 AND validtotime < %s limit 1000 ",
+        sparkSession.sql(String.format(
+                " delete FROM " + tablename("orders") + " WHERE  spent=1 AND validtotime < %s limit 1000 ",
                 beforetime - 100 * NetworkParameters.ORDER_TIMEOUT_MAX));
 
     }
@@ -1936,13 +1947,13 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void prunedBlocks(Long height, Long chain) throws BlockStoreException {
 
-        sparkSession
-                .sql(" delete FROM blocks WHERE   hash    in (  select distinct( blocks.hash) from  blocks  , outputs "
-                        + " where spenderblockhash = blocks.hash    " + "  and blocks.milestone < " + chain
-                        + "and blocks.milestone !=0  " + " and ( blocks.blocktype = "
-                        + Block.Type.BLOCKTYPE_TRANSFER.ordinal() + " or blocks.blocktype = "
-                        + Block.Type.BLOCKTYPE_ORDER_OPEN.ordinal() + " or blocks.blocktype = "
-                        + Block.Type.BLOCKTYPE_REWARD.ordinal() + "  ) limit 1000 ) ");
+        sparkSession.sql(" delete FROM " + tablename("blocks")
+                + " WHERE   hash    in (  select distinct( blocks.hash) from  " + tablename("blocks") + "  , "
+                + tablename("outputs") + " where spenderblockhash = blocks.hash    " + "  and blocks.milestone < "
+                + chain + "and blocks.milestone !=0  " + " and ( blocks.blocktype = "
+                + Block.Type.BLOCKTYPE_TRANSFER.ordinal() + " or blocks.blocktype = "
+                + Block.Type.BLOCKTYPE_ORDER_OPEN.ordinal() + " or blocks.blocktype = "
+                + Block.Type.BLOCKTYPE_REWARD.ordinal() + "  ) limit 1000 ) ");
 
     }
 
@@ -1953,7 +1964,7 @@ public class SparkStore implements FullBlockStore {
     @Override
     public void prunedHistoryUTXO(Long maxRewardblock) throws BlockStoreException {
 
-        sparkSession.sql(" delete FROM outputs WHERE  spent=1 AND "
+        sparkSession.sql(" delete FROM " + tablename("outputs") + " WHERE  spent=1 AND "
                 + "spenderblockhash in (select hash from blocks where milestone < " + maxRewardblock
                 + " ) limit 1000 ");
     }
@@ -1966,7 +1977,7 @@ public class SparkStore implements FullBlockStore {
 
         long minTime = Math.min(beforetime, System.currentTimeMillis() / 1000 - 60 * 24 * 60 * 60);
 
-        sparkSession.sql(" delete FROM matching WHERE inserttime < " + minTime + "  limit 1000 ");
+        sparkSession.sql(" delete FROM " + tablename("matching") + " WHERE inserttime < " + minTime + "  limit 1000 ");
     }
 
     @Override
@@ -2001,9 +2012,9 @@ public class SparkStore implements FullBlockStore {
 
         String myaddress = " in (" + buildINList(addresses) + ")";
 
-        String sql = "SELECT " + ORDER_TEMPLATE + " FROM orders "
+        String sql = "SELECT " + ORDER_TEMPLATE + " FROM " + tablename("orders")
                 + " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress" + myaddress + " AND issuingmatcherblockhash="
-                + OPENORDERHASH + " AND blockhash NOT IN ( SELECT blockhash FROM orders "
+                + OPENORDERHASH + " AND blockhash NOT IN ( SELECT blockhash FROM " + tablename("orders")
                 + "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress" + myaddress + ")";
 
         Dataset<OrderRecordModel> s = sparkSession.sql(sql).as(Encoders.bean(OrderRecordModel.class));
@@ -2029,7 +2040,8 @@ public class SparkStore implements FullBlockStore {
     @Override
     public boolean existBlock(Sha256Hash hash) throws BlockStoreException {
 
-        return sparkSession.sql(" select hash from blocks where hash =  " + quotedString(hash)).isEmpty();
+        return sparkSession.sql(" select hash from " + tablename("blocks") + " where hash =  " + quotedString(hash))
+                .isEmpty();
 
     }
 
@@ -2048,12 +2060,13 @@ public class SparkStore implements FullBlockStore {
     public List<MatchLastdayResult> getLastMatchingEvents(Set<String> tokenIds, String basetoken)
             throws BlockStoreException {
 
-        String sql = "SELECT  ml.txhash txhash,ml.tokenid tokenid ,ml.basetokenid basetokenid,  ml.price price, ml.executedQuantity executedQuantity,ml.inserttime inserttime, "
-                + "mld.price lastdayprice,mld.executedQuantity lastdayQuantity "
-                + "FROM matchinglast ml LEFT JOIN matchinglastday mld ON ml.tokenid=mld.tokenid AND  ml.basetokenid=mld.basetokenid";
-        sql += " where ml.basetokenid= " + quotedString(basetoken);
+        String sql = "SELECT  matchinglast.txhash txhash,matchinglast.tokenid tokenid ,matchinglast.basetokenid basetokenid,  matchinglast.price price, matchinglast.executedQuantity executedQuantity,ml.inserttime inserttime, "
+                + "matchinglastday.price lastdayprice,matchinglastday.executedQuantitymatchinglastastdayQuantity "
+                + "FROM " + tablename("matchinglast") + "LEFT JOIN" + tablename("matchinglastday")
+                + " ON matchinglast.tokenid=matchinglastday.tokenid AND  matchinglast.basetokenid=matchinglastday.basetokenid";
+        sql += " where matchinglast.basetokenid= " + quotedString(basetoken);
         if (tokenIds != null && !tokenIds.isEmpty()) {
-            sql += "  and ml.tokenid IN ( " + buildINList(tokenIds) + " )";
+            sql += "  and matchinglast.tokenid IN ( " + buildINList(tokenIds) + " )";
         }
 
         return sparkSession.sql(sql).as(Encoders.bean(MatchLastdayResult.class)).collectAsList();
@@ -2135,8 +2148,8 @@ public class SparkStore implements FullBlockStore {
     public List<MatchLastdayResult> getTimeAVGBetweenMatchingEvents(String tokenid, String basetoken, Long startDate,
             Long endDate, int count) throws BlockStoreException {
 
-        String SELECT_AVG = "select tokenid,basetokenid,  avgprice, totalQuantity,matchday "
-                + "from matchingdaily where datediff(curdate(),str_to_date(matchday,'%Y-%m-%d'))<=30";
+        String SELECT_AVG = "select tokenid,basetokenid,  avgprice, totalQuantity,matchday " + "from "
+                + tablename("matchingdaily") + " where datediff(curdate(),str_to_date(matchday,'%Y-%m-%d'))<=30";
         String sql = SELECT_AVG + " AND  basetokenid = " + quotedString(basetoken) + " AND  tokenid = "
                 + quotedString(tokenid);
 
@@ -2187,7 +2200,7 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void deleteAllChainBlockQueue() throws BlockStoreException {
-        sparkSession.sql(" delete from chainblockqueue ");
+        sparkSession.sql(" delete from " + tablename("chainblockqueue"));
 
     }
 
@@ -2196,7 +2209,8 @@ public class SparkStore implements FullBlockStore {
 
         for (ChainBlockQueue chainBlockQueue : chainBlockQueues) {
 
-            sparkSession.sql(" delete from chainblockqueue  where hash = " + chainBlockQueue.getHash());
+            sparkSession.sql(" delete from " + tablename("chainblockqueue") + "  where hash = "
+                    + quotedString(chainBlockQueue.getHash()));
 
         }
     }
@@ -2222,13 +2236,14 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public void deleteLockobject(String lockobjectid) throws BlockStoreException {
-        sparkSession.sql(" delete from lockobject  where lockobjectid =" + quotedString(lockobjectid));
+        sparkSession
+                .sql(" delete from " + tablename("lockobject") + "  where lockobjectid =" + quotedString(lockobjectid));
 
     }
 
     @Override
     public void deleteAllLockobject() throws BlockStoreException {
-        sparkSession.sql(" delete from lockobject ");
+        sparkSession.sql(" delete from " + tablename("lockobject"));
 
     }
 
@@ -2295,8 +2310,9 @@ public class SparkStore implements FullBlockStore {
     }
 
     public void deleteLastdayPrice(MatchResult matchResult) throws BlockStoreException {
-        sparkSession.sql("delete from  matchinglastday where tokenid=" + quotedString(matchResult.getTokenid())
-                + " and basetokenid=" + quotedString(matchResult.getBasetokenid()));
+        sparkSession.sql("delete from  " + tablename("matchinglastday") + " where tokenid="
+                + quotedString(matchResult.getTokenid()) + " and basetokenid="
+                + quotedString(matchResult.getBasetokenid()));
     }
 
     public List<Long> selectTimesUntilNow() throws ParseException {
@@ -2308,8 +2324,8 @@ public class SparkStore implements FullBlockStore {
 
         long time = dateFormat0.parse(yesterday + "-23:59:59:999").getTime();
 
-        Dataset<Row> s = sparkSession
-                .sql(" select inserttime from matching where inserttime<=" + time / 1000 + " order by  inserttime asc");
+        Dataset<Row> s = sparkSession.sql(" select inserttime from " + tablename("matching") + " where inserttime<="
+                + time / 1000 + " order by  inserttime asc");
 
         List<Long> times = new ArrayList<Long>();
         for (Row r : s.collectAsList()) {
@@ -2322,7 +2338,9 @@ public class SparkStore implements FullBlockStore {
 
     public long getCountMatching(String matchday) throws BlockStoreException {
 
-        return sparkSession.sql(" select count(1) from matchingdaily where matchday=" + quotedString(matchday)).count();
+        return sparkSession.sql(
+                " select count(1) from " + tablename("matchingdaily") + " where matchday=" + quotedString(matchday))
+                .count();
 
     }
 
@@ -2331,26 +2349,27 @@ public class SparkStore implements FullBlockStore {
 
         DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
-        return sparkSession
-                .sql(" select tokenid,basetokenid,sum(price),count(price),"
-                        + "max(price),min(price),sum(executedQuantity)" + " from matching where inserttime>="
-                        + starttime / 1000 + " and inserttime<=" + endtime / 1000 + " group by tokenid,basetokenid  ")
+        return sparkSession.sql(
+                " select tokenid,basetokenid,sum(price),count(price)," + "max(price),min(price),sum(executedQuantity)"
+                        + " from " + tablename("matching") + " where inserttime>=" + starttime / 1000
+                        + " and inserttime<=" + endtime / 1000 + " group by tokenid,basetokenid  ")
                 .as(Encoders.bean(AVGMatchResult.class)).collectAsList();
 
     }
 
     public MatchResult queryTickerLast(long starttime, long endtime, String tokenid, String basetokenid)
             throws BlockStoreException {
-        return sparkSession.sql(" select tokenid,basetokenid,  price,  executedQuantity "
-                + " from matching where inserttime>=" + starttime / 1000 + " and inserttime<=" + endtime / 1000
-                + "   and  tokenid=" + "%s" + " and basetokenid=%s  ").as(Encoders.bean(MatchResult.class)).first();
+        return sparkSession
+                .sql(" select tokenid,basetokenid,  price,  executedQuantity " + " from " + tablename("matching")
+                        + " where inserttime>=" + starttime / 1000 + " and inserttime<=" + endtime / 1000
+                        + "   and  tokenid=" + "%s" + " and basetokenid=%s  ")
+                .as(Encoders.bean(MatchResult.class)).first();
     }
 
     @Override
     public LockObject selectLockobject(String lockobjectid) throws BlockStoreException {
-        return sparkSession.sql(
-                " select lockobjectid, locktime from lockobject  where lockobjectid = " + quotedString(lockobjectid))
-                .as(Encoders.bean(LockObject.class)).first();
+        return sparkSession.sql(" select lockobjectid, locktime from " + tablename("lockobject")
+                + "  where lockobjectid = " + quotedString(lockobjectid)).as(Encoders.bean(LockObject.class)).first();
 
     }
 
