@@ -120,8 +120,8 @@ public class SparkStore implements FullBlockStore {
     // Queries SQL.
     private String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM " + tablename("settings") + " WHERE name = %s";
 
-    private String SELECT_BLOCKS_TEMPLATE = "  blocks.hash as hash, block, prevblockhash, prevbranchblockhash"
-            + "  height, milestone, milestonelastupdate,  inserttime,   solid, confirmed";
+    private String SELECT_BLOCKS_TEMPLATE = "  blocks.hash as hash, INT(height), block, prevblockhash, prevbranchblockhash"
+            + "  , BIGINT(milestone), BIGINT(milestonelastupdate),  BIGINT(inserttime),   INT(solid), confirmed, mineraddress";
 
     private String SELECT_BLOCKS_SQL = " select " + SELECT_BLOCKS_TEMPLATE + " FROM " + tablename("blocks")
             + " WHERE hash =  ";
@@ -135,7 +135,8 @@ public class SparkStore implements FullBlockStore {
 
     private String SELECT_NOT_INVALID_APPROVER_BLOCKS_SQL = "SELECT " + SELECT_BLOCKS_TEMPLATE
             + "  , rating, depth, cumulativeweight " + "  FROM " + tablename("blocks") + ", " + tablename("mcmc")
-            + " WHERE blocks.hash= mcmc.hash and (prevblockhash = %s or prevbranchblockhash = %s) AND solid >= 0 ";
+            + " WHERE blocks.hash= mcmc.hash"
+            + " and (prevblockhash = %s or prevbranchblockhash = %s) AND solid >= 0 ";
 
     private String SELECT_SOLID_APPROVER_BLOCKS_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
             + " ,  rating, depth, cumulativeweight " + tablename("blocks") + ", " + tablename("mcmc")
@@ -177,8 +178,9 @@ public class SparkStore implements FullBlockStore {
             + " WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = true AND mcmc.rating < "
             + NetworkParameters.CONFIRMATION_LOWER_THRESHOLD;
 
-    private String SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE + "  FROM "
-            + tablename("blocks") + " WHERE milestone >= %s AND milestone <= %s";
+    private String SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL = "SELECT " + SELECT_BLOCKS_TEMPLATE
+            + "  , rating, depth, cumulativeweight " + "  FROM " + tablename("blocks") + ", " + tablename("mcmc")
+            + " WHERE blocks.hash= mcmc.hash" + " WHERE milestone >= %s AND milestone <= %s";
 
     private String SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL = "SELECT   " + SELECT_BLOCKS_TEMPLATE + " FROM "
             + tablename("blocks") + " WHERE   height > %s AND height <= %s AND solid = 2 ";
@@ -899,7 +901,10 @@ public class SparkStore implements FullBlockStore {
         try {
 
             Dataset<BlockMCMCModel> s = sparkSession
-                    .sql(String.format(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL, minMilestone, maxMilestone))
+                    .sql(String.format("SELECT " + "  blocks.hash as hash, INT(height), block, prevblockhash, prevbranchblockhash"
+                            + "  , BIGINT(milestone), BIGINT(milestonelastupdate),  BIGINT(inserttime),   INT(solid), confirmed, mineraddress, INT(blocktype)"
+                            + "  , BIGINT(rating), BIGINT(depth), BIGINT(cumulativeweight) " + "  FROM " + tablename("blocks") + ", " + tablename("mcmc")
+                            + " WHERE blocks.hash= mcmc.hash" + " and milestone >= %s AND milestone <= %s", minMilestone, maxMilestone)) 
                     .as(Encoders.bean(BlockMCMCModel.class));
             for (BlockMCMCModel b : s.collectAsList()) {
                 BlockEvaluation blockEvaluation = b.toBlockEvaluation();
@@ -915,8 +920,8 @@ public class SparkStore implements FullBlockStore {
         }
 
     }
-
-    public List<BlockWrap> getEntryPoints(Long currChainLength) throws BlockStoreException {
+    @Override
+    public List<BlockWrap> getEntryPoints(long currChainLength) throws BlockStoreException {
         // long currChainLength = getMaxConfirmedReward().getChainLength();
         long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF);
         return getBlocksInMilestoneInterval(minChainLength, currChainLength);
@@ -2615,12 +2620,8 @@ public class SparkStore implements FullBlockStore {
         return 0;
     }
 
-    @Override
-    public List<BlockWrap> getEntryPoints(long currChainLength) throws BlockStoreException {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
+  
+   
     @Override
     public void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException {
         // TODO Auto-generated method stub
