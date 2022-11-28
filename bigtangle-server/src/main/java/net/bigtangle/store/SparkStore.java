@@ -209,7 +209,7 @@ public class SparkStore implements FullBlockStore {
             + " WHERE blockhash = %s AND issuingmatcherblockhash = %s";
 
     private String SELECT_TOKENS_SQL_TEMPLATE = "SELECT blockhash, confirmed, tokenid, tokenindex, amount, tokenname, description, domainname, signnumber,tokentype, tokenstop ,"
-            + "tokenkeyvalues, revoked,language,classification,decimals, domainnameblockhash ";
+            + "tokenkeyvalues, revoked,language,classification,decimals, domainnameblockhash,time, prevblockhash,spenderblockhash,spent ";
 
     private String SELECT_TOKEN_SPENT_BY_BLOCKHASH_SQL = "SELECT spent FROM " + tablename("tokens")
             + " WHERE blockhash = %s";
