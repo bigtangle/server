@@ -17,7 +17,7 @@ public class BlockModel implements Serializable {
     private static final long serialVersionUID = 1L;
     String hash;
     Long height;
-    String block;
+    byte[] block;
     String prevblockhash;
     String prevbranchblockhash;
     String mineraddress;
@@ -28,10 +28,7 @@ public class BlockModel implements Serializable {
     Long solid;
     Boolean confirmed;
 
-    public byte[] getBlockBytes() {
-        return Utils.HEX.decode(block);
-    }
-
+   
     
     public String getHash() {
         return hash;
@@ -49,11 +46,13 @@ public class BlockModel implements Serializable {
         this.height = height;
     }
 
-    public String getBlock() {
+ 
+
+    public byte[] getBlock() {
         return block;
     }
 
-    public void setBlock(String block) {
+    public void setBlock(byte[] block) {
         this.block = block;
     }
 
@@ -137,7 +136,7 @@ public class BlockModel implements Serializable {
         BlockModel s = new BlockModel();
         s.setHash(block.getHash().toString());
         s.setHeight(block.getHeight());
-        s.setBlock(Utils.HEX.encode(Gzip.compress(block.unsafeBitcoinSerialize())));
+        s.setBlock(Gzip.compress(block.unsafeBitcoinSerialize()));
 
         s.setPrevblockhash( block.getPrevBlockHash().toString());
         s.setPrevbranchblockhash(block.getPrevBranchBlockHash().toString());

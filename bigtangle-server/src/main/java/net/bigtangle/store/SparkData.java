@@ -119,7 +119,7 @@ public class SparkData {
             + ")\n";
 
     public static final String CREATE_BLOCKS_TABLE = "CREATE TABLE blocks (\n" + "    hash string ,\n"
-            + "    height bigint ,\n" + "    block string ,\n" + "    prevblockhash  string  ,\n"
+            + "    height bigint ,\n" + "    block binary ,\n" + "    prevblockhash  string  ,\n"
             + "    prevbranchblockhash  string ,\n" + "    mineraddress string  ,\n" + "    blocktype bigint ,\n"
             // reward block chain length is here milestone
             + "    milestone bigint ,\n" + "    milestonelastupdate bigint ,\n" + "    confirmed boolean ,\n"

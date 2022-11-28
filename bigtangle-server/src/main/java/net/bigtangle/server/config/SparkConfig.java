@@ -30,6 +30,7 @@ public class SparkConfig {
         conf.set("spark.master", "local[*]").set("spark.driver.bindAddress", "localhost")
                 // .set("spark.sql.shuffle.partitions",
                 // "3").set("spark.default.parallelism", "3")
+                .set("spark.debug.maxToStringFields", "100")
                 .set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
                 .set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
 

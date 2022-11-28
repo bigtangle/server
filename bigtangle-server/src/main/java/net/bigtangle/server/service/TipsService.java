@@ -91,7 +91,7 @@ public class TipsService {
             throws BlockStoreException {
         Stopwatch watch = Stopwatch.createStarted();
 
-        List<BlockWrap> entryPoints = getEntryPoints(count, maxConfirmedReward.getChainLength(), store);
+        List<BlockWrap> entryPoints = getEntryPoints(count, maxConfirmedReward , store);
         List<Future<BlockWrap>> ratingTipFutures = new ArrayList<Future<BlockWrap>>(count);
         List<BlockWrap> ratingTips = new ArrayList<BlockWrap>(count);
 
@@ -183,7 +183,7 @@ public class TipsService {
     private Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPairDo(TXReward maxConfirmedReward,
             HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, Sha256Hash prevRewardHash, FullBlockStore store)
             throws BlockStoreException {
-        List<BlockWrap> entryPoints = getEntryPoints(2,  maxConfirmedReward.getChainLength(),
+        List<BlockWrap> entryPoints = getEntryPoints(2,  maxConfirmedReward ,
                 store);
         BlockWrap left = entryPoints.get(0);
         BlockWrap right = entryPoints.get(1);
@@ -334,7 +334,7 @@ public class TipsService {
 
     private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(TXReward maxConfirmedReward,
             HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, FullBlockStore store) throws BlockStoreException {
-        List<BlockWrap> entryPoints = getEntryPoints(2,  maxConfirmedReward.getChainLength(),
+        List<BlockWrap> entryPoints = getEntryPoints(2,  maxConfirmedReward ,
                 store);
         BlockWrap left = entryPoints.get(0);
         BlockWrap right = entryPoints.get(1);
@@ -512,11 +512,13 @@ public class TipsService {
      * @return hashes of the entry points
      * @throws Exception
      */
-    private List<BlockWrap> getEntryPoints(int count, long currChainLength, FullBlockStore store)
+    private List<BlockWrap> getEntryPoints(int count,TXReward aTXReward, FullBlockStore store)
             throws BlockStoreException {
+        long currChainLength = aTXReward.getChainLength() ;
         List<BlockWrap> candidates = blockService.getEntryPointCandidates(currChainLength, store);
-        if (candidates.isEmpty()) {
-            candidates.add(store.getBlockWrap(store.getMaxConfirmedReward().getBlockHash()));
+        if (candidates.isEmpty()) { 
+            candidates.add(store.getBlockWrap(aTXReward.getBlockHash()));
+    
         }
         return pullRandomlyByCumulativeWeight(candidates, count);
     }
