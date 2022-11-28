@@ -591,28 +591,11 @@ public class DispatcherController {
                 break;
             }
         } catch (BlockStoreException e) {
-            logger.error("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
-                    bodyByte.length, e);
-            AbstractResponse resp = ErrorResponse.create(101);
-            resp.setErrorcode(101);
-            resp.setMessage(e.getLocalizedMessage());
-            this.outPrintJSONString(httpServletResponse, resp, watch, reqCmd);
+            logException(reqCmd, httpServletResponse, httprequest, watch, bodyByte, 101, e);
         } catch (NoBlockException e) {
-            logger.info("reqCmd : {} from {}, size : {}, started.", reqCmd, httprequest.getRemoteAddr(),
-                    bodyByte.length);
-            logger.error("", e);
-            AbstractResponse resp = ErrorResponse.create(404);
-            resp.setErrorcode(404);
-            resp.setMessage(e.getLocalizedMessage());
-            this.outPrintJSONString(httpServletResponse, resp, watch, reqCmd);
-        } catch (Throwable exception) {
-            logger.error("reqCmd : {}, reqHex : {}, {},error.", reqCmd, bodyByte.length, remoteAddr(httprequest),
-                    exception);
-            AbstractResponse resp = ErrorResponse.create(100);
-            StringWriter sw = new StringWriter();
-            exception.printStackTrace(new PrintWriter(sw));
-            resp.setMessage(sw.toString());
-            this.outPrintJSONString(httpServletResponse, resp, watch, reqCmd);
+            logException(reqCmd, httpServletResponse, httprequest, watch, bodyByte, 404, e);
+        } catch (Throwable e) { 
+            logException(reqCmd, httpServletResponse, httprequest, watch, bodyByte, 500, e);
         } finally {
             store.close();
             if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
@@ -620,6 +603,20 @@ public class DispatcherController {
                         remoteAddr(httprequest));
             watch.stop();
         }
+    }
+
+    private void logException(String reqCmd, HttpServletResponse httpServletResponse, HttpServletRequest httprequest,
+            Stopwatch watch, byte[] bodyByte, int code, Throwable e) throws Exception {
+        e.printStackTrace();
+        logger.error(String.format("reqCmd : {}, reqHex : {}, {},error.", reqCmd, bodyByte.length, remoteAddr(httprequest)),
+                e);
+   
+        AbstractResponse resp = ErrorResponse.create(code);
+        resp.setErrorcode(code);
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        resp.setMessage(sw.toString());
+        this.outPrintJSONString(httpServletResponse, resp, watch, reqCmd);
     }
 
     @RequestMapping("/")
