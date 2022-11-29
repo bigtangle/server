@@ -243,7 +243,7 @@ public class FullBlockGraph {
         try {
             store.beginDatabaseBatchWrite();
             ChainBlockQueue chainBlockQueue = new ChainBlockQueue(block.getHash().toString(),
-                    Utils.HEX.encode(Gzip.compress(block.unsafeBitcoinSerialize())), block.getLastMiningRewardBlock(),
+                    Gzip.compress(block.unsafeBitcoinSerialize()), block.getLastMiningRewardBlock(),
                     orphan, block.getTimeSeconds());
             store.insertChainBlockQueue(chainBlockQueue);
             store.commitDatabaseBatchWrite();
@@ -287,8 +287,7 @@ public class FullBlockGraph {
             store.beginDatabaseBatchWrite();
 
             // It can be down lock for update of this on database
-            Block block = networkParameters.getDefaultSerializer()
-                    .makeBlock(Utils.HEX.decode(chainBlockQueue.getBlock()));
+            Block block = networkParameters.getDefaultSerializer().makeZippedBlock(chainBlockQueue.getBlock());
 
             // Check the block is partially formally valid and fulfills PoW
             block.verifyHeader();
@@ -321,7 +320,7 @@ public class FullBlockGraph {
             store.commitDatabaseBatchWrite();
         } catch (Exception e) {
             store.abortDatabaseBatchWrite();
-            throw e;
+            throw new  BlockStoreException(e);
         } finally {
             deleteChainQueue(chainBlockQueue, store);
             store.defaultDatabaseBatchWrite();

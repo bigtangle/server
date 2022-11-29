@@ -323,7 +323,7 @@ public class SparkData {
             + ") ";
 
     public static final String CREATE_CHAINBLOCKQUEUE_TABLE = "CREATE TABLE chainblockqueue (\n" + "    hash string ,\n"
-            + "    block string ,\n" + "    chainlength bigint,\n " + "    orphan boolean,\n "
+            + "    block binary ,\n" + "    chainlength bigint,\n " + "    orphan boolean,\n "
             + "    inserttime bigint \n"
             // + " CONSTRAINT chainblockqueue_pk PRIMARY KEY (hash) \n"
             + ")  \n";

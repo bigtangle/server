@@ -1881,7 +1881,7 @@ public class SparkStore implements FullBlockStore {
         Dataset source = sparkSession.createDataset(list, Encoders.bean(OrderRecordModel.class));
         SparkData.orders.as("target")
                 .merge(source.as("source"),
-                        "target.orderblockhash = source.orderblockhash and"
+                        "target.blockhash = source.blockhash and "
                                 + "target.issuingmatcherblockhash = source.issuingmatcherblockhash  ")
                 .whenMatched().updateAll().whenNotMatched().insertAll().execute();
 
@@ -1910,7 +1910,7 @@ public class SparkStore implements FullBlockStore {
         Dataset source = sparkSession.createDataset(list, Encoders.bean(OrderRecordModel.class));
         SparkData.orders.as("target")
                 .merge(source.as("source"),
-                        "target.orderblockhash = source.orderblockhash and"
+                        "target.blockhash = source.blockhash and "
                                 + "target.issuingmatcherblockhash = source.issuingmatcherblockhash  ")
                 .whenMatched().update(new HashMap<String, Column>() {
                     {
@@ -1934,7 +1934,7 @@ public class SparkStore implements FullBlockStore {
         Dataset source = sparkSession.createDataset(list, Encoders.bean(OrderRecordModel.class));
         SparkData.orders.as("target")
                 .merge(source.as("source"),
-                        "target.orderblockhash = source.orderblockhash and"
+                        "target.blockhash = source.blockhash and "
                                 + "target.issuingmatcherblockhash = source.issuingmatcherblockhash  ")
                 .whenMatched().update(new HashMap<String, Column>() {
                     {
@@ -2069,7 +2069,7 @@ public class SparkStore implements FullBlockStore {
         Dataset source = sparkSession.createDataset(matchs, Encoders.bean(MatchResult.class));
         SparkData.matching.as("target")
                 .merge(source.as("source"),
-                        "target.txhash = source.txhash and" + "target.tokenid = source.tokenid  "
+                        "target.txhash = source.txhash and " + "target.tokenid = source.tokenid  "
                                 + " and target.basetokenid = source.basetokenid  ")
                 .whenMatched().updateAll().whenNotMatched().insertAll().execute();
     }

@@ -5,12 +5,14 @@
 
 package net.bigtangle.server.data;
 
+import java.util.Arrays;
+
 import net.bigtangle.core.Utils;
 
 public class ChainBlockQueue {
 
     private String hash;
-    private String block;
+    private byte[] block;
     private long inserttime;
     private long chainlength;
     private boolean orphan;
@@ -19,7 +21,7 @@ public class ChainBlockQueue {
 
     }
 
-    public ChainBlockQueue(String hash, String block, long chainlength, boolean orphan, long inserttime) {
+    public ChainBlockQueue(String hash, byte[] block, long chainlength, boolean orphan, long inserttime) {
         super();
         this.hash = hash;
         this.block = block;
@@ -28,7 +30,7 @@ public class ChainBlockQueue {
         this.orphan = orphan;
     }
 
-    
+ 
     public String getHash() {
         return hash;
     }
@@ -37,11 +39,11 @@ public class ChainBlockQueue {
         this.hash = hash;
     }
 
-    public String getBlock() {
+    public byte[] getBlock() {
         return block;
     }
 
-    public void setBlock(String block) {
+    public void setBlock(byte[] block) {
         this.block = block;
     }
 
@@ -69,6 +71,5 @@ public class ChainBlockQueue {
         this.orphan = orphan;
     }
 
-   
-
+    
 }
