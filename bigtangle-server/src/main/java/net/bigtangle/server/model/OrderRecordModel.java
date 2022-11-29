@@ -10,9 +10,7 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Utils;
 
 public class OrderRecordModel extends SpentBlockModel {
-
-    private static final long serialVersionUID = -2331665478149550684L;
-
+ 
     // order matching block
     private String issuingmatcherblockhash;
     private long offercoinvalue;
@@ -42,8 +40,8 @@ public class OrderRecordModel extends SpentBlockModel {
      * for wallet set the order status from cancel
      */
 
-    private boolean cancelPending;
-    private long cancelPendingTime;
+  //  private boolean cancelPending;
+  //  private long cancelPendingTime;
 
     public OrderRecord toOrderRecord() {
         return new OrderRecord(Sha256Hash.wrap(getBlockhash()), Sha256Hash.wrap(getIssuingmatcherblockHash()),
@@ -159,22 +157,7 @@ public class OrderRecordModel extends SpentBlockModel {
         this.price = price;
     }
 
-    public boolean isCancelPending() {
-        return cancelPending;
-    }
-
-    public void setCancelPending(boolean cancelPending) {
-        this.cancelPending = cancelPending;
-    }
-
-    public long getCancelPendingTime() {
-        return cancelPendingTime;
-    }
-
-    public void setCancelPendingTime(long cancelPendingTime) {
-        this.cancelPendingTime = cancelPendingTime;
-    }
-
+ 
     public static OrderRecordModel from(OrderRecord record) {
         OrderRecordModel p = new OrderRecordModel();
         p.setBlockhash(record.getBlockHash().toString());

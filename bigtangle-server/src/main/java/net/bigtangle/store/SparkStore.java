@@ -2386,8 +2386,10 @@ public class SparkStore implements FullBlockStore {
 
     @Override
     public LockObject selectLockobject(String lockobjectid) throws BlockStoreException {
-        return sparkSession.sql(" select lockobjectid, locktime from " + tablename("lockobject")
-                + "  where lockobjectid = " + quotedString(lockobjectid)).as(Encoders.bean(LockObject.class)).first();
+          Dataset<LockObject> s = sparkSession.sql(" select lockobjectid, locktime from " + tablename("lockobject")
+                + "  where lockobjectid = " + quotedString(lockobjectid)).as(Encoders.bean(LockObject.class));
+               if(s.isEmpty()) return null; 
+                return s.first();
 
     }
 
