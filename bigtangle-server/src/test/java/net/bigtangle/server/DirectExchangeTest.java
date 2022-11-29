@@ -60,7 +60,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(DirectExchangeTest.class);
 
-    @Test
+    //@Test
     public void testBatchBlock() throws Exception {
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));

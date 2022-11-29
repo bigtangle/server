@@ -1218,9 +1218,9 @@ public class SparkStore implements FullBlockStore {
             long height, long maxblocks) throws BlockStoreException {
 
         String sql = "";
-        sql += SELECT_BLOCKS_TEMPLATE;
+        sql += SELECT_BLOCKS_TEMPLATE +" FROM " + tablename("blocks") ;
         sql += " where height >= " + height;
-        sql += " ORDER BY insertTime desc ";
+        sql += " ORDER BY inserttime desc ";
         Long a = Long.valueOf(lastestAmount);
         if (a > maxblocks) {
             a = maxblocks;
