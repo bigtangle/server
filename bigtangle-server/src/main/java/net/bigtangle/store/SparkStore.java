@@ -196,7 +196,7 @@ public class SparkStore implements FullBlockStore {
     private String ORDER_TEMPLATE = "  blockhash, issuingmatcherblockhash, offercoinvalue, offertokenid, "
             + "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, "
             + "beneficiarypubkey, validtotime, validfromtime, side , beneficiaryaddress, orderbasetoken, "
-            + "price, tokendecimals ";
+            + "price, tokendecimals,time ";
     private String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT " + ORDER_TEMPLATE + " FROM " + tablename("orders")
             + " WHERE issuingmatcherblockhash = %s";
 

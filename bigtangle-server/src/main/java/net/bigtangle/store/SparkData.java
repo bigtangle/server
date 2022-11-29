@@ -191,7 +191,7 @@ public class SparkData {
             + "    confirmed boolean ,\n"
             // true if used by a confirmed ordermatch block (either
             // returned or used for another orderoutput/output)
-            + "    spent boolean ,\n" + "    spenderblockhash  string \n"
+            + "    spent boolean ,\n" + "    spenderblockhash  string \n,  time bigint "
             // + " CONSTRAINT orders_pk PRIMARY KEY (blockhash,
             // issuingmatcherblockhash) " + " USING HASH \n"
             + ")  \n";
