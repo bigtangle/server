@@ -526,7 +526,7 @@ public class SyncBlockService {
                 blockStore.commitDatabaseBatchWrite();
             } catch (Exception e) {
                 blockStore.abortDatabaseBatchWrite();
-                throw e;
+                throw new BlockStoreException(e);
             } finally {
                 blockStore.defaultDatabaseBatchWrite();
 
@@ -538,11 +538,12 @@ public class SyncBlockService {
     /**
      * For each block in ChainBlockQueue as orphan block, see if we can now fit
      * it on top of the chain and if so, do so.
+     * @throws IOException 
      */
     private void tryConnectingOrphans(ChainBlockQueue orphanBlock, long cut, FullBlockStore store)
-            throws VerificationException, BlockStoreException {
+            throws VerificationException, BlockStoreException, IOException {
         // Look up the blocks previous.
-        Block block = networkParameters.getDefaultSerializer().makeBlock(Utils.HEX.decode(orphanBlock.getBlock()));
+        Block block = networkParameters.getDefaultSerializer().makeZippedBlock(orphanBlock.getBlock());
 
         // remove too old OrphanBlock and cutoff chain length
         if (System.currentTimeMillis() - orphanBlock.getInserttime() * 1000 > 2 * 60 * 60 * 1000
