@@ -1951,6 +1951,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             List<FreeStandingTransactionOutput> coinList, Block tipBlock)
             throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
+        Transaction multispent = payFromListNoSplitTransaction(aesKey, destination, amount, memo, coinList);
+        tipBlock.addTransaction(multispent);
+
+        return tipBlock;
+
+    }
+
+    private Transaction payFromListNoSplitTransaction(KeyParameter aesKey, String destination, Coin amount, String memo,
+            List<FreeStandingTransactionOutput> coinList) throws UTXOProviderException {
         Transaction multispent = new Transaction(params);
         multispent.setMemo(new MemoInfo(memo));
         multispent.addOutput(amount, Address.fromBase58(params, destination));
@@ -1969,10 +1978,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             }
         }
         signTransaction(multispent, aesKey);
-        tipBlock.addTransaction(multispent);
-
-        return tipBlock;
-
+        return multispent;
     }
 
     private Block getTip() throws IOException, JsonProcessingException {
@@ -2002,6 +2008,21 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         if (giveMoneyResult.isEmpty()) {
             return null;
         }
+        Transaction multispent = payMoneyToECKeyListNoSplitTransaction(aesKey, giveMoneyResult, tokenid, memo,
+                coinList);
+
+        HashMap<String, String> requestParam = new HashMap<String, String>();
+        byte[] data = OkHttp3Util.postAndGetBlock(getServerURL() + ReqCmd.getTip,
+                Json.jsonmapper().writeValueAsString(requestParam));
+        Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
+        rollingBlock.addTransaction(multispent);
+
+        return solveAndPost(rollingBlock);
+    }
+
+    public Transaction payMoneyToECKeyListNoSplitTransaction(KeyParameter aesKey,
+            HashMap<String, Long> giveMoneyResult, byte[] tokenid, String memo,
+            List<FreeStandingTransactionOutput> coinList) throws UTXOProviderException, InsufficientMoneyException {
         Coin summe = Coin.valueOf(0, tokenid);
         Transaction multispent = new Transaction(params);
         multispent.setMemo(new MemoInfo(memo));
@@ -2027,14 +2048,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
 
         signTransaction(multispent, aesKey);
-
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(getServerURL() + ReqCmd.getTip,
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
-        rollingBlock.addTransaction(multispent);
-
-        return solveAndPost(rollingBlock);
+        return multispent;
     }
 
     // check the token id is on the server
