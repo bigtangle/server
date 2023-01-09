@@ -2034,7 +2034,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
         Coin amount = summe.negate();
         ECKey beneficiary = null;
-        for (FreeStandingTransactionOutput spendableOutput : coinList) {
+        //filter only for tokenid
+        List<FreeStandingTransactionOutput> coinListTokenid = filterTokenid(tokenid, coinList);
+        for (FreeStandingTransactionOutput spendableOutput : coinListTokenid) {
             beneficiary = getECKey(aesKey, spendableOutput.getUTXO().getAddress());
             amount = spendableOutput.getValue().add(amount);
             multispent.addInput(spendableOutput.getUTXO().getBlockHash(), spendableOutput);
