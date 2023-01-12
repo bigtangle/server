@@ -1209,6 +1209,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         try {
             s = getConnection().prepareStatement(INSERT_OUTPUTS_SQL);
             for (UTXO out : utxos) {
+                if( out.getValue().isPositive()) {
                 s.setBytes(1, out.getTxHash().getBytes());
                 // index is actually an unsigned int
                 s.setLong(2, out.getIndex());
@@ -1232,6 +1233,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                 s.setLong(16, out.getSpendPendingTime());
                 s.setLong(17, out.getMinimumsign());
                 s.addBatch();
+                }
             }
             s.executeBatch();
             s.close();
