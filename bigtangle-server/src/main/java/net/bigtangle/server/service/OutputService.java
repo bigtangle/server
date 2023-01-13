@@ -142,12 +142,12 @@ public class OutputService {
     }
     
     
-    @CacheEvict(value = "OpenTransactionOutputs", key = "#address") 
+   // @CacheEvict(value = "OpenTransactionOutputs", key = "#address") 
     public void  evictTransactionOutputs(String address)   {
        
     }
     
-    @Cacheable(value = "OpenTransactionOutputs", key = "#address") 
+   // @Cacheable(value = "OpenTransactionOutputs", key = "#address") 
     private List<UTXO> getOpenTransactionOutputs(String address, FullBlockStore store) throws UTXOProviderException {
         return store.getOpenTransactionOutputs(address); 
  
