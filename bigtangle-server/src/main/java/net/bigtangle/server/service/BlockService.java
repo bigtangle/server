@@ -1,36 +1,59 @@
  package net.bigtangle.server.service;
 
- import net.bigtangle.core.*;
- import net.bigtangle.core.Block.Type;
- import net.bigtangle.core.exception.BlockStoreException;
- import net.bigtangle.core.exception.NoBlockException;
- import net.bigtangle.core.exception.ProtocolException;
- import net.bigtangle.core.exception.VerificationException;
- import net.bigtangle.core.exception.VerificationException.ConflictPossibleException;
- import net.bigtangle.core.exception.VerificationException.CutoffException;
- import net.bigtangle.core.exception.VerificationException.ProofOfWorkException;
- import net.bigtangle.core.exception.VerificationException.UnsolidException;
- import net.bigtangle.core.response.AbstractResponse;
- import net.bigtangle.core.response.GetBlockEvaluationsResponse;
- import net.bigtangle.core.response.GetBlockListResponse;
- import net.bigtangle.kafka.KafkaConfiguration;
- import net.bigtangle.kafka.KafkaMessageProducer;
- import net.bigtangle.server.config.ServerConfiguration;
- import net.bigtangle.server.core.BlockWrap;
- import net.bigtangle.store.FullBlockGraph;
- import net.bigtangle.store.FullBlockStore;
- import net.bigtangle.utils.DomainValidator;
- import net.bigtangle.utils.Gzip;
- import org.apache.commons.lang3.tuple.Pair;
- import org.slf4j.Logger;
- import org.slf4j.LoggerFactory;
- import org.springframework.beans.factory.annotation.Autowired;
- import org.springframework.cache.annotation.Cacheable;
- import org.springframework.stereotype.Service;
-
  import java.io.IOException;
- import java.util.*;
- import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.PriorityQueue;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import net.bigtangle.core.Address;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.BlockEvaluation;
+import net.bigtangle.core.BlockEvaluationDisplay;
+import net.bigtangle.core.BlockMCMC;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.RewardInfo;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TXReward;
+import net.bigtangle.core.TokenInfo;
+import net.bigtangle.core.TokenType;
+import net.bigtangle.core.Transaction;
+import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.TransactionOutPoint;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.NoBlockException;
+import net.bigtangle.core.exception.ProtocolException;
+import net.bigtangle.core.exception.VerificationException;
+import net.bigtangle.core.exception.VerificationException.ConflictPossibleException;
+import net.bigtangle.core.exception.VerificationException.CutoffException;
+import net.bigtangle.core.exception.VerificationException.ProofOfWorkException;
+import net.bigtangle.core.exception.VerificationException.UnsolidException;
+import net.bigtangle.core.response.AbstractResponse;
+import net.bigtangle.core.response.GetBlockEvaluationsResponse;
+import net.bigtangle.core.response.GetBlockListResponse;
+import net.bigtangle.kafka.KafkaConfiguration;
+import net.bigtangle.kafka.KafkaMessageProducer;
+import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.utils.DomainValidator;
+import net.bigtangle.utils.Gzip;
 
  /**
  * <p>
@@ -59,7 +82,7 @@ public class BlockService {
     private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
     // cache only binary block only
-    @Cacheable(value = "blocksCache", key = "#blockhash")
+   // @Cacheable(value = "blocksCache", key = "#blockhash")
     public Block getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
         // logger.debug("read from databse and no cache for:"+ blockhash);
         return store.get(blockhash);

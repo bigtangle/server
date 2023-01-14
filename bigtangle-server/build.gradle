@@ -35,9 +35,7 @@ dependencies {
     compile group: 'org.bgee.log4jdbc-log4j2', name: 'log4jdbc-log4j2-jdbc4.1', version: '1.16'
  
     compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
-    
-    compile group: 'com.hazelcast', name: 'hazelcast', version: '3.12.3'
- 
+     
 	compile group: 'com.zaxxer', name: 'HikariCP', version: '3.4.5'
  
     compile project(':bigtangle-servercore')
@@ -46,9 +44,7 @@ dependencies {
     /**
      * test dependencies
      */
-      testCompile 'org.cassandraunit:cassandra-unit:3.3.0.2'
-     testCompile 'org.cassandraunit:cassandra-unit-spring:3.3.0.2'
-     testCompile group: 'com.datastax.cassandra', name: 'cassandra-driver-core', version: '3.3.0'
+ 
      
    //  testCompile(group: 'org.springframework.data', name: 'spring-data-cassandra', version: ver.spring_boot)
     testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
