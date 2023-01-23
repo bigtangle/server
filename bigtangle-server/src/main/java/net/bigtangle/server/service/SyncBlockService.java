@@ -38,7 +38,6 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.core.response.GetTXRewardResponse;
-import net.bigtangle.docker.ResultExecution;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.checkpoint.DockerService;
 import net.bigtangle.server.config.ScheduleConfiguration;
@@ -430,7 +429,14 @@ public class SyncBlockService {
             Collections.sort(remotes, new SortbyChain());
             List<TXReward> mylist = new ArrayList<TXReward>();
 
-            for (TXReward t : store.getAllConfirmedReward()) {
+            List<TXReward> allConfirmedReward = store.getAllConfirmedReward();
+            MissingNumberCheckService  missingNumberCheckService=new MissingNumberCheckService();
+           if(! missingNumberCheckService.check(allConfirmedReward)) {
+               log.debug("  my chain missing sequence  " );
+
+           };
+            
+            for (TXReward t : allConfirmedReward) {
                 if (t.getChainLength() <= my.getChainLength()) {
                     mylist.add(t);
                 }

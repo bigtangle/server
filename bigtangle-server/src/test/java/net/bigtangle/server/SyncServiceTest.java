@@ -21,6 +21,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.TXReward;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.InsufficientMoneyException;
@@ -28,6 +29,7 @@ import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.service.MissingNumberCheckService;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -74,6 +76,26 @@ public class SyncServiceTest extends AbstractIntegrationTest {
         syncBlockService.startSingleProcess();
     }
 
+    @Test
+    public void testSyncCheckChain() throws Exception {
+        List<Block> a1 = new ArrayList<Block>();
+        testToken(a1);
+        makeRewardBlock(a1);
+        Block r1 = networkParameters.getGenesisBlock();
+        for (int i = 0; i < 3; i++) {
+            createNonChain(r1, a1);
+        }
+        serverConfiguration.setRequester(contextRoot);
+        syncBlockService.startSingleProcess();
+        for (int i = 0; i < 130; i++) {
+        createReward(r1, a1);
+        }
+        List<TXReward> allConfirmedReward = store.getAllConfirmedReward();
+        MissingNumberCheckService  missingNumberCheckService=new MissingNumberCheckService();
+        missingNumberCheckService.check(allConfirmedReward);
+    }
+
+    
     public void testToken(List<Block> blocksAddedAll) throws Exception {
 
         blocksAddedAll.add(testCreateToken(walletAppKit.wallet().walletKeys().get(0), "test"));
