@@ -28,7 +28,7 @@ dependencies {
  
  	compile group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka
  
-	compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:ver.bcprov_jdk15on
+	compile group: 'org.bouncycastle', name: 'bcprov-jdk15to18', version:ver.bcprov_jdk15on
   
     compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
 
