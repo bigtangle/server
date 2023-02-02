@@ -9,7 +9,7 @@ ext {
             junit       : '4.12',
             gson :'2.8.1',
             mockito_all :'1.10.19',
-            bcprov_jdk15on:'1.7.0',
+            bcprov_jdk15on:'1.72',
             jackson_databind:'2.6.7',
             protobuf_java:'2.6.1',
             guava:'18.0',
