@@ -20,6 +20,7 @@ dependencies {
     compile group: 'org.apache.commons', name: 'commons-lang3', version:ver.commons_lang3
     compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
   	//compile group: 'com.swiftcryptollc', name: 'kyberJCE', version:'2.1.5'
+  	compile group: 'net.thiim.dilithium', name: 'dilithium-java', version:'0.0.1-SNAPSHOT'
     /**
      * test dependencies
      */

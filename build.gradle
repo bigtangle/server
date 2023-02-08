@@ -45,7 +45,7 @@ subprojects {
     apply plugin: 'eclipse'
     apply plugin: 'project-report'
 
-    sourceCompatibility = 1.8
+    sourceCompatibility = 17
     targetCompatibility = 1.8
     tasks.withType(JavaCompile) {
         options.encoding = 'UTF-8'
