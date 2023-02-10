@@ -24,6 +24,7 @@ package net.bigtangle.core;
 
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -104,6 +105,17 @@ public class ECKey implements EncryptableItem {
     protected PublicKey pub;
 
     protected DilithiumParameterSpec param;
+
+    public ECKey(DilithiumParameterSpec spec) throws Exception {
+        DilithiumProvider pv = new DilithiumProvider();
+        KeyPairGenerator kpg = KeyPairGenerator.getInstance("Dilithium", pv);
+        kpg.initialize(spec);
+        KeyPair kp = kpg.generateKeyPair();
+        priv = kp.getPrivate();
+        pub = kp.getPublic();
+        param = spec;
+
+    }
 
     public ECKey(@Nullable PrivateKey priv, PublicKey pub, DilithiumParameterSpec param) {
 
@@ -207,7 +219,21 @@ public class ECKey implements EncryptableItem {
             throw new RuntimeException(e);
         }
     }
+    public  boolean sign(byte[] hashTwice, byte[] sig, byte[] alertSigningKey,
+            DilithiumParameterSpec parameterSpec) {
+        try {
+            DilithiumProvider pv = new DilithiumProvider();
+            Signature signature = Signature.getInstance("Dilithium", pv);
+            ECKey ec = ECKey.fromPrivatekey(alertSigningKey, parameterSpec);
+            signature.initSign(ec.priv ) ;
+            // alertSigningKey);
+            signature.update(sig);
 
+            return signature.verify(sig);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
     public byte[] getPubKey() {
 
         return pub.getEncoded();
