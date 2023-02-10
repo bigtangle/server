@@ -32,9 +32,15 @@ import java.security.SignatureException;
 
 import javax.annotation.Nullable;
 
+import org.bouncycastle.util.encoders.Base64;
+
 import net.bigtangle.crypto.EncryptableItem;
 import net.bigtangle.crypto.EncryptedData;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
+import net.thiim.dilithium.impl.PackingUtils;
+import net.thiim.dilithium.interfaces.DilithiumParameterSpec;
+import net.thiim.dilithium.interfaces.DilithiumPrivateKeySpec;
+import net.thiim.dilithium.interfaces.DilithiumPublicKeySpec;
 import net.thiim.dilithium.provider.DilithiumProvider;
 
 // TODO: Move this class to tracking compression state itself.
@@ -89,76 +95,136 @@ import net.thiim.dilithium.provider.DilithiumProvider;
  */
 public class ECKey implements EncryptableItem {
 
-	KeyPair kp;
-	// The two parts of the key. If "priv" is set, "pub" can always be calculated.
-	// If "pub" is set but not "priv", we
-	// can only verify signatures not make them.
-	protected final PrivateKey priv; // A field element.
-	protected final PublicKey pub;
+    KeyPair kp;
+    // The two parts of the key. If "priv" is set, "pub" can always be
+    // calculated.
+    // If "pub" is set but not "priv", we
+    // can only verify signatures not make them.
+    protected PrivateKey priv; // A field element.
+    protected PublicKey pub;
 
-	public ECKey(@Nullable PrivateKey priv, PublicKey pub) {
+    protected DilithiumParameterSpec param;
 
-		this.priv = priv;
-		this.pub = pub;
-	}
+    public ECKey(@Nullable PrivateKey priv, PublicKey pub, DilithiumParameterSpec param) {
 
-	@Override
-	public boolean isEncrypted() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+        this.priv = priv;
+        this.pub = pub;
+        this.param = param;
+        kp = new KeyPair(pub, priv);
 
-	@Override
-	public byte[] getSecretBytes() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    }
 
-	@Override
-	public EncryptedData getEncryptedData() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    public ECKey(PrivateKey priv, DilithiumParameterSpec param) {
+        this.param = param;
+        this.priv = priv;
+        kp = new KeyPair(null, priv);
 
-	@Override
-	public EncryptionType getEncryptionType() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    }
 
-	@Override
-	public long getCreationTimeSeconds() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+    public ECKey(PublicKey pub, DilithiumParameterSpec param) {
+        this.param = param;
+        this.pub = pub;
+        kp = new KeyPair(pub, null);
 
-	public static ECKey fromPublicOnly(byte[] pubKeyTo) {
+    }
 
-		return new ECKey(null, null);
-	}
+    @Override
+    public boolean isEncrypted() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
-	public byte[] getPubKey() {
+    @Override
+    public byte[] getSecretBytes() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-		return kp.getPublic().getEncoded();
-	}
+    @Override
+    public EncryptedData getEncryptedData() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	public static boolean verify(byte[] hashTwice, byte[] sig, byte[] alertSigningKey) {
-		try {
-			DilithiumProvider pv = new DilithiumProvider();
-			Signature signature = Signature.getInstance("Dilithium", pv);
-			ECKey ec= new ECKey(null, null);
-			signature.initVerify(ec.pub); //
-			// alertSigningKey);
-			signature.update(sig);
+    @Override
+    public EncryptionType getEncryptionType() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-			return signature.verify(sig);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Override
+    public long getCreationTimeSeconds() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 
-	public byte[] getPubKeyHash() {
-		 
-		return null;
-	}
+    public String getPublicKeyString() {
+
+        return Base64.toBase64String(getPubKey());
+    }
+
+    public String getPrivateKeyString() {
+
+        return Base64.toBase64String(getPrivateKey());
+    }
+
+    public static ECKey fromPublicKeyString(String publickey, DilithiumParameterSpec parameterSpec) {
+        DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(parameterSpec, Base64.decode(publickey));
+        PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
+        return new ECKey(publicKey, parameterSpec);
+    }
+
+    public static ECKey fromPrivatekeyString(String privatekey, DilithiumParameterSpec parameterSpec) {
+        DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(parameterSpec, Base64.decode(privatekey));
+        PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
+        return new ECKey(privateKey, parameterSpec);
+    }
+
+    public static ECKey fromPublicKey(byte[] publicHash, DilithiumParameterSpec parameterSpec) {
+        DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(parameterSpec, publicHash);
+        PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
+        return new ECKey(publicKey, parameterSpec);
+    }
+
+    public static ECKey fromPrivatekey(byte[] privateHash, DilithiumParameterSpec parameterSpec) {
+        DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(parameterSpec, privateHash);
+        PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
+        return new ECKey(privateKey, parameterSpec);
+    }
+
+    public static boolean verify(byte[] hashTwice, byte[] sig, byte[] alertSigningKey,
+            DilithiumParameterSpec parameterSpec) {
+        try {
+            DilithiumProvider pv = new DilithiumProvider();
+            Signature signature = Signature.getInstance("Dilithium", pv);
+            ECKey ec = ECKey.fromPublicKey(alertSigningKey, parameterSpec);
+            signature.initVerify(ec.pub); //
+            // alertSigningKey);
+            signature.update(sig);
+
+            return signature.verify(sig);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public byte[] getPubKey() {
+
+        return pub.getEncoded();
+    }
+
+    public byte[] getPrivateKey() {
+
+        return priv.getEncoded();
+    }
+
+    public byte[] getPubKeyHash() {
+
+        return Utils.sha256hash160(this.pub.getEncoded());
+    }
+
+    public byte[] getPrivateKeyHash() {
+
+        return Utils.sha256hash160(this.priv.getEncoded());
+    }
 }
