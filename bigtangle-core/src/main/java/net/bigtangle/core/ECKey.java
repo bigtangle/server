@@ -37,7 +37,6 @@ import org.spongycastle.util.encoders.Base64;
 
 import net.bigtangle.crypto.EncryptableItem;
 import net.bigtangle.crypto.EncryptedData;
-import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
 import net.thiim.dilithium.impl.PackingUtils;
 import net.thiim.dilithium.interfaces.DilithiumParameterSpec;
@@ -106,6 +105,15 @@ public class ECKey implements EncryptableItem {
 
 	protected DilithiumParameterSpec spec = DilithiumParameterSpec.LEVEL5;
 
+	//this key for encryption   
+ /*  
+  	KyberPublicKey kyberPublicKey;
+	KyberPrivateKey kyberPrivateKey;
+  *  Kyber1024KeyPairGenerator bobKeyGen1024 = new Kyber1024KeyPairGenerator();
+    KeyPair bobKeyPair = bobKeyGen1024.generateKeyPair();
+    KyberPublicKey bobPublicKey = (KyberPublicKey) bobKeyPair.getPublic();
+    KyberPrivateKey bobPrivateKey = (KyberPrivateKey) bobKeyPair.getPrivate();
+ */
 	public ECKey() throws Exception {
 		DilithiumProvider pv = new DilithiumProvider();
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("Dilithium", pv);
