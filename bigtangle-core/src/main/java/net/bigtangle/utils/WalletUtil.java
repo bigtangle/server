@@ -9,6 +9,7 @@ import java.util.Map;
 
 import net.bigtangle.apps.data.SignedData;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.ECKey2;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
@@ -103,11 +104,11 @@ public class WalletUtil {
     /*
      * return all decrypted SignedData list of the given keys and token type
      */
-    public static List<SignedDataWithToken> signedTokenList(List<ECKey> userKeys, TokenType tokenType, String serverurl)
+    public static List<SignedDataWithToken> signedTokenList(List<ECKey2> userKeys, TokenType tokenType, String serverurl)
             throws Exception {
         List<SignedDataWithToken> signedTokenList = new ArrayList<SignedDataWithToken>();
         List<String> keys = new ArrayList<String>();
-        for (ECKey k : userKeys) {
+        for (ECKey2 k : userKeys) {
             keys.add(Utils.HEX.encode(k.getPubKeyHash()));
         }
         byte[] response = OkHttp3Util.post(serverurl + ReqCmd.getBalances.name(),
@@ -124,13 +125,13 @@ public class WalletUtil {
         return signedTokenList;
     }
 
-    private static void signedTokenListAdd(UTXO utxo, List<ECKey> userkeys, Token token,
+    private static void signedTokenListAdd(UTXO utxo, List<ECKey2> userkeys, Token token,
             List<SignedDataWithToken> signedTokenList) throws Exception {
         if (token == null || token.getTokenKeyValues() == null) {
             return;
         }
         for (KeyValue kvtemp : token.getTokenKeyValues().getKeyvalues()) {
-            ECKey signerKey = getSignedKey(userkeys, kvtemp.getKey());
+            ECKey2 signerKey = getSignedKey(userkeys, kvtemp.getKey());
             if (signerKey != null) {
                 try {
                     byte[] decryptedPayload = ECIESCoder.decrypt(signerKey.getPrivKey(),
@@ -144,8 +145,8 @@ public class WalletUtil {
         }
     }
 
-    private static ECKey getSignedKey(List<ECKey> userkeys, String pubKey) {
-        for (ECKey userkey : userkeys) {
+    private static ECKey2 getSignedKey(List<ECKey2> userkeys, String pubKey) {
+        for (ECKey2 userkey : userkeys) {
             if (userkey.getPublicKeyAsHex().equals(pubKey)) {
                 return userkey;
             }

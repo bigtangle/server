@@ -33,7 +33,7 @@ import net.bigtangle.script.ScriptBuilder;
  */
 public class TransactionTest {
     private static final NetworkParameters PARAMS = MainNetParams.get();
-    private static final Address ADDRESS = new ECKey().toAddress(PARAMS);
+   // private static final Address ADDRESS = new ECKey().toAddress(PARAMS);
 
     private Transaction tx;
 
@@ -76,9 +76,9 @@ public class TransactionTest {
     }
 
     @Test
-    public void testOptimalEncodingMessageSize() {
+    public void testOptimalEncodingMessageSize() throws Exception {
         Transaction tx = new Transaction(PARAMS);
-
+        Address ADDRESS = new ECKey().toAddress(PARAMS);
         int length = tx.length;
 
         // add basic transaction input, check the length
@@ -103,7 +103,7 @@ public class TransactionTest {
     
 
     @Test
-    public void testCLTVPaymentChannelTransactionSpending() {
+    public void testCLTVPaymentChannelTransactionSpending() throws Exception {
         BigInteger time = BigInteger.valueOf(20);
 
         ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
@@ -147,7 +147,7 @@ public class TransactionTest {
     }
 
     @Test
-    public void testCLTVPaymentChannelTransactionRefund() {
+    public void testCLTVPaymentChannelTransactionRefund() throws Exception {
         BigInteger time = BigInteger.valueOf(20);
 
         ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
@@ -225,7 +225,7 @@ public class TransactionTest {
     
     
     @Test(expected = ScriptException.class)
-    public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
+    public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() throws Exception {
         ECKey key = new ECKey();
         Address addr = key.toAddress(PARAMS);
         Transaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
