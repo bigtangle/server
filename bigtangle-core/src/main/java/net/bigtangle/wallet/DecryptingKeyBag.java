@@ -19,16 +19,17 @@
  */
 package net.bigtangle.wallet;
 
-import org.spongycastle.crypto.params.KeyParameter;
-
-import net.bigtangle.core.ECKey;
-
-import javax.annotation.Nullable;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import javax.annotation.Nullable;
+
+import org.spongycastle.crypto.params.KeyParameter;
+
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.ECKey2;
 
 /**
  * A DecryptingKeyBag filters a pre-existing key bag, decrypting keys as they are requested using the provided
@@ -45,12 +46,12 @@ public class DecryptingKeyBag implements KeyBag {
     }
 
     @Nullable
-    public ECKey maybeDecrypt(ECKey key) {
+    public ECKey2 maybeDecrypt(ECKey2 key) {
         if (key == null)
             return null;
         else if (key.isEncrypted()) {
             if (aesKey == null)
-                throw new ECKey.KeyIsEncryptedException();
+                throw new ECKey2.KeyIsEncryptedException();
             return key.decrypt(aesKey);
         } else {
             return key;

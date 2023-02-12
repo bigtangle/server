@@ -25,6 +25,7 @@ package net.bigtangle.script;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.*;
+import net.bigtangle.core.Transaction.SigHash;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.ScriptException;
 import net.bigtangle.crypto.TransactionSignature;
@@ -542,7 +543,7 @@ public class Script {
         int numKeys = Script.decodeFromOpN(chunks.get(chunks.size() - 2).opcode);
         TransactionSignature signature = TransactionSignature.decodeFromBitcoin(signatureBytes, true, false);
         for (int i = 0 ; i < numKeys ; i++) {
-            if (ECKey.fromPublicOnly(chunks.get(i + 1).data).verify(hash, signature)) {
+            if (ECKey.fromPublicOnly(chunks.get(i + 1).data).verify(hash, signature.sig)) {
                 return i;
             }
         }
@@ -1460,8 +1461,8 @@ public class Script {
                 verifyFlags.contains(VerifyFlag.LOW_S));
 
             // TODO: Should check hash type is known
-            Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
-            sigValid = ECKey.verify(hash.getBytes(), sig, pubKey);
+            Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript,  (byte) SigHash.ALL.value);
+            sigValid = ECKey.verify(hash.getBytes(), sig.sig, pubKey);
         } catch (Exception e1) {
             // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)
             // Because I can't verify there aren't more, we use a very generic Exception catch
@@ -1534,8 +1535,8 @@ public class Script {
             // more expensive than hashing, its not a big deal.
             try {
                 TransactionSignature sig = TransactionSignature.decodeFromBitcoin(sigs.getFirst(), requireCanonical, false);
-                Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) sig.sighashFlags);
-                if (ECKey.verify(hash.getBytes(), sig, pubKey))
+                Sha256Hash hash = txContainingThis.hashForSignature(index, connectedScript, (byte) SigHash.ALL.value);
+                if (ECKey.verify(hash.getBytes(), sig.sig, pubKey))
                     sigs.pollFirst();
             } catch (Exception e) {
                 // There is (at least) one exception that could be hit here (EOFException, if the sig is too short)

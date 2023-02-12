@@ -33,10 +33,11 @@ import java.security.SignatureException;
 
 import javax.annotation.Nullable;
 
-import org.bouncycastle.util.encoders.Base64;
+import org.spongycastle.util.encoders.Base64;
 
 import net.bigtangle.crypto.EncryptableItem;
 import net.bigtangle.crypto.EncryptedData;
+import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
 import net.thiim.dilithium.impl.PackingUtils;
 import net.thiim.dilithium.interfaces.DilithiumParameterSpec;
@@ -96,161 +97,201 @@ import net.thiim.dilithium.provider.DilithiumProvider;
  */
 public class ECKey implements EncryptableItem {
 
-    KeyPair kp;
-    // The two parts of the key. If "priv" is set, "pub" can always be
-    // calculated.
-    // If "pub" is set but not "priv", we
-    // can only verify signatures not make them.
-    protected PrivateKey priv; // A field element.
-    protected PublicKey pub;
+	// The two parts of the key. If "priv" is set, "pub" can always be
+	// calculated.
+	// If "pub" is set but not "priv", we
+	// can only verify signatures not make them.
+	protected PrivateKey priv; // A field element.
+	protected PublicKey pub;
 
-    protected DilithiumParameterSpec param;
+	protected DilithiumParameterSpec spec = DilithiumParameterSpec.LEVEL5;
 
-    public ECKey(DilithiumParameterSpec spec) throws Exception {
-        DilithiumProvider pv = new DilithiumProvider();
-        KeyPairGenerator kpg = KeyPairGenerator.getInstance("Dilithium", pv);
-        kpg.initialize(spec);
-        KeyPair kp = kpg.generateKeyPair();
-        priv = kp.getPrivate();
-        pub = kp.getPublic();
-        param = spec;
+	public ECKey() throws Exception {
+		DilithiumProvider pv = new DilithiumProvider();
+		KeyPairGenerator kpg = KeyPairGenerator.getInstance("Dilithium", pv);
+		kpg.initialize(spec);
+		KeyPair kp = kpg.generateKeyPair();
+		priv = kp.getPrivate();
+		pub = kp.getPublic();
 
-    }
+	}
 
-    public ECKey(@Nullable PrivateKey priv, PublicKey pub, DilithiumParameterSpec param) {
+	public ECKey(@Nullable PrivateKey priv, @Nullable PublicKey pub) {
 
-        this.priv = priv;
-        this.pub = pub;
-        this.param = param;
-        kp = new KeyPair(pub, priv);
+		this.priv = priv;
+		this.pub = pub;
 
-    }
+	}
 
-    public ECKey(PrivateKey priv, DilithiumParameterSpec param) {
-        this.param = param;
-        this.priv = priv;
-        kp = new KeyPair(null, priv);
+	@Override
+	public boolean isEncrypted() {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
-    }
+	@Override
+	public byte[] getSecretBytes() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-    public ECKey(PublicKey pub, DilithiumParameterSpec param) {
-        this.param = param;
-        this.pub = pub;
-        kp = new KeyPair(pub, null);
+	@Override
+	public EncryptedData getEncryptedData() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-    }
+	@Override
+	public EncryptionType getEncryptionType() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-    @Override
-    public boolean isEncrypted() {
-        // TODO Auto-generated method stub
-        return false;
-    }
+	@Override
+	public long getCreationTimeSeconds() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
-    @Override
-    public byte[] getSecretBytes() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+	public String getPublicKeyString() {
 
-    @Override
-    public EncryptedData getEncryptedData() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+		return Base64.toBase64String(getPubKey());
+	}
 
-    @Override
-    public EncryptionType getEncryptionType() {
-        // TODO Auto-generated method stub
-        return null;
-    }
+	public String getPrivateKeyString() {
 
-    @Override
-    public long getCreationTimeSeconds() {
-        // TODO Auto-generated method stub
-        return 0;
-    }
+		return Base64.toBase64String(getPrivateKey());
+	}
 
-    public String getPublicKeyString() {
+	public static ECKey fromPublicKeyString(String publickey) {
+		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(DilithiumParameterSpec.LEVEL5,
+				Base64.decode(publickey));
+		PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
+		return new ECKey(null, publicKey);
+	}
 
-        return Base64.toBase64String(getPubKey());
-    }
+	public static ECKey fromPrivatekeyString(String privatekey) {
+		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(DilithiumParameterSpec.LEVEL5,
+				Base64.decode(privatekey));
+		PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
+		return new ECKey(privateKey, null);
+	}
 
-    public String getPrivateKeyString() {
+	public static ECKey fromPublicOnly(byte[] publicHash) {
+		return fromPublicKey(publicHash);
+	}
+	public static ECKey fromPublicKey(byte[] publicHash) {
+		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(DilithiumParameterSpec.LEVEL5, publicHash);
+		PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
+		return new ECKey(null, publicKey);
+	}
 
-        return Base64.toBase64String(getPrivateKey());
-    }
+	public static ECKey fromPrivatekey(byte[] privateHash) {
+		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(DilithiumParameterSpec.LEVEL5, privateHash);
+		PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
+		return new ECKey(privateKey, null);
+	}
 
-    public static ECKey fromPublicKeyString(String publickey, DilithiumParameterSpec parameterSpec) {
-        DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(parameterSpec, Base64.decode(publickey));
-        PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
-        return new ECKey(publicKey, parameterSpec);
-    }
+	public static boolean verify(byte[] text, byte[] sig, byte[] pubKey) {
+		try {
+			DilithiumProvider pv = new DilithiumProvider();
+			Signature signature = Signature.getInstance("Dilithium", pv);
+			ECKey ec = ECKey.fromPublicKey(pubKey);
+			signature.initVerify(ec.pub); //
+			// alertSigningKey);
+			signature.update(text);
 
-    public static ECKey fromPrivatekeyString(String privatekey, DilithiumParameterSpec parameterSpec) {
-        DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(parameterSpec, Base64.decode(privatekey));
-        PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
-        return new ECKey(privateKey, parameterSpec);
-    }
+			return signature.verify(sig);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
-    public static ECKey fromPublicKey(byte[] publicHash, DilithiumParameterSpec parameterSpec) {
-        DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(parameterSpec, publicHash);
-        PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
-        return new ECKey(publicKey, parameterSpec);
-    }
+	public static byte[] sign(byte[] text, byte[] privateKey)
+			throws SignatureException, NoSuchAlgorithmException, InvalidKeyException {
 
-    public static ECKey fromPrivatekey(byte[] privateHash, DilithiumParameterSpec parameterSpec) {
-        DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(parameterSpec, privateHash);
-        PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
-        return new ECKey(privateKey, parameterSpec);
-    }
+		DilithiumProvider pv = new DilithiumProvider();
+		Signature signature = Signature.getInstance("Dilithium", pv);
+		ECKey ec = ECKey.fromPrivatekey(privateKey);
+		signature.initSign(ec.priv);
+		signature.update(text);
+		return signature.sign();
+	}
 
-    public static boolean verify(byte[] hashTwice, byte[] sig, byte[] alertSigningKey,
-            DilithiumParameterSpec parameterSpec) {
-        try {
-            DilithiumProvider pv = new DilithiumProvider();
-            Signature signature = Signature.getInstance("Dilithium", pv);
-            ECKey ec = ECKey.fromPublicKey(alertSigningKey, parameterSpec);
-            signature.initVerify(ec.pub); //
-            // alertSigningKey);
-            signature.update(sig);
+	public byte[] getPubKey() {
 
-            return signature.verify(sig);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-    public  boolean sign(byte[] hashTwice, byte[] sig, byte[] alertSigningKey,
-            DilithiumParameterSpec parameterSpec) {
-        try {
-            DilithiumProvider pv = new DilithiumProvider();
-            Signature signature = Signature.getInstance("Dilithium", pv);
-            ECKey ec = ECKey.fromPrivatekey(alertSigningKey, parameterSpec);
-            signature.initSign(ec.priv ) ;
-            // alertSigningKey);
-            signature.update(sig);
+		return pub.getEncoded();
+	}
 
-            return signature.verify(sig);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-    public byte[] getPubKey() {
+	public byte[] getPrivateKey() {
 
-        return pub.getEncoded();
-    }
+		return priv.getEncoded();
+	}
 
-    public byte[] getPrivateKey() {
+	/** Gets the hash160 form of the public key (as seen in addresses). */
+	public byte[] getPubKeyHash() {
 
-        return priv.getEncoded();
-    }
+		return Utils.sha256hash160(this.pub.getEncoded());
+	}
 
-    public byte[] getPubKeyHash() {
+	public byte[] getPrivateKeyHash() {
 
-        return Utils.sha256hash160(this.pub.getEncoded());
-    }
+		return Utils.sha256hash160(this.priv.getEncoded());
+	}
 
-    public byte[] getPrivateKeyHash() {
+	public static class ECDSASignature {
+		public ECDSASignature(byte[] sig2) {
+			sig = sig2;
+		}
 
-        return Utils.sha256hash160(this.priv.getEncoded());
+		/** The two components of the signature. */
+		public byte[] sig;
+
+	}
+
+	/**
+	 * Returns the address that corresponds to the public part of this ECKey. Note
+	 * that an address is derived from the RIPEMD-160 hash of the public key and is
+	 * not the public key itself (which is too large to be convenient).
+	 */
+	public Address toAddress(NetworkParameters params) {
+		return new Address(params, getPubKeyHash());
+	}
+
+	public   boolean verify(Sha256Hash hash, byte[] sig) {
+		try {
+			DilithiumProvider pv = new DilithiumProvider();
+			Signature signature = Signature.getInstance("Dilithium", pv);
+		 
+			signature.initVerify(pub); //
+			// alertSigningKey);
+			signature.update(hash.getBytes());
+
+			return signature.verify(sig);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+ 
+	}
+
+	public ECKey.ECDSASignature sign(Sha256Hash hash)   {
+		
+		try{DilithiumProvider pv = new DilithiumProvider();
+		Signature signature = Signature.getInstance("Dilithium", pv);
+ 
+		signature.initSign(priv);
+		signature.update(hash.getBytes());
+		return new ECKey.ECDSASignature(signature.sign());
+	} catch (Exception e) {
+		throw new RuntimeException(e);
+	}
+	}
+
+	public String getPublicKeyAsHex() {
+		 
+		return getPublicKeyString();
+	}
+    public boolean hasPrivKey() {
+        return priv != null;
     }
 }

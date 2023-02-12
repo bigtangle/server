@@ -28,8 +28,9 @@ import java.io.InputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.InvalidCipherTextException;
- 
+
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.ECKey2;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.encrypt.ECIESCoder;
 import net.bigtangle.wallet.KeyChainGroup;
@@ -42,7 +43,7 @@ public class WalletUtil {
     protected static final Logger log = LoggerFactory.getLogger(WalletUtil.class);
  
 
-    public static byte[] createWallet(NetworkParameters params) throws IOException {
+    public static byte[] createWallet(NetworkParameters params) throws Exception {
 
         Wallet wallet =   Wallet.fromKeys(params, new ECKey()); // default
 
@@ -83,12 +84,12 @@ public class WalletUtil {
 
    
 
-    public static byte[] encrypt( ECKey ecKey , byte[] payload ) throws InvalidCipherTextException, IOException   {
+    public static byte[] encrypt( ECKey2 ecKey , byte[] payload ) throws InvalidCipherTextException, IOException   {
       return  ECIESCoder.encrypt(ecKey.getPubKeyPoint(), payload);
      
     }
 
-    public static byte[] decrypt( ECKey ecKey , byte[] cipher) throws InvalidCipherTextException, IOException    {
+    public static byte[] decrypt( ECKey2 ecKey , byte[] cipher) throws InvalidCipherTextException, IOException    {
       return    ECIESCoder.decrypt(ecKey.getPrivKey(), cipher);
     }
 

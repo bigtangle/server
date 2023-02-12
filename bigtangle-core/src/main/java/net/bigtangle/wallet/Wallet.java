@@ -69,6 +69,7 @@ import net.bigtangle.core.ContractEventInfo;
 import net.bigtangle.core.ContractExecutionResult;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.ECKey2;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.MultiSign;
@@ -108,8 +109,6 @@ import net.bigtangle.core.response.OrderTickerResponse;
 import net.bigtangle.core.response.OutputsDetailsResponse;
 import net.bigtangle.core.response.PermissionedAddressesResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
-import net.bigtangle.crypto.ChildNumber;
-import net.bigtangle.crypto.DeterministicKey;
 import net.bigtangle.crypto.KeyCrypter;
 import net.bigtangle.crypto.KeyCrypterException;
 import net.bigtangle.crypto.KeyCrypterScrypt;
@@ -213,8 +212,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      * zero in the recommended BIP32 key hierarchy.
      */
     public static Wallet fromKeys(NetworkParameters params, List<ECKey> keys) {
-        for (ECKey key : keys)
-            checkArgument(!(key instanceof DeterministicKey));
+    
 
         KeyChainGroup group = new KeyChainGroup(params);
         group.importKeys(keys);
@@ -231,7 +229,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      */
     public static Wallet fromKeys(NetworkParameters params, ECKey key) {
 
-        checkArgument(!(key instanceof DeterministicKey));
+      //  checkArgument(!(key instanceof DeterministicKey));
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(key);
         KeyChainGroup group = new KeyChainGroup(params);
@@ -444,7 +442,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      */
     public int importKeys(final List<ECKey> keys) {
         // API usage check.
-        checkNoDeterministicKeys(keys);
+      //  checkNoDeterministicKeys(keys);
         int result;
         keyChainGroupLock.lock();
         try {
@@ -456,15 +454,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return result;
     }
 
-    private void checkNoDeterministicKeys(List<ECKey> keys) {
-        // Watch out for someone doing
-        // wallet.importKey(wallet.freshReceiveKey()); or equivalent: we never
-        // tested this.
-        for (ECKey key : keys)
-            if (key instanceof DeterministicKey)
-                throw new IllegalArgumentException("Cannot import HD keys back into the wallet");
-    }
-
+ 
     /**
      * Takes a list of keys and a password, then encrypts and imports them in
      * one step using the current keycrypter.
@@ -489,7 +479,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public int importKeysAndEncrypt(final List<ECKey> keys, KeyParameter aesKey) {
         keyChainGroupLock.lock();
         try {
-            checkNoDeterministicKeys(keys);
+          //  checkNoDeterministicKeys(keys);
             return keyChainGroup.importKeysAndEncrypt(keys, aesKey);
         } finally {
             keyChainGroupLock.unlock();
@@ -616,40 +606,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             keyChainGroupLock.unlock();
         }
     }
+ 
 
-    /**
-     * Returns the immutable seed for the current active HD chain.
-     * 
-     * @throws net.bigtangle.core.ECKey.MissingPrivateKeyException
-     *             if the seed is unavailable (watching wallet)
-     */
-    public DeterministicSeed getKeyChainSeed() {
-        keyChainGroupLock.lock();
-        try {
-            DeterministicSeed seed = keyChainGroup.getActiveKeyChain().getSeed();
-            if (seed == null)
-                throw new ECKey.MissingPrivateKeyException();
-            return seed;
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /**
-     * Returns a key for the given HD path, assuming it's already been derived.
-     * You normally shouldn't use this: use currentReceiveKey/freshReceiveKey
-     * instead.
-     */
-    public DeterministicKey getKeyByPath(List<ChildNumber> path) {
-        keyChainGroupLock.lock();
-        try {
-            maybeUpgradeToHD();
-            return keyChainGroup.getActiveKeyChain().getKeyByPath(path, false);
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
+ 
     /**
      * Convenience wrapper around
      * {@link Wallet#encrypt(net.bigtangle.crypto.KeyCrypter, org.spongycastle.crypto.params.KeyParameter)}
@@ -1697,12 +1656,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
             walletKeys.add(ecKey);
         }
-        for (DeterministicKeyChain chain : getKeyChainGroup().getDeterministicKeyChains()) {
-            for (ECKey key : chain.getLeafKeys()) {
-                ECKey ecKey = maybeDecryptingKeyBag.maybeDecrypt(key);
-                walletKeys.add(ecKey);
-            }
-        }
+     
         return walletKeys;
     }
 
@@ -1739,7 +1693,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return saveToken(tokenInfo, basecoin, ownerKey, aesKey, ownerKey.getPubKey(), new MemoInfo("coinbase"));
     }
 
-    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey ownerKey, KeyParameter aesKey, byte[] pubKeyTo,
+    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey2 ownerKey, KeyParameter aesKey, byte[] pubKeyTo,
             MemoInfo memoInfo) throws Exception {
         final Token token = tokenInfo.getToken();
 
@@ -1789,7 +1743,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         Sha256Hash sighash = transaction.getHash();
 
-        ECKey.ECDSASignature party1Signature = ownerKey.sign(sighash, aesKey);
+        ECKey2.ECDSASignature party1Signature = ownerKey.sign(sighash, aesKey);
         byte[] buf1 = party1Signature.encodeToDER();
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -2325,8 +2279,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         // Legitimate it by signing
         Sha256Hash sighash1 = tx.getHash();
-        ECKey.ECDSASignature party1Signature = legitimatingKey.sign(sighash1, null);
-        byte[] buf1 = party1Signature.encodeToDER();
+        ECKey.ECDSASignature party1Signature = legitimatingKey.sign(sighash1);
+        byte[] buf1 = party1Signature.sig;
         tx.setDataSignature(buf1);
 
         Block block = getTip();
@@ -2434,8 +2388,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                 false);
 
-        TransactionSignature tsrecsig = new TransactionSignature(connectKey.sign(sighash, aesKey),
-                Transaction.SigHash.ALL, false);
+        TransactionSignature tsrecsig = new TransactionSignature(connectKey.sign(sighash).sig);
         Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
         input.setScriptSig(inputScript);
 
@@ -2583,7 +2536,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(rollingBlock);
     }
 
-    public Block saveUserdata(ECKey userKey, Transaction transaction, boolean encrypt)
+    public Block saveUserdata(ECKey2 userKey, Transaction transaction, boolean encrypt)
             throws JsonProcessingException, IOException, InsufficientMoneyException, InvalidCipherTextException {
         // transaction.getData() is not encrypted
         if (encrypt) {
@@ -2597,7 +2550,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         Block block = params.getDefaultSerializer().makeBlock(data);
 
         Sha256Hash sighash = transaction.getHash();
-        ECKey.ECDSASignature party1Signature = userKey.sign(sighash);
+        ECKey2.ECDSASignature party1Signature = userKey.sign(sighash);
         byte[] buf1 = party1Signature.encodeToDER();
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
@@ -2612,7 +2565,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return solveAndPost(block);
     }
 
-    public UserSettingDataInfo getUserSettingDataInfo(ECKey userKey, boolean encrypt)
+    public UserSettingDataInfo getUserSettingDataInfo(ECKey2 userKey, boolean encrypt)
             throws JsonProcessingException, IOException, InvalidCipherTextException {
         HashMap<String, String> requestParam0 = new HashMap<String, String>();
         requestParam0.put("dataclassname", DataClassName.UserSettingDataInfo.name());
@@ -2713,7 +2666,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return getDomainBlockHashResponse;
     }
 
-    public void multiSign(final String tokenid, ECKey outKey, KeyParameter aesKey) throws Exception {
+    public void multiSign(final String tokenid, ECKey2 outKey, KeyParameter aesKey) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
 
         String address = outKey.toAddress(params).toBase58();
@@ -2740,7 +2693,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             multiSignBies = multiSignByRequest.getMultiSignBies();
         }
         Sha256Hash sighash = transaction.getHash();
-        ECKey.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
+        ECKey2.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
         byte[] buf1 = party1Signature.encodeToDER();
 
         MultiSignBy multiSignBy0 = new MultiSignBy();

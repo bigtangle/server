@@ -319,7 +319,7 @@ public class WalletAppKit extends AbstractIdleService {
         return loadWallet(shouldReplayWallet, new FileInputStream(vWalletFile));
     }
 
-    protected Wallet createWallet() { 
+    protected Wallet createWallet() throws Exception { 
         return  Wallet.fromKeys(params, new ECKey()); // default
     }
 

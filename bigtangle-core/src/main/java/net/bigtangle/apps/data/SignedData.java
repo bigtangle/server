@@ -11,6 +11,7 @@ import org.spongycastle.crypto.InvalidCipherTextException;
 
 import net.bigtangle.core.DataClass;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.ECKey2;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.TokenKeyValues;
@@ -37,11 +38,11 @@ public class SignedData extends DataClass implements java.io.Serializable {
     private Long validtodate;
 
     public void verify() throws SignatureException {
-        ECKey.fromPublicOnly(signerpubkey).verifyMessage(serializedData, signature);
+        ECKey2.fromPublicOnly(signerpubkey).verifyMessage(serializedData, signature);
 
     }
 
-    public void signMessage(ECKey key) throws SignatureException {
+    public void signMessage(ECKey2 key) throws SignatureException {
         signature = key.signMessage(serializedData);
     }
 
@@ -91,7 +92,7 @@ public class SignedData extends DataClass implements java.io.Serializable {
         return this;
     }
 
-    public MemoInfo encryptToMemo(ECKey userkey) throws InvalidCipherTextException, IOException {
+    public MemoInfo encryptToMemo(ECKey2 userkey) throws InvalidCipherTextException, IOException {
         byte[] cipher = ECIESCoder.encrypt(userkey.getPubKeyPoint(), this.toByteArray());
         String memoHex = Utils.HEX.encode(cipher);
         MemoInfo memoInfo = new MemoInfo();
@@ -99,7 +100,7 @@ public class SignedData extends DataClass implements java.io.Serializable {
         return memoInfo;
     }
 
-    public static SignedData decryptFromMemo(ECKey userkey, MemoInfo memoInfo)
+    public static SignedData decryptFromMemo(ECKey2 userkey, MemoInfo memoInfo)
             throws InvalidCipherTextException, IOException, SignatureException, NoSignedDataException {
         for (KeyValue keyValue : memoInfo.getKv()) {
             if (keyValue.getKey().equals(MemoInfo.ENCRYPT)) {
@@ -116,7 +117,7 @@ public class SignedData extends DataClass implements java.io.Serializable {
     /*
      * transform the data with encryption to be saved in token
      */
-    public TokenKeyValues toTokenKeyValues(ECKey key, ECKey userkey)
+    public TokenKeyValues toTokenKeyValues(ECKey2 key, ECKey2 userkey)
             throws InvalidCipherTextException, IOException, SignatureException {
 
         byte[] data = this.toByteArray();
@@ -139,7 +140,7 @@ public class SignedData extends DataClass implements java.io.Serializable {
         return tokenKeyValues;
     }
 
-    public void signData(ECKey signkey, byte[] originalData, String dataClassname) throws SignatureException {
+    public void signData(ECKey2 signkey, byte[] originalData, String dataClassname) throws SignatureException {
         setSerializedData(originalData);
         setSignerpubkey(signkey.getPubKey());
         setDataClassName(dataClassname);

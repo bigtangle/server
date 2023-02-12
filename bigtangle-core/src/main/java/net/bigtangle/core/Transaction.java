@@ -835,7 +835,7 @@ public class Transaction extends ChildMessage {
         addInput(input);
         Sha256Hash hash = hashForSignature(inputs.size() - 1, scriptPubKey, sigHash, anyoneCanPay);
         ECKey.ECDSASignature ecSig = sigKey.sign(hash);
-        TransactionSignature txSig = new TransactionSignature(ecSig, sigHash, anyoneCanPay);
+        TransactionSignature txSig = new TransactionSignature(ecSig.sig );
         if (scriptPubKey.isSentToRawPubKey() || scriptPubKey.isSentToMultiSig())
             input.setScriptSig(ScriptBuilder.createInputScript(txSig));
         else if (scriptPubKey.isSentToAddress())
@@ -848,7 +848,7 @@ public class Transaction extends ChildMessage {
     public void signInputs(TransactionOutPoint prevOut, Script scriptPubKey, ECKey sigKey) throws ScriptException {
         Sha256Hash hash = hashForSignature(inputs.size() - 1, scriptPubKey, SigHash.ALL, false);
         ECKey.ECDSASignature ecSig = sigKey.sign(hash);
-        TransactionSignature txSig = new TransactionSignature(ecSig, SigHash.ALL, false);
+        TransactionSignature txSig = new TransactionSignature(ecSig.sig);
         for (TransactionInput input : getInputs()) {
             // TODO only sign if valid signature can be created
             if (input.getScriptBytes().length != 0)
@@ -972,7 +972,7 @@ public class Transaction extends ChildMessage {
     public TransactionSignature calculateSignature(int inputIndex, ECKey key, byte[] redeemScript, SigHash hashType,
             boolean anyoneCanPay) {
         Sha256Hash hash = hashForSignature(inputIndex, redeemScript, hashType, anyoneCanPay);
-        return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
+        return new TransactionSignature(key.sign(hash).sig);
     }
 
     /**
@@ -999,7 +999,7 @@ public class Transaction extends ChildMessage {
     public TransactionSignature calculateSignature(int inputIndex, ECKey key, Script redeemScript, SigHash hashType,
             boolean anyoneCanPay) {
         Sha256Hash hash = hashForSignature(inputIndex, redeemScript.getProgram(), hashType, anyoneCanPay);
-        return new TransactionSignature(key.sign(hash), hashType, anyoneCanPay);
+        return new TransactionSignature(key.sign(hash).sig );
     }
 
     /**

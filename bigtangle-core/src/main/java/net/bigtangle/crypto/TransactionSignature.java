@@ -26,49 +26,25 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Transaction.SigHash;
 import net.bigtangle.core.exception.VerificationException;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.math.BigInteger;
-
 /**
  * A TransactionSignature wraps an {@link net.bigtangle.core.ECKey.ECDSASignature} and adds methods for handling
  * the additional SIGHASH mode byte that is used.
  */
 public class TransactionSignature extends ECKey.ECDSASignature {
-    /**
-     * A byte that controls which parts of a transaction are signed. This is exposed because signatures
-     * parsed off the wire may have sighash flags that aren't "normal" serializations of the enum values.
-     * Because Bitcoin Core works via bit testing, we must not lose the exact value when round-tripping
-     * otherwise we'll fail to verify signature hashes.
-     */
-    public final int sighashFlags;
+  
+    public TransactionSignature(byte[] sig2) {
+		super(sig2); 
+	}
 
-    /** Constructs a signature with the given components and SIGHASH_ALL. */
-    public TransactionSignature(BigInteger r, BigInteger s) {
-        this(r, s, Transaction.SigHash.ALL.value);
-    }
-
-    /** Constructs a signature with the given components and raw sighash flag bytes (needed for rule compatibility). */
-    public TransactionSignature(BigInteger r, BigInteger s, int sighashFlags) {
-        super(r, s);
-        this.sighashFlags = sighashFlags;
-    }
-
-    /** Constructs a transaction signature based on the ECDSA signature. */
-    public TransactionSignature(ECKey.ECDSASignature signature, Transaction.SigHash mode, boolean anyoneCanPay) {
-        super(signature.r, signature.s);
-        sighashFlags = calcSigHashValue(mode, anyoneCanPay);
-    }
-
-    /**
+	/**
      * Returns a dummy invalid signature whose R/S values are set such that they will take up the same number of
      * encoded bytes as a real signature. This can be useful when you want to fill out a transaction to be of the
      * right size (e.g. for fee calculations) but don't have the requisite signing key yet and will fill out the
      * real signature later.
      */
     public static TransactionSignature dummy() {
-        BigInteger val = ECKey.HALF_CURVE_ORDER;
-        return new TransactionSignature(val, val);
+     
+        return new TransactionSignature(null );
     }
 
     /** Calculates the byte used in the protocol to represent the combination of mode and anyoneCanPay. */
@@ -127,17 +103,10 @@ public class TransactionSignature extends ECKey.ECDSASignature {
         return true;
     }
 
-    public boolean anyoneCanPay() {
-        return (sighashFlags & Transaction.SigHash.ANYONECANPAY.value) != 0;
-    }
+ 
 
     public Transaction.SigHash sigHashMode() {
-        final int mode = sighashFlags & 0x1f;
-        if (mode == Transaction.SigHash.NONE.value)
-            return Transaction.SigHash.NONE;
-        else if (mode == Transaction.SigHash.SINGLE.value)
-            return Transaction.SigHash.SINGLE;
-        else
+   
             return Transaction.SigHash.ALL;
     }
 
@@ -147,19 +116,10 @@ public class TransactionSignature extends ECKey.ECDSASignature {
      * components into a structure, and then we append a byte to the end for the sighash flags.
      */
     public byte[] encodeToBitcoin() {
-        try {
-            ByteArrayOutputStream bos = derByteStream();
-            bos.write(sighashFlags);
-            return bos.toByteArray();
-        } catch (IOException e) {
-            throw new RuntimeException(e);  // Cannot happen.
-        }
+        return sig;
     }
 
-    @Override
-    public ECKey.ECDSASignature toCanonicalised() {
-        return new TransactionSignature(super.toCanonicalised(), sigHashMode(), anyoneCanPay());
-    }
+     
 
     /**
      * Returns a decoded signature.
@@ -173,20 +133,10 @@ public class TransactionSignature extends ECKey.ECDSASignature {
     public static TransactionSignature decodeFromBitcoin(byte[] bytes,
                                                          boolean requireCanonicalEncoding,
                                                          boolean requireCanonicalSValue) throws VerificationException {
-        // Bitcoin encoding is DER signature + sighash byte.
-        if (requireCanonicalEncoding && !isEncodingCanonical(bytes))
-            throw new VerificationException("Signature encoding is not canonical.");
-        ECKey.ECDSASignature sig;
-        try {
-            sig = ECKey.ECDSASignature.decodeFromDER(bytes);
-        } catch (IllegalArgumentException e) {
-            throw new VerificationException("Could not decode DER", e);
-        }
-        if (requireCanonicalSValue && !sig.isCanonical())
-            throw new VerificationException("S-value is not canonical.");
-
+ 
+ 
         // In Bitcoin, any value of the final byte is valid, but not necessarily canonical. See javadocs for
         // isEncodingCanonical to learn more about this. So we must store the exact byte found.
-        return new TransactionSignature(sig.r, sig.s, bytes[bytes.length - 1]);
+        return new TransactionSignature(bytes);
     }
 }

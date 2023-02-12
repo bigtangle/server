@@ -21,18 +21,18 @@
 
 package net.bigtangle.utils;
 
+import java.util.Arrays;
+
+import javax.annotation.Nullable;
+
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
-import net.bigtangle.core.ECKey;
+import net.bigtangle.core.ECKey2;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.VersionedChecksummedBytes;
 import net.bigtangle.core.exception.AddressFormatException;
 import net.bigtangle.core.exception.WrongNetworkException;
-
-import java.util.Arrays;
-
-import javax.annotation.Nullable;
 
 /**
  * Parses and generates private keys in the form used by the Bitcoin "dumpprivkey" command. This is the private key
@@ -96,8 +96,8 @@ public class DumpedPrivateKey extends VersionedChecksummedBytes {
     /**
      * Returns an ECKey created from this encoded private key.
      */
-    public ECKey getKey() {
-        final ECKey key = ECKey.fromPrivate(bytes);
+    public ECKey2 getKey() {
+        final ECKey2 key = ECKey2.fromPrivate(bytes);
         return compressed ? key : key.decompress();
     }
 
