@@ -32,19 +32,15 @@ import java.nio.channels.FileLock;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nullable;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 
- 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Utils;
-import net.bigtangle.wallet.DeterministicSeed;
 import net.bigtangle.wallet.Protos;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.WalletExtension;
@@ -107,8 +103,7 @@ public class WalletAppKit extends AbstractIdleService {
                                       // true.
     protected String userAgent, version;
     protected WalletProtobufSerializer.WalletFactory walletFactory;
-    @Nullable
-    protected DeterministicSeed restoreFromSeed;
+ 
 
   
 
@@ -186,21 +181,7 @@ public class WalletAppKit extends AbstractIdleService {
         this.useTor = true;
         return this;
     }
-
-    /**
-     * If a seed is set here then any existing wallet that matches the file name
-     * will be renamed to a backup name, the chain file will be deleted, and the
-     * wallet object will be instantiated with the given seed instead of a fresh
-     * one being created. This is intended for restoring a wallet from the
-     * original seed. To implement restore you would shut down the existing
-     * appkit, if any, then recreate it with the seed given by the user, then
-     * start up the new kit. The next time your app starts it should work as
-     * normal (that is, don't keep calling this each time).
-     */
-    public WalletAppKit restoreWalletFromSeed(DeterministicSeed seed) {
-        this.restoreFromSeed = seed;
-        return this;
-    }
+ 
 
     /**
      * <p>
@@ -324,8 +305,7 @@ public class WalletAppKit extends AbstractIdleService {
     }
 
     private void maybeMoveOldWalletOutOfTheWay() {
-        if (restoreFromSeed == null)
-            return;
+ 
         if (!vWalletFile.exists())
             return;
         int counter = 1;

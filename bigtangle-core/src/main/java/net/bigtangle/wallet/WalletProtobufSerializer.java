@@ -86,7 +86,7 @@ public class WalletProtobufSerializer {
     }
 
     private final WalletFactory factory;
-    private KeyChainFactory keyChainFactory;
+  
 
     public WalletProtobufSerializer() {
         this(new WalletFactory() {
@@ -100,13 +100,9 @@ public class WalletProtobufSerializer {
     public WalletProtobufSerializer(WalletFactory factory) {
       
         this.factory = factory;
-        this.keyChainFactory = new DefaultKeyChainFactory();
+ 
     }
-
-    public void setKeyChainFactory(KeyChainFactory keyChainFactory) {
-        this.keyChainFactory = keyChainFactory;
-    }
-
+ 
 
 
     /**
@@ -319,10 +315,9 @@ public class WalletProtobufSerializer {
         if (walletProto.hasEncryptionParameters()) {
             Protos.ScryptParameters encryptionParameters = walletProto.getEncryptionParameters();
             final KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(encryptionParameters);
-            keyChainGroup = KeyChainGroup.fromProtobufEncrypted(params, walletProto.getKeyList(), keyCrypter,
-                    keyChainFactory);
+            keyChainGroup = KeyChainGroup.fromProtobufEncrypted(params, walletProto.getKeyList(), keyCrypter );
         } else {
-            keyChainGroup = KeyChainGroup.fromProtobufUnencrypted(params, walletProto.getKeyList(), keyChainFactory);
+            keyChainGroup = KeyChainGroup.fromProtobufEncrypted(params, walletProto.getKeyList(),null );
         }
         Wallet wallet = factory.create(params, keyChainGroup);
 
