@@ -173,14 +173,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
     }
 
     private void importKeyLocked(ECKey key) {
-        if (hashToKeys.isEmpty()) {
-            isWatching = key.isWatching();
-        } else {
-            if (key.isWatching() && !isWatching)
-                throw new IllegalArgumentException("Key is watching but chain is not");
-            if (!key.isWatching() && isWatching)
-                throw new IllegalArgumentException("Key is not watching but chain is");
-        }
+ 
         ECKey previousKey = pubkeyToKeys.put(ByteString.copyFrom(key.getPubKey()), key);
         hashToKeys.put(ByteString.copyFrom(key.getPubKeyHash()), key);
         checkState(previousKey == null);
@@ -382,11 +375,11 @@ public class BasicKeyChain implements EncryptableKeyChain {
                         throw new UnreadableWalletException("Encrypted private key data missing");
                     Protos.EncryptedData proto = key.getEncryptedData();
                     EncryptedData e = new EncryptedData(proto.getInitialisationVector().toByteArray(),
-                            proto.getEncryptedPrivateKey().toByteArray());
+                            proto.getEncryptedPrivateKey().toByteArray(),  proto.getPublicKey().toByteArray());
                     ecKey = ECKey.fromEncrypted(e, keyCrypter, pub);
                 } else {
                     if (priv != null)
-                        ecKey = ECKey.fromPrivateAndPrecalculatedPublic(priv, pub);
+                        ecKey = ECKey.fromPrivateAndPublic(priv, pub);
                     else
                         ecKey = ECKey.fromPublicOnly(pub);
                 }

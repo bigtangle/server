@@ -201,7 +201,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
      * Password based encryption using AES - CBC 256 bits.
      */
     @Override
-    public EncryptedData encrypt(byte[] plainBytes, KeyParameter aesKey) throws KeyCrypterException {
+    public EncryptedData encrypt(byte[] plainBytes,byte[] publicBytes, KeyParameter aesKey) throws KeyCrypterException {
         checkNotNull(plainBytes);
         checkNotNull(aesKey);
 
@@ -219,7 +219,7 @@ public class KeyCrypterScrypt implements KeyCrypter {
             final int length1 = cipher.processBytes(plainBytes, 0, plainBytes.length, encryptedBytes, 0);
             final int length2 = cipher.doFinal(encryptedBytes, length1);
 
-            return new EncryptedData(iv, Arrays.copyOf(encryptedBytes, length1 + length2));
+            return new EncryptedData(iv, Arrays.copyOf(encryptedBytes, length1 + length2), publicBytes);
         } catch (Exception e) {
             throw new KeyCrypterException("Could not encrypt bytes.", e);
         }

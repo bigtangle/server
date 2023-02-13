@@ -202,10 +202,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     @GuardedBy("lock")
     private List<TransactionSigner> signers;
 
-    public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
-        return new Wallet(params, new KeyChainGroup(params, seed));
-    }
-
+ 
     /**
      * Creates a wallet that tracks payments to and from the HD key hierarchy
      * rooted by the given watching key. A watching key corresponds to account
@@ -213,7 +210,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
      */
     public static Wallet fromKeys(NetworkParameters params, List<ECKey> keys) {
     
-
         KeyChainGroup group = new KeyChainGroup(params);
         group.importKeys(keys);
         return new Wallet(params, group);
@@ -232,7 +228,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
       //  checkArgument(!(key instanceof DeterministicKey));
         List<ECKey> keys = new ArrayList<ECKey>();
         keys.add(key);
-        KeyChainGroup group = new KeyChainGroup(params);
+        KeyChainGroup group = new KeyChainGroup(params,null,new KeyCrypterScrypt(2));
         group.importKeys(keys);
         return new Wallet(params, group);
     }
@@ -255,8 +251,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         // keys in the chain of any kind then
         // we're probably being deserialized so leave things alone: the API user
         // can upgrade later.
-        if (this.keyChainGroup.numKeys() == 0)
-            this.keyChainGroup.createAndActivateNewHDChain();
+ 
         watchedScripts = Sets.newHashSet();
 
         signers = new ArrayList<TransactionSigner>();
@@ -268,14 +263,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
     public NetworkParameters getNetworkParameters() {
         return params;
     }
-
-    /**
-     * Gets the active keychain via {@link KeyChainGroup#getActiveKeyChain()}
-     */
-    public DeterministicKeyChain getActiveKeyChain() {
-        return keyChainGroup.getActiveKeyChain();
-    }
-
+ 
     /**
      * <p>
      * Adds given transaction signer to the list of signers. It will be added to
@@ -309,63 +297,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         }
     }
 
-    /******************************************************************************************************************/
-
-    // region Key Management
-
-    /**
-     * Upgrades the wallet to be deterministic (BIP32). You should call this,
-     * possibly providing the users encryption key, after loading a wallet
-     * produced by previous versions of bitcoinj. If the wallet is encrypted the
-     * key <b>must</b> be provided, due to the way the seed is derived
-     * deterministically from private key bytes: failing to do this will result
-     * in an exception being thrown. For non-encrypted wallets, the upgrade will
-     * be done for you automatically the first time a new key is requested (this
-     * happens when spending due to the change address).
-     */
-    public void upgradeToDeterministic(@Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
-        keyChainGroupLock.lock();
-        try {
-            keyChainGroup.upgradeToDeterministic(vKeyRotationTimestamp, aesKey);
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /**
-     * Returns true if the wallet contains random keys and no HD chains, in
-     * which case you should call
-     * {@link #upgradeToDeterministic(org.spongycastle.crypto.params.KeyParameter)}
-     * before attempting to do anything that would require a new address or key.
-     */
-    public boolean isDeterministicUpgradeRequired() {
-        keyChainGroupLock.lock();
-        try {
-            return keyChainGroup.isDeterministicUpgradeRequired();
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    private void maybeUpgradeToHD() throws DeterministicUpgradeRequiresPassword {
-        maybeUpgradeToHD(null);
-    }
-
-    @GuardedBy("keyChainGroupLock")
-    private void maybeUpgradeToHD(@Nullable KeyParameter aesKey) throws DeterministicUpgradeRequiresPassword {
-        checkState(keyChainGroupLock.isHeldByCurrentThread());
-        if (keyChainGroup.isDeterministicUpgradeRequired()) {
-            log.info("Upgrade to HD wallets is required, attempting to do so.");
-            try {
-                upgradeToDeterministic(aesKey);
-            } catch (DeterministicUpgradeRequiresPassword e) {
-                log.error("Failed to auto upgrade due to encryption. You should call wallet.upgradeToDeterministic "
-                        + "with the users AES key to avoid this error.");
-                throw e;
-            }
-        }
-    }
-
+ 
     /**
      * Removes the given key from the basicKeyChain. Be very careful with this -
      * losing a private key <b>destroys the money associated with it</b>.
@@ -393,17 +325,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             keyChainGroupLock.unlock();
         }
     }
-
-    @VisibleForTesting
-    public int getKeyChainGroupCombinedKeyLookaheadEpochs() {
-        keyChainGroupLock.lock();
-        try {
-            return keyChainGroup.getCombinedKeyLookaheadEpochs();
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
+ 
     /**
      * Returns a list of the non-deterministic keys that have been imported into
      * the wallet, or the empty list if none.
@@ -513,37 +435,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             keyChainGroupLock.unlock();
         }
     }
-
-    /**
-     * See
-     * {@link net.bigtangle.wallet.DeterministicKeyChain#setLookaheadThreshold(int)}
-     * for more info on this.
-     */
-    public void setKeyChainGroupLookaheadThreshold(int num) {
-        keyChainGroupLock.lock();
-        try {
-            maybeUpgradeToHD();
-            keyChainGroup.setLookaheadThreshold(num);
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
-    /**
-     * See
-     * {@link net.bigtangle.wallet.DeterministicKeyChain#setLookaheadThreshold(int)}
-     * for more info on this.
-     */
-    public int getKeyChainGroupLookaheadThreshold() {
-        keyChainGroupLock.lock();
-        try {
-            maybeUpgradeToHD();
-            return keyChainGroup.getLookaheadThreshold();
-        } finally {
-            keyChainGroupLock.unlock();
-        }
-    }
-
+ 
+   
     /*
      * Locates a keypair from the basicKeyChain given the hash of the public
      * key. This is needed when finding out which key we need to use to redeem a

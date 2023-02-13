@@ -37,8 +37,12 @@ import java.util.Arrays;
 
 import javax.annotation.Nullable;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Base64;
+
+import com.google.common.base.MoreObjects;
 
 import net.bigtangle.core.ECKey2.ECDSASignature;
 import net.bigtangle.core.ECKey2.KeyIsEncryptedException;
@@ -47,6 +51,8 @@ import net.bigtangle.crypto.EncryptableItem;
 import net.bigtangle.crypto.EncryptedData;
 import net.bigtangle.crypto.KeyCrypter;
 import net.bigtangle.crypto.KeyCrypterException;
+import net.bigtangle.wallet.Protos;
+import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
 import net.thiim.dilithium.impl.PackingUtils;
 import net.thiim.dilithium.interfaces.DilithiumParameterSpec;
@@ -105,7 +111,7 @@ import net.thiim.dilithium.provider.DilithiumProvider;
  * </p>
  */
 public class ECKey implements EncryptableItem {
-
+	 private static final Logger log = LoggerFactory.getLogger(ECKey .class);
 	// The two parts of the key. If "priv" is set, "pub" can always be
 	// calculated.
 	// If "pub" is set but not "priv", we
@@ -114,69 +120,71 @@ public class ECKey implements EncryptableItem {
 	protected PublicKey pub;
 
 	protected DilithiumParameterSpec spec = DilithiumParameterSpec.LEVEL5;
-    protected EncryptedData encryptedPrivateKey;
-    protected KeyCrypter keyCrypter;
-	//this key for encryption   
- /*  
-  	KyberPublicKey kyberPublicKey;
-	KyberPrivateKey kyberPrivateKey;
-  *  Kyber1024KeyPairGenerator bobKeyGen1024 = new Kyber1024KeyPairGenerator();
-    KeyPair bobKeyPair = bobKeyGen1024.generateKeyPair();
-    KyberPublicKey bobPublicKey = (KyberPublicKey) bobKeyPair.getPublic();
-    KyberPrivateKey bobPrivateKey = (KyberPrivateKey) bobKeyPair.getPrivate();
- */
-    
+	protected EncryptedData encryptedData;
+	protected KeyCrypter keyCrypter;
+	// this key for encryption
+	/*
+	 * KyberPublicKey kyberPublicKey; KyberPrivateKey kyberPrivateKey;
+	 * Kyber1024KeyPairGenerator bobKeyGen1024 = new Kyber1024KeyPairGenerator();
+	 * KeyPair bobKeyPair = bobKeyGen1024.generateKeyPair(); KyberPublicKey
+	 * bobPublicKey = (KyberPublicKey) bobKeyPair.getPublic(); KyberPrivateKey
+	 * bobPrivateKey = (KyberPrivateKey) bobKeyPair.getPrivate();
+	 */
 
-    // Creation time of the key in seconds since the epoch, or zero if the key was deserialized from a version that did
-    // not have this field.
-    protected long creationTimeSeconds;
-    
-	public ECKey() throws Exception {
-		DilithiumProvider pv = new DilithiumProvider();
-		KeyPairGenerator kpg = KeyPairGenerator.getInstance("Dilithium", pv);
-		kpg.initialize(spec);
-		KeyPair kp = kpg.generateKeyPair();
-		priv = kp.getPrivate();
-		pub = kp.getPublic();
-		  creationTimeSeconds = Utils.currentTimeSeconds();
+	// Creation time of the key in seconds since the epoch, or zero if the key was
+	// deserialized from a version that did
+	// not have this field.
+	protected long creationTimeSeconds;
 
+	public ECKey() {
+		try {
+			DilithiumProvider pv = new DilithiumProvider();
+			KeyPairGenerator kpg = KeyPairGenerator.getInstance("Dilithium", pv);
+			kpg.initialize(spec);
+			KeyPair kp = kpg.generateKeyPair();
+			priv = kp.getPrivate();
+			pub = kp.getPublic();
+			creationTimeSeconds = Utils.currentTimeSeconds();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
-	public ECKey(@Nullable PrivateKey priv, @Nullable PublicKey pub) {
+	public ECKey(@Nullable PrivateKey priv, @Nullable PublicKey pub, @Nullable EncryptedData encryptedKey) {
 
 		this.priv = priv;
 		this.pub = pub;
-
+		this.encryptedData = encryptedKey;
 	}
 
 	@Override
 	public boolean isEncrypted() {
-		// TODO Auto-generated method stub
-		return false;
+		return keyCrypter != null && encryptedData != null && encryptedData.encryptedBytes.length > 0;
 	}
 
 	@Override
 	public byte[] getSecretBytes() {
-		// TODO Auto-generated method stub
-		return null;
+		if (hasPrivKey())
+			return priv.getEncoded();
+		else
+			return null;
 	}
 
 	@Override
 	public EncryptedData getEncryptedData() {
-		// TODO Auto-generated method stub
-		return null;
+
+		return encryptedData;
 	}
 
+	@Nullable
 	@Override
-	public EncryptionType getEncryptionType() {
-		// TODO Auto-generated method stub
-		return null;
+	public Protos.Wallet.EncryptionType getEncryptionType() {
+		return keyCrypter != null ? keyCrypter.getUnderstoodEncryptionType() : Protos.Wallet.EncryptionType.UNENCRYPTED;
 	}
 
 	@Override
 	public long getCreationTimeSeconds() {
-		// TODO Auto-generated method stub
-		return 0;
+		return creationTimeSeconds;
 	}
 
 	public String getPublicKeyString() {
@@ -193,31 +201,38 @@ public class ECKey implements EncryptableItem {
 		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(DilithiumParameterSpec.LEVEL5,
 				Base64.decode(publickey));
 		PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
-		return new ECKey(null, publicKey);
+		return new ECKey(null, publicKey, null);
 	}
 
 	public static ECKey fromPrivatekeyString(String privatekey) {
 		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(DilithiumParameterSpec.LEVEL5,
 				Base64.decode(privatekey));
 		PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
-		return new ECKey(privateKey, null);
+		return new ECKey(privateKey, null, null);
 	}
 
 	public static ECKey fromPublicOnly(byte[] publicHash) {
 		return fromPublicKey(publicHash);
 	}
+
 	public static ECKey fromPublicKey(byte[] publicHash) {
 		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(DilithiumParameterSpec.LEVEL5, publicHash);
 		PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
-		return new ECKey(null, publicKey);
+		return new ECKey(null, publicKey, null);
 	}
 
 	public static ECKey fromPrivatekey(byte[] privateHash) {
 		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(DilithiumParameterSpec.LEVEL5, privateHash);
 		PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
-		return new ECKey(privateKey, null);
+		return new ECKey(privateKey, null, null);
 	}
-
+	public static ECKey fromPrivateAndPublic(byte[] privateHash, byte[] publicHash) {
+		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(DilithiumParameterSpec.LEVEL5, privateHash);
+		PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
+		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(DilithiumParameterSpec.LEVEL5, publicHash);
+		PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
+		return new ECKey(privateKey, publicKey, null);
+	}
 	public static boolean verify(byte[] text, byte[] sig, byte[] pubKey) {
 		try {
 			DilithiumProvider pv = new DilithiumProvider();
@@ -284,11 +299,11 @@ public class ECKey implements EncryptableItem {
 		return new Address(params, getPubKeyHash());
 	}
 
-	public   boolean verify(Sha256Hash hash, byte[] sig) {
+	public boolean verify(Sha256Hash hash, byte[] sig) {
 		try {
 			DilithiumProvider pv = new DilithiumProvider();
 			Signature signature = Signature.getInstance("Dilithium", pv);
-		 
+
 			signature.initVerify(pub); //
 			// alertSigningKey);
 			signature.update(hash.getBytes());
@@ -297,100 +312,201 @@ public class ECKey implements EncryptableItem {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
- 
+
 	}
 
-	public ECKey.ECDSASignature sign(Sha256Hash hash)   {
-		
-		try{DilithiumProvider pv = new DilithiumProvider();
-		Signature signature = Signature.getInstance("Dilithium", pv);
- 
-		signature.initSign(priv);
-		signature.update(hash.getBytes());
-		return new ECKey.ECDSASignature(signature.sign());
-	} catch (Exception e) {
-		throw new RuntimeException(e);
-	}
+	public ECKey.ECDSASignature sign(Sha256Hash hash) {
+
+		try {
+			DilithiumProvider pv = new DilithiumProvider();
+			Signature signature = Signature.getInstance("Dilithium", pv);
+
+			signature.initSign(priv);
+			signature.update(hash.getBytes());
+			return new ECKey.ECDSASignature(signature.sign());
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public String getPublicKeyAsHex() {
-		 
+
 		return getPublicKeyString();
 	}
-    public boolean hasPrivKey() {
-        return priv != null;
-    }
-    
-    public ECKey decrypt(KeyParameter aesKey) throws KeyCrypterException {
-        final KeyCrypter crypter = getKeyCrypter();
-        if (crypter == null)
-            throw new KeyCrypterException("No key crypter available");
-        return decrypt(crypter, aesKey);
-    }
-    /**
-     * Returns the KeyCrypter that was used to encrypt to encrypt this ECKey2 . You need this to decrypt the ECKey2 .
-     */
-    @Nullable
-    public KeyCrypter getKeyCrypter() {
-        return keyCrypter;
-    }
-    /**
-     * Create a decrypted private key with the keyCrypter and AES key supplied. Note that if the aesKey is wrong, this
-     * has some chance of throwing KeyCrypterException due to the corrupted padding that will result, but it can also
-     * just yield a garbage key.
-     *
-     * @param keyCrypter The keyCrypter that specifies exactly how the decrypted bytes are created.
-     * @param aesKey The KeyParameter with the AES encryption key (usually constructed with keyCrypter#deriveKey and cached).
-     */
-    public ECKey decrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
-        checkNotNull(keyCrypter);
-        // Check that the keyCrypter matches the one used to encrypt the keys, if set.
-        if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter))
-            throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
-        checkState(encryptedPrivateKey != null, "This key is not encrypted");
-        byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
-        ECKey key = ECKey.fromPrivatekey(unencryptedPrivateKey);
-       // if (!isCompressed())
-       //     key = key.decompress();
-        if (!Arrays.equals(key.getPubKey(), getPubKey()))
-            throw new KeyCrypterException("Provided AES key is wrong");
-        key.setCreationTimeSeconds(creationTimeSeconds);
+
+	public boolean hasPrivKey() {
+		return priv != null;
+	}
+
+	public ECKey encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
+		checkNotNull(keyCrypter);
+		final byte[] privKeyBytes = priv.getEncoded();
+		EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, pub.getEncoded(), aesKey);
+		ECKey result = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, getPubKey());
+		result.setCreationTimeSeconds(creationTimeSeconds);
+		return result;
+	}
+
+	public static ECKey fromEncrypted(EncryptedData encrypted, KeyCrypter keyCrypter2, byte[] pubKey) {
+		ECKey key = fromPublicKey( pubKey);
+		key.encryptedData=encrypted;
+        key.keyCrypter = checkNotNull(keyCrypter2);
         return key;
-    }
+	}
 
-    
+ 
+	
+	public ECKey decrypt(KeyParameter aesKey) throws KeyCrypterException {
+		final KeyCrypter crypter = getKeyCrypter();
+		if (crypter == null)
+			throw new KeyCrypterException("No key crypter available");
+		return decrypt(crypter, aesKey);
+	}
+
+	/**
+	 * Returns the KeyCrypter that was used to encrypt to encrypt this ECKey2 . You
+	 * need this to decrypt the ECKey2 .
+	 */
+	@Nullable
+	public KeyCrypter getKeyCrypter() {
+		return keyCrypter;
+	}
+
+	/**
+	 * Create a decrypted private key with the keyCrypter and AES key supplied. Note
+	 * that if the aesKey is wrong, this has some chance of throwing
+	 * KeyCrypterException due to the corrupted padding that will result, but it can
+	 * also just yield a garbage key.
+	 *
+	 * @param keyCrypter The keyCrypter that specifies exactly how the decrypted
+	 *                   bytes are created.
+	 * @param aesKey     The KeyParameter with the AES encryption key (usually
+	 *                   constructed with keyCrypter#deriveKey and cached).
+	 */
+	public ECKey decrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
+		checkNotNull(keyCrypter);
+		// Check that the keyCrypter matches the one used to encrypt the keys, if set.
+		if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter))
+			throw new KeyCrypterException(
+					"The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
+		checkState(encryptedData != null, "This key is not encrypted");
+		byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedData, aesKey);
+		ECKey key = ECKey.fromPrivatekey(unencryptedPrivateKey);
+		// if (!isCompressed())
+		// key = key.decompress();
+		if (!Arrays.equals(key.getPubKey(), getPubKey()))
+			throw new KeyCrypterException("Provided AES key is wrong");
+		key.setCreationTimeSeconds(creationTimeSeconds);
+		return key;
+	}
+
+	/**
+	 * Signs the given hash and returns the R and S components as BigIntegers. In
+	 * the Bitcoin protocol, they are usually encoded using DER format, so you want
+	 * {@link net.bigtangle.core.ECKey2 .ECDSASignature#encodeToDER()} instead.
+	 * However sometimes the independent components can be useful, for instance, if
+	 * you're doing to do further EC maths on them.
+	 *
+	 * @param aesKey The AES key to use for decryption of the private key. If null
+	 *               then no decryption is required.
+	 * @throws KeyCrypterException if there's something wrong with aesKey.
+	 * @throws ECKey2              .MissingPrivateKeyException if this key cannot
+	 *                             sign because it's pubkey only.
+	 */
+	public ECDSASignature sign(Sha256Hash input, @Nullable KeyParameter aesKey) throws KeyCrypterException {
+		KeyCrypter crypter = getKeyCrypter();
+		if (crypter != null) {
+			if (aesKey == null)
+				throw new KeyIsEncryptedException();
+			return decrypt(aesKey).sign(input);
+		} else {
+			// No decryption of private key required.
+			if (priv == null)
+				throw new MissingPrivateKeyException();
+		}
+		return sign(input);
+	}
+
+	/**
+	 * Sets the creation time of this key. Zero is a convention to mean
+	 * "unavailable". This method can be useful when you have a raw key you are
+	 * importing from somewhere else.
+	 */
+	public void setCreationTimeSeconds(long newCreationTimeSeconds) {
+		if (newCreationTimeSeconds < 0)
+			throw new IllegalArgumentException("Cannot set creation time to negative value: " + newCreationTimeSeconds);
+		creationTimeSeconds = newCreationTimeSeconds;
+	}
+	
     /**
-     * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
-     * usually encoded using DER format, so you want {@link net.bigtangle.core.ECKey2 .ECDSASignature#encodeToDER()}
-     * instead. However sometimes the independent components can be useful, for instance, if you're doing to do further
-     * EC maths on them.
+     * <p>Check that it is possible to decrypt the key with the keyCrypter and that the original key is returned.</p>
      *
-     * @param aesKey The AES key to use for decryption of the private key. If null then no decryption is required.
-     * @throws KeyCrypterException if there's something wrong with aesKey.
-     * @throws ECKey2 .MissingPrivateKeyException if this key cannot sign because it's pubkey only.
+     * <p>Because it is a critical failure if the private keys cannot be decrypted successfully (resulting of loss of all
+     * bitcoins controlled by the private key) you can use this method to check when you *encrypt* a wallet that
+     * it can definitely be decrypted successfully.</p>
+     *
+     * <p>See {@link Wallet#encrypt(KeyCrypter keyCrypter, KeyParameter aesKey)} for example usage.</p>
+     *
+     * @return true if the encrypted key can be decrypted back to the original key successfully.
      */
-    public ECDSASignature sign(Sha256Hash input, @Nullable KeyParameter aesKey) throws KeyCrypterException {
-        KeyCrypter crypter = getKeyCrypter();
-        if (crypter != null) {
-            if (aesKey == null)
-                throw new KeyIsEncryptedException();
-            return decrypt(aesKey).sign(input);
-        } else {
-            // No decryption of private key required.
-            if (priv == null)
-                throw new MissingPrivateKeyException();
+    public static boolean encryptionIsReversible(ECKey originalKey, ECKey encryptedKey, KeyCrypter keyCrypter, KeyParameter aesKey) {
+        try {
+            ECKey rebornUnencryptedKey = encryptedKey.decrypt(keyCrypter, aesKey);
+            byte[] originalPrivateKeyBytes = originalKey.getPrivateKey();
+            byte[] rebornKeyBytes = rebornUnencryptedKey.getPrivateKey();
+            if (!Arrays.equals(originalPrivateKeyBytes, rebornKeyBytes)) {
+             //   log.error("The check that encryption could be reversed failed for {}", originalKey);
+                return false;
+            }
+            return true;
+        } catch (KeyCrypterException kce) {
+            log.error(kce.getMessage());
+            return false;
         }
-        return sign(input);
     }
-     
+    
+    public void formatKeyWithAddress(boolean includePrivateKeys, StringBuilder builder, NetworkParameters params) {
+        final Address address = toAddress(params);
+        builder.append("  addr:");
+        builder.append(address.toString());
+        builder.append("  hash160:");
+        builder.append(Utils.HEX.encode(getPubKeyHash()));
+        if (creationTimeSeconds > 0)
+            builder.append("  creationTimeSeconds:").append(creationTimeSeconds);
+        builder.append("\n");
+        if (includePrivateKeys) {
+            builder.append("  ");
+            builder.append(toString(true, params));
+            builder.append("\n");
+        }
+    }
+    
 
-    /**
-     * Sets the creation time of this key. Zero is a convention to mean "unavailable". This method can be useful when
-     * you have a raw key you are importing from somewhere else.
-     */
-    public void setCreationTimeSeconds(long newCreationTimeSeconds) {
-        if (newCreationTimeSeconds < 0)
-            throw new IllegalArgumentException("Cannot set creation time to negative value: " + newCreationTimeSeconds);
-        creationTimeSeconds = newCreationTimeSeconds;
+    private String toString(boolean includePrivate, NetworkParameters params) {
+        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
+        helper.add("pub HEX", getPublicKeyAsHex());
+        if (includePrivate) {
+            try {
+                helper.add("priv HEX", getPrivateKeyString());
+ 
+            } catch (IllegalStateException e) {
+                // TODO: Make hasPrivKey() work for deterministic keys and fix this.
+            } catch (Exception e) {
+                final String message = e.getMessage();
+                helper.add("priv EXCEPTION", e.getClass().getName() + (message != null ? ": " + message : ""));
+            }
+        }
+        if (creationTimeSeconds > 0)
+            helper.add("creationTimeSeconds", creationTimeSeconds);
+        helper.add("keyCrypter", keyCrypter);
+        if (includePrivate)
+            helper.add("encryptedPrivateKey", encryptedData);
+        helper.add("isEncrypted", isEncrypted());
+        helper.add("isPubKeyOnly", isPubKeyOnly());
+        return helper.toString();
     }
+    public boolean isPubKeyOnly() {
+        return priv == null;
+    }
+
 }
