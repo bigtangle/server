@@ -1693,7 +1693,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return saveToken(tokenInfo, basecoin, ownerKey, aesKey, ownerKey.getPubKey(), new MemoInfo("coinbase"));
     }
 
-    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey2 ownerKey, KeyParameter aesKey, byte[] pubKeyTo,
+    public Block saveToken(TokenInfo tokenInfo, Coin basecoin, ECKey ownerKey, KeyParameter aesKey, byte[] pubKeyTo,
             MemoInfo memoInfo) throws Exception {
         final Token token = tokenInfo.getToken();
 
@@ -1743,8 +1743,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
         Sha256Hash sighash = transaction.getHash();
 
-        ECKey2.ECDSASignature party1Signature = ownerKey.sign(sighash, aesKey);
-        byte[] buf1 = party1Signature.encodeToDER();
+        ECKey.ECDSASignature party1Signature = ownerKey.sign(sighash, aesKey);
+        byte[] buf1 = party1Signature.sig;
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
         MultiSignBy multiSignBy0 = new MultiSignBy();

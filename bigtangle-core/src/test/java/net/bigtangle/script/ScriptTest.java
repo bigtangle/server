@@ -109,7 +109,7 @@ public class ScriptTest {
         Script script = ScriptBuilder.createMultiSigOutputScript(3, keys);
         assertTrue(script.isSentToMultiSig());
         List<ECKey> pubkeys = new ArrayList<ECKey>(3);
-        for (ECKey key : keys) pubkeys.add(ECKey.fromPublicOnly(key.getPubKeyPoint()));
+        for (ECKey key : keys) pubkeys.add(ECKey.fromPublicOnly(key.getPubKey()));
         assertEquals(script.getPubKeys(), pubkeys);
         assertFalse(ScriptBuilder.createOutputScript(new ECKey()).isSentToMultiSig());
         try {
@@ -142,11 +142,11 @@ public class ScriptTest {
     }
     
    //TODO  new binary @Test
-    public void testCreateMultiSigInputScript() {
+    public void testCreateMultiSigInputScript() throws Exception {
         // Setup transaction and signatures
-        ECKey key1 = DumpedPrivateKey.fromBase58(PARAMS, "cVLwRLTvz3BxDAWkvS3yzT9pUcTCup7kQnfT2smRjvmmm1wAP6QT").getKey();
-        ECKey key2 = DumpedPrivateKey.fromBase58(PARAMS, "cTine92s8GLpVqvebi8rYce3FrUYq78ZGQffBYCS1HmDPJdSTxUo").getKey();
-        ECKey key3 = DumpedPrivateKey.fromBase58(PARAMS, "cVHwXSPRZmL9adctwBwmn4oTZdZMbaCsR5XF6VznqMgcvt1FDDxg").getKey();
+        ECKey key1 = new ECKey();
+        ECKey key2 =   new ECKey();
+        ECKey key3 =  new ECKey();
         Script multisigScript = ScriptBuilder.createMultiSigOutputScript(2, Arrays.asList(key1, key2, key3));
         byte[] bytes = HEX.decode("01000000013df681ff83b43b6585fa32dd0e12b0b502e6481e04ee52ff0fdaf55a16a4ef61000000006b483045022100a84acca7906c13c5895a1314c165d33621cdcf8696145080895cbf301119b7cf0220730ff511106aa0e0a8570ff00ee57d7a6f24e30f592a10cae1deffac9e13b990012102b8d567bcd6328fd48a429f9cf4b315b859a58fd28c5088ef3cb1d98125fc4e8dffffffff02364f1c00000000001976a91439a02793b418de8ec748dd75382656453dc99bcb88ac40420f000000000017a9145780b80be32e117f675d6e0ada13ba799bf248e98700000000");
         Transaction transaction = PARAMS.getDefaultSerializer().makeTransaction(bytes);
@@ -159,8 +159,8 @@ public class ScriptTest {
         Sha256Hash sighash = spendTx.hashForSignature(0, multisigScript, SigHash.ALL, false);
         ECKey.ECDSASignature party1Signature = key1.sign(sighash);
         ECKey.ECDSASignature party2Signature = key2.sign(sighash);
-        TransactionSignature party1TransactionSignature = new TransactionSignature(party1Signature, SigHash.ALL, false);
-        TransactionSignature party2TransactionSignature = new TransactionSignature(party2Signature, SigHash.ALL, false);
+        TransactionSignature party1TransactionSignature = new TransactionSignature(party1Signature.sig);
+        TransactionSignature party2TransactionSignature = new TransactionSignature(party2Signature.sig);
 
         // Create p2sh multisig input script
         Script inputScript = ScriptBuilder.createP2SHMultiSigInputScript(ImmutableList.of(party1TransactionSignature, party2TransactionSignature), multisigScript);
@@ -425,7 +425,7 @@ public class ScriptTest {
     }
 
     @Test
-    public void testCLTVPaymentChannelOutput() {
+    public void testCLTVPaymentChannelOutput() throws Exception {
         Script script = ScriptBuilder.createCLTVPaymentChannelOutput(BigInteger.valueOf(20), new ECKey(), new ECKey());
         assertTrue("script is locktime-verify", script.isSentToCLTVPaymentChannel());
     }

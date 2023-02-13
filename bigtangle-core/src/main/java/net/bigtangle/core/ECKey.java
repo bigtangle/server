@@ -22,6 +22,9 @@
 
 package net.bigtangle.core;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -30,13 +33,20 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.SignatureException;
+import java.util.Arrays;
 
 import javax.annotation.Nullable;
 
+import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Base64;
 
+import net.bigtangle.core.ECKey2.ECDSASignature;
+import net.bigtangle.core.ECKey2.KeyIsEncryptedException;
+import net.bigtangle.core.ECKey2.MissingPrivateKeyException;
 import net.bigtangle.crypto.EncryptableItem;
 import net.bigtangle.crypto.EncryptedData;
+import net.bigtangle.crypto.KeyCrypter;
+import net.bigtangle.crypto.KeyCrypterException;
 import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
 import net.thiim.dilithium.impl.PackingUtils;
 import net.thiim.dilithium.interfaces.DilithiumParameterSpec;
@@ -104,7 +114,8 @@ public class ECKey implements EncryptableItem {
 	protected PublicKey pub;
 
 	protected DilithiumParameterSpec spec = DilithiumParameterSpec.LEVEL5;
-
+    protected EncryptedData encryptedPrivateKey;
+    protected KeyCrypter keyCrypter;
 	//this key for encryption   
  /*  
   	KyberPublicKey kyberPublicKey;
@@ -114,6 +125,12 @@ public class ECKey implements EncryptableItem {
     KyberPublicKey bobPublicKey = (KyberPublicKey) bobKeyPair.getPublic();
     KyberPrivateKey bobPrivateKey = (KyberPrivateKey) bobKeyPair.getPrivate();
  */
+    
+
+    // Creation time of the key in seconds since the epoch, or zero if the key was deserialized from a version that did
+    // not have this field.
+    protected long creationTimeSeconds;
+    
 	public ECKey() throws Exception {
 		DilithiumProvider pv = new DilithiumProvider();
 		KeyPairGenerator kpg = KeyPairGenerator.getInstance("Dilithium", pv);
@@ -121,6 +138,7 @@ public class ECKey implements EncryptableItem {
 		KeyPair kp = kpg.generateKeyPair();
 		priv = kp.getPrivate();
 		pub = kp.getPublic();
+		  creationTimeSeconds = Utils.currentTimeSeconds();
 
 	}
 
@@ -301,5 +319,78 @@ public class ECKey implements EncryptableItem {
 	}
     public boolean hasPrivKey() {
         return priv != null;
+    }
+    
+    public ECKey decrypt(KeyParameter aesKey) throws KeyCrypterException {
+        final KeyCrypter crypter = getKeyCrypter();
+        if (crypter == null)
+            throw new KeyCrypterException("No key crypter available");
+        return decrypt(crypter, aesKey);
+    }
+    /**
+     * Returns the KeyCrypter that was used to encrypt to encrypt this ECKey2 . You need this to decrypt the ECKey2 .
+     */
+    @Nullable
+    public KeyCrypter getKeyCrypter() {
+        return keyCrypter;
+    }
+    /**
+     * Create a decrypted private key with the keyCrypter and AES key supplied. Note that if the aesKey is wrong, this
+     * has some chance of throwing KeyCrypterException due to the corrupted padding that will result, but it can also
+     * just yield a garbage key.
+     *
+     * @param keyCrypter The keyCrypter that specifies exactly how the decrypted bytes are created.
+     * @param aesKey The KeyParameter with the AES encryption key (usually constructed with keyCrypter#deriveKey and cached).
+     */
+    public ECKey decrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
+        checkNotNull(keyCrypter);
+        // Check that the keyCrypter matches the one used to encrypt the keys, if set.
+        if (this.keyCrypter != null && !this.keyCrypter.equals(keyCrypter))
+            throw new KeyCrypterException("The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
+        checkState(encryptedPrivateKey != null, "This key is not encrypted");
+        byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedPrivateKey, aesKey);
+        ECKey key = ECKey.fromPrivatekey(unencryptedPrivateKey);
+       // if (!isCompressed())
+       //     key = key.decompress();
+        if (!Arrays.equals(key.getPubKey(), getPubKey()))
+            throw new KeyCrypterException("Provided AES key is wrong");
+        key.setCreationTimeSeconds(creationTimeSeconds);
+        return key;
+    }
+
+    
+    /**
+     * Signs the given hash and returns the R and S components as BigIntegers. In the Bitcoin protocol, they are
+     * usually encoded using DER format, so you want {@link net.bigtangle.core.ECKey2 .ECDSASignature#encodeToDER()}
+     * instead. However sometimes the independent components can be useful, for instance, if you're doing to do further
+     * EC maths on them.
+     *
+     * @param aesKey The AES key to use for decryption of the private key. If null then no decryption is required.
+     * @throws KeyCrypterException if there's something wrong with aesKey.
+     * @throws ECKey2 .MissingPrivateKeyException if this key cannot sign because it's pubkey only.
+     */
+    public ECDSASignature sign(Sha256Hash input, @Nullable KeyParameter aesKey) throws KeyCrypterException {
+        KeyCrypter crypter = getKeyCrypter();
+        if (crypter != null) {
+            if (aesKey == null)
+                throw new KeyIsEncryptedException();
+            return decrypt(aesKey).sign(input);
+        } else {
+            // No decryption of private key required.
+            if (priv == null)
+                throw new MissingPrivateKeyException();
+        }
+        return sign(input);
+    }
+     
+
+    /**
+     * Sets the creation time of this key. Zero is a convention to mean "unavailable". This method can be useful when
+     * you have a raw key you are importing from somewhere else.
+     */
+    public void setCreationTimeSeconds(long newCreationTimeSeconds) {
+        if (newCreationTimeSeconds < 0)
+            throw new IllegalArgumentException("Cannot set creation time to negative value: " + newCreationTimeSeconds);
+        creationTimeSeconds = newCreationTimeSeconds;
     }
 }

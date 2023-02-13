@@ -32,10 +32,11 @@ import java.util.Arrays;
 public final class EncryptedData {
     public final byte[] initialisationVector;
     public final byte[] encryptedBytes;
-
-    public EncryptedData(byte[] initialisationVector, byte[] encryptedBytes) {
+    public final byte[] publicBytes;
+    public EncryptedData(byte[] initialisationVector, byte[] encryptedBytes,byte[] publicBytes) {
         this.initialisationVector = Arrays.copyOf(initialisationVector, initialisationVector.length);
         this.encryptedBytes = Arrays.copyOf(encryptedBytes, encryptedBytes.length);
+        this.publicBytes = Arrays.copyOf(publicBytes, publicBytes.length);
     }
 
     @Override
@@ -43,17 +44,21 @@ public final class EncryptedData {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         EncryptedData other = (EncryptedData) o;
-        return Arrays.equals(encryptedBytes, other.encryptedBytes) && Arrays.equals(initialisationVector, other.initialisationVector);
+        return 
+        		Arrays.equals(encryptedBytes, other.encryptedBytes) &&
+        		Arrays.equals(publicBytes, other.publicBytes) && Arrays.equals(initialisationVector, other.initialisationVector);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(Arrays.hashCode(encryptedBytes), Arrays.hashCode(initialisationVector));
+        return Objects.hashCode(Arrays.hashCode(encryptedBytes),Arrays.hashCode(publicBytes), Arrays.hashCode(initialisationVector));
     }
 
     @Override
     public String toString() {
         return "EncryptedData [initialisationVector=" + Arrays.toString(initialisationVector)
-            + ", encryptedPrivateKey=" + Arrays.toString(encryptedBytes) + "]";
+            + ", encryptedPrivateKey=" + Arrays.toString(encryptedBytes) 
+            + ", publicBytes=" + Arrays.toString(publicBytes) 
+            + "]";
     }
 }

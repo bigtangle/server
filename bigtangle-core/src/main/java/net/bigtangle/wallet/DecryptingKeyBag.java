@@ -46,7 +46,7 @@ public class DecryptingKeyBag implements KeyBag {
     }
 
     @Nullable
-    public ECKey2 maybeDecrypt(ECKey2 key) {
+    public ECKey maybeDecrypt(ECKey key) {
         if (key == null)
             return null;
         else if (key.isEncrypted()) {
