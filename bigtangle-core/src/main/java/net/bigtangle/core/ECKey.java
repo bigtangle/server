@@ -119,7 +119,7 @@ public class ECKey implements EncryptableItem {
 	protected PrivateKey priv; // A field element.
 	protected PublicKey pub;
 
-	protected DilithiumParameterSpec spec = DilithiumParameterSpec.LEVEL5;
+	protected static DilithiumParameterSpec spec = DilithiumParameterSpec.LEVEL3;
 	protected EncryptedData encryptedData;
 	protected KeyCrypter keyCrypter;
 	// this key for encryption
@@ -189,23 +189,23 @@ public class ECKey implements EncryptableItem {
 
 	public String getPublicKeyString() {
 
-		return Base64.toBase64String(getPubKey());
+		return Utils.HEX.encode(getPubKey());
 	}
 
 	public String getPrivateKeyString() {
 
-		return Base64.toBase64String(getPrivateKey());
+		return Utils.HEX.encode(getPrivateKey());
 	}
 
 	public static ECKey fromPublicKeyString(String publickey) {
-		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(DilithiumParameterSpec.LEVEL5,
+		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(spec,
 				Base64.decode(publickey));
 		PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
 		return new ECKey(null, publicKey, null);
 	}
 
 	public static ECKey fromPrivatekeyString(String privatekey) {
-		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(DilithiumParameterSpec.LEVEL5,
+		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(spec,
 				Base64.decode(privatekey));
 		PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
 		return new ECKey(privateKey, null, null);
@@ -216,20 +216,20 @@ public class ECKey implements EncryptableItem {
 	}
 
 	public static ECKey fromPublicKey(byte[] publicHash) {
-		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(DilithiumParameterSpec.LEVEL5, publicHash);
+		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(spec, publicHash);
 		PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
 		return new ECKey(null, publicKey, null);
 	}
 
 	public static ECKey fromPrivatekey(byte[] privateHash) {
-		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(DilithiumParameterSpec.LEVEL5, privateHash);
+		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(spec, privateHash);
 		PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
 		return new ECKey(privateKey, null, null);
 	}
 	public static ECKey fromPrivateAndPublic(byte[] privateHash, byte[] publicHash) {
-		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(DilithiumParameterSpec.LEVEL5, privateHash);
+		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(spec, privateHash);
 		PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
-		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(DilithiumParameterSpec.LEVEL5, publicHash);
+		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(spec, publicHash);
 		PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
 		return new ECKey(privateKey, publicKey, null);
 	}

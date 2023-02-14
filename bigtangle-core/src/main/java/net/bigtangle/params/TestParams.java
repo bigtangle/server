@@ -19,50 +19,47 @@ import net.bigtangle.pool.server.ServerPool;
  */
 public class TestParams extends AbstractBitcoinNetParams {
 
-  
-    public TestParams() {
-        super();
+	public TestParams() {
+		super();
 
-        id = ID_UNITTESTNET;
+		id = ID_UNITTESTNET;
 
-        maxTarget = new BigInteger("578960377169117509212217050695880916496095398817113098493422368414323410000");
-        maxTargetReward = maxTarget.subtract(new BigInteger("100"));
+		maxTarget = new BigInteger("578960377169117509212217050695880916496095398817113098493422368414323410000");
+		maxTargetReward = maxTarget.subtract(new BigInteger("100"));
 
-        dumpedPrivateKeyHeader = 128;
-        addressHeader = 0;
-        p2shHeader = 5;
-        acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
+		dumpedPrivateKeyHeader = 128;
+		addressHeader = 0;
+		p2shHeader = 5;
+		acceptableAddressCodes = new int[] { addressHeader, p2shHeader };
 
-        packetMagic = 0xf9beb4d9L;
-        bip32HeaderPub = 0x0488B21E; // The 4 byte header that serializes in
-                                     // base58 to "xpub".
-        bip32HeaderPriv = 0x0488ADE4; // The 4 byte header that serializes in
-                                      // base58 to "xprv"
-        genesisPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
-        permissionDomainname = ImmutableList.of(genesisPub);
-  
-        // Equihash Settings
-        equihashN = 100;
-        equihashK = 4;
+		packetMagic = 0xf9beb4d9L;
+		bip32HeaderPub = 0x0488B21E; // The 4 byte header that serializes in
+										// base58 to "xpub".
+		bip32HeaderPriv = 0x0488ADE4; // The 4 byte header that serializes in
+										// base58 to "xprv"
+		genesisPub = "914cb375875bac1bd3c254fc97fb9fff682abfca80030b7418ec2b87ebd62b62c781514c3539df337a909cc536eabffd674da1611b93ef269ced4bc1eb1b1e015b1d850883d5d532f6ea724932d571dccc30e317aa343977aba82c944594ca54822ed4f46664902d744e37ac04c173b2d8ae1c1a49da98c0e974a53f8c0f8705acbad168c77dd47a30a6461def916a9cb4c5d8118a6b9cf8bbc3814dbe847f4829d44c2e23d9278cccf00e1dffa14652f5f52159e81bd22bd6765e52235b4718d68fad10fd174a6d0d38d679a61f37323169a4817ea7c67c728cea5248a1b92687fd96a33353886f3048fd41cfb2a7e352fba75f2dfb5b6477a57e8756c1c827c5d9194db50d83db0fbbb8ac2cc4d18593084aad73df72ed2315cab51b318862d5ddd9351cc322960863fb1f61c3f1758d8f285de03973f7d6d1b0f28867ad5950b10dd68988d93ed8e96c6c86fc054e47bc6840c7c97e24feb5cef79ea963c1358d5331267ee092354aafc2065df222a490e2af8ee24206834fabe836f77bed03c64c488f4eac24ca2799d6fb95611be3ad84c0a4d9bd8902839019ccacaba4712444fbcdf55b70a1205895ca531e1e28b238d0bf1f6437b718de6ccabe21ca5b0bf8dc13c1186ce9cc6f453d9f68c8ef58ca32a0ba631f5795db9b355cacd1078520599968861c2e31da33e177aa2fa8d97516e50902f97892d99e57f28b64704b5166ad17a454457150836b0bb89d20c3e4d3b08daab75f21dec24ec9fe12175393187dd5238f1740f8fedd0150cc317b3dda2007de6d14f93e0e60d73737f809325b01301b649d0de89f4bbb2dc544485168d92d2d762d5fa4254c02cbc94b7b77f2eb66e77c07dc26c27fb79c03b9cadc25f7d562c332c62dbd2575c48eef4a5ac88ef9d8c6b4f6bd69170922cd382091a7270f5989bd04d2f6499f033a8feeaa07ea342bccfcb1f6ea2fb0eb4312c227d5465d68feee5e9241ae0654f68626b21e100bd41df18030a0f84bb4f6f57d267580017bd81f4a2fbd07aa01a64ed922e30e0dba5368aeea1f314664629c3ec534234d5be89f1c9ef3fe82721302e2db5d67ae2857fa7890473cd10f6b8849bccf0c8ce89b66fabeff330a9c4b2e1a8016478a884fbce74d1f932bdc978eae22f1f5eca98bfc42ef95221ef230672c333acbd40049c17e8551ab592b4a274ead0056881693365344080fc1fff87b79fb5f0a77ccc3cd3df44bc4b9ddf8c7873174953cba3e02d32f645e0fec6393726bfa102da7861dab8c768e427d6420a33a5c0bafb5f381d5ab3432a2b174dd4e569203a835c27f6d9424fc42e4271a840204db200ea6d4bc2184db6da5809faf266071c8a97dc553d8fc3f07ea2df9e9614063f4bb46920be9f8145f21b8338a2451998844444cc08fb315a1186cdbae2659e77b768ebf4a44928b2a6afdc1455cc590d729b530bf6fb77f95f74ef50dd3e16883a46f854c52f9101fc1f8e9b93944d7602a223a0bff613dfaac969bfb17612182e916e579a101079ca6ec6629db56b32f8a528d3f8fefa77935a32da5b2aaafcb81f3798d3f6d1e7642cb331a4ffee91ffce8febb9d723422af32c21c1011cbd630a0f3125694d5d7bf9cd58c60361361fb129b215dd144c5ce917fcf02ecc2672100779bc0a7f344a56a5185e385c4ba0f3f770abdfd685c6694f34b460ab800519e5344efd87dd0669c5491230a0134c2bf3358d1dcaf86734f44b5ed8b2f42588233d17f9dd2560cd119fba3b9e68e084bf89cc1f949779d9c33d8c1defc9eea16ab85b7212b4a4be08454fecd13b97c2c23a41d2d7b71817f3cd396397d2268dec1d9035a1d2bba955e32b8ad63bc6bb60e0b5be6e704ad7d086318e53a6fadb30106323e02a840ae702f691091cfefe963e440b77562abf5a0e34e0da317121ba135eeacbbc34d88bd3cd1dcc3a80eed247ba797febf4b474175c2929e0dc01f3184ea15c0c76d6770d114f9aaa29a8e7d0dbb86685b3c24121997c0dec1cebcc976ad120a50f5eb3af46d2a05ac2b6af899ef9fa987d207cb572687bd0288b1646e936f2e069eac84a9a96ca19e15f9e8fc546c776a41c231ae91bbba0a11f59d2b740dc9ebbbfcc84dfa29ded4585cf7e7b67fae17e6462656224fc5f113c3387111302f25836d32f43d9c16484937624a88e589795f6c7371f36279821fb689a017b454c3763179db4cda124f425a7595c9a87ec04ffeb5f090715564a761a6b8f4cb0d9f9ca3376dd0c1528de274ada84454dd7909fd3db84c5a7f512381edd82b7151d6fb1391f9c99018451a7611f287a2e5ea3e1e903d20ad439e15ef5f8d8a2ae724320394abc2d4c964a5a85301f2691e2a9343649bdd85775676e0d8974e5eec9ffe1275c412f45859038cc11a0ae6fb474fe8c6b1b35c7d9d27502763f97e97f4639702b4192382c077ece9d15a094cc6704ae0bba31b2dc57d0d515265cfbb25923ee24262882ff6d20590aa43084dd4440f89ed130cfa6093d64b6620aef2fc8db53f5d88de3fd76c8ffa7681c73bc43997b27ff5eaceaef864c34f2ae7c1d3d976a36851b770b44787c07152a16050d6289e6a7b6f9cae566bf385284cab46c51ae5c86f330a21ed4b936446ce41a97b41593a8cd2781ba616750d39a71546dd1dd9fc92e398cfaba0441e33c17aa15309230acfd808c6d505408e0ea1897cdc94341fd68bc846cb24de48fcd54715dcb5dcf29c592f04b707b91a0fb75800e501";
+		permissionDomainname = ImmutableList.of(genesisPub);
 
-        genesisBlock = createGenesis(this);
+		// Equihash Settings
+		equihashN = 100;
+		equihashK = 4;
 
-    }
+		genesisBlock = createGenesis(this);
 
-    public String[] serverSeeds() {
-        return new String[] { "https://test.bigtangle.de:8089/", "https://test.bigtangle.info:8089/" };
+	}
 
-    }
+	public String[] serverSeeds() {
+		return new String[] { "https://test.bigtangle.de:8089/", "https://test.bigtangle.info:8089/" };
 
-    private static TestParams instance;
+	}
 
-    public static synchronized TestParams get() {
-        if (instance == null) {
-            instance = new TestParams();
-        }
-        return instance;
-    }
+	private static TestParams instance;
 
-  
+	public static synchronized TestParams get() {
+		if (instance == null) {
+			instance = new TestParams();
+		}
+		return instance;
+	}
 
 }

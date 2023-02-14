@@ -974,7 +974,7 @@ public class ECKey2 implements EncryptableItem {
     public ECKey2 encrypt(KeyCrypter keyCrypter, KeyParameter aesKey) throws KeyCrypterException {
         checkNotNull(keyCrypter);
         final byte[] privKeyBytes = getPrivKeyBytes();
-        EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, aesKey);
+        EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, "".getBytes(), aesKey);
         ECKey2 result = ECKey2 .fromEncrypted(encryptedPrivateKey, keyCrypter, getPubKey());
         result.setCreationTimeSeconds(creationTimeSeconds);
         return result;

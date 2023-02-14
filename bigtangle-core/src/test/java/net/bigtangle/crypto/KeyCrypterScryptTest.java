@@ -38,7 +38,7 @@ public class KeyCrypterScryptTest {
     private static final CharSequence WRONG_PASSWORD = "thisIsTheWrongPassword";
 
     private ScryptParameters scryptParameters;
-
+    private static final byte[] testpub ="1".getBytes();
     @Before
     public void setUp() throws Exception {
         Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder()
@@ -53,7 +53,7 @@ public class KeyCrypterScryptTest {
         KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(scryptParameters);
 
         // Encrypt.
-        EncryptedData data = keyCrypter.encrypt(TEST_BYTES1, keyCrypter.deriveKey(PASSWORD1));
+        EncryptedData data = keyCrypter.encrypt(TEST_BYTES1,testpub, keyCrypter.deriveKey(PASSWORD1));
         assertNotNull(data);
 
         // Decrypt.
@@ -79,7 +79,7 @@ public class KeyCrypterScryptTest {
             String plainText = UUID.randomUUID().toString();
             CharSequence password = UUID.randomUUID().toString();
 
-            EncryptedData data = keyCrypter.encrypt(plainText.getBytes(), keyCrypter.deriveKey(password));
+            EncryptedData data = keyCrypter.encrypt(plainText.getBytes(), testpub, keyCrypter.deriveKey(password));
 
             assertNotNull(data);
 
@@ -98,7 +98,7 @@ public class KeyCrypterScryptTest {
             builder.append(i).append(" The quick brown fox");
         }
 
-        EncryptedData data = keyCrypter.encrypt(builder.toString().getBytes(), keyCrypter.deriveKey(PASSWORD2));
+        EncryptedData data = keyCrypter.encrypt(builder.toString().getBytes(), testpub, keyCrypter.deriveKey(PASSWORD2));
         assertNotNull(data);
 
         try {
@@ -115,7 +115,7 @@ public class KeyCrypterScryptTest {
         KeyCrypterScrypt keyCrypter = new KeyCrypterScrypt(scryptParameters);
 
         // Encrypt bytes.
-        EncryptedData data = keyCrypter.encrypt(TEST_BYTES1, keyCrypter.deriveKey(PASSWORD1));
+        EncryptedData data = keyCrypter.encrypt(TEST_BYTES1,testpub,  keyCrypter.deriveKey(PASSWORD1));
         assertNotNull(data);
         log.debug("\nEncrypterDecrypterTest: cipherBytes = \nlength = " + data.encryptedBytes.length + "\n---------------\n" + Utils.HEX.encode(data.encryptedBytes) + "\n---------------\n");
 
@@ -137,7 +137,7 @@ public class KeyCrypterScryptTest {
             byte[] plainBytes = new byte[i];
             random.nextBytes(plainBytes);
 
-            EncryptedData data = keyCrypter.encrypt(plainBytes, keyCrypter.deriveKey(PASSWORD1));
+            EncryptedData data = keyCrypter.encrypt(plainBytes,testpub,  keyCrypter.deriveKey(PASSWORD1));
             assertNotNull(data);
             //log.debug("\nEncrypterDecrypterTest: cipherBytes = \nlength = " + cipherBytes.length + "\n---------------\n" + Utils.HEX.encode(cipherBytes) + "\n---------------\n");
 
