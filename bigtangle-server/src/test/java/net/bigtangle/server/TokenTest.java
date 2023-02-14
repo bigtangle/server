@@ -106,7 +106,7 @@ public class TokenTest extends AbstractIntegrationTest {
     @Test
     public void testCreateDomainToken() throws Exception {
 
-        ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey preKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         {
             final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
@@ -169,7 +169,7 @@ public class TokenTest extends AbstractIntegrationTest {
     @Test
     public void testWrongDomainname() throws Exception {
 
-        ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey preKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         {
             final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
@@ -188,7 +188,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
     public void testWrongSignnumber() throws Exception {
 
-        ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey preKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         {
             final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
@@ -707,7 +707,7 @@ public class TokenTest extends AbstractIntegrationTest {
         wallet2();
 
         List<ECKey> walletKeys = wallet2Keys;
-        ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey preKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         {
             final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
@@ -799,7 +799,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         this.walletAppKit.wallet().multiSign(tokenid, outKey4, aesKey);
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesiskey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         this.walletAppKit.wallet().multiSign(tokenid, genesiskey, null);
     }
@@ -886,7 +886,7 @@ public class TokenTest extends AbstractIntegrationTest {
             final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
             walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "shop", aesKey, "");
 
-            ECKey preKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+            ECKey preKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                     Utils.HEX.decode(testPub));
 
             walletAppKit1.wallet().multiSign(tokenid, preKey, aesKey);

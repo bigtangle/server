@@ -177,7 +177,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
     }
 
     public void payMoneyToWallet1(int j, List<Block> blocksAddedAll) throws Exception {
-        ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey fromkey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
         wallet1();
         for (int i = 0; i < 10; i++) {

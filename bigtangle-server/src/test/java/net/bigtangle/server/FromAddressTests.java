@@ -47,7 +47,8 @@ public class FromAddressTests extends AbstractIntegrationTest {
 
     @Test 
     public void testUserpay() throws Exception {
-        w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+        w = Wallet.fromKeys(networkParameters, ECKey.fromPrivateAndPublic(Utils.HEX.decode(yuanTokenPriv),
+        		Utils.HEX.decode(yuanTokenPub)));
         w.setServerURL(contextRoot);
         accountKey = new ECKey(); 
         testTokens();
@@ -115,13 +116,15 @@ public class FromAddressTests extends AbstractIntegrationTest {
 
     public void testTokens() throws JsonProcessingException, Exception {
         String domain = "";
-        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)), "人民币", 2, domain, "人民币 CNY",
+        testCreateMultiSigToken(ECKey.fromPrivateAndPublic(Utils.HEX.decode(yuanTokenPriv),
+        		Utils.HEX.decode(yuanTokenPub)), "人民币", 2, domain, "人民币 CNY",
                 BigInteger.valueOf(10000000l));
         makeRewardBlock();
     }
 
     public Address getAddress() {
-        return ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)).toAddress(networkParameters);
+        return ECKey.fromPrivateAndPublic(Utils.HEX.decode(yuanTokenPriv),
+        		Utils.HEX.decode(yuanTokenPub)).toAddress(networkParameters);
     }
 
     // create a token with multi sign
@@ -131,7 +134,8 @@ public class FromAddressTests extends AbstractIntegrationTest {
             walletAppKit1.wallet().setServerURL(contextRoot);
              createToken(key, tokename, decimals, domainname, description, amount, true, null,  TokenType.identity.ordinal(), key.getPublicKeyAsHex(),
                     walletAppKit1.wallet());
-            ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
+            ECKey signkey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(yuanTokenPriv),
+            		Utils.HEX.decode(yuanTokenPub));
 
             walletAppKit1.wallet().multiSign(key.getPublicKeyAsHex(), signkey, null);
 

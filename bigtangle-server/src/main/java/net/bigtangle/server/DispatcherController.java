@@ -815,11 +815,10 @@ public class DispatcherController {
             String pubkey = header.split(",")[0];
             String signHex = header.split(",")[1];
             String accessToken = header.split(",")[2];
-            ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
-
+           
             byte[] buf = Utils.HEX.decode(accessToken);
             byte[] signature = Utils.HEX.decode(signHex);
-            flag = key.verify(buf, signature);
+            flag = ECKey.verify(buf, signature,Utils.HEX.decode(pubkey));
 
             if (flag) {
                 int count = this.accessPermissionedService.checkSessionRandomNumResp(pubkey, accessToken, store);

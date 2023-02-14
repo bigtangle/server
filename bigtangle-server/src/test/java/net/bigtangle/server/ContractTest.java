@@ -24,7 +24,7 @@ public class ContractTest extends AbstractIntegrationTest {
      @Test
     public void payContract() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();

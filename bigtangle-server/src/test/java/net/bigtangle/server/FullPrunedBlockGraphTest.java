@@ -163,7 +163,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConnectOrderOpenUTXOs() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey tokenKey= new ECKey();
         resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
   
@@ -178,7 +178,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         // Give it the legitimation of an order opening tx by finally signing
         // the hash
         ECKey.ECDSASignature party1Signature = walletKeys.get(0).sign(tx.getHash(), null);
-        byte[] buf1 = party1Signature.encodeToDER();
+        byte[] buf1 = party1Signature.sig;
         tx.setDataSignature(buf1);
 
         // Create burning 2 BIG
@@ -192,7 +192,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
@@ -313,7 +313,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConfirmOrderOpenUTXOs() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey tokenKey= new ECKey();
         Block rollingBlock = resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
   
@@ -336,7 +336,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
@@ -359,7 +359,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConfirmOrderMatchUTXOs1() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey tokenKey= new ECKey();
         resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
   
@@ -386,7 +386,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
 
@@ -423,7 +423,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testConfirmOrderMatchUTXOs2() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // Make the "test" token
         List<Block> addedBlocks = new ArrayList<>();
         resetAndMakeTestToken(testKey, addedBlocks);
@@ -578,7 +578,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmOrderOpenUTXOs() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey tokenKey= new ECKey();
         resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
         // Set the order
@@ -600,7 +600,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
         resetAndMakeTestToken(testKey, new ArrayList<Block>());
@@ -624,7 +624,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmOrderMatchUTXOs1() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey tokenKey= new ECKey(); 
         Block block = resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
         Block block1 = null;
@@ -650,7 +650,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
  
@@ -693,7 +693,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmOrderMatchUTXOs2() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // Make the "test" token
         List<Block> addedBlocks = new ArrayList<>();
         resetAndMakeTestToken(testKey, addedBlocks);
@@ -847,7 +847,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmDependentsRewardVirtualSpenders() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         // Generate blocks until passing second reward interval
         Block rollingBlock = networkParameters.getGenesisBlock();
         for (int i = 0; i < 1 + 1 + 1; i++) {
@@ -880,7 +880,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
         TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
         Script inputScript = ScriptBuilder.createInputScript(sig, testKey);
         input.setScriptSig(inputScript);
         Block spenderBlock = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx);
@@ -987,7 +987,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
     @Test
     public void testUnconfirmDependentsOrderVirtualUTXOSpenders() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
 

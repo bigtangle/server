@@ -72,7 +72,7 @@ public class SubtangleTests extends AbstractIntegrationTest {
         Transaction transaction = block.getTransactions().get(0);
         Sha256Hash sighash = transaction.getHash();
         ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
-        byte[] buf1 = party1Signature.encodeToDER();
+        byte[] buf1 = party1Signature.sig;
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
         MultiSignBy multiSignBy0 = new MultiSignBy();
@@ -91,7 +91,7 @@ public class SubtangleTests extends AbstractIntegrationTest {
 
     public void giveMoneySubtangleId(ECKey outKey, long amount, Address toAddressInSubtangle) throws Exception {
         
-        ECKey genesiskey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesiskey =  ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
 
         UTXO findOutput = null;
@@ -113,8 +113,7 @@ public class SubtangleTests extends AbstractIntegrationTest {
         Sha256Hash sighash = transaction.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                 false);
 
-        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
-                false);
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash) .sig);
         Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
         input.setScriptSig(inputScript);
 
@@ -141,10 +140,10 @@ public class SubtangleTests extends AbstractIntegrationTest {
     @Test
     public void testGiveMoney() throws Exception {
 
-        ECKey subtangleKey =  ECKey.fromPrivateAndPrecalculatedPublic(
+        ECKey subtangleKey =  ECKey.fromPrivateAndPublic(
                 Utils.HEX.decode("1430ec255d2f92eb8d6702c2282187d8ce92f78c878248f51ae316fe995d896c"),
                 Utils.HEX.decode("02b9416f95f21953232df29d89ee5c8d1b648bfe8d55c8e53705d4a452264a98f0"));
-        // ECKey subtangleKey =  ECKey.fromPrivateAndPrecalculatedPublic();
+        // ECKey subtangleKey =  ECKey.fromPrivateAndPublic();
 
         // System.out.println(Utils.HEX.encode(subtangleKey.getPubKey()));
         // System.out.println(Utils.HEX.encode(subtangleKey.getPrivKeyBytes()));

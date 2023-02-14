@@ -594,7 +594,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Again but with less output coins
         {
 
-            ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+            ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                     Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
@@ -607,7 +607,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             TransactionInput input = tx2.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx2.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
             createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
@@ -619,7 +619,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Again but with more output coins
         try {
 
-            ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+            ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                     Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
@@ -631,7 +631,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             TransactionInput input = tx2.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx2.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
             tx2.getOutput(0).getValue().setValue(tx2.getOutput(0).getValue().getValue().add(BigInteger.valueOf(1)));
@@ -650,7 +650,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Create block with negative outputs
         try {
 
-            ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+            ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                     Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
@@ -663,7 +663,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             TransactionInput input = tx2.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx2.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
             createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
@@ -694,7 +694,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         // Create block with outputs
         try {
 
-            ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+            ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                     Utils.HEX.decode(testPub));
             List<UTXO> outputs = getBalance(false, testKey);
             TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
@@ -762,7 +762,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 rollingBlock.getHash(), rollingBlock.getHash(), store);
         Transaction tx = rewardBlock.getTransactions().get(0);
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
@@ -772,7 +772,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
         rewardBlock.solve();
@@ -1075,7 +1075,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityTokenMutatedData() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Generate an eligible issuance tokenInfo
         ECKey outKey = walletKeys.get(1);
@@ -1657,7 +1657,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 Transaction transaction = block.getTransactions().get(0);
                 Sha256Hash sighash1 = transaction.getHash();
                 ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
-                byte[] buf1 = party1Signature.encodeToDER();
+                byte[] buf1 = party1Signature.sig;
 
                 List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
                 MultiSignBy multiSignBy0 = new MultiSignBy();
@@ -1671,10 +1671,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
                 multiSignBy0.setSignature(Utils.HEX.encode(buf1));
                 multiSignBies.add(multiSignBy0);
 
-                ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+                ECKey genesiskey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                         Utils.HEX.decode(testPub));
                 ECKey.ECDSASignature party2Signature = genesiskey.sign(sighash1, aesKey);
-                byte[] buf2 = party2Signature.encodeToDER();
+                byte[] buf2 = party2Signature.sig;
                 multiSignBy0 = new MultiSignBy();
                 if (tokenInfo.getToken() != null && tokenInfo.getToken().getTokenid() != null)
                     multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
@@ -1732,7 +1732,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Transaction transaction = block.getTransactions().get(0);
         Sha256Hash sighash1 = transaction.getHash();
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
-        byte[] buf1 = party1Signature.encodeToDER();
+        byte[] buf1 = party1Signature.sig;
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
         MultiSignBy multiSignBy0 = new MultiSignBy();
@@ -1743,10 +1743,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         multiSignBy0.setSignature(Utils.HEX.encode(buf1));
         multiSignBies.add(multiSignBy0);
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesiskey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey.ECDSASignature party2Signature = genesiskey.sign(sighash1, aesKey);
-        byte[] buf2 = party2Signature.encodeToDER();
+        byte[] buf2 = party2Signature.sig;
         multiSignBy0 = new MultiSignBy();
         if (tokenInfo.getToken() != null && tokenInfo.getToken().getTokenid() != null)
             multiSignBy0.setTokenid(tokenInfo.getToken().getTokenid().trim());
@@ -2012,7 +2012,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Transaction transaction = block.getTransactions().get(0);
         Sha256Hash sighash1 = transaction.getHash();
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
-        byte[] buf1 = party1Signature.encodeToDER();
+        byte[] buf1 = party1Signature.sig;
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
         MultiSignBy multiSignBy0 = new MultiSignBy();
@@ -2065,7 +2065,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Transaction transaction = block.getTransactions().get(0);
         Sha256Hash sighash1 = transaction.getHash();
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
-        byte[] buf1 = party1Signature.encodeToDER();
+        byte[] buf1 = party1Signature.sig;
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
         MultiSignBy multiSignBy0 = new MultiSignBy();
@@ -2320,7 +2320,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         Sha256Hash sighash1 = transaction.getHash();
         ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
-        byte[] buf1 = party1Signature.encodeToDER();
+        byte[] buf1 = party1Signature.sig;
 
         List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
         MultiSignBy multiSignBy0 = new MultiSignBy();
@@ -2348,7 +2348,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpenOk() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey tokenKey= new ECKey();
         resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
         Block block1 = null;
@@ -2374,7 +2374,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
 
@@ -2411,7 +2411,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpenMultipleTXs() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make the "test" token
         Block tokenBlock = null;
@@ -2457,7 +2457,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
 
@@ -2476,8 +2476,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             TransactionInput input2 = tx2.addInput(outputs2.get(0).getBlockHash(), spendableOutput2);
             Sha256Hash sighash2 = tx2.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
-            TransactionSignature sig2 = new TransactionSignature(testKey.sign(sighash2), Transaction.SigHash.ALL,
-                    false);
+            TransactionSignature sig2 = new TransactionSignature(testKey.sign(sighash2).sig);
             Script inputScript2 = ScriptBuilder.createInputScript(sig2);
             input2.setScriptSig(inputScript2);
 
@@ -2500,7 +2499,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpenNoTokensOffered() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         Block block1 = null;
         {
@@ -2530,7 +2529,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpenMultipleTokens() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make the "test" token
         Block tokenBlock = null;
@@ -2591,13 +2590,12 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
             Sha256Hash sighash2 = tx.hashForSignature(1, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
-            TransactionSignature sig2 = new TransactionSignature(testKey.sign(sighash2), Transaction.SigHash.ALL,
-                    false);
+            TransactionSignature sig2 = new TransactionSignature(testKey.sign(sighash2).sig);
             Script inputScript2 = ScriptBuilder.createInputScript(sig2);
             input2.setScriptSig(inputScript2);
 
@@ -2619,7 +2617,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpenNoBIGs() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Make the "test" token
         Block tokenBlock = null;
@@ -2666,8 +2664,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
             Sha256Hash sighash2 = tx.hashForSignature(0, spendableOutput2.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
-            TransactionSignature sig2 = new TransactionSignature(testKey.sign(sighash2), Transaction.SigHash.ALL,
-                    false);
+            TransactionSignature sig2 = new TransactionSignature(testKey.sign(sighash2).sig);
             Script inputScript2 = ScriptBuilder.createInputScript(sig2);
             input2.setScriptSig(inputScript2);
 
@@ -2689,7 +2686,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpenFractionalPrice() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey tokenKey= new ECKey();
         resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
 
@@ -2737,7 +2734,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
 
@@ -2780,7 +2777,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
 
@@ -2803,7 +2800,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpOk() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey tokenKey= new ECKey();
         resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
 
@@ -2831,7 +2828,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
 
@@ -2856,7 +2853,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Legitimate it by signing
             Sha256Hash sighash1 = tx.getHash();
             ECKey.ECDSASignature party1Signature = testKey.sign(sighash1, null);
-            byte[] buf1 = party1Signature.encodeToDER();
+            byte[] buf1 = party1Signature.sig;
             tx.setDataSignature(buf1);
 
             // Create block with order
@@ -2873,7 +2870,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityOrderOpWrongSig() throws Exception {
 
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         ECKey tokenKey= new ECKey();
         resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
 
@@ -2900,7 +2897,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
                     false);
 
-            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+            TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
             Script inputScript = ScriptBuilder.createInputScript(sig);
             input.setScriptSig(inputScript);
 
@@ -2924,7 +2921,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
             // Legitimate it by signing
             Sha256Hash sighash1 = tx.getHash();
             ECKey.ECDSASignature party1Signature = testKey.sign(sighash1, null);
-            byte[] buf1 = party1Signature.encodeToDER();
+            byte[] buf1 = party1Signature.sig;
             buf1[0] = 0;
             buf1[1] = 0;
             buf1[2] = 0;

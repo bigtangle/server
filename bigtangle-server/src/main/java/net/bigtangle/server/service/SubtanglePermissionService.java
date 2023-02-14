@@ -21,10 +21,9 @@ public class SubtanglePermissionService {
   
 
     public boolean savePubkey(String pubkey, String signHex, FullBlockStore store) throws BlockStoreException {
-        ECKey key = ECKey.fromPublicOnly(Utils.HEX.decode(pubkey));
-
+     
         byte[] signOutput = Utils.HEX.decode(signHex);
-        boolean flag = key.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput);
+        boolean flag = ECKey.verify(Sha256Hash.ZERO_HASH.getBytes(), signOutput,Utils.HEX.decode(pubkey));
         if (flag) {
             store.deleteSubtanglePermission(pubkey);
             store.insertSubtanglePermission(pubkey, null, SubtangleStatus.wait);

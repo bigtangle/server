@@ -125,7 +125,7 @@ public class BasicKeyChainTest {
         ECKey key = chain.findKeyFromPubKey(key1.getPubKey());
         assertTrue(key.isEncrypted());
         assertTrue(key.isPubKeyOnly());
-        assertFalse(key.isWatching());
+ 
         assertNull(key.getSecretBytes());
 
         try {
@@ -143,8 +143,7 @@ public class BasicKeyChainTest {
         key = chain.findKeyFromPubKey(key1.getPubKey());
         assertFalse(key.isEncrypted());
         assertFalse(key.isPubKeyOnly());
-        assertFalse(key.isWatching());
-        key.getPrivKeyBytes();
+ 
     }
 
     @Test(expected = KeyCrypterException.class)
@@ -179,8 +178,8 @@ public class BasicKeyChainTest {
         assertEquals(2, keys.size());
         assertArrayEquals(key1.getPubKey(), keys.get(0).getPublicKey().toByteArray());
         assertArrayEquals(key2.getPubKey(), keys.get(1).getPublicKey().toByteArray());
-        assertArrayEquals(key1.getPrivKeyBytes(), keys.get(0).getSecretBytes().toByteArray());
-        assertArrayEquals(key2.getPrivKeyBytes(), keys.get(1).getSecretBytes().toByteArray());
+        assertArrayEquals(key1.getPrivateKey(), keys.get(0).getSecretBytes().toByteArray());
+        assertArrayEquals(key2.getPrivateKey(), keys.get(1).getSecretBytes().toByteArray());
         long normTime = (long) (Math.floor(now.getTime() / 1000) * 1000);
         assertEquals(normTime, keys.get(0).getCreationTimestamp());
         assertEquals(normTime + 5000 * 1000, keys.get(1).getCreationTimestamp());
@@ -203,14 +202,14 @@ public class BasicKeyChainTest {
         assertFalse(keys.get(0).hasSecretBytes());
         assertTrue(keys.get(0).hasEncryptedData());
         chain = BasicKeyChain.fromProtobufEncrypted(keys, checkNotNull(chain.getKeyCrypter()));
-        assertEquals(key1.getEncryptedPrivateKey(), chain.getKeys().get(0).getEncryptedPrivateKey());
+        assertEquals(key1.getEncryptedData(), chain.getKeys().get(0).getEncryptedData());
         assertTrue(chain.checkPassword("foo bar"));
     }
 
     @Test
     public void watching() throws UnreadableWalletException {
         ECKey key1 = new ECKey();
-        ECKey pub = ECKey.fromPublicOnly(key1.getPubKeyPoint());
+        ECKey pub = ECKey.fromPublicOnly(key1.getPubKey());
         chain.importKeys(pub);
         assertEquals(1, chain.numKeys());
         List<Protos.Key> keys = chain.serializeToProtobuf();

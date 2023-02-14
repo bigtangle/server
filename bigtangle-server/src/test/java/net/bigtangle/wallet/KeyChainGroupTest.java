@@ -413,8 +413,7 @@ public class KeyChainGroupTest {
         assertEquals(initialKeys + 1 /* for the seed */, group.serializeToProtobuf().size());
         group = KeyChainGroup.fromProtobufUnencrypted(PARAMS, group.serializeToProtobuf());
         group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        DeterministicKey key1 = group.freshKey(KeyChain.KeyPurpose.RECEIVE_FUNDS);
-        DeterministicKey key2 = group.freshKey(KeyChain.KeyPurpose.CHANGE);
+ 
         group.getBloomFilterElementCount();
         List<Protos.Key> protoKeys1 = group.serializeToProtobuf();
         assertEquals(initialKeys + ((LOOKAHEAD_SIZE + 1) * 2) + 1 /* for the seed */ + 1, protoKeys1.size());

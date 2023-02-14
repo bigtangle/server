@@ -40,7 +40,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
 
         for (ECKey ecKey : wallet2Keys) {
-            System.out.println("pubKey : " + ecKey.getPublicKeyAsHex() + ", privKey : " + ecKey.getPrivateKeyAsHex());
+            System.out.println("pubKey : " + ecKey.getPublicKeyAsHex() + ", privKey : " + ecKey.getPrivateKeyString());
         }
 
         ECKey testKey = walletKeys.get(0);
@@ -70,7 +70,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
         wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
 
         for (ECKey ecKey : wallet1Keys) {
-            System.out.println("pubKey : " + ecKey.getPublicKeyAsHex() + ", privKey : " + ecKey.getPrivateKeyAsHex());
+            System.out.println("pubKey : " + ecKey.getPublicKeyAsHex() + ", privKey : " + ecKey.getPrivateKeyString());
         }
 
         ECKey testKey = walletKeys.get(0);

@@ -60,7 +60,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void orderTickerPrice() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -118,7 +118,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void orderTickerSearchAPI() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -174,7 +174,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     //TODO no data @Test
     public void orderTickerSearchAVGAPI() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -234,7 +234,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
    // @Test
     public void orderTickerSearchWithLastdayPriceAPI() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -297,7 +297,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void buy() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -335,7 +335,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         List<Block> addedBlocks = new ArrayList<>();
 
         // base token
-        ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
+        ECKey yuan = ECKey.fromPrivateAndPublic(Utils.HEX.decode(yuanTokenPriv), Utils.HEX.decode(yuanTokenPub));
 
         long tokennumber = 888888 * 1000;
         makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
@@ -388,7 +388,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         List<Block> addedBlocks = new ArrayList<>();
         // base token
-        ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
+        ECKey yuan = ECKey.fromPrivateAndPublic(Utils.HEX.decode(yuanTokenPriv), Utils.HEX.decode(yuanTokenPub));
 
         long tokennumber = 888888 * 1000;
         makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
@@ -441,7 +441,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         List<Block> addedBlocks = new ArrayList<>();
 
         // base token
-        ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
+        ECKey yuan =  ECKey.fromPrivateAndPublic(Utils.HEX.decode(yuanTokenPriv), Utils.HEX.decode(yuanTokenPub));
         int priceshift = 1000000;
         long tokennumber = priceshift * 1000;
         makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
@@ -477,7 +477,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         List<Block> addedBlocks = new ArrayList<>();
 
         // base token
-        ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
+        ECKey yuan =  ECKey.fromPrivateAndPublic(Utils.HEX.decode(yuanTokenPriv), Utils.HEX.decode(yuanTokenPub));
         int priceshift = 1000000;
         long tokennumber = priceshift * 1000;
         makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
@@ -518,14 +518,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void buyBaseTokenMixed() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
         int priceshift = 1000000;
 
         // base token
-        ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
+        ECKey yuan =  ECKey.fromPrivateAndPublic(Utils.HEX.decode(yuanTokenPriv), Utils.HEX.decode(yuanTokenPub));
         resetAndMakeTestToken(yuan, addedBlocks);
 
         // Make test token
@@ -589,7 +589,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void sell() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -625,7 +625,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void multiLevelBuy() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -666,7 +666,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void multiLevelSell() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -707,7 +707,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void partialBuy() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -743,7 +743,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void partialSell() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -779,7 +779,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void partialBidFill() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -817,7 +817,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void partialAskFill() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -855,7 +855,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void cancel() throws Exception {
 
-        // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        // ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
         // Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -887,7 +887,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void cancelTwoStep() throws Exception {
 
         // ECKey genesisKey =
-        // ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        // ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
         // Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -924,7 +924,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void effectiveCancel() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -965,7 +965,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     public void testValidFromTime() throws Exception {
         final int waitTime = 5000;
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -1003,7 +1003,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
@@ -1082,7 +1082,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
         Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
@@ -1110,7 +1110,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void testAllOrdersSpent() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -1147,7 +1147,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void testReorgMatching() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -1183,7 +1183,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void testMultiMatching1() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -1221,7 +1221,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
     @Test
     public void testMultiMatching3() throws Exception {
 
-        ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesisKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
@@ -1345,7 +1345,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
         List<Block> addedBlocks = new ArrayList<>();
         int priceshift = 1000000;
         // base token yuan with decimal 2
-        ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
+        ECKey yuan =  ECKey.fromPrivateAndPublic(Utils.HEX.decode(yuanTokenPriv), Utils.HEX.decode(yuanTokenPub));
         makeTestToken(yuan, BigInteger.valueOf(10000000), addedBlocks, 2);
 
         // Make test token with decimal 2

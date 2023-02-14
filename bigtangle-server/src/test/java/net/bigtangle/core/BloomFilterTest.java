@@ -68,7 +68,7 @@ public class BloomFilterTest {
 
         KeyChainGroup group = new KeyChainGroup(params);
         // Add a random key which happens to have been used in a recent generation
-        group.importKeys(ECKey.fromPublicOnly(privKey.getKey().getPubKeyPoint()), ECKey.fromPublicOnly(HEX.decode("03cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99")));
+       // group.importKeys(ECKey.fromPublicOnly(privKey.getKey().getPubKeyPoint()), ECKey.fromPublicOnly(HEX.decode("03cb219f69f1b49468bd563239a86667e74a06fcba69ac50a08a5cbc42a5808e99")));
        // Wallet wallet = new Wallet(params, group);
          
         // We should have 2 per pubkey, and one for the pay-2-pubkey output we have

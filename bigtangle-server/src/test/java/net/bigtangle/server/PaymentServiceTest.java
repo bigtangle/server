@@ -131,10 +131,8 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         TransactionInput input2 = transaction0.getInput(0);
 
         Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript1, Transaction.SigHash.ALL, false);
-        TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys_part.get(0).sign(sighash),
-                Transaction.SigHash.ALL, false);
-        TransactionSignature tsintsig = new TransactionSignature(wallet1Keys_part.get(1).sign(sighash),
-                Transaction.SigHash.ALL, false);
+        TransactionSignature tsrecsig = new TransactionSignature(wallet1Keys_part.get(0).sign(sighash) .sig);
+        TransactionSignature tsintsig = new TransactionSignature(wallet1Keys_part.get(1).sign(sighash) .sig);
         Script inputScript = ScriptBuilder.createMultiSigInputScript(ImmutableList.of(tsrecsig, tsintsig));
         input2.setScriptSig(inputScript);
 
@@ -319,35 +317,5 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
     }
 
     //@Test
-    public void testBurnedAddress() throws Exception {
-
-        ECKey to = ECKey
-                .fromPrivate(Utils.HEX.decode("34c4fc283cd9ac303deb6617b8dcd4c033b007782fd15bd168d7fc0e1819f3f8"));
-
-        Coin aCoin = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
-
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-
-        SendRequest request = SendRequest.to(to.toAddress(networkParameters), aCoin);
-
-        walletAppKit.wallet().completeTx(request, null);
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
-
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        makeRewardBlock();
-        // pay from burned address
-        try {
-            Wallet wallet = Wallet.fromKeys(networkParameters, to);
-            wallet.setServerURL(contextRoot);
-            wallet.pay(null, to.toAddress(networkParameters), aCoin, "");
-            fail();
-        } catch (RuntimeException e) {
-          assertTrue(e.getMessage().contains("Burned"));
-        }
-
-    }
+    public void testBurnedAddress() throws Exception { }
 }

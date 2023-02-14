@@ -64,7 +64,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
     @Test
     public void testConflictTransactionalUTXO() throws Exception {
         // Generate two conflicting blocks
-        ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
+        ECKey testKey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
         List<UTXO> outputs = getBalance(false, testKey);
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
         Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
@@ -74,7 +74,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash).sig);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
@@ -344,7 +344,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
     @Test
     public void testUpdateConflictingTransactionalMilestoneCandidates() throws Exception {
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesiskey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         // use UTXO to create double spending, this can not be created with
         // wallet
@@ -357,7 +357,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL, false);
+        TransactionSignature sig = new TransactionSignature(genesiskey.sign(sighash).sig);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 
@@ -461,7 +461,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 //        assertTrue(blockService.getBlockEvaluation(b2.getHash(), store).isConfirmed());
 //        assertTrue(blockService.getBlockEvaluation(b3.getHash(), store).isConfirmed());
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+        ECKey genesiskey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
         // use UTXO to create double spending, this can not be created with
         // wallet
@@ -474,7 +474,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
                 Transaction.SigHash.ALL, false);
 
-        TransactionSignature sig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL, false);
+        TransactionSignature sig = new TransactionSignature(genesiskey.sign(sighash).sig);
         Script inputScript = ScriptBuilder.createInputScript(sig);
         input.setScriptSig(inputScript);
 

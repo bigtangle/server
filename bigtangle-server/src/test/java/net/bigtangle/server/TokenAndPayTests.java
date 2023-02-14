@@ -104,8 +104,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         tx.addOutput(new TransactionOutput(networkParameters, tx, amount, outKey));
         TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), transactionOutput);
         Sha256Hash sighash = tx.hashForSignature(0, transactionOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
-                false);
+        TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash).sig);
         Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
         input.setScriptSig(inputScript);
 
@@ -319,11 +318,10 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         Transaction transaction0 = networkParameters.getDefaultSerializer().makeTransaction(payloadBytes);
 
         Sha256Hash sighash = transaction0.hashForSignature(0, multisigScript_1, Transaction.SigHash.ALL, false);
-        TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash),
-                Transaction.SigHash.ALL, false);
+        TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash).sig);
 
         ECKey.ECDSASignature party1Signature = ecKey.sign(transaction0.getHash());
-        byte[] buf1 = party1Signature.encodeToDER();
+        byte[] buf1 = party1Signature.sig;
 
         requestParam.clear();
         requestParam.put("orderid", (String) payMultiSign_.getOrderid());
@@ -616,7 +614,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         }
         Sha256Hash sighash = transaction.getHash();
         ECKey.ECDSASignature party1Signature = keys.get(3).sign(sighash);
-        byte[] buf1 = party1Signature.encodeToDER();
+        byte[] buf1 = party1Signature.sig;
 
         MultiSignBy multiSignBy0 = new MultiSignBy();
         multiSignBy0.setTokenid(tokenid);
@@ -778,7 +776,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         }
         Sha256Hash sighash = transaction.getHash();
         ECKey.ECDSASignature party1Signature = keys.get(0).sign(sighash);
-        byte[] buf1 = party1Signature.encodeToDER();
+        byte[] buf1 = party1Signature.sig;
 
         MultiSignBy multiSignBy0 = new MultiSignBy();
         multiSignBy0.setTokenid(tokenid);
@@ -842,7 +840,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
             Sha256Hash sighash = transaction.getHash();
             ECKey.ECDSASignature party1Signature = outKey.sign(sighash);
-            byte[] buf1 = party1Signature.encodeToDER();
+            byte[] buf1 = party1Signature.sig;
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
             MultiSignBy multiSignBy0 = new MultiSignBy();
@@ -938,7 +936,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
             }
             Sha256Hash sighash = transaction.getHash();
             ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
-            byte[] buf1 = party1Signature.encodeToDER();
+            byte[] buf1 = party1Signature.sig;
 
             MultiSignBy multiSignBy0 = new MultiSignBy();
             multiSignBy0.setTokenid(tokenid);
@@ -961,7 +959,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         ECKey outKey = new ECKey();
         log.debug("pubkey= " + Utils.HEX.encode(outKey.getPubKey()));
         // ECKey ecKey = ECKey.fromPublicOnly(outKey.getPubKey());
-        log.debug("privkey= " + outKey.getPrivateKeyAsHex());
+        log.debug("privkey= " + outKey.getPrivateKeyString());
     }
 
     public void testRequestBlock(Block block) throws Exception {

@@ -54,7 +54,7 @@ import org.spongycastle.crypto.params.KeyParameter;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.google.common.annotations.VisibleForTesting;
+ 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -2559,7 +2559,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         return getDomainBlockHashResponse;
     }
 
-    public void multiSign(final String tokenid, ECKey2 outKey, KeyParameter aesKey) throws Exception {
+    public void multiSign(final String tokenid, ECKey outKey, KeyParameter aesKey) throws Exception {
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
 
         String address = outKey.toAddress(params).toBase58();
@@ -2586,8 +2586,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
             multiSignBies = multiSignByRequest.getMultiSignBies();
         }
         Sha256Hash sighash = transaction.getHash();
-        ECKey2.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
-        byte[] buf1 = party1Signature.encodeToDER();
+        ECKey.ECDSASignature party1Signature = outKey.sign(sighash, aesKey);
+        byte[] buf1 = party1Signature.sig;
 
         MultiSignBy multiSignBy0 = new MultiSignBy();
 
