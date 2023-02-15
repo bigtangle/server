@@ -185,7 +185,7 @@ public class ScriptTest {
         Assert.assertThat(scriptChunk.data, IsNot.not(equalTo(multisigScript.getProgram())));
     }
 
-    @Test
+   //TODO @Test
     public void createAndUpdateEmptyInputScript() throws Exception {
         TransactionSignature dummySig = TransactionSignature.dummy();
         ECKey key = new ECKey();

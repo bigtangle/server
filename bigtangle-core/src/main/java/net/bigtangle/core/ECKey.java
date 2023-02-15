@@ -43,6 +43,8 @@ import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Base64;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
+import com.google.common.primitives.Ints;
 
 import net.bigtangle.core.ECKey2.ECDSASignature;
 import net.bigtangle.core.ECKey2.KeyIsEncryptedException;
@@ -508,5 +510,22 @@ public class ECKey implements EncryptableItem {
     public boolean isPubKeyOnly() {
         return priv == null;
     }
-
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || !(o instanceof ECKey)) return false;
+        ECKey other = (ECKey) o;
+        return Objects.equal(this.priv, other.priv)
+                && Objects.equal(this.pub, other.pub)
+                && Objects.equal(this.creationTimeSeconds, other.creationTimeSeconds)
+                && Objects.equal(this.keyCrypter, other.keyCrypter)
+                && Objects.equal(this.encryptedData, other.encryptedData);
+    }
+    @Override
+    public int hashCode() {
+        // Public keys are random already so we can just use a part of them as the hashcode. Read from the start to
+        // avoid picking up the type code (compressed vs uncompressed) which is tacked on the end.
+        byte[] bits = getPubKey();
+        return Ints.fromBytes(bits[0], bits[1], bits[2], bits[3]);
+    }
 }

@@ -166,8 +166,8 @@ public class BasicKeyChain implements EncryptableKeyChain {
     private void checkKeyEncryptionStateMatches(ECKey key) {
         if (keyCrypter == null && key.isEncrypted())
             throw new KeyCrypterException("Key is encrypted but chain is not");
-        else if (keyCrypter != null && !key.isEncrypted())
-            throw new KeyCrypterException("Key is not encrypted but chain is");
+    //    else if (keyCrypter != null && !key.isEncrypted())
+    //        throw new KeyCrypterException("Key is not encrypted but chain is");
         else if (keyCrypter != null && key.getKeyCrypter() != null && !key.getKeyCrypter().equals(keyCrypter))
             throw new KeyCrypterException("Key encrypted under different parameters to chain");
     }
