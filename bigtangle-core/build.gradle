@@ -21,6 +21,8 @@ dependencies {
     compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
   	//compile group: 'com.swiftcryptollc', name: 'kyberJCE', version:'2.1.5'
   	compile group: 'net.thiim.dilithium', name: 'dilithium-java', version:'0.0.1-SNAPSHOT'
+  	compile group: 'org.bouncycastle', name: 'bcprov-jdk18on', version:'1.71'
+ 
     /**
      * test dependencies
      */
