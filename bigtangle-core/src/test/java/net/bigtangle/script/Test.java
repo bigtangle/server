@@ -1,5 +1,7 @@
 package net.bigtangle.script;
 
+import static org.junit.Assert.assertEquals;
+
 import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -36,6 +38,6 @@ public class Test {
         DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(DilithiumParameterSpec.LEVEL2, sk.getEncoded());
         PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
         System.out.println("sk2 = " + Hex.toHexString(privateKey.getEncoded()).toUpperCase());
-
+        assertEquals(sk, privateKey);assertEquals(pk, publicKey);
     }
 }
