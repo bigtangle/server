@@ -516,7 +516,7 @@ public class ECKey implements EncryptableItem {
         if (o == null || !(o instanceof ECKey)) return false;
         ECKey other = (ECKey) o;
         return Objects.equal(this.priv, other.priv)
-                && Objects.equal(this.pub, other.pub)
+                && Objects.equal(this.pub.getEncoded(), other.pub.getEncoded())
                 && Objects.equal(this.creationTimeSeconds, other.creationTimeSeconds)
                 && Objects.equal(this.keyCrypter, other.keyCrypter)
                 && Objects.equal(this.encryptedData, other.encryptedData);

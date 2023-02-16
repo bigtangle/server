@@ -10,6 +10,7 @@ import java.security.PublicKey;
 
 import org.bouncycastle.util.encoders.Hex;
 
+import net.thiim.dilithium.impl.DilithiumPrivateKeyImpl;
 import net.thiim.dilithium.impl.PackingUtils;
 import net.thiim.dilithium.interfaces.DilithiumParameterSpec;
 import net.thiim.dilithium.interfaces.DilithiumPrivateKey;
@@ -23,7 +24,7 @@ public class Test {
     public void test() throws Exception {
         DilithiumProvider pv = new DilithiumProvider();
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("Dilithium", pv);
-        kpg.initialize(DilithiumParameterSpec.LEVEL2);
+        kpg.initialize(DilithiumParameterSpec.LEVEL3);
         KeyPair kp = kpg.generateKeyPair();
 
         DilithiumPrivateKey sk = (DilithiumPrivateKey) kp.getPrivate();
@@ -31,13 +32,13 @@ public class Test {
         System.out.println("pk = " + Hex.toHexString(pk.getEncoded()).toUpperCase());
         System.out.println("sk = " + Hex.toHexString(sk.getEncoded()).toUpperCase());
 
-        DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(DilithiumParameterSpec.LEVEL2, pk.getEncoded());
-        PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
+        DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(DilithiumParameterSpec.LEVEL3, pk.getEncoded());
+        DilithiumPublicKey publicKey =(DilithiumPublicKey) PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
         System.out.println("pk1 = " + Hex.toHexString(publicKey.getEncoded()).toUpperCase());
 
-        DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(DilithiumParameterSpec.LEVEL2, sk.getEncoded());
-        PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
+        DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(DilithiumParameterSpec.LEVEL3, sk.getEncoded());
+        DilithiumPrivateKey privateKey = (DilithiumPrivateKey) PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
         System.out.println("sk2 = " + Hex.toHexString(privateKey.getEncoded()).toUpperCase());
-        assertEquals(sk, privateKey);assertEquals(pk, publicKey);
+        assertEquals(sk.getEncoded(), privateKey.getEncoded());assertEquals(pk.getEncoded(), publicKey.getEncoded());
     }
 }
