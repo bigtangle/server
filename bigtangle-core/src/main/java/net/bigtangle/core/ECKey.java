@@ -393,7 +393,7 @@ public class ECKey implements EncryptableItem {
 					"The keyCrypter being used to decrypt the key is different to the one that was used to encrypt it");
 		checkState(encryptedData != null, "This key is not encrypted");
 		byte[] unencryptedPrivateKey = keyCrypter.decrypt(encryptedData, aesKey);
-		ECKey key = ECKey.fromPrivatekey(unencryptedPrivateKey);
+		ECKey key = ECKey.fromPrivateAndPublic(unencryptedPrivateKey,encryptedData.publicBytes);
 		// if (!isCompressed())
 		// key = key.decompress();
 		if (!Arrays.equals(key.getPubKey(), getPubKey()))
@@ -510,22 +510,5 @@ public class ECKey implements EncryptableItem {
     public boolean isPubKeyOnly() {
         return priv == null;
     }
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || !(o instanceof ECKey)) return false;
-        ECKey other = (ECKey) o;
-        return Objects.equal(this.priv, other.priv)
-                && Objects.equal(this.pub.getEncoded(), other.pub.getEncoded())
-                && Objects.equal(this.creationTimeSeconds, other.creationTimeSeconds)
-                && Objects.equal(this.keyCrypter, other.keyCrypter)
-                && Objects.equal(this.encryptedData, other.encryptedData);
-    }
-    @Override
-    public int hashCode() {
-        // Public keys are random already so we can just use a part of them as the hashcode. Read from the start to
-        // avoid picking up the type code (compressed vs uncompressed) which is tacked on the end.
-        byte[] bits = getPubKey();
-        return Ints.fromBytes(bits[0], bits[1], bits[2], bits[3]);
-    }
+    
 }

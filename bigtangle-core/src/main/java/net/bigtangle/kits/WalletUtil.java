@@ -40,57 +40,58 @@ import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.WalletProtobufSerializer;
 
 public class WalletUtil {
-    protected static final Logger log = LoggerFactory.getLogger(WalletUtil.class);
- 
+	protected static final Logger log = LoggerFactory.getLogger(WalletUtil.class);
 
-    public static byte[] createWallet(NetworkParameters params) throws Exception {
+	public static byte[] createWallet(NetworkParameters params) throws Exception {
 
-        Wallet wallet =   Wallet.fromKeys(params, new ECKey()); // default
+		return createWallet(params, new ECKey());
 
-        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-        new WalletProtobufSerializer().writeWallet(wallet, outStream);
-        return outStream.toByteArray();
+	}
 
-    }
+	public static byte[] createWallet(NetworkParameters params, ECKey eckey) throws Exception {
+		Wallet wallet = Wallet.fromKeys(params, eckey);
+		ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+		new WalletProtobufSerializer().writeWallet(wallet, outStream);
+		return outStream.toByteArray();
 
-    public static byte[] createWallet(NetworkParameters params, int size) throws IOException {
-        KeyChainGroup kcg;
-        kcg = new KeyChainGroup(params);
-        kcg.setLookaheadSize(size);
- 
-        Wallet wallet = new Wallet(params, kcg); // default
+	}
 
-        ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-        new WalletProtobufSerializer().writeWallet(wallet, outStream);
-        return outStream.toByteArray();
+	public static byte[] createWallet(NetworkParameters params, int size) throws IOException {
+		KeyChainGroup kcg;
+		kcg = new KeyChainGroup(params);
+		kcg.setLookaheadSize(size);
 
-    }
+		Wallet wallet = new Wallet(params, kcg); // default
 
-    public static Wallet loadWallet(boolean shouldReplayWallet, InputStream walletStream, NetworkParameters params)
-            throws IOException, UnreadableWalletException {
- 
-        Wallet wallet;
-        try {
+		ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+		new WalletProtobufSerializer().writeWallet(wallet, outStream);
+		return outStream.toByteArray();
 
-            Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
-            final WalletProtobufSerializer serializer = new WalletProtobufSerializer();
-            wallet = serializer.readWallet(params, null, proto);
+	}
 
-        } finally {
-            walletStream.close();
-        }
-        return wallet;
-    }
+	public static Wallet loadWallet(boolean shouldReplayWallet, InputStream walletStream, NetworkParameters params)
+			throws IOException, UnreadableWalletException {
 
-   
+		Wallet wallet;
+		try {
 
-    public static byte[] encrypt( ECKey2 ecKey , byte[] payload ) throws InvalidCipherTextException, IOException   {
-      return  ECIESCoder.encrypt(ecKey.getPubKeyPoint(), payload);
-     
-    }
+			Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
+			final WalletProtobufSerializer serializer = new WalletProtobufSerializer();
+			wallet = serializer.readWallet(params, null, proto);
 
-    public static byte[] decrypt( ECKey2 ecKey , byte[] cipher) throws InvalidCipherTextException, IOException    {
-      return    ECIESCoder.decrypt(ecKey.getPrivKey(), cipher);
-    }
+		} finally {
+			walletStream.close();
+		}
+		return wallet;
+	}
+
+	public static byte[] encrypt(ECKey2 ecKey, byte[] payload) throws InvalidCipherTextException, IOException {
+		return ECIESCoder.encrypt(ecKey.getPubKeyPoint(), payload);
+
+	}
+
+	public static byte[] decrypt(ECKey2 ecKey, byte[] cipher) throws InvalidCipherTextException, IOException {
+		return ECIESCoder.decrypt(ecKey.getPrivKey(), cipher);
+	}
 
 }

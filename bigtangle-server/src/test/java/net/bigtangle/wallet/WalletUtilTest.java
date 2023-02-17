@@ -36,16 +36,15 @@ public class WalletUtilTest {
 
     @Test
     public void walletCreateLoadTest() throws Exception {
-
-        byte[] a = WalletUtil.createWallet(TestParams.get());
+    	 ECKey k= new  ECKey();
+        byte[] a = WalletUtil.createWallet(MainNetParams.get(),k);
         Wallet wallet = WalletUtil.loadWallet(false, new ByteArrayInputStream(a), MainNetParams.get());
 
         List<ECKey> issuedKeys = wallet.walletKeys(null);
         assertTrue(issuedKeys.size() == 1);
         for (ECKey ecKey : issuedKeys) {
-            log.debug(ecKey.getPublicKeyAsHex());
-            log.debug(ecKey.getPrivateKeyString());
-            log.debug(ecKey.toAddress(MainNetParams.get()).toString());
+        	 assertEquals(ecKey.getPrivateKeyString(), k.getPrivateKeyString());
+        	 assertEquals(ecKey.getPublicKeyString(), k.getPublicKeyString());
         }
 
     }
