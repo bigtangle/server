@@ -43,19 +43,16 @@ import org.spongycastle.crypto.params.KeyParameter;
 import org.spongycastle.util.encoders.Base64;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
-import com.google.common.primitives.Ints;
 
-import net.bigtangle.core.ECKey2.ECDSASignature;
 import net.bigtangle.core.ECKey2.KeyIsEncryptedException;
 import net.bigtangle.core.ECKey2.MissingPrivateKeyException;
 import net.bigtangle.crypto.EncryptableItem;
 import net.bigtangle.crypto.EncryptedData;
 import net.bigtangle.crypto.KeyCrypter;
 import net.bigtangle.crypto.KeyCrypterException;
+import net.bigtangle.params.MainNetParams;
 import net.bigtangle.wallet.Protos;
 import net.bigtangle.wallet.Wallet;
-import net.bigtangle.wallet.Protos.Wallet.EncryptionType;
 import net.thiim.dilithium.impl.PackingUtils;
 import net.thiim.dilithium.interfaces.DilithiumParameterSpec;
 import net.thiim.dilithium.interfaces.DilithiumPrivateKeySpec;
@@ -212,26 +209,26 @@ public class ECKey implements EncryptableItem {
 		PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
 		return new ECKey(privateKey, null, null);
 	}
-
-	public static ECKey fromPublicOnly(byte[] publicHash) {
-		return fromPublicKey(publicHash);
+ 
+	public static ECKey fromPublicOnly(String publicHex) {
+		return fromPublicOnly(Utils.HEX.decode(publicHex));
 	}
-
-	public static ECKey fromPublicKey(byte[] publicHash) {
-		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(spec, publicHash);
+	
+	public static ECKey fromPublicOnly(byte[] publicByte) {
+		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(spec, publicByte);
 		PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
 		return new ECKey(null, publicKey, null);
 	}
 
-	public static ECKey fromPrivatekey(byte[] privateHash) {
+	private static ECKey fromPrivatekey(byte[] privateHash) {
 		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(spec, privateHash);
 		PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
 		return new ECKey(privateKey, null, null);
 	}
-	public static ECKey fromPrivateAndPublic(byte[] privateHash, byte[] publicHash) {
+	public static ECKey fromPrivateAndPublic(byte[] privateHash, byte[] publicByte) {
 		DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(spec, privateHash);
 		PrivateKey privateKey = PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
-		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(spec, publicHash);
+		DilithiumPublicKeySpec pubspec = new DilithiumPublicKeySpec(spec, publicByte);
 		PublicKey publicKey = PackingUtils.unpackPublicKey(pubspec.getParameterSpec(), pubspec.getBytes());
 		return new ECKey(privateKey, publicKey, null);
 	}
@@ -239,7 +236,7 @@ public class ECKey implements EncryptableItem {
 		try {
 			DilithiumProvider pv = new DilithiumProvider();
 			Signature signature = Signature.getInstance("Dilithium", pv);
-			ECKey ec = ECKey.fromPublicKey(pubKey);
+			ECKey ec = ECKey.fromPublicOnly(pubKey);
 			signature.initVerify(ec.pub); //
 			// alertSigningKey);
 			signature.update(text);
@@ -297,6 +294,16 @@ public class ECKey implements EncryptableItem {
 	 * that an address is derived from the RIPEMD-160 hash of the public key and is
 	 * not the public key itself (which is too large to be convenient).
 	 */
+	public String toTokenid() {
+		return  Utils.HEX.encode( getPubKeyHash()) ;
+	}
+
+	
+	/**
+	 * Returns the address that corresponds to the public part of this ECKey. Note
+	 * that an address is derived from the RIPEMD-160 hash of the public key and is
+	 * not the public key itself (which is too large to be convenient).
+	 */
 	public Address toAddress(NetworkParameters params) {
 		return new Address(params, getPubKeyHash());
 	}
@@ -344,13 +351,13 @@ public class ECKey implements EncryptableItem {
 		checkNotNull(keyCrypter);
 		final byte[] privKeyBytes = priv.getEncoded();
 		EncryptedData encryptedPrivateKey = keyCrypter.encrypt(privKeyBytes, pub.getEncoded(), aesKey);
-		ECKey result = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter, getPubKey());
+		ECKey result = ECKey.fromEncrypted(encryptedPrivateKey, keyCrypter);
 		result.setCreationTimeSeconds(creationTimeSeconds);
 		return result;
 	}
 
-	public static ECKey fromEncrypted(EncryptedData encrypted, KeyCrypter keyCrypter2, byte[] pubKey) {
-		ECKey key = fromPublicKey( pubKey);
+	public static ECKey fromEncrypted(EncryptedData encrypted, KeyCrypter keyCrypter2 ) {
+		ECKey key = new ECKey( null,null ,encrypted);
 		key.encryptedData=encrypted;
         key.keyCrypter = checkNotNull(keyCrypter2);
         return key;

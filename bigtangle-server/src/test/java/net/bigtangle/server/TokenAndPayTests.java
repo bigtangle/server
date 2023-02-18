@@ -730,7 +730,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
                 Json.jsonmapper().writeValueAsString(requestParam));
         Block block = networkParameters.getDefaultSerializer().makeBlock(data);
         block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        String tokenid = keys.get(5).getPublicKeyAsHex();
+        String tokenid = keys.get(5).toTokenid();
         int amount = 100000000;
         Coin basecoin = Coin.valueOf(amount, tokenid);
 
@@ -803,12 +803,12 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         walletAppKit.wallet().importKey(new ECKey() );
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
         ECKey outKey = keys.get(6);
-        byte[] pubKey = outKey.getPubKey();
-        String tokenid = Utils.HEX.encode(pubKey);
+        ECKey pubKey = outKey;
+        String tokenid = pubKey.toTokenid();
         for (int i = 1; i <= 2; i++) {
             TokenInfo tokenInfo = new TokenInfo();
 
-            Coin basecoin = Coin.valueOf(100000L, pubKey);
+            Coin basecoin = Coin.valueOf(100000L, pubKey.getPubKey());
 
             Token tokens = Token.buildSimpleTokenInfo(true, null, tokenid, "test", "test", 2, 0, basecoin.getValue(),
                     false, 0, networkParameters.getGenesisBlock().getHashAsString());
@@ -844,7 +844,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
             List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
             MultiSignBy multiSignBy0 = new MultiSignBy();
-            multiSignBy0.setTokenid(Utils.HEX.encode(pubKey));
+            multiSignBy0.setTokenid(pubKey.toTokenid());
             multiSignBy0.setTokenindex(0);
             multiSignBy0.setAddress(outKey.toAddress(networkParameters).toBase58());
             multiSignBy0.setPublickey(Utils.HEX.encode(outKey.getPubKey()));
@@ -868,7 +868,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         wallet2();
 
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
-        String tokenid = keys.get(3).getPublicKeyAsHex();
+        String tokenid = keys.get(3).toTokenid();
 
         TokenInfo tokenInfo = new TokenInfo();
 
@@ -1010,7 +1010,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         walletAppKit.wallet().importKey(new ECKey() );
         walletAppKit.wallet().importKey(new ECKey() );
         List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
-        String tokenid =  new ECKey().getPublicKeyAsHex();
+        String tokenid =  new ECKey().toTokenid();
         TokenInfo tokenInfo = new TokenInfo();
 
         HashMap<String, String> requestParam00 = new HashMap<String, String>();
@@ -1056,7 +1056,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         TokenInfo updateTokenInfo = new TokenInfo().parse(transaction.getData());
         updateTokenInfo.getToken().setTokenname("UPDATE_TOKEN");
         ECKey key4 = keys.get(3);
-        updateTokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key4.getPublicKeyAsHex()));
+        updateTokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key4.toTokenid()));
         walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
 
         // save block

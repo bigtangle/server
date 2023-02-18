@@ -39,6 +39,6 @@ public class Test {
         DilithiumPrivateKeySpec prvspec = new DilithiumPrivateKeySpec(DilithiumParameterSpec.LEVEL3, sk.getEncoded());
         DilithiumPrivateKey privateKey = (DilithiumPrivateKey) PackingUtils.unpackPrivateKey(prvspec.getParameterSpec(), prvspec.getBytes());
         System.out.println("sk2 = " + Hex.toHexString(privateKey.getEncoded()).toUpperCase());
-        assertEquals(sk, privateKey);assertEquals(pk.getEncoded(), publicKey.getEncoded());
+        assertEquals(sk.getEncoded(), privateKey.getEncoded());assertEquals(pk.getEncoded(), publicKey.getEncoded());
     }
 }

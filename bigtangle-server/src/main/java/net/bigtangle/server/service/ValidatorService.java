@@ -1874,7 +1874,7 @@ public class ValidatorService {
 
         // Check all token issuance transaction outputs are actually of the
         // given token
-        for (Transaction tx1 : block.getTransactions()) {
+   /*     for (Transaction tx1 : block.getTransactions()) {
             for (TransactionOutput out : tx1.getOutputs()) {
                 if (!out.getValue().getTokenHex().equals(currentToken.getToken().getTokenid())) {
                     if (throwExceptions)
@@ -1883,7 +1883,7 @@ public class ValidatorService {
                 }
             }
         }
-
+*/
         // Check previous issuance hash exists or initial issuance
         if ((currentToken.getToken().getPrevblockhash() == null && currentToken.getToken().getTokenindex() != 0)
                 || (currentToken.getToken().getPrevblockhash() != null

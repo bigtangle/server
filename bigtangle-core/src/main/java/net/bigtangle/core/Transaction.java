@@ -1107,7 +1107,7 @@ public class Transaction extends ChildMessage {
             // ever put into scripts. Deleting OP_CODESEPARATOR is a step that
             // should never be required but if we don't
             // do it, we could split off the main chain.
-            connectedScript = Script.removeAllInstancesOfOp(connectedScript, ScriptOpCodes.OP_CODESEPARATOR);
+             connectedScript = Script.removeAllInstancesOfOp(connectedScript, ScriptOpCodes.OP_CODESEPARATOR);
 
             // Set the input to the script of its output. Bitcoin Core does this
             // but the step has no obvious purpose as

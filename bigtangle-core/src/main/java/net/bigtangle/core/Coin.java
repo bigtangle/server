@@ -24,6 +24,8 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import org.bouncycastle.util.encoders.Hex;
+
 import com.google.common.math.LongMath;
 
 /**
@@ -92,7 +94,7 @@ public final class Coin implements Monetary, Comparable<Coin>, Serializable {
     }
 
     public static Coin valueOf(final long satoshis, String tokenid) {
-        byte[] buf = Utils.HEX.decode(tokenid);
+        byte[] buf =  tokenid.getBytes();
         return new Coin(satoshis, buf);
     }
 

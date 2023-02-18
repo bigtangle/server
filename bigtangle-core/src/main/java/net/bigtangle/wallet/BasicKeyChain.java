@@ -376,7 +376,7 @@ public class BasicKeyChain implements EncryptableKeyChain {
                     Protos.EncryptedData proto = key.getEncryptedData();
                     EncryptedData e = new EncryptedData(proto.getInitialisationVector().toByteArray(),
                             proto.getEncryptedPrivateKey().toByteArray(),  proto.getPublicKey().toByteArray());
-                    ecKey = ECKey.fromEncrypted(e, keyCrypter, pub);
+                    ecKey = ECKey.fromEncrypted(e, keyCrypter);
                 } else {
                     if (priv != null)
                         ecKey = ECKey.fromPrivateAndPublic(priv, pub);

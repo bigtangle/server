@@ -335,7 +335,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         Coin coinbase = Coin.valueOf(77777L, pubKey);
 
         TokenInfo tokenInfo = new TokenInfo();
-        Token tokens = Token.buildSimpleTokenInfo(true, null, Utils.HEX.encode(pubKey), "Test", "Test", 1, 0,
+        Token tokens = Token.buildSimpleTokenInfo(true, null,  outKey.toTokenid(), "Test", "Test", 1, 0,
                 coinbase.getValue(), false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
@@ -345,7 +345,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
         // Generate second eligible issuance
         TokenInfo tokenInfo2 = new TokenInfo();
-        Token tokens2 = Token.buildSimpleTokenInfo(true, depBlock.getHash(), Utils.HEX.encode(pubKey), "Test", "Test",
+        Token tokens2 = Token.buildSimpleTokenInfo(true, depBlock.getHash(),outKey.toTokenid(), "Test", "Test",
                 1, 1, coinbase.getValue(), false, 0, networkParameters.getGenesisBlock().getHashAsString());
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()

@@ -38,9 +38,7 @@ import net.bigtangle.wallet.Wallet;
 public class FromAddressTests extends AbstractIntegrationTest {
     @Autowired
     private NetworkParameters networkParameters;
-    public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
-    public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
-
+   
     private ECKey accountKey;
     Wallet w;
     protected static final Logger log = LoggerFactory.getLogger(FromAddressTests.class);
@@ -132,12 +130,13 @@ public class FromAddressTests extends AbstractIntegrationTest {
             String description, BigInteger amount) throws JsonProcessingException, Exception {
         try {
             walletAppKit1.wallet().setServerURL(contextRoot);
-             createToken(key, tokename, decimals, domainname, description, amount, true, null,  TokenType.identity.ordinal(), key.getPublicKeyAsHex(),
+             createToken(key, tokename, decimals, domainname, description, amount, true, null,  TokenType.identity.ordinal(),
+            		 key.toTokenid(),
                     walletAppKit1.wallet());
             ECKey signkey = ECKey.fromPrivateAndPublic(Utils.HEX.decode(yuanTokenPriv),
             		Utils.HEX.decode(yuanTokenPub));
 
-            walletAppKit1.wallet().multiSign(key.getPublicKeyAsHex(), signkey, null);
+            walletAppKit1.wallet().multiSign(key.toTokenid(), signkey, null);
 
         } catch (Exception e) {
             // TODO: handle exception

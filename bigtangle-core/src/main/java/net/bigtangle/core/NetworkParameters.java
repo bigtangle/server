@@ -237,7 +237,7 @@ public abstract class NetworkParameters {
         }
         if (keys.size() <= 1) {
             coinbase.addOutput(new TransactionOutput(params, coinbase, base,
-                    ScriptBuilder.createOutputScript(ECKey.fromPublicOnly(keys.get(0).getPubKey())).getProgram()));
+                    ScriptBuilder.createOutputScript(keys.get(0)).getProgram()));
         } else {
             Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript((int) keys.size() - 1, keys);
             coinbase.addOutput(new TransactionOutput(params, coinbase, base, scriptPubKey.getProgram()));
