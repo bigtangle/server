@@ -485,18 +485,20 @@ public class ECKey implements EncryptableItem {
         builder.append("\n");
         if (includePrivateKeys) {
             builder.append("  ");
-            builder.append(toString(true, params));
+            builder.append(toString(true ));
             builder.append("\n");
         }
     }
     
-
-    private String toString(boolean includePrivate, NetworkParameters params) {
+    public String toString( ) {
+    	return toString(true);
+    }
+    private String toString(boolean includePrivate) {
         final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this).omitNullValues();
-        helper.add("pub HEX", getPublicKeyAsHex());
+        helper.add("pub", getPublicKeyAsHex());
         if (includePrivate) {
             try {
-                helper.add("priv HEX", getPrivateKeyString());
+                helper.add("\n priv", getPrivateKeyString());
  
             } catch (IllegalStateException e) {
                 // TODO: Make hasPrivKey() work for deterministic keys and fix this.
