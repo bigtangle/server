@@ -1176,7 +1176,7 @@ public class Transaction extends ChildMessage {
             tx.bitcoinSerialize(bos);
             // We also have to write a hash type (sigHashType is actually an
             // unsigned char)
-            uint32ToByteStreamLE(0x000000ff & sigHashType, bos);
+        //    uint32ToByteStreamLE(0x000000ff & sigHashType, bos);
             // Note that this is NOT reversed to ensure it will be signed
             // correctly. If it were to be printed out
             // however then we would expect that it is IS reversed.
