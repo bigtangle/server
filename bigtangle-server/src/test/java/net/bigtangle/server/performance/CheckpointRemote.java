@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.performance;
+package net.bigtangle.server.performance;
 
 import java.io.IOException;
 import java.math.BigInteger;

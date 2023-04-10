@@ -1,4 +1,4 @@
-package net.bigtangle.performance;
+package net.bigtangle.server.performance;
 
 import static org.junit.Assert.assertTrue;
 
