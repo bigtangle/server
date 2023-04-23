@@ -64,7 +64,8 @@ public class OrderYuanTest extends AbstractIntegrationTest {
         Address address = walletAppKit.wallet().walletKeys().get(0).toAddress(networkParameters);
         Coin amount = MonetaryFormat.FIAT.noCode().parse("1", Utils.HEX.decode(yuanTokenPub), 2);
         List<Long> list = new ArrayList<Long>();
-        for (int i = 0; i < 100; i++) {
+        long time1=System.currentTimeMillis();
+        for (int i = 0; i < 160; i++) {
             long start = System.currentTimeMillis();
             walletAppKit.wallet().pay(null, address, amount, "");
             makeRewardBlock();
@@ -72,6 +73,8 @@ public class OrderYuanTest extends AbstractIntegrationTest {
 
             list.add(end - start);
         }
+        long time2=System.currentTimeMillis();
+        list.add(time2 - time1);
         for (Long long1 : list) {
             System.out.println(long1);
         }
