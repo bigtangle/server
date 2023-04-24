@@ -1,7 +1,7 @@
  dependencies {
  
    implementation 'org.springframework.boot:spring-boot-starter-web:2.2.0.RELEASE'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator:$ ver.spring_boot'
+
     implementation 'org.springframework.boot:spring-boot-configuration-processor:2.2.0.RELEASE'   
  
     implementation project(':bigtangle-core')
