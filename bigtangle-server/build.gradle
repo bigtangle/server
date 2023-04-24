@@ -1,103 +1,42 @@
- plugins {
-    id 'application'
-   
-}
-
-
-defaultTasks 'clean', 'build'
-
-distributions {
-    main {
-        contents {
-            baseName = "bigtangle-server"
-        }
-    }
-}
- 
  
 dependencies {
 
-    compile group: 'org.springframework.boot', name: 'spring-boot-starter-web', version:  ver.spring_boot
-    compile group: 'org.springframework.boot', name: 'spring-boot-starter-actuator', version:   ver.spring_boot
-    compile group: 'org.springframework.boot', name: 'spring-boot-configuration-processor', version:  ver.spring_boot   
+    implementation 'org.springframework.boot:spring-boot-starter-web:2.2.0.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator:2.2.0.RELEASE'
+    implementation 'org.springframework.boot:spring-boot-configuration-processor:2.2.0.RELEASE'
 
-  	compile group: 'org.springframework.boot', name: 'spring-boot-starter-jdbc', version:  ver.spring_boot
-    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.8'
+  	implementation 'org.springframework.boot:spring-boot-starter-jdbc:2.2.0.RELEASE'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.8'
 
-   	compile group: 'org.apache.commons', name: 'commons-lang3', version:ver.commons_lang3
+   	implementation 'org.apache.commons:commons-lang3:3.6'
  
- 	compile group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka
+ 	implementation 'org.apache.kafka:kafka-streams:1.1.0'
  
-	compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:ver.bcprov_jdk15on
+	implementation 'org.bouncycastle:bcprov-jdk15on:1.63'
   
-    compile group: 'mysql', name: 'mysql-connector-java', version:ver.mysql_connector_java
+    implementation 'mysql:mysql-connector-java:8.0.18'
 
-    compile group: 'org.bgee.log4jdbc-log4j2', name: 'log4jdbc-log4j2-jdbc4.1', version: '1.16'
+    implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
  
-    compile group: 'com.google.code.gson', name: 'gson', version:ver.gson
+    implementation 'com.google.code.gson:gson:2.8.1'
      
-	compile group: 'com.zaxxer', name: 'HikariCP', version: '3.4.5'
+	implementation 'com.zaxxer:HikariCP:3.4.5'
  
-    compile project(':bigtangle-servercore')
-    compile project(':bigtangle-docker')
+    implementation project(':bigtangle-servercore')
+    implementation project(':bigtangle-docker')
    
     /**
      * test dependencies
      */
  
      
-   //  testCompile(group: 'org.springframework.data', name: 'spring-data-cassandra', version: ver.spring_boot)
-    testCompile group: 'org.mockito', name: 'mockito-all', version:  ver.mockito_all
-    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
-    testCompile group: 'junit', name: 'junit',version:ver.junit
-    testCompile group: 'org.springframework.boot', name:'spring-boot-starter-test', version:ver.spring_boot
-    testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
-   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-    runtime group:'io.micrometer', name:'micrometer-registry-prometheus', version:ver.spring_metrics_promet
+   //  testCompile(group: 'org.springframework.data:spring-data-cassandra:$ ver.spring_boot)
+  //  testimplementation 'org.mockito:mockito-all:$ver.mockito_all'
+     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.2.0.RELEASE'
+    testImplementation 'junit:junit:4.12'
+     testImplementation 'org.springframework.boot:spring-boot-starter-test:2.2.0.RELEASE'
+    //testImplementation 'org.easymock:easymock:$ver.easymock'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+   
 }
-
-mainClassName = "net.bigtangle.server.ServerStart"
-//applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
-applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.net.bigtangle.level=INFO", 
- "-Dsun.jnu.encoding=UTF-8", "-Dfile.encoding=UTF-8",
-   "-Xmx10g"]
-
-jar {
-    manifest {
-        attributes("Main-Class": mainClassName)
-    }
-}
-
  
-
-
-
-task createDistributable(type: Copy) { 
-    def distDir = file('build/dist')
-    from('build/libs') {
-        include '*.jar'
-        rename '.*', 'bigtangle-server.jar'
-        into 'build/libs'
-    }
-    from('etc/') {
-        include 'Dockerfile'
-        include 'entrypoint.sh'
-    }
-    destinationDir distDir
-}
-
-task buildDockerImage(dependsOn: createDistributable) {
-    group 'docker'
-    doLast {
-        parent.buildDockerImageProcessing('bigtangle-server/build/dist', dockerLocalTag, dockerRegistryTag, project.name, project.group, projectName)
-    }
-}
-
-task pushDockerImage(dependsOn: buildDockerImage) {
-    group 'docker'
-    doLast {
-        parent.buildDockerPush(dockerRegistryTag)
-    }
-}
-
-createDistributable.dependsOn distTar

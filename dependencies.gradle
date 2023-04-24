@@ -1,14 +1,14 @@
 ext {
 
     ver = [
-            kafka      : '1.1.0',
-            spring_boot : '2.2.0.RELEASE',
-            commons_lang3 : '3.6',
-            commons_io : '2.5',   
-            slf4j_api :'1.7.28',
-            junit       : '4.12',
-            gson :'2.8.1',
-            mockito_all :'1.10.19',
+            kafka: '1.1.0',
+            spring_boot: '2.2.0.RELEASE',
+            commons_lang3: '3.6',
+            commons_io: '2.5',   
+            slf4j_api:'1.7.28',
+            junit:'4.12',
+            gson:'2.8.1',
+            mockito_all:'1.10.19',
             bcprov_jdk15on:'1.63',
             jackson_databind:'2.6.7',
             protobuf_java:'2.6.1',
@@ -20,8 +20,6 @@ ext {
             okhttp:'3.12.5',
             easymock:'3.2',
             spongycastlecore:'1.51.0.0',
-            spark: '2.3.0',
-            spring_metrics_promet  : '1.0.3',
-    ]
-
+            spark:'2.3.0', 
+]
 }

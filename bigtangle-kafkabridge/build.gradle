@@ -1,48 +1,11 @@
-plugins {
-    id 'application'
-}
-
-
-defaultTasks 'clean', 'build'
-
-distributions {
-    main {
-        contents {
-            baseName = "bigtangle-kafkabridge"
-        }
-    }
-}
+ 
 
 
 dependencies {
 
-     compile group: 'net.sf.jopt-simple', name: 'jopt-simple', version:'4.3'
-     compile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
-     compile group: 'org.apache.kafka', name: 'kafka-streams', version:ver.kafka
-      compile group: 'ch.qos.logback', name: 'logback-classic', version:'1.0.0'
-     compile project(':bigtangle-core')
+     implementation 'net.sf.jopt-simple:jopt-simple:4.3'
+     implementation 'org.apache.kafka:kafka-streams:1.1.0'
+      implementation 'ch.qos.logback:logback-classic:1.0.0'
+     implementation project(':bigtangle-core')
 }
 
-mainClassName = "net.bigtangle.tools.KafkaBridge"
-//applicationDefaultJvmArgs = ["-Dlogging.config=/etc/processor/logback.xml"]
-applicationDefaultJvmArgs = ["-Dlog.root.level=WARN", "-Dlog.net.bigtangle.level=INFO", "-Xmx2g"]
-
-jar {
-    manifest {
-        attributes("Main-Class": mainClassName)
-    }
-}
-
-
-task createDistributable(type: Copy) {
-    def distDir = file('build/dist')
-    from('build/distributions') {
-        include '*processor*.tar'
-        rename '.*', 'processor-all.tar'
-    }
-    from('etc') {
-        include '*'
-    }
-    destinationDir distDir
-}
-createDistributable.dependsOn distTar

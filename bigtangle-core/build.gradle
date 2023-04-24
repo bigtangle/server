@@ -1,32 +1,26 @@
 
-    tasks.withType(JavaCompile) {
-        options.encoding = 'UTF-8'
-            sourceCompatibility = 1.7
-    		targetCompatibility = 1.7
-    }
-
 dependencies {
-    implementations: 'org.slf4j', name: 'slf4j-api', version:ver.slf4j_api
-    implementations: 'com.google.guava', name: 'guava', version:ver.guava
-    implementations: 'com.google.protobuf', name: 'protobuf-java', version:ver.protobuf_java
-    implementations: 'com.madgag.spongycastle', name: 'core', version:ver.spongycastlecore
-    implementations: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
-    implementations: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
-    implementations: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
-   // implementations: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:ver.jackson_databind
-    implementations: 'net.jcip', name: 'jcip-annotations', version:ver.jcip_annotations
-    implementations: 'com.lambdaworks', name: 'scrypt', version:ver.scrypt
-    implementations: 'com.squareup.okhttp3', name: 'okhttp', version:ver.okhttp
-    implementations: 'org.apache.commons', name: 'commons-lang3', version:ver.commons_lang3
-    implementations: 'commons-io', name: 'commons-io', version:ver.commons_io
+    implementation 'org.slf4j:slf4j-api:1.7.28'
+    implementation 'com.google.guava:guava:18.0'
+    implementation 'com.google.protobuf:protobuf-java:2.6.1'
+    implementation 'com.madgag.spongycastle:core:1.51.0.0'
+    implementation 'com.google.code.findbugs:jsr305:2.0.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.6.7'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.6.7'
+   // implementation 'com.fasterxml.jackson.core:jackson-annotations:2.6.7
+    implementation 'net.jcip:jcip-annotations:1.0'
+    implementation 'com.lambdaworks:scrypt:1.4.0'
+    implementation 'com.squareup.okhttp3:okhttp:3.12.5'
+    implementation 'org.apache.commons:commons-lang3:3.6'
+    implementation 'commons-io:commons-io:2.5'
     /**
      * test dependencies
      */
-   // testimplementations: 'org.easymock', name: 'easymock', version:  ver.easymock
-    testimplementations: 'junit', name: 'junit',  version:ver.junit
-    testimplementations: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
-    // implementations: 'org.ethereum', name: 'ethereumj-core', version: '1.7.2-RELEASE'
-    // implementations: 'org.ethereum', name: 'rocksdbjni', version: '5.9.2'
+   // testimplementation 'org.easymock:easymock:$  ver.easymock
+       testImplementation 'junit:junit:4.13.1'
+   // testimplementation 'com.google.code.findbugs:jsr305:2.0.1'
+    // implementation 'org.ethereum:ethereumj-core:$ '1.7.2-RELEASE'
+    // implementation 'org.ethereum:rocksdbjni:$ '5.9.2'
 }
 
 apply plugin: 'maven-publish'
