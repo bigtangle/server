@@ -6,27 +6,27 @@
     }
 
 dependencies {
-    compile group: 'org.slf4j', name: 'slf4j-api', version:ver.slf4j_api
-    compile group: 'com.google.guava', name: 'guava', version:ver.guava
-    compile group: 'com.google.protobuf', name: 'protobuf-java', version:ver.protobuf_java
-    compile group: 'com.madgag.spongycastle', name: 'core', version:ver.spongycastlecore
-    compile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
-   // compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:ver.jackson_databind
-    compile group: 'net.jcip', name: 'jcip-annotations', version:ver.jcip_annotations
-    compile group: 'com.lambdaworks', name: 'scrypt', version:ver.scrypt
-    compile group: 'com.squareup.okhttp3', name: 'okhttp', version:ver.okhttp
-    compile group: 'org.apache.commons', name: 'commons-lang3', version:ver.commons_lang3
-    compile group: 'commons-io', name: 'commons-io', version:ver.commons_io
+    implementations: 'org.slf4j', name: 'slf4j-api', version:ver.slf4j_api
+    implementations: 'com.google.guava', name: 'guava', version:ver.guava
+    implementations: 'com.google.protobuf', name: 'protobuf-java', version:ver.protobuf_java
+    implementations: 'com.madgag.spongycastle', name: 'core', version:ver.spongycastlecore
+    implementations: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
+    implementations: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
+    implementations: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:ver.jackson_databind
+   // implementations: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version:ver.jackson_databind
+    implementations: 'net.jcip', name: 'jcip-annotations', version:ver.jcip_annotations
+    implementations: 'com.lambdaworks', name: 'scrypt', version:ver.scrypt
+    implementations: 'com.squareup.okhttp3', name: 'okhttp', version:ver.okhttp
+    implementations: 'org.apache.commons', name: 'commons-lang3', version:ver.commons_lang3
+    implementations: 'commons-io', name: 'commons-io', version:ver.commons_io
     /**
      * test dependencies
      */
-   // testCompile group: 'org.easymock', name: 'easymock', version:  ver.easymock
-    testCompile group: 'junit', name: 'junit',  version:ver.junit
-    testCompile group: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
-    // compile group: 'org.ethereum', name: 'ethereumj-core', version: '1.7.2-RELEASE'
-    // compile group: 'org.ethereum', name: 'rocksdbjni', version: '5.9.2'
+   // testimplementations: 'org.easymock', name: 'easymock', version:  ver.easymock
+    testimplementations: 'junit', name: 'junit',  version:ver.junit
+    testimplementations: 'com.google.code.findbugs', name: 'jsr305', version:ver.jsr305
+    // implementations: 'org.ethereum', name: 'ethereumj-core', version: '1.7.2-RELEASE'
+    // implementations: 'org.ethereum', name: 'rocksdbjni', version: '5.9.2'
 }
 
 apply plugin: 'maven-publish'
