@@ -35,5 +35,7 @@ public enum ReqCmd {
 	// Smart Contract
 	getContractEvents,
     // check point value
-    getCheckPoint;
+    getCheckPoint,
+	//addon service userpay
+	saveUserpay, deleteUserpay
 }

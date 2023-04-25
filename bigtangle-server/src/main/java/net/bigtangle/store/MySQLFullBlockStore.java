@@ -396,6 +396,12 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    locktime bigint NOT NULL,\n"
             + "    CONSTRAINT lockobject_pk PRIMARY KEY (lockobjectid)  \n" + ") ENGINE=InnoDB \n";
     
+    private static final String CREATE_USERPAY_TABLE = "CREATE TABLE userpay (\n" 
+            + "    lockobjectid varchar(255) NOT NULL,\n"  
+            + "    locktime bigint NOT NULL,\n"
+            + "    CONSTRAINT lockobject_pk PRIMARY KEY (lockobjectid)  \n" + ") ENGINE=InnoDB \n";
+
+    
     // Some indexes to speed up stuff
     private static final String CREATE_OUTPUTS_ADDRESS_MULTI_INDEX = "CREATE INDEX outputs_hash_index_toaddress_idx ON outputs (hash, outputindex, toaddress) USING HASH";
     private static final String CREATE_OUTPUTS_TOADDRESS_INDEX = "CREATE INDEX outputs_toaddress_idx ON outputs (toaddress) USING HASH";

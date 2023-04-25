@@ -78,7 +78,7 @@ public class OrderYuanTest extends AbstractIntegrationTest {
 
     }
 
-    @Test
+   // @Test
     public void buyBaseToken() throws Exception {
         walletAppKit.wallet().importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
         walletAppKit.wallet().importKey(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));

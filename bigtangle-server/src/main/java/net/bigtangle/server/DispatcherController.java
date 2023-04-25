@@ -635,6 +635,12 @@ public class DispatcherController {
                 this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
             }
                 break;
+                
+            case saveUserpay: {
+                AbstractResponse response = CheckpointResponse.create(checkpointService.checkToken(store));
+                this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
+            }
+                break;
             default:
                 break;
             }
