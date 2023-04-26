@@ -32,7 +32,7 @@ public class UserPay implements  Serializable {
     public String columns() {
         return " payid,status, userid, tokenname,tokenid" + ",amount, gaslimit,gasprice,fee,"
                 + " fromaddress, fromsystem, toaddress,tosystem" + ",fromblockhash,transactionhash,toblockhash,"
-                + "remark,changedby,changeddate,changedTolast";
+                + "remark ";
     }
 
     public String insertSQL() {

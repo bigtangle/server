@@ -397,9 +397,24 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    CONSTRAINT lockobject_pk PRIMARY KEY (lockobjectid)  \n" + ") ENGINE=InnoDB \n";
     
     private static final String CREATE_USERPAY_TABLE = "CREATE TABLE userpay (\n" 
-            + "    lockobjectid varchar(255) NOT NULL,\n"  
-            + "    locktime bigint NOT NULL,\n"
-            + "    CONSTRAINT lockobject_pk PRIMARY KEY (lockobjectid)  \n" + ") ENGINE=InnoDB \n";
+            + "    payid bigint NOT NULL,\n"  
+            + "    userid bigint ,\n" 
+            + "    status varchar(255) ,\n" 
+            + "    tokenname varchar(255)  ,\n"  
+            + "    tokenid varchar(255) ,\n" 
+            + "    amount varchar(255)  ,\n"  
+            + "    gaslimit varchar(255) ,\n"  
+            + "    gasprice varchar(255)  ,\n"  
+            + "    fee varchar(255) ,\n"  
+            + "    fromaddress varchar(255)  ,\n"  
+            + "    fromsystem varchar(255) ,\n"
+            + "    toaddress varchar(255) ,\n"  
+            + "    tosystem varchar(255)  ,\n"  
+            + "    fromblockhash varchar(255) ,\n" 
+            + "    transactionhash varchar(255) ,\n"  
+            + "    toblockhash varchar(255) ,\n" 
+            + "    remark varchar(255) ,\n" 
+            + "    CONSTRAINT lockobject_pk PRIMARY KEY (payid)  \n" + ") ENGINE=InnoDB \n";
 
     
     // Some indexes to speed up stuff
