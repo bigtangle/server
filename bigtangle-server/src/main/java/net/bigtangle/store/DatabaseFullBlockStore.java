@@ -471,6 +471,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			+ ") VALUES (?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?)";
 	protected final String UPDATE_USERPAY = getUpdate() + "   userpay set transactionhash=?, status=? where payid=?";
 	protected final String DELETE_USERPAY = "delete from   userpay  where payid=?";
+
+	protected final String SELECT_USERPAY_BY_USERID = "select " + USERPAY_COL + " from   userpay  where userid=?";
+
 	protected NetworkParameters params;
 	protected Connection conn;
 
@@ -6505,6 +6508,34 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 					// throw new BlockStoreException("Could not close statement");
 				}
 			}
+		}
+	}
+
+	public List<UserPay> queryUserpayByUserid(Long userid) throws BlockStoreException {
+		PreparedStatement s = null;
+		List<UserPay> list = new ArrayList<UserPay>();
+		try {
+			s = getConnection().prepareStatement(SELECT_USERPAY_BY_USERID);
+			s.setLong(1, userid);
+			ResultSet rs = s.executeQuery();
+			while (rs.next()) {
+				list.add(new UserPay(rs.getLong("payid"), rs.getString("status"), rs.getString("tokenname"),
+						rs.getString("tokenid"), rs.getString("fromaddress"), rs.getString("fromsystem"),
+						rs.getString("toaddress"), rs.getString("tosystem"), rs.getString("amount"),
+						rs.getString("gaslimit"), rs.getString("gasprice"), rs.getString("fee"), rs.getLong("userid"),
+						rs.getString("fromblockhash"), rs.getString("transactionhash"), rs.getString("toblockhash"),
+						rs.getString("remark")));
+			}
+			return list;
+		} catch (Exception ex) {
+			throw new BlockStoreException(ex);
+		} finally {
+			if (s != null)
+				try {
+					s.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
 		}
 	}
 

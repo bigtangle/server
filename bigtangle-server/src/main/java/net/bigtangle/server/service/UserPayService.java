@@ -13,8 +13,10 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.userpay.UserPay;
+import net.bigtangle.userpay.UserPayResponse;
 
 @Service
 public class UserPayService {
@@ -31,6 +33,12 @@ public class UserPayService {
 
 	public void deleteUserpay(Long payid, FullBlockStore store) throws BlockStoreException {
 		store.deleteUserpay(payid);
+	}
+
+	public AbstractResponse queryUserpayByUserId(Long userid, FullBlockStore store) throws BlockStoreException {
+
+		return UserPayResponse.createUserPayResponse(store.queryUserpayByUserid(userid));
+
 	}
 
 	private RowMapper<UserPay> userpayMapper = new RowMapper<UserPay>() {

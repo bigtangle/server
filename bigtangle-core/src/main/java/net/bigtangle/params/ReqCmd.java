@@ -37,5 +37,5 @@ public enum ReqCmd {
     // check point value
     getCheckPoint,
 	//addon service userpay
-	saveUserpay, updateUserpay,deleteUserpay
+	saveUserpay, updateUserpay,deleteUserpay,queryUserpayByUserid
 }

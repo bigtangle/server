@@ -477,5 +477,8 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 	void insertUserpay(UserPay userpay) throws BlockStoreException;
 
 	void updateUserpay(String hash, String status, Long payid) throws BlockStoreException;
-	void deleteUserpay( Long payid) throws BlockStoreException;
+
+	void deleteUserpay(Long payid) throws BlockStoreException;
+
+	List<UserPay> queryUserpayByUserid(Long userid) throws BlockStoreException;
 }

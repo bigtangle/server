@@ -694,6 +694,15 @@ public class DispatcherController {
 				this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch, reqCmd);
 			}
 				break;
+			case queryUserpayByUserid: {
+				String reqStr = new String(bodyByte, "UTF-8");
+				Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+				Long userid = request.get("userid") == null ? 0l : Long.valueOf(request.get("userid").toString());
+
+				AbstractResponse response = userPayService.queryUserpayByUserId(userid, store);
+				this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
+			}
+				break;
 			default:
 				break;
 			}
