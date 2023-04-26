@@ -25,6 +25,14 @@ public class UserPayService {
 		store.insertUserpay(userpay);
 	}
 
+	public void updateUserpay(String hash, String status, Long payid, FullBlockStore store) throws BlockStoreException {
+		store.updateUserpay(hash, status, payid);
+	}
+
+	public void deleteUserpay(Long payid, FullBlockStore store) throws BlockStoreException {
+		store.deleteUserpay(payid);
+	}
+
 	private RowMapper<UserPay> userpayMapper = new RowMapper<UserPay>() {
 		public UserPay mapRow(ResultSet rs, int row) throws SQLException {
 			return new UserPay(rs.getLong("payid"), rs.getString("status"), rs.getString("tokenname"),

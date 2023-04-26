@@ -469,6 +469,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	protected final String USERPAY_COL = "payid,status, userid, tokenname,tokenid,amount, gaslimit,gasprice,fee,fromaddress, fromsystem, toaddress,tosystem,fromblockhash,transactionhash,toblockhash,remark";
 	protected final String INSERT_USERPAY = getInsert() + "  INTO userpay (" + USERPAY_COL
 			+ ") VALUES (?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?)";
+	protected final String UPDATE_USERPAY = getUpdate() + "   userpay set transactionhash=?, status=? where payid=?";
+	protected final String DELETE_USERPAY = "delete from   userpay  where payid=?";
 	protected NetworkParameters params;
 	protected Connection conn;
 
@@ -6448,6 +6450,50 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			preparedStatement.setString(15, userpay.getTransactionhash());
 			preparedStatement.setString(16, userpay.getToblockhash());
 			preparedStatement.setString(17, userpay.getRemark());
+			preparedStatement.execute();
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+
+	public void updateUserpay(String hash, String status, Long payid) throws BlockStoreException {
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = getConnection().prepareStatement(UPDATE_USERPAY);
+
+			preparedStatement.setString(1, hash);
+			preparedStatement.setString(2, status);
+			preparedStatement.setLong(3, payid);
+
+			preparedStatement.execute();
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+
+	public void deleteUserpay(Long payid) throws BlockStoreException {
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = getConnection().prepareStatement(DELETE_USERPAY);
+
+			preparedStatement.setLong(1, payid);
+
 			preparedStatement.execute();
 		} catch (SQLException e) {
 			throw new BlockStoreException(e);

@@ -666,11 +666,31 @@ public class DispatcherController {
 				String toblockhash = request.get("toblockhash") == null ? null : request.get("toblockhash").toString();
 				String remark = request.get("remark") == null ? null : request.get("remark").toString();
 				String amount = request.get("amount") == null ? null : request.get("amount").toString();
-				
+
 				UserPay userpay = new UserPay(payid, status, tokenname, tokenid, fromaddress, fromsystem, toaddress,
 						tosystem, amount, gaslimit, gasprice, fee, userid, fromblockhash, transactionhash, toblockhash,
 						remark);
 				userPayService.saveUserpay(userpay, store);
+				this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch, reqCmd);
+			}
+				break;
+			case updateUserpay: {
+				String reqStr = new String(bodyByte, "UTF-8");
+				Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+				Long payid = request.get("payid") == null ? 0l : Long.valueOf(request.get("payid").toString());
+				String status = request.get("status") == null ? null : request.get("status").toString();
+				String transactionhash = request.get("transactionhash") == null ? null
+						: request.get("transactionhash").toString();
+				userPayService.updateUserpay(transactionhash, status, payid, store);
+				this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch, reqCmd);
+			}
+				break;
+			case deleteUserpay: {
+				String reqStr = new String(bodyByte, "UTF-8");
+				Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+				Long payid = request.get("payid") == null ? 0l : Long.valueOf(request.get("payid").toString());
+
+				userPayService.deleteUserpay(payid, store);
 				this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch, reqCmd);
 			}
 				break;
