@@ -9,7 +9,6 @@ import static org.junit.Assert.assertTrue;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
@@ -27,7 +26,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -54,11 +52,14 @@ public class LotteryTests extends AbstractIntegrationTest {
 	@Test
 	public void lottery() throws Exception {
 		for (int i = 0; i < 18; i++) {
+		     long start = System.currentTimeMillis();
 			usernumber = Math.abs(new Random().nextInt()) % 88;
 			winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
-
+			log.debug("start iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount
+					 );
 			lotteryDo();
-			log.debug("done iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount);
+			log.debug("done iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount
+					+ " time " + (System.currentTimeMillis() -start )/1000);
 		}
 	}
 
@@ -76,15 +77,15 @@ public class LotteryTests extends AbstractIntegrationTest {
 		long tokennumber = 100000000;
 		makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
 		for (ECKey ecKey : walletKeys) {
-			System.out.println("+++++++++++++");
-			System.out.println(ecKey.toAddress(networkParameters).toString());
+			log.debug("+++++++++++++");
+			log.debug(ecKey.toAddress(networkParameters).toString());
 			List<UTXO> list = this.getBalance(ecKey.toAddress(networkParameters).toString());
 			if (list == null) {
-				System.out.println("list==null");
+				log.debug("list==null");
 			} else {
 				for (UTXO utxo : list) {
-					System.out.println("================");
-					System.out.println(utxo.toString());
+					log.debug("================");
+					log.debug(utxo.toString());
 				}
 			}
 
@@ -175,44 +176,19 @@ public class LotteryTests extends AbstractIntegrationTest {
 		}
 
 		Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub),
-				"net.bigtangle.server.performance.LotteryTests.payKeys() pay to user");
+				" pay to user");
 		log.debug("block " + (b == null ? "block is null" : b.toString()));
 		mcmc();
 		return userkeys;
 	}
 
-	public void testTokens() throws JsonProcessingException, Exception {
-
-		String domain = "";
-
-		testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)), "人民币", 2, domain, "人民币 CNY",
-				winnerAmount.multiply(BigInteger.valueOf(usernumber * 10000000l)));
-		mcmc();
-	}
+	 
 
 	public Address getAddress() {
 		return ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)).toAddress(networkParameters);
 	}
 
-	// create a token with multi sign
-	protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals, String domainname,
-			String description, BigInteger amount) throws JsonProcessingException, Exception {
-		try {
-			walletAppKit1.wallet().setServerURL(contextRoot);
-			createToken(key, tokename, decimals, domainname, description, amount, true, null,
-					TokenType.identity.ordinal(), key.getPublicKeyAsHex(), walletAppKit1.wallet());
-
-			ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
-
-			walletAppKit1.wallet().multiSign(key.getPublicKeyAsHex(), signkey, null);
-
-		} catch (Exception e) {
-			// TODO: handle exception
-			log.warn("", e);
-		}
-
-	}
-
+ 
 	// get balance for the walletKeys
 	protected List<UTXO> getBalance(String address) throws Exception {
 		List<UTXO> listUTXO = new ArrayList<UTXO>();
