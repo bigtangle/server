@@ -473,7 +473,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	protected final String DELETE_USERPAY = "delete from   userpay  where payid=?";
 
 	protected final String SELECT_USERPAY_BY_USERID = "select " + USERPAY_COL + " from   userpay  where userid=?";
-
+	protected final String SELECT_USERPAY_BY_STATUSES = "select " + USERPAY_COL + " from   userpay  where (fromsystem=? or tosystem=?) ";
 	protected NetworkParameters params;
 	protected Connection conn;
 
