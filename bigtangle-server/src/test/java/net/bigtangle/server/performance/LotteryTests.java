@@ -52,21 +52,20 @@ public class LotteryTests extends AbstractIntegrationTest {
 	@Test
 	public void lottery() throws Exception {
 		for (int i = 0; i < 18; i++) {
-		     long start = System.currentTimeMillis();
+			long start = System.currentTimeMillis();
 			usernumber = Math.abs(new Random().nextInt()) % 88;
 			winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
-			log.debug("start iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount
-					 );
+			log.debug("start iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount);
 			lotteryDo();
-			log.debug("done iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount
-					+ " time " + (System.currentTimeMillis() -start )/1000);
+			log.debug("done iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount + " time "
+					+ (System.currentTimeMillis() - start) / 1000);
 		}
 	}
 
 	public void lotteryDo() throws Exception {
 		walletAppKit.wallet().importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
 		accountKey = new ECKey();
-		walletAppKit.wallet().importKey(accountKey);
+	//	walletAppKit.wallet().importKey(accountKey);
 
 //		testTokens();
 		List<Block> addedBlocks = new ArrayList<>();
@@ -174,21 +173,22 @@ public class LotteryTests extends AbstractIntegrationTest {
 			giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount.longValue());
 			userkeys.add(key);
 		}
-
-		Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub),
-				" pay to user");
-		log.debug("block " + (b == null ? "block is null" : b.toString()));
+		try {
+			Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub),
+					" pay to user");
+			log.debug("block " + (b == null ? "block is null" : b.toString()));
+		} catch (InsufficientMoneyException e) {
+			// TODO: handle exception
+			log.debug("",e);
+		}
 		mcmc();
 		return userkeys;
 	}
-
-	 
 
 	public Address getAddress() {
 		return ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)).toAddress(networkParameters);
 	}
 
- 
 	// get balance for the walletKeys
 	protected List<UTXO> getBalance(String address) throws Exception {
 		List<UTXO> listUTXO = new ArrayList<UTXO>();

@@ -38,244 +38,260 @@ import net.bigtangle.wallet.Wallet;
 
 public class Lottery {
 
-    private static final Logger log = LoggerFactory.getLogger(Lottery.class);
-    private String tokenid;
-    private String contextRoot = "http://localhost:8088/";
-    private Wallet walletAdmin;
-    private NetworkParameters params;
-    private String winner;
-    private List<UTXO> userUtxos;
-    private BigInteger winnerAmount;
-    private boolean macthed;
-    private ECKey accountKey;
-    List<String> userAddress;
-    /*
-     * start check balance and check to X amount and collect all user in lottery
-     * list of (each ticket, address) compute random selection of winner pay to
-     * winner address
-     */
-    public void start() throws Exception {
-        // ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
-        walletAdmin = Wallet.fromKeys(params, accountKey);
-       // walletAdmin.setServerURL(contextRoot);
-        List<UTXO> player = getBalance(accountKey);
-        // TODO 100 millions raw
-        new UtilSort().sortUTXO(player);
-        userUtxos = new ArrayList<UTXO>();
-        if (canTakeWinner(player, userUtxos)) {
-            doTakeWinner();
-        }
-    }
+	private static final Logger log = LoggerFactory.getLogger(Lottery.class);
+	private String tokenid;
+	private String contextRoot = "http://localhost:8088/";
+	private Wallet walletAdmin;
+	private NetworkParameters params;
+	private String winner;
+	private List<UTXO> userUtxos;
+	private BigInteger winnerAmount;
+	private boolean macthed;
+	private ECKey accountKey;
+	List<String> userAddress;
 
-    private void doTakeWinner() throws Exception {
-        Token t = walletAdmin.checkTokenId(tokenid);
+	/*
+	 * start check balance and check to X amount and collect all user in lottery
+	 * list of (each ticket, address) compute random selection of winner pay to
+	 * winner address
+	 */
+	public void start() throws Exception {
+		// ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
+		walletAdmin = Wallet.fromKeys(params, accountKey);
+		// walletAdmin.setServerURL(contextRoot);
+		List<UTXO> player = getBalance(accountKey);
+		// TODO 100 millions raw
+		new UtilSort().sortUTXO(player);
+		userUtxos = new ArrayList<UTXO>();
+		if (canTakeWinner(player, userUtxos)) {
+			doTakeWinner();
+		}
+	}
 
-         userAddress = baseList(userUtxos, t);
+	private void doTakeWinner() throws Exception {
+		Token t = walletAdmin.checkTokenId(tokenid);
 
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        byte[] buf = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block r1 = params.getDefaultSerializer().makeBlock(buf);
-        // Deterministic randomization
-        byte[] randomness = Utils.xor(r1.getPrevBlockHash().getBytes(), r1.getPrevBranchBlockHash().getBytes());
-        SecureRandom se = new SecureRandom(randomness);
+		userAddress = baseList(userUtxos, t);
 
-        winner = userAddress.get(se.nextInt(userAddress.size()));
+		HashMap<String, Object> requestParam = new HashMap<String, Object>();
+		byte[] buf = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+				Json.jsonmapper().writeValueAsString(requestParam));
+		Block r1 = params.getDefaultSerializer().makeBlock(buf);
+		// Deterministic randomization
+		byte[] randomness = Utils.xor(r1.getPrevBlockHash().getBytes(), r1.getPrevBranchBlockHash().getBytes());
+		SecureRandom se = new SecureRandom(randomness);
 
-        log.debug("winner " + winner +" sum ="+sum()+ " \n user address size: " + userAddress.size());
+		winner = userAddress.get(se.nextInt(userAddress.size()));
 
-        List<Block> bl = batchGiveMoneyToECKeyList(winner, sum(), "win lottery", userUtxos);
-        if (bl.isEmpty()) {
-            log.error("payment of winner is failed");
-        }
-        for (Block b : bl) {
-            log.debug("block " + (b == null ? "block is null" : b.toString()));
-        }
+		log.debug("winner " + winner + " sum =" + sum() + " \n user address size: " + userAddress.size());
 
-    }
+		List<Block> bl = batchGiveMoneyToECKeyList(winner, sum(), "win lottery", userUtxos);
+		if (bl.isEmpty()) {
+			log.error("payment of winner is failed");
+		}
+		for (Block b : bl) {
+			log.debug("block " + (b == null ? "block is null" : b.toString()));
+		}
 
-    /*
-     * split the list for lottery pay
-     */
-    private List<String> baseList(List<UTXO> player, Token t) {
-        List<String> addresses = new ArrayList<String>();
-        for (UTXO u : player) {
-            addresses.addAll(baseList(u, t));
-        }
-        return addresses;
-    }
+	}
 
-    private List<String> baseList(UTXO u, Token t) {
-        List<String> addresses = new ArrayList<String>();
-        if (checkUTXO(u)) {
-            long roundCoin = roundCoin(u.getValue(), t);
-            for (long i = 0; i < roundCoin; i++) {
+	private void verifyTakeWinner(List<String> userAddress, Block refBlock, String winner, String sum, String tokenid)
+			throws Exception {
+		Token t = walletAdmin.checkTokenId(tokenid);
 
-                addresses.add(u.getFromaddress());
-            }
-        }
-        return addresses;
-    }
+		userAddress = baseList(userUtxos, t);
 
-    private boolean checkUTXO(UTXO u) {
-        return u.getFromaddress() != null && !"".equals(u.getFromaddress())
-                && !u.getFromaddress().equals(u.getAddress());
-    }
+		byte[] randomness = Utils.xor(refBlock.getPrevBlockHash().getBytes(),
+				refBlock.getPrevBranchBlockHash().getBytes());
+		SecureRandom se = new SecureRandom(randomness);
 
-    /*
-     * round without decimals
-     */
+		winner.equals(userAddress.get(se.nextInt(userAddress.size())));
 
-    private long roundCoin(Coin c, Token t) {
+		log.debug("winner " + winner + " sum =" + sum() + " \n user address size: " + userAddress.size());
 
-        return LongMath.divide(c.getValue().longValue(), LongMath.checkedPow(10, t.getDecimals()), RoundingMode.DOWN);
+	}
 
-    }
+	/*
+	 * split the list for lottery pay
+	 */
+	private List<String> baseList(List<UTXO> player, Token t) {
+		List<String> addresses = new ArrayList<String>();
+		for (UTXO u : player) {
+			addresses.addAll(baseList(u, t));
+		}
+		return addresses;
+	}
 
-    public BigInteger sum() {
-        BigInteger sum = BigInteger.ZERO;
-        for (UTXO u : userUtxos) {
-            sum = sum.add(u.getValue().getValue());
-        }
-        return sum;
-    }
+	private List<String> baseList(UTXO u, Token t) {
+		List<String> addresses = new ArrayList<String>();
+		if (checkUTXO(u)) {
+			long roundCoin = roundCoin(u.getValue(), t);
+			for (long i = 0; i < roundCoin; i++) {
 
-    /*
-     * condition for execute the lottery 1) no other pending payment 2) can do
-     * the send failed block again 3) the sum is ok
-     */
-    private boolean canTakeWinner(List<UTXO> player, List<UTXO> userlist) {
+				addresses.add(u.getFromaddress());
+			}
+		}
+		return addresses;
+	}
 
-        BigInteger sum = BigInteger.ZERO;
-        for (UTXO u : player) {
-            if (checkUTXO(u)) {
-                sum = sum.add(u.getValue().getValue());
-                userlist.add(u);
-                if (sum.compareTo(winnerAmount) >= 0) {
-                    return macthed = true;
-                }
-            }
-        }
-        log.debug(" sum= " + sum);
-        return macthed = false;
+	private boolean checkUTXO(UTXO u) {
+		return u.getFromaddress() != null && !"".equals(u.getFromaddress())
+				&& !u.getFromaddress().equals(u.getAddress());
+	}
 
-    }
+	/*
+	 * round without decimals
+	 */
 
-    public synchronized List<Block> batchGiveMoneyToECKeyList(String address, BigInteger amount, String memo,
-            List<UTXO> userlist)
-            throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException, Exception {
+	private long roundCoin(Coin c, Token t) {
 
-        List<FreeStandingTransactionOutput> candidates = new ArrayList<FreeStandingTransactionOutput>();
-        for (UTXO u : userlist) {
-            candidates.add(new FreeStandingTransactionOutput(this.params, u));
-        }
-        
-        return walletAdmin.payFromList(null, address, new Coin(amount, Utils.HEX.decode(tokenid)), memo, candidates);
+		return LongMath.divide(c.getValue().longValue(), LongMath.checkedPow(10, t.getDecimals()), RoundingMode.DOWN);
 
-    }
+	}
 
-    // get balance for the walletKeys
-    protected List<UTXO> getBalance(List<ECKey> keys) throws Exception {
-        List<UTXO> listUTXO = new ArrayList<UTXO>();
-        List<String> keyStrHex000 = new ArrayList<String>();
+	public BigInteger sum() {
+		BigInteger sum = BigInteger.ZERO;
+		for (UTXO u : userUtxos) {
+			sum = sum.add(u.getValue().getValue());
+		}
+		return sum;
+	}
 
-        for (ECKey ecKey : keys) {
-            // keyStrHex000.add(ecKey.toAddress(networkParameters).toString());
-            keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
-        }
-          byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
-                Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+	/*
+	 * condition for execute the lottery 1) no other pending payment 2) can do the
+	 * send failed block again 3) the sum is ok
+	 */
+	private boolean canTakeWinner(List<UTXO> player, List<UTXO> userlist) {
 
-        GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+		BigInteger sum = BigInteger.ZERO;
+		for (UTXO u : player) {
+			if (checkUTXO(u)) {
+				sum = sum.add(u.getValue().getValue());
+				userlist.add(u);
+				if (sum.compareTo(winnerAmount) >= 0) {
+					return macthed = true;
+				}
+			}
+		}
+		log.debug(" sum= " + sum);
+		return macthed = false;
 
-        // no pending utxo
-        for (UTXO utxo : getBalancesResponse.getOutputs()) {
-            if (utxo.getValue().getValue().signum() > 0 || utxo.getTokenId().equals(tokenid)) {
-                if (!utxo.isSpendPending())
-                    listUTXO.add(utxo);
-            }
-        }
+	}
 
-        return listUTXO;
-    }
+	public synchronized List<Block> batchGiveMoneyToECKeyList(String address, BigInteger amount, String memo,
+			List<UTXO> userlist)
+			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException, Exception {
 
-    protected List<UTXO> getBalance(ECKey ecKey) throws Exception {
-        List<ECKey> keys = new ArrayList<ECKey>();
-        keys.add(ecKey);
-        return getBalance(keys);
-    }
+		List<FreeStandingTransactionOutput> candidates = new ArrayList<FreeStandingTransactionOutput>();
+		for (UTXO u : userlist) {
+			candidates.add(new FreeStandingTransactionOutput(this.params, u));
+		}
 
-    public String getTokenid() {
-        return tokenid;
-    }
+		return walletAdmin.payFromList(null, address, new Coin(amount, Utils.HEX.decode(tokenid)), memo, candidates);
 
-    public void setTokenid(String tokenid) {
-        this.tokenid = tokenid;
-    }
+	}
 
-  
-    public NetworkParameters getParams() {
-        return params;
-    }
+	// get balance for the walletKeys
+	protected List<UTXO> getBalance(List<ECKey> keys) throws Exception {
+		List<UTXO> listUTXO = new ArrayList<UTXO>();
+		List<String> keyStrHex000 = new ArrayList<String>();
 
-    public void setParams(NetworkParameters params) {
-        this.params = params;
-    }
+		for (ECKey ecKey : keys) {
+			// keyStrHex000.add(ecKey.toAddress(networkParameters).toString());
+			keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+		}
+		byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+				Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
-    public String getContext_root() {
-        return contextRoot;
-    }
+		GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
 
-    public void setContext_root(String context_root) {
-        this.contextRoot = context_root;
-    }
+		// no pending utxo
+		for (UTXO utxo : getBalancesResponse.getOutputs()) {
+			if (utxo.getValue().getValue().signum() > 0 || utxo.getTokenId().equals(tokenid)) {
+				if (!utxo.isSpendPending())
+					listUTXO.add(utxo);
+			}
+		}
 
-    public String getWinner() {
-        return winner;
-    }
+		return listUTXO;
+	}
 
-    public void setWinner(String winner) {
-        this.winner = winner;
-    }
+	protected List<UTXO> getBalance(ECKey ecKey) throws Exception {
+		List<ECKey> keys = new ArrayList<ECKey>();
+		keys.add(ecKey);
+		return getBalance(keys);
+	}
 
-    public List<UTXO> getUserUtxos() {
-        return userUtxos;
-    }
+	public String getTokenid() {
+		return tokenid;
+	}
 
-    public String getContextRoot() {
-        return contextRoot;
-    }
+	public void setTokenid(String tokenid) {
+		this.tokenid = tokenid;
+	}
 
-    public void setContextRoot(String contextRoot) {
-        this.contextRoot = contextRoot;
-    }
+	public NetworkParameters getParams() {
+		return params;
+	}
 
-    public void setUserUtxos(List<UTXO> userUtxos) {
-        this.userUtxos = userUtxos;
-    }
+	public void setParams(NetworkParameters params) {
+		this.params = params;
+	}
 
-    public BigInteger getWinnerAmount() {
-        return winnerAmount;
-    }
+	public String getContext_root() {
+		return contextRoot;
+	}
 
-    public void setWinnerAmount(BigInteger winnerAmount) {
-        this.winnerAmount = winnerAmount;
-    }
+	public void setContext_root(String context_root) {
+		this.contextRoot = context_root;
+	}
 
-    public boolean isMacthed() {
-        return macthed;
-    }
+	public String getWinner() {
+		return winner;
+	}
 
-    public void setMacthed(boolean macthed) {
-        this.macthed = macthed;
-    }
+	public void setWinner(String winner) {
+		this.winner = winner;
+	}
 
-    public ECKey getAccountKey() {
-        return accountKey;
-    }
+	public List<UTXO> getUserUtxos() {
+		return userUtxos;
+	}
 
-    public void setAccountKey(ECKey accountKey) {
-        this.accountKey = accountKey;
-    }
+	public String getContextRoot() {
+		return contextRoot;
+	}
+
+	public void setContextRoot(String contextRoot) {
+		this.contextRoot = contextRoot;
+	}
+
+	public void setUserUtxos(List<UTXO> userUtxos) {
+		this.userUtxos = userUtxos;
+	}
+
+	public BigInteger getWinnerAmount() {
+		return winnerAmount;
+	}
+
+	public void setWinnerAmount(BigInteger winnerAmount) {
+		this.winnerAmount = winnerAmount;
+	}
+
+	public boolean isMacthed() {
+		return macthed;
+	}
+
+	public void setMacthed(boolean macthed) {
+		this.macthed = macthed;
+	}
+
+	public ECKey getAccountKey() {
+		return accountKey;
+	}
+
+	public void setAccountKey(ECKey accountKey) {
+		this.accountKey = accountKey;
+	}
 
 }
