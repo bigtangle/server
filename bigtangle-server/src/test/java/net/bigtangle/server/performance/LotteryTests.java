@@ -86,9 +86,8 @@ public class LotteryTests extends AbstractIntegrationTest {
 			createUserPay(accountKey);
 			startLottery = startLottery();
 		}
-		mcmc();
-		mcmc();
-		mcmc();
+		makeRewardBlock();
+	 
 		checkResult(startLottery);
 	}
 
@@ -136,6 +135,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 		for (ECKey key : ulist) {
 			buyTicket(key, accountKey);
 		}
+		makeRewardBlock();
 	}
 
 	/*
