@@ -65,7 +65,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 	public void lotteryDo() throws Exception {
 		walletAppKit.wallet().importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
 		accountKey = new ECKey();
-	//	walletAppKit.wallet().importKey(accountKey);
+		// walletAppKit.wallet().importKey(accountKey);
 
 //		testTokens();
 		List<Block> addedBlocks = new ArrayList<>();
@@ -74,21 +74,9 @@ public class LotteryTests extends AbstractIntegrationTest {
 		ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
 
 		long tokennumber = 100000000;
-		makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
-		for (ECKey ecKey : walletKeys) {
-			log.debug("+++++++++++++");
-			log.debug(ecKey.toAddress(networkParameters).toString());
-			List<UTXO> list = this.getBalance(ecKey.toAddress(networkParameters).toString());
-			if (list == null) {
-				log.debug("list==null");
-			} else {
-				for (UTXO utxo : list) {
-					log.debug("================");
-					log.debug(utxo.toString());
-				}
-			}
-
-		}
+		Block block = makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
+		log.debug("+++++++++++++");
+		log.debug(block.getHashAsString());
 
 		mcmc();
 		createUserPay(accountKey);
@@ -144,6 +132,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 
 	private void createUserPay(ECKey accountKey) throws Exception {
 		List<ECKey> ulist = payKeys();
+		log.debug(getAddress().toString());
 		for (ECKey key : ulist) {
 			buyTicket(key, accountKey);
 		}
@@ -179,9 +168,11 @@ public class LotteryTests extends AbstractIntegrationTest {
 			log.debug("block " + (b == null ? "block is null" : b.toString()));
 		} catch (InsufficientMoneyException e) {
 			// TODO: handle exception
-			log.debug("",e);
+			userkeys = new ArrayList<ECKey>();
+			log.debug("", e);
 		}
-		mcmc();
+
+		makeRewardBlock();
 		return userkeys;
 	}
 
