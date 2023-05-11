@@ -162,15 +162,10 @@ public class LotteryTests extends AbstractIntegrationTest {
 			giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount.longValue());
 			userkeys.add(key);
 		}
-		try {
-			Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub),
-					" pay to user");
-			log.debug("block " + (b == null ? "block is null" : b.toString()));
-		} catch (InsufficientMoneyException e) {
-			// TODO: handle exception
-			userkeys = new ArrayList<ECKey>();
-			log.debug("", e);
-		}
+
+		Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub),
+				" pay to user");
+		log.debug("block " + (b == null ? "block is null" : b.toString()));
 
 		makeRewardBlock();
 		return userkeys;
