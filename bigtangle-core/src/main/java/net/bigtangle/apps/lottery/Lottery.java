@@ -58,7 +58,7 @@ public class Lottery {
 	public void start() throws Exception {
 		// ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
 		walletAdmin = Wallet.fromKeys(params, accountKey);
-		// walletAdmin.setServerURL(contextRoot);
+		walletAdmin.setServerURL(contextRoot);
 		List<UTXO> player = getBalance(accountKey);
 		// TODO 100 millions raw
 		new UtilSort().sortUTXO(player);
@@ -69,6 +69,7 @@ public class Lottery {
 	}
 
 	private void doTakeWinner() throws Exception {
+
 		Token t = walletAdmin.checkTokenId(tokenid);
 
 		userAddress = baseList(userUtxos, t);
