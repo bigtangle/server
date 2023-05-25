@@ -58,7 +58,7 @@ spec:
               name: mysql-secret
               key: password
         ports:
-        - containerPort: 3306
+        - containerPort: 3307
           name: mysql
         volumeMounts:
         - name: mysql-persistent-storage
@@ -73,7 +73,10 @@ kind: Service
 metadata:
   name: mysql
 spec:
+  type: NodePort
   ports:
-  - port: 3306
+  - port: 3307
+    targetPort: 3307
+    nodePort: 30001
   selector:
     app: mysql
