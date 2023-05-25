@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
-import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import org.bitcoin.Secp256k1Context;
@@ -25,7 +24,7 @@ public class BeforeStartup {
 
     private static final Logger logger = LoggerFactory.getLogger(BeforeStartup.class);
 
-    @PostConstruct
+    @jakarta.annotation.PostConstruct
     public void run() throws Exception {
 
         logger.debug("server config: " + serverConfiguration.toString());

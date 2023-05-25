@@ -5,8 +5,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import javax.annotation.PostConstruct;
-
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.slf4j.Logger;
@@ -35,7 +33,7 @@ public class KafkaTopicsHealthIndicator implements HealthIndicator {
     }
 
 
-    @PostConstruct
+    @jakarta.annotation.PostConstruct
     public void initAdminClient() {
         if (kafkaStart())
             this.adminClient = AdminClient.create(prepareConfiguration());
