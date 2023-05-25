@@ -44,13 +44,13 @@ public class DBStoreConfiguration {
     @Value("${db.hostname:localhost}")
     private String hostname;
 
-    @Value("${db.dbName:bitcoinj_test}")
-    private String dbName = "bitcoinj_test";
+    @Value("${db.dbName:info}")
+    private String dbName ;
 
     @Value("${db.username:root}")
     private String username = "root";
 
-    @Value("${db.password:adminroot}")
+    @Value("${db.password:test1234}")
     private String password;
 
     @Value("${db.port:3306}")
@@ -68,8 +68,9 @@ public class DBStoreConfiguration {
 
         HikariConfig config = new HikariConfig();
 
-        config.setJdbcUrl(MySQLFullBlockStore.DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName
-                + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC");
+        config.setJdbcUrl(MySQLFullBlockStore.DATABASE_CONNECTION_URL_PREFIX + hostname +":" +port+ "/" + dbName
+               // + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC"
+                );
         config.setUsername(username);
         config.setPassword(password);
         config.addDataSourceProperty("cachePrepStmts", "true");

@@ -75,7 +75,13 @@
 			<version>3.4.5</version>
 		</dependency>
 
-
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<!-- Replace with the version of the MySQL driver you want to use -->
+			<version>${mysql-version}</version>
+		</dependency>
+		
 	</dependencies>
 
 	<build>
