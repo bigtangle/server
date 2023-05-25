@@ -82,24 +82,11 @@
 			<version>3.4.5</version>
 		</dependency>
 
-
-		<dependency>
-			<groupId>org.cassandraunit</groupId>
-			<artifactId>cassandra-unit</artifactId>
-			<version>3.3.0.2</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.cassandraunit</groupId>
-			<artifactId>cassandra-unit-spring</artifactId>
-			<version>3.3.0.2</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.datastax.cassandra</groupId>
-			<artifactId>cassandra-driver-core</artifactId>
-			<version>3.3.0</version>
-			<scope>test</scope>
+ 		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<!-- Replace with the version of the MySQL driver you want to use -->
+			<version>${mysql-version}</version>
 		</dependency>
 
 		<dependency>
