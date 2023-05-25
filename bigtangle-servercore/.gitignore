@@ -1,2 +1,5 @@
-/bin/
 /build/
+/target/
+/bin/
+.classpath
+.project

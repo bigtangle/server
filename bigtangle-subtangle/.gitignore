@@ -1,5 +1,5 @@
-/bin/
-/.cache-main
-/.cache-tests
-/logs/
 /build/
+/target/
+/bin/
+.classpath
+.project
