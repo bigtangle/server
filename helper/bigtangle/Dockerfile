@@ -4,8 +4,6 @@
 
 FROM ubuntu:20.04 AS build
 
-MAINTAINER <cui@inasset.de> 
-
 
 ENV BIGTANGLEVERSION 0.3.5
 
