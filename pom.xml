@@ -16,10 +16,11 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java-version>1.8</java-version>
 	 
-		<org.slf4j-version>1.7.30</org.slf4j-version>
-		<mysql-version>8.0.22</mysql-version>
-		<jackson.version>2.10.0</jackson.version>
-		<jersey.version>2.25.1</jersey.version> 
+		<org.slf4j-version>1.7.28</org.slf4j-version>
+		<mysql-version>8.0.18</mysql-version>
+		<jackson.version>2.6.7</jackson.version>
+		<org.springframework.boot.version>2.2.0.RELEASE</org.springframework.boot.version>
+		 
  
 		<junit.jupiter.version>5.9.1</junit.jupiter.version>
 		<junit.platform.version>1.9.1</junit.platform.version>

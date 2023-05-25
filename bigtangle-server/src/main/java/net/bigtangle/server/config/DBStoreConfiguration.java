@@ -24,7 +24,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -127,7 +126,7 @@ public class DBStoreConfiguration {
                 DriverManager.getConnection(MySQLFullBlockStore.DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName
                         + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC", connectionProps);
                 rating = true;
-            } catch (CommunicationsException e) {
+            } catch ( Exception e) {
          
                 Thread.sleep(1000);
             }
