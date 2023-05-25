@@ -9,19 +9,19 @@
 	<description>The parent project for bigtangle </description>
 	<url>http://www.bigtangle.org</url>
 	<inceptionYear>2010</inceptionYear>
-	 
+
 	<packaging>pom</packaging>
 	<version>0.3.5</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java-version>17</java-version>
-	 
+
 		<org.slf4j-version>1.7.28</org.slf4j-version>
 		<mysql-version>8.0.18</mysql-version>
 		<jackson.version>2.6.7</jackson.version>
 		<org.springframework.boot.version>2.2.0.RELEASE</org.springframework.boot.version>
-		 
- 
+
+
 		<junit.jupiter.version>5.9.1</junit.jupiter.version>
 		<junit.platform.version>1.9.1</junit.platform.version>
 	</properties>
@@ -30,8 +30,8 @@
 		<module>./bigtangle-docker</module>
 		<module>./bigtangle-servercore</module>
 		<module>./bigtangle-server</module>
- 
-	 
+
+
 	</modules>
 	<dependencies>
 		<!-- Logging -->
@@ -77,16 +77,20 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
- 
+
 	<build>
 		<resources>
 			<resource>
 				<directory>src/main/java</directory>
 			</resource>
+
 		</resources>
 		<testResources>
 			<testResource>
 				<directory>src/test/java</directory>
+			</testResource>
+			<testResource>
+				<directory>src/main/resources</directory>
 			</testResource>
 		</testResources>
 		<plugins>
