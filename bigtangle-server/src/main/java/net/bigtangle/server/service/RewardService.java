@@ -58,7 +58,7 @@ import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.data.SolidityState;
-import net.bigtangle.server.service.ValidatorService.RewardBuilderResult;
+import net.bigtangle.server.service.ServiceBase.RewardBuilderResult;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
 
@@ -78,8 +78,7 @@ public class RewardService {
     protected TipsService tipService;
     @Autowired
     protected ServerConfiguration serverConfiguration;
-    @Autowired
-    private ValidatorService validatorService;
+ 
     @Autowired
     protected NetworkParameters networkParameters;
     @Autowired
@@ -87,6 +86,9 @@ public class RewardService {
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
 
+ 
+
+    
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final String LOCKID = this.getClass().getName();
@@ -317,7 +319,7 @@ public class RewardService {
         blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength, true,
                 store);
 
-        long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
+        long difficultyReward = new ServiceBase(serverConfiguration,networkParameters).calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
 
         // Build the type-specific tx data
         RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
@@ -362,7 +364,8 @@ public class RewardService {
         checkContainsNoRewardBlocks(newMilestoneBlock, store);
 
         // Check: At this point, predecessors must be solid
-        solidityState = validatorService.checkSolidity(newMilestoneBlock, false, store,false);
+        ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
+		solidityState = serviceBase.checkSolidity(newMilestoneBlock, false, store,false);
         if (!solidityState.isSuccessState())
             throw new VerificationException(" validatorService.checkSolidity is failed: " + solidityState.toString()
                     + "\n with block = " + newMilestoneBlock.toString());
@@ -371,7 +374,7 @@ public class RewardService {
         List<Sha256Hash> wipeBlocks = store.getWhereConfirmedNotMilestone();
         HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
         for (Sha256Hash wipeBlock : wipeBlocks)
-            blockGraph.unconfirm(wipeBlock, traversedBlockHashes, store);
+        	serviceBase.unconfirm(wipeBlock, traversedBlockHashes, store);
 
         // Find conflicts in the dependency set
         HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
@@ -409,11 +412,11 @@ public class RewardService {
 
         // Otherwise, all predecessors exist and were at least
         // solid > 0, so we should be able to confirm everything
-        blockGraph.solidifyBlock(newMilestoneBlock, solidityState, true, store);
+        serviceBase.solidifyBlock(newMilestoneBlock, solidityState, true, store);
         HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
         long milestoneNumber = store.getRewardChainLength(newMilestoneBlock.getHash());
         for (BlockWrap approvedBlock : allApprovedNewBlocks)
-            blockGraph.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms, milestoneNumber,
+        	serviceBase.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms, milestoneNumber,
                     store);
 
     }
@@ -473,7 +476,7 @@ public class RewardService {
                         milestoneNumber);
                 // Unconfirm anything not confirmed by milestone
                 for (BlockWrap wipeBlock : blocksInMilestoneInterval)
-                    blockGraph.unconfirm(wipeBlock.getBlockHash(), new HashSet<>(), store);
+                	new ServiceBase(serverConfiguration, networkParameters).unconfirm(wipeBlock.getBlockHash(), new HashSet<>(), store);
             }
         }
         Block cursor;
@@ -552,7 +555,7 @@ public class RewardService {
             FullBlockStore store) {
         return allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates()).flatMap(i -> i.stream()).filter(c -> {
             try {
-                return validatorService.hasSpentDependencies(c, store);
+                return new ServiceBase(serverConfiguration,networkParameters).hasSpentDependencies(c, store);
             } catch (BlockStoreException e) {
                 e.printStackTrace();
                 return true;
@@ -563,7 +566,7 @@ public class RewardService {
     private boolean hasSpentInputs(HashSet<BlockWrap> allApprovedNewBlocks, FullBlockStore store) {
         return allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates()).flatMap(i -> i.stream()).anyMatch(c -> {
             try {
-                return validatorService.hasSpentDependencies(c, store);
+                return new ServiceBase(serverConfiguration,networkParameters).hasSpentDependencies(c, store);
             } catch (BlockStoreException e) {
                 // e.printStackTrace();
                 return true;
@@ -642,142 +645,9 @@ public class RewardService {
 
     public boolean solidifyWaiting(Block block, FullBlockStore store) throws BlockStoreException {
 
-        SolidityState solidityState = validatorService.checkSolidity(block, false, store);
+        SolidityState solidityState = new ServiceBase(serverConfiguration,networkParameters).checkSolidity(block, false, store);
         blockGraph.solidifyBlock(block, solidityState, false, store);
         return true;
     }
-
-    public SolidityState checkRewardDifficulty(Block rewardBlock, FullBlockStore store) throws BlockStoreException {
-        RewardInfo rewardInfo = new RewardInfo().parseChecked(rewardBlock.getTransactions().get(0).getData());
-
-        // Check previous reward blocks exist and get their approved sets
-        Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
-        if (prevRewardHash == null)
-            throw new VerificationException("Missing previous reward block: " + prevRewardHash);
-
-        Block prevRewardBlock = store.get(prevRewardHash);
-        if (prevRewardBlock == null)
-            return SolidityState.from(prevRewardHash, true);
-        if (prevRewardBlock.getBlockType() != Type.BLOCKTYPE_REWARD
-                && prevRewardBlock.getBlockType() != Type.BLOCKTYPE_INITIAL)
-            throw new VerificationException("Previous reward block is not reward block.");
-
-        checkRewardDifficulty(rewardBlock, rewardInfo, prevRewardBlock, store);
-
-        return SolidityState.getSuccessState();
-    }
-
-    public SolidityState checkRewardReferencedBlocks(Block rewardBlock, FullBlockStore store)
-            throws BlockStoreException {
-        try {
-            RewardInfo rewardInfo = new RewardInfo().parseChecked(rewardBlock.getTransactions().get(0).getData());
-
-            // Check previous reward blocks exist and get their approved sets
-            Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
-            if (prevRewardHash == null)
-                throw new VerificationException("Missing previous block reference." + prevRewardHash);
-
-            Block prevRewardBlock = store.get(prevRewardHash);
-            if (prevRewardBlock == null)
-                return SolidityState.from(prevRewardHash, true);
-            if (prevRewardBlock.getBlockType() != Type.BLOCKTYPE_REWARD
-                    && prevRewardBlock.getBlockType() != Type.BLOCKTYPE_INITIAL)
-                throw new VerificationException("Previous reward block is not reward block.");
-
-            // Get all blocks approved by previous reward blocks
-            long cutoffHeight = blockService.getRewardCutoffHeight(prevRewardHash, store);
-
-            for (Sha256Hash hash : rewardInfo.getBlocks()) {
-                BlockWrap block = store.getBlockWrap(hash);
-                if (block == null)
-                    return SolidityState.from(hash, true);
-                if (block.getBlock().getHeight() <= cutoffHeight)
-                    throw new VerificationException("Referenced blocks are below cutoff height.");
-
-                SolidityState requirementResult = checkRequiredBlocks(rewardInfo, block, store);
-                if (!requirementResult.isSuccessState()) {
-                    return requirementResult;
-                }
-            }
-
-        } catch (Exception e) {
-            throw new VerificationException("checkRewardReferencedBlocks not completed:", e);
-        }
-
-        return SolidityState.getSuccessState();
-    }
-
-    /*
-     * check only if the blocks in database
-     */
-    private SolidityState checkRequiredBlocks(RewardInfo rewardInfo, BlockWrap block, FullBlockStore store)
-            throws BlockStoreException {
-        Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock(), false);
-        for (Sha256Hash reqHash : requiredBlocks) {
-            BlockWrap req = store.getBlockWrap(reqHash);
-            // the required block must be in this referenced blocks or in
-            // milestone
-            if (req == null) {
-                return SolidityState.from(reqHash, true);
-            }
-        }
-
-        return SolidityState.getSuccessState();
-    }
-
-    private void checkRewardDifficulty(Block rewardBlock, RewardInfo rewardInfo, Block prevRewardBlock,
-            FullBlockStore store) throws BlockStoreException {
-
-        // check difficulty
-        Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
-        long difficulty = calculateNextChainDifficulty(prevRewardHash, rewardInfo.getChainlength(),
-                rewardBlock.getTimeSeconds(), store);
-
-        if (difficulty != rewardInfo.getDifficultyTargetReward()) {
-            throw new VerificationException("getDifficultyTargetReward does not match.");
-        }
-
-    }
-
-    public long calculateNextChainDifficulty(Sha256Hash prevRewardHash, long currChainLength, long currentTime,
-            FullBlockStore store) throws BlockStoreException {
-
-        if (currChainLength % NetworkParameters.INTERVAL != 0) {
-            return store.getRewardDifficulty(prevRewardHash);
-        }
-
-        // Get the block INTERVAL ago
-        for (int i = 0; i < NetworkParameters.INTERVAL - 1; i++) {
-            prevRewardHash = store.getRewardPrevBlockHash(prevRewardHash);
-        }
-        Block oldBlock = store.get(prevRewardHash);
-
-        int timespan = (int) Math.max(1, (currentTime - oldBlock.getTimeSeconds()));
-        long prevDifficulty = store.getRewardDifficulty(prevRewardHash);
-
-        // Limit the adjustment step.
-        int targetTimespan = NetworkParameters.TARGET_TIMESPAN;
-        if (timespan < targetTimespan / 4)
-            timespan = targetTimespan / 4;
-        if (timespan > targetTimespan * 4)
-            timespan = targetTimespan * 4;
-
-        BigInteger newTarget = Utils.decodeCompactBits(prevDifficulty);
-        newTarget = newTarget.multiply(BigInteger.valueOf(timespan));
-        newTarget = newTarget.divide(BigInteger.valueOf(targetTimespan));
-
-        if (newTarget.compareTo(networkParameters.getMaxTargetReward()) > 0) {
-            // log.info("Difficulty hit proof of work limit: {}",
-            // newTarget.toString(16));
-            newTarget = networkParameters.getMaxTargetReward();
-        }
-
-        if (prevDifficulty != (Utils.encodeCompactBits(newTarget))) {
-            log.info("Difficulty  change from {} to: {} and diff={}", prevDifficulty,
-                    Utils.encodeCompactBits(newTarget), prevDifficulty - Utils.encodeCompactBits(newTarget));
-
-        }
-
-        return Utils.encodeCompactBits(newTarget);
-    }
+ 
 }

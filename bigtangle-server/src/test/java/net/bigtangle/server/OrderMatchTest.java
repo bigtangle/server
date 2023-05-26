@@ -44,6 +44,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.OrderTickerService;
+import net.bigtangle.server.service.ServiceBase;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MarketOrderItem;
 import net.bigtangle.utils.OkHttp3Util;
@@ -1170,7 +1171,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
         // Execute order matching and then unexecute it
         Block orderMatching = makeRewardBlock(addedBlocks);
-        blockGraph.unconfirm(orderMatching.getHash(), new HashSet<>(), store);
+        new ServiceBase(serverConfiguration, networkParameters).unconfirm(orderMatching.getHash(), new HashSet<>(), store);
 
         // Verify the tokens did not change possession
         assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 0l);

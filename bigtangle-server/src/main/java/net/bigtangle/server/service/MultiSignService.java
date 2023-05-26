@@ -33,6 +33,7 @@ import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.core.response.MultiSignResponse;
 import net.bigtangle.core.response.SearchMultiSignResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Json;
@@ -44,15 +45,16 @@ public class MultiSignService {
     private static final Logger log = LoggerFactory.getLogger(MultiSignService.class);
     @Autowired
     protected  StoreService storeService;
-    @Autowired
-    protected ValidatorService validatorService;
+ 
     @Autowired
     protected NetworkParameters params;
     @Autowired
     protected TokenDomainnameService tokenDomainnameService;
     @Autowired
     private BlockService blockService;
-
+    @Autowired
+    protected ServerConfiguration serverConfiguration;
+    
     public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address, FullBlockStore store )
             throws BlockStoreException {
         if (StringUtils.isBlank(tokenid)) {
@@ -193,8 +195,8 @@ public class MultiSignService {
 
     public void signTokenAndSaveBlock(Block block, boolean allowConflicts,FullBlockStore store) throws Exception {
         try {
-            validatorService.checkTokenUnique(block,store);
-            if (validatorService.checkFullTokenSolidity(block, 0, true,store) == SolidityState.getSuccessState()) {
+        	new ServiceBase(serverConfiguration,networkParameters).checkTokenUnique(block,store);
+            if (new ServiceBase(serverConfiguration, networkParameters).checkFullTokenSolidity(block, 0, true,store) == SolidityState.getSuccessState()) {
                 this.saveMultiSign(block,store);
                 // check the block prototype and may do update
 
