@@ -60,9 +60,7 @@ public class DBStoreConfiguration {
     NetworkParameters networkParameters;
     @Autowired
     ServerConfiguration serverConfiguration;
-
-    @Autowired
-    private DBStoreConfiguration dbStoreConfiguration;
+ 
 
     @Bean
     public DataSource dataSource() throws BlockStoreException, IOException, InterruptedException, ExecutionException {
@@ -96,8 +94,8 @@ public class DBStoreConfiguration {
                 
                 dockerHelper.shellExecute(" mkdir -p  " + data  );
                 dockerHelper.shellExecute("   docker run -d  -t " + "-v " + data
-                        + ":/var/lib/mysql " + " -e MYSQL_ROOT_PASSWORD=" + dbStoreConfiguration.getPassword()
-                        + " -e MYSQL_DATABASE=" + dbStoreConfiguration.getDbName() + " --name="
+                        + ":/var/lib/mysql " + " -e MYSQL_ROOT_PASSWORD=" +  getPassword()
+                        + " -e MYSQL_DATABASE=" + getDbName() + " --name="
                         + serverConfiguration.getDockerDBHost() + "     mysql:8.0.23 ");
                 // check database available
                  logger.debug(" check database connection " +
@@ -120,8 +118,8 @@ public class DBStoreConfiguration {
         while (!rating) {
             try {
                 Properties connectionProps = new Properties();
-                connectionProps.put("user", dbStoreConfiguration.getUsername());
-                connectionProps.put("password", dbStoreConfiguration.getPassword());
+                connectionProps.put("user",  getUsername());
+                connectionProps.put("password",  getPassword());
 
                 DriverManager.getConnection(MySQLFullBlockStore.DATABASE_CONNECTION_URL_PREFIX + hostname + "/" + dbName
                         + "?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC", connectionProps);
