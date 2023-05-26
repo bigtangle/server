@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server;
 
-import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import org.bitcoin.Secp256k1Context;
@@ -13,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.kafka.BlockStreamHandler;
 import net.bigtangle.server.config.ScheduleConfiguration;

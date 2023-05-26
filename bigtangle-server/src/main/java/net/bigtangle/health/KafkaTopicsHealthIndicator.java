@@ -5,8 +5,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import javax.annotation.PostConstruct;
-
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.slf4j.Logger;
@@ -18,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Sets;
 
+import jakarta.annotation.PostConstruct;
 import net.bigtangle.kafka.KafkaConfiguration;
 
 @Component
