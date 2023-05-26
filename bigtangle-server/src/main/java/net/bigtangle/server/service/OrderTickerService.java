@@ -32,33 +32,8 @@ public class OrderTickerService {
 
     private int MAXCOUNT = 500;
 
-    public void addMatchingEvents(OrderMatchingResult orderMatchingResult, String transactionHash, long matchBlockTime,
-            FullBlockStore store) throws BlockStoreException {
-        // collect the spend order volumes and ticker to write to database
-        List<MatchResult> matchResultList = new ArrayList<MatchResult>();
-        try {
-            for (Entry<TradePair, List<Event>> entry : orderMatchingResult.getTokenId2Events().entrySet()) {
-                for (Event event : entry.getValue()) {
-                    if (event instanceof Match) {
-                        MatchResult f = new MatchResult(transactionHash, entry.getKey().getOrderToken(),
-                                entry.getKey().getOrderBaseToken(), ((OrderBookEvents.Match) event).price,
-                                ((OrderBookEvents.Match) event).executedQuantity, matchBlockTime);
-                        matchResultList.add(f);
+    
 
-                    }
-                }
-            }
-            if (!matchResultList.isEmpty())
-                store.insertMatchingEvent(matchResultList);
-
-        } catch (Exception e) {
-            // this is analysis data and is not consensus relevant
-        }
-    }
-
-    public void removeMatchingEvents(Transaction outputTx, FullBlockStore store) throws BlockStoreException {
-        store.deleteMatchingEvents(outputTx.getHashAsString());
-    }
 
     /**
      * Returns a list of up to n last prices in ascending occurrence

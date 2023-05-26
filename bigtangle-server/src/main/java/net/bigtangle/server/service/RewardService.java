@@ -4,17 +4,10 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
@@ -24,7 +17,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -36,7 +28,6 @@ import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
@@ -54,7 +45,6 @@ import net.bigtangle.core.response.GetTXRewardResponse;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.data.SolidityState;
@@ -314,12 +304,13 @@ public class RewardService {
         BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
         BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
 
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength, true,
+        ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
+		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength, true,
                 store);
-        blockService.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength, true,
+        serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength, true,
                 store);
 
-        long difficultyReward = new ServiceBase(serverConfiguration,networkParameters).calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
+        long difficultyReward = serviceBase.calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
 
         // Build the type-specific tx data
         RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
@@ -342,307 +333,9 @@ public class RewardService {
 
         return Utils.encodeCompactBits(difficultyChain);
     }
-
-    public void buildRewardChain(Block newMilestoneBlock, FullBlockStore store) throws BlockStoreException {
-
-        RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
-        Set<Sha256Hash> milestoneSet = currRewardInfo.getBlocks();
-        long cutoffHeight = blockService.getRewardCutoffHeight(currRewardInfo.getPrevRewardHash(), store);
-
-        // Check all referenced blocks have their requirements
-        SolidityState solidityState = checkReferencedBlockRequirements(newMilestoneBlock, cutoffHeight, store);
-        if (!solidityState.isSuccessState())
-            throw new VerificationException(" checkReferencedBlockRequirements is failed: " + solidityState.toString());
-
-        // Solidify referenced blocks
-        solidifyBlocks(currRewardInfo, store);
-
-        // Ensure the new difficulty and tx is set correctly
-        checkGeneratedReward(newMilestoneBlock, store);
-
-        // Sanity check: No reward blocks are approved
-        checkContainsNoRewardBlocks(newMilestoneBlock, store);
-
-        // Check: At this point, predecessors must be solid
-        ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
-		solidityState = serviceBase.checkSolidity(newMilestoneBlock, false, store,false);
-        if (!solidityState.isSuccessState())
-            throw new VerificationException(" validatorService.checkSolidity is failed: " + solidityState.toString()
-                    + "\n with block = " + newMilestoneBlock.toString());
-
-        // Unconfirm anything not confirmed by milestone
-        List<Sha256Hash> wipeBlocks = store.getWhereConfirmedNotMilestone();
-        HashSet<Sha256Hash> traversedBlockHashes = new HashSet<>();
-        for (Sha256Hash wipeBlock : wipeBlocks)
-        	serviceBase.unconfirm(wipeBlock, traversedBlockHashes, store);
-
-        // Find conflicts in the dependency set
-        HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
-        for (Sha256Hash hash : milestoneSet)
-            allApprovedNewBlocks.add(store.getBlockWrap(hash));
-        allApprovedNewBlocks.add(store.getBlockWrap(newMilestoneBlock.getHash()));
-
-        // If anything is already spent, no-go
-        boolean anySpentInputs = hasSpentInputs(allApprovedNewBlocks, store);
-        // Optional<ConflictCandidate> spentInput =
-        // findFirstSpentInput(allApprovedNewBlocks);
-
-        if (anySpentInputs) {
-            // solidityState = SolidityState.getFailState();
-            throw new VerificationException("there are hasSpentInputs in allApprovedNewBlocks ");
-        }
-        // If any conflicts exist between the current set of
-        // blocks, no-go
-        boolean anyCandidateConflicts = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
-                .flatMap(i -> i.stream()).collect(Collectors.groupingBy(i -> i.getConflictPoint())).values().stream()
-                .anyMatch(l -> l.size() > 1);
-        // List<List<ConflictCandidate>> candidateConflicts =
-        // allApprovedNewBlocks.stream()
-        // .map(b -> b.toConflictCandidates()).flatMap(i -> i.stream())
-        // .collect(Collectors.groupingBy(i ->
-        // i.getConflictPoint())).values().stream().filter(l -> l.size() > 1)
-        // .collect(Collectors.toList());
-
-        // Did we fail? Then we stop now and rerun consensus
-        // logic on the new longest chain.
-        if (anyCandidateConflicts) {
-            solidityState = SolidityState.getFailState();
-            throw new VerificationException("conflicts exist between the current set of ");
-        }
-
-        // Otherwise, all predecessors exist and were at least
-        // solid > 0, so we should be able to confirm everything
-        serviceBase.solidifyBlock(newMilestoneBlock, solidityState, true, store);
-        HashSet<Sha256Hash> traversedConfirms = new HashSet<>();
-        long milestoneNumber = store.getRewardChainLength(newMilestoneBlock.getHash());
-        for (BlockWrap approvedBlock : allApprovedNewBlocks)
-        	serviceBase.confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms, milestoneNumber,
-                    store);
-
-    }
-
-    public void solidifyBlocks(RewardInfo currRewardInfo, FullBlockStore store) throws BlockStoreException {
-        Comparator<Block> comparator = Comparator.comparingLong((Block b) -> b.getHeight())
-                .thenComparing((Block b) -> b.getHash());
-        TreeSet<Block> referencedBlocks = new TreeSet<Block>(comparator);
-        for (Sha256Hash hash : currRewardInfo.getBlocks()) {
-            referencedBlocks.add(store.get(hash));
-        }
-        for (Block block : referencedBlocks) {
-            solidifyWaiting(block, store);
-        }
-    }
-
-    /**
-     * Called as part of connecting a block when the new block results in a
-     * different chain having higher total work.
-     * 
-     */
-    public void handleNewBestChain(Block newChainHead, FullBlockStore store)
-            throws BlockStoreException, VerificationException {
-        // checkState(lock.isHeldByCurrentThread());
-        // This chain has overtaken the one we currently believe is best.
-        // Reorganize is required.
-        //
-        // Firstly, calculate the block at which the chain diverged. We only
-        // need to examine the
-        // chain from beyond this block to find differences.
-        Block head = getChainHead(store);
-        final Block splitPoint = findSplit(newChainHead, head, store);
-        if (splitPoint == null) {
-            log.info(" splitPoint is null, the chain ist not complete: ", newChainHead);
-            return;
-        }
-
-        log.info("Re-organize after split at height {}", splitPoint.getHeight());
-        log.info("Old chain head: \n {}", head);
-        log.info("New chain head: \n {}", newChainHead);
-        log.info("Split at block: \n {}", splitPoint);
-        // Then build a list of all blocks in the old part of the chain and the
-        // new part.
-        LinkedList<Block> oldBlocks = new LinkedList<Block>();
-        if (!head.getHash().equals(splitPoint.getHash())) {
-            oldBlocks = getPartialChain(head, splitPoint, store);
-        }
-        final LinkedList<Block> newBlocks = getPartialChain(newChainHead, splitPoint, store);
-        // Disconnect each transaction in the previous best chain that is no
-        // longer in the new best chain
-        for (Block oldBlock : oldBlocks) {
-            // Sanity check:
-            if (!oldBlock.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
-                // Unset the milestone of this one
-                long milestoneNumber = oldBlock.getRewardInfo().getChainlength();
-                List<BlockWrap> blocksInMilestoneInterval = store.getBlocksInMilestoneInterval(milestoneNumber,
-                        milestoneNumber);
-                // Unconfirm anything not confirmed by milestone
-                for (BlockWrap wipeBlock : blocksInMilestoneInterval)
-                	new ServiceBase(serverConfiguration, networkParameters).unconfirm(wipeBlock.getBlockHash(), new HashSet<>(), store);
-            }
-        }
-        Block cursor;
-        // Walk in ascending chronological order.
-        for (Iterator<Block> it = newBlocks.descendingIterator(); it.hasNext();) {
-            cursor = it.next();
-            buildRewardChain(cursor, store);
-            // if we build a chain longer than head, do a commit, even it may be
-            // failed after this.
-            if (cursor.getRewardInfo().getChainlength() > head.getRewardInfo().getChainlength()) {
-                store.commitDatabaseBatchWrite();
-                store.beginDatabaseBatchWrite();
-            }
-        }
-
-        // Update the pointer to the best known block.
-        // setChainHead(storedNewHead);
-    }
-
-    private Block getChainHead(FullBlockStore store) throws BlockStoreException {
-        return store.get(store.getMaxConfirmedReward().getBlockHash());
-    }
-
-    /**
-     * Locates the point in the chain at which newBlock and chainHead diverge.
-     * Returns null if no split point was found (ie they are not part of the
-     * same chain). Returns newChainHead or chainHead if they don't actually
-     * diverge but are part of the same chain. return null, if the newChainHead
-     * is not complete locally.
-     */
-    public Block findSplit(Block newChainHead, Block oldChainHead, FullBlockStore store) throws BlockStoreException {
-        Block currentChainCursor = oldChainHead;
-        Block newChainCursor = newChainHead;
-        // Loop until we find the reward block both chains have in common.
-        // Example:
-        //
-        // A -> B -> C -> D
-        // *****\--> E -> F -> G
-        //
-        // findSplit will return block B. oldChainHead = D and newChainHead = G.
-        while (!currentChainCursor.equals(newChainCursor)) {
-            if (currentChainCursor.getRewardInfo().getChainlength() > newChainCursor.getRewardInfo().getChainlength()) {
-                currentChainCursor = store.get(currentChainCursor.getRewardInfo().getPrevRewardHash());
-                checkNotNull(currentChainCursor, "Attempt to follow an orphan chain");
-
-            } else {
-                newChainCursor = store.get(newChainCursor.getRewardInfo().getPrevRewardHash());
-                checkNotNull(newChainCursor, "Attempt to follow an orphan chain");
-
-            }
-        }
-        return currentChainCursor;
-    }
-
-    /**
-     * Returns the set of contiguous blocks between 'higher' and 'lower'. Higher
-     * is included, lower is not.
-     */
-    private LinkedList<Block> getPartialChain(Block higher, Block lower, FullBlockStore store)
-            throws BlockStoreException {
-        checkArgument(higher.getHeight() > lower.getHeight(), "higher and lower are reversed");
-        LinkedList<Block> results = new LinkedList<>();
-        Block cursor = higher;
-        while (true) {
-            results.add(cursor);
-            cursor = checkNotNull(store.get(cursor.getRewardInfo().getPrevRewardHash()),
-                    "Ran off the end of the chain");
-            if (cursor.equals(lower))
-                break;
-        }
-        return results;
-    }
-
-    @SuppressWarnings("unused")
-    private Optional<ConflictCandidate> findFirstSpentInput(HashSet<BlockWrap> allApprovedNewBlocks,
-            FullBlockStore store) {
-        return allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates()).flatMap(i -> i.stream()).filter(c -> {
-            try {
-                return new ServiceBase(serverConfiguration,networkParameters).hasSpentDependencies(c, store);
-            } catch (BlockStoreException e) {
-                e.printStackTrace();
-                return true;
-            }
-        }).findFirst();
-    }
-
-    private boolean hasSpentInputs(HashSet<BlockWrap> allApprovedNewBlocks, FullBlockStore store) {
-        return allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates()).flatMap(i -> i.stream()).anyMatch(c -> {
-            try {
-                return new ServiceBase(serverConfiguration,networkParameters).hasSpentDependencies(c, store);
-            } catch (BlockStoreException e) {
-                // e.printStackTrace();
-                return true;
-            }
-        });
-    }
-
-    /*
-     * check blocks are in not in milestone
-     */
-    private SolidityState checkReferencedBlockRequirements(Block newMilestoneBlock, long cutoffHeight,
-            FullBlockStore store) throws BlockStoreException {
-
-        RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
-
-        for (Sha256Hash hash : currRewardInfo.getBlocks()) {
-            BlockWrap block = store.getBlockWrap(hash);
-            if (block == null)
-                return SolidityState.from(hash, true);
-            if (block.getBlock().getHeight() <= cutoffHeight)
-                throw new VerificationException("Referenced blocks are below cutoff height.");
-
-            Set<Sha256Hash> requiredBlocks = blockService.getAllRequiredBlockHashes(block.getBlock(), false);
-            for (Sha256Hash reqHash : requiredBlocks) {
-                BlockWrap req = store.getBlockWrap(reqHash);
-                if (req == null)
-                    return SolidityState.from(reqHash, true);
-
-                if (req != null && req.getBlockEvaluation().getMilestone() < 0
-                        && !currRewardInfo.getBlocks().contains(reqHash)) {
-                    // FIXME blocks problem with 4046309 throw new
-                    // VerificationException("Predecessors are not in
-                    // milestone." + req.toString());
-                }
-            }
-        }
-
-        return SolidityState.getSuccessState();
-    }
-
-    private void checkContainsNoRewardBlocks(Block newMilestoneBlock, FullBlockStore store) throws BlockStoreException {
-
-        RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
-        for (Sha256Hash hash : currRewardInfo.getBlocks()) {
-            BlockWrap block = store.getBlockWrap(hash);
-            if (block.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD)
-                throw new VerificationException("Reward block approves other reward blocks");
-        }
-    }
-
-    private void checkGeneratedReward(Block newMilestoneBlock, FullBlockStore store) throws BlockStoreException {
-
-        RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
-
-        RewardBuilderResult result = makeReward(newMilestoneBlock.getPrevBlockHash(),
-                newMilestoneBlock.getPrevBranchBlockHash(), currRewardInfo.getPrevRewardHash(),
-                newMilestoneBlock.getTimeSeconds(), store);
-        if (currRewardInfo.getDifficultyTargetReward() != result.getDifficulty()) {
-            throw new VerificationException("Incorrect difficulty target");
-        }
-
-        OrderMatchingResult ordermatchresult = blockGraph.generateOrderMatching(newMilestoneBlock, store);
-
-        // Only check the Hash of OrderMatchingResult
-        if (!currRewardInfo.getOrdermatchingResult().equals(ordermatchresult.getOrderMatchingResultHash())) {
-            throw new VerificationException("OrderMatchingResult transactions output is wrong.");
-        }
-
-        Transaction miningTx = blockGraph.generateVirtualMiningRewardTX(newMilestoneBlock, store);
-
-        // Only check the Hash of OrderMatchingResult
-        if (!currRewardInfo.getMiningResult().equals(miningTx.getHash())) {
-            throw new VerificationException("generateVirtualMiningRewardTX transactions output is wrong.");
-        }
-    }
-
+ 
+  
+  
     public boolean solidifyWaiting(Block block, FullBlockStore store) throws BlockStoreException {
 
         SolidityState solidityState = new ServiceBase(serverConfiguration,networkParameters).checkSolidity(block, false, store);

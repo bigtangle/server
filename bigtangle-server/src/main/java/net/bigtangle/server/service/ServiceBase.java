@@ -104,6 +104,7 @@ import net.bigtangle.core.exception.VerificationException.SigOpsException;
 import net.bigtangle.core.exception.VerificationException.TimeReversionException;
 import net.bigtangle.core.exception.VerificationException.TransactionOutputsDisallowedException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
+import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
@@ -3165,7 +3166,7 @@ public class ServiceBase {
 		}).findFirst();
 	}
 
-	private boolean hasSpentInputs(HashSet<BlockWrap> allApprovedNewBlocks, FullBlockStore store) {
+	public boolean hasSpentInputs(HashSet<BlockWrap> allApprovedNewBlocks, FullBlockStore store) {
 		return allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates()).flatMap(i -> i.stream()).anyMatch(c -> {
 			try {
 				return hasSpentDependencies(c, store);
@@ -3673,9 +3674,32 @@ public class ServiceBase {
 		blockStore.updateOrderConfirmed(actualCalculationResult.getRemainingOrders(), true);
 
 		// Update the matching history in db
-		// tickerService.addMatchingEvents(actualCalculationResult,
-		// actualCalculationResult.getOutputTx().getHashAsString(),
-		// block.getBlock().getTimeSeconds(), blockStore);
+		addMatchingEvents(actualCalculationResult, actualCalculationResult.getOutputTx().getHashAsString(),
+				block.getBlock().getTimeSeconds(), blockStore);
+	}
+
+	public void addMatchingEvents(OrderMatchingResult orderMatchingResult, String transactionHash, long matchBlockTime,
+			FullBlockStore store) throws BlockStoreException {
+		// collect the spend order volumes and ticker to write to database
+		List<MatchResult> matchResultList = new ArrayList<MatchResult>();
+		try {
+			for (Entry<TradePair, List<Event>> entry : orderMatchingResult.getTokenId2Events().entrySet()) {
+				for (Event event : entry.getValue()) {
+					if (event instanceof Match) {
+						MatchResult f = new MatchResult(transactionHash, entry.getKey().getOrderToken(),
+								entry.getKey().getOrderBaseToken(), ((OrderBookEvents.Match) event).price,
+								((OrderBookEvents.Match) event).executedQuantity, matchBlockTime);
+						matchResultList.add(f);
+
+					}
+				}
+			}
+			if (!matchResultList.isEmpty())
+				store.insertMatchingEvent(matchResultList);
+
+		} catch (Exception e) {
+			// this is analysis data and is not consensus relevant
+		}
 	}
 
 	private void confirmOrderOpen(BlockWrap block, FullBlockStore blockStore) throws BlockStoreException {
@@ -4004,7 +4028,11 @@ public class ServiceBase {
 		blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
 
 		// Update the matching history in db
-		// tickerService.removeMatchingEvents(matchingResult.getOutputTx(), blockStore);
+		removeMatchingEvents(matchingResult.getOutputTx(), blockStore);
+	}
+
+	public void removeMatchingEvents(Transaction outputTx, FullBlockStore store) throws BlockStoreException {
+		store.deleteMatchingEvents(outputTx.getHashAsString());
 	}
 
 	private void unconfirmOrderOpen(Block block, FullBlockStore blockStore) throws BlockStoreException {

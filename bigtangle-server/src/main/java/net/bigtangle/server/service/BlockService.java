@@ -3,13 +3,10 @@
  import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -40,7 +37,6 @@ import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.ConflictPossibleException;
-import net.bigtangle.core.exception.VerificationException.CutoffException;
 import net.bigtangle.core.exception.VerificationException.ProofOfWorkException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.core.response.AbstractResponse;
@@ -129,191 +125,7 @@ public class BlockService {
         return System.currentTimeMillis() / 1000 - (long) days * 60 * 24 * 60;
     }
 
-    /**
-     * Recursively removes the specified block and its approvers from the
-     * collection if this block is contained in the collection.
-     */
-    public void removeBlockAndApproversFrom(Collection<BlockWrap> blocks, BlockWrap startingBlock, FullBlockStore store)
-            throws BlockStoreException {
-
-        PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
-                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()));
-        Set<Sha256Hash> blockQueueSet = new HashSet<>();
-        blockQueue.add(startingBlock);
-        blockQueueSet.add(startingBlock.getBlockHash());
-
-        while (!blockQueue.isEmpty()) {
-            BlockWrap block = blockQueue.poll();
-            blockQueueSet.remove(block.getBlockHash());
-
-            // Nothing to remove further if not in set
-            if (!blocks.contains(block))
-                continue;
-
-            // Remove this block.
-            blocks.remove(block);
-
-            // Queue all of its approver blocks if not already queued.
-            for (Sha256Hash req : store.getSolidApproverBlockHashes(block.getBlockHash())) {
-                if (!blockQueueSet.contains(req)) {
-                    BlockWrap pred = store.getBlockWrap(req);
-                    blockQueueSet.add(req);
-                    blockQueue.add(pred);
-                }
-            }
-        }
-    }
-
-    /**
-     * Recursively adds the specified block and its approvers to the collection
-     * if the blocks are in the current milestone and not in the collection.
-     */
-    public void addConfirmedApproversTo(Collection<BlockWrap> blocks, BlockWrap startingBlock, FullBlockStore store)
-            throws BlockStoreException {
-
-        PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
-                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()));
-        Set<Sha256Hash> blockQueueSet = new HashSet<>();
-        blockQueue.add(startingBlock);
-        blockQueueSet.add(startingBlock.getBlockHash());
-
-        while (!blockQueue.isEmpty()) {
-            BlockWrap block = blockQueue.poll();
-            blockQueueSet.remove(block.getBlockHash());
-
-            // Nothing added if already in set or not confirmed
-            if (!block.getBlockEvaluation().isConfirmed() || blocks.contains(block))
-                continue;
-
-            // Add this block.
-            blocks.add(block);
-
-            // Queue all of its confirmed approver blocks if not already queued.
-            for (Sha256Hash req : store.getSolidApproverBlockHashes(block.getBlockHash())) {
-                if (!blockQueueSet.contains(req)) {
-                    BlockWrap pred = store.getBlockWrap(req);
-                    blockQueueSet.add(req);
-                    blockQueue.add(pred);
-                }
-            }
-        }
-    }
-
-    /**
-     * Recursively adds the specified block and its approved blocks to the
-     * collection if the blocks are not in the collection. if a block is missing
-     * somewhere, returns false. throwException will be true, if it required the
-     * validation for consensus. Otherwise, it does ignore the cutoff blocks.
-     *
-     */
-    public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap startingBlock,
-            long cutoffHeight, long prevMilestoneNumber, boolean throwException, FullBlockStore store)
-            throws BlockStoreException {
-
-        PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
-                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
-        Set<Sha256Hash> blockQueueSet = new HashSet<>();
-        blockQueue.add(startingBlock);
-        blockQueueSet.add(startingBlock.getBlockHash());
-        boolean notMissingAnything = true;
-
-        while (!blockQueue.isEmpty()) {
-            BlockWrap block = blockQueue.poll();
-            blockQueueSet.remove(block.getBlockHash());
-
-            // Nothing added if already in set
-            if (blocks.contains(block.getBlockHash()))
-                continue;
-
-            // Nothing added if already in milestone
-            if (block.getBlockEvaluation().getMilestone() >= 0
-                    && block.getBlockEvaluation().getMilestone() <= prevMilestoneNumber)
-                continue;
-
-            // Check if the block is in cutoff and not in chain
-            if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
-                if (throwException) {
-        //TODO            throw new CutoffException(
-                   logger.debug("Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
-                } else {
-                    notMissingAnything = false;
-                    continue;
-                }
-            }
-
-            // Add this block.
-            blocks.add(block.getBlockHash());
-
-            // Queue all of its required blocks if not already queued.
-            for (Sha256Hash req : getAllRequiredBlockHashes(block.getBlock(),false)) {
-                if (!blockQueueSet.contains(req)) {
-                    BlockWrap pred = store.getBlockWrap(req);
-                    if (pred == null) {
-                        notMissingAnything = false;
-                        continue;
-                    } else {
-                        blockQueueSet.add(req);
-                        blockQueue.add(pred);
-                    }
-                }
-            }
-        }
-
-        return notMissingAnything;
-    }
-
-    /**
-     * Recursively adds the specified block and its approved blocks to the
-     * collection if the blocks are not in the current milestone and not in the
-     * collection. if a block is missing somewhere, returns false.
-     *
-     */
-    public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap startingBlock,
-            long cutoffHeight, FullBlockStore store) throws BlockStoreException {
-
-        PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
-                Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
-        Set<Sha256Hash> blockQueueSet = new HashSet<>();
-        blockQueue.add(startingBlock);
-        blockQueueSet.add(startingBlock.getBlockHash());
-        boolean notMissingAnything = true;
-
-        while (!blockQueue.isEmpty()) {
-            BlockWrap block = blockQueue.poll();
-            blockQueueSet.remove(block.getBlockHash());
-
-            // Nothing added if already in set or confirmed
-            if (block.getBlockEvaluation().getMilestone() >= 0 || block.getBlockEvaluation().isConfirmed()
-                    || blocks.contains(block))
-                continue;
-
-            // Check if the block is in cutoff and not in chain
-            if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
-                throw new CutoffException(
-                        "Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
-            }
-
-            // Add this block.
-            blocks.add(block);
-
-            // Queue all of its required blocks if not already queued.
-            for (Sha256Hash req : getAllRequiredBlockHashes(block.getBlock(),false)) {
-                if (!blockQueueSet.contains(req)) {
-                    BlockWrap pred = store.getBlockWrap(req);
-                    if (pred == null) {
-                        notMissingAnything = false;
-                        continue;
-                    } else {
-                        blockQueueSet.add(req);
-                        blockQueue.add(pred);
-                    }
-                }
-            }
-        }
-
-        return notMissingAnything;
-    }
-
+   
     public AbstractResponse searchBlock(Map<String, Object> request, FullBlockStore store) throws BlockStoreException {
         @SuppressWarnings("unchecked")
         List<String> address = (List<String>) request.get("address");
