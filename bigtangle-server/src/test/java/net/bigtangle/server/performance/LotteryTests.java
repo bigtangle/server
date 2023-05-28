@@ -55,10 +55,10 @@ public class LotteryTests extends AbstractIntegrationTest {
         for (int i = 0; i < 18; i++) {
         	    usernumber = Math.abs(new Random().nextInt()) % 88;
             winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
-            log.debug("start lotteryDo " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount);
+            log.debug("start lotteryDo " + i + " usernumber=" + usernumber + " winnerAmount=" + winnerAmount);
            
             lotteryDo();
-            log.debug("done iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount);
+            log.debug("done iteration " + i + " usernumber=" + usernumber + " winnerAmount=" + winnerAmount);
         }
     }
 
