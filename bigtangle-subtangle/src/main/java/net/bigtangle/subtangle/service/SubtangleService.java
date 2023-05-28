@@ -41,8 +41,7 @@ import net.bigtangle.wallet.Wallet;
 
 @Service
 public class SubtangleService {
-
-    @SuppressWarnings("deprecation")
+ 
     public void giveMoneyToTargetAccount(FullBlockStore store) throws Exception {
         ECKey signKey = ECKey.fromPrivateAndPrecalculatedPublic(
                 Utils.HEX.decode(subtangleConfiguration.getPriKeyHex0()),
@@ -79,8 +78,7 @@ public class SubtangleService {
             }
         }
     }
-
-    @SuppressWarnings("deprecation")
+ 
     private void giveRemoteMoney(ECKey signKey, Coin amount, UTXO output, FullBlockStore store) throws Exception {
         TransactionOutput spendableOutput = new FreeStandingTransactionOutput(networkParameters, output);
         Transaction transaction = new Transaction(networkParameters);
