@@ -53,9 +53,10 @@ public class LotteryTests extends AbstractIntegrationTest {
     @Test
     public void lottery() throws Exception {
         for (int i = 0; i < 18; i++) {
-            usernumber = Math.abs(new Random().nextInt()) % 88;
+        	    usernumber = Math.abs(new Random().nextInt()) % 88;
             winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
-
+            log.debug("start lotteryDo " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount);
+           
             lotteryDo();
             log.debug("done iteration " + i + "usernumber=" + usernumber + " winnerAmount=" + winnerAmount);
         }
@@ -67,15 +68,13 @@ public class LotteryTests extends AbstractIntegrationTest {
         walletAppKit1.wallet().importKey(accountKey);
         testTokens();
         createUserPay(accountKey);
-        mcmc();
+        makeRewardBlock();
         Lottery startLottery = startLottery();
         while (!startLottery.isMacthed()) {
             createUserPay(accountKey);
             startLottery = startLottery();
         }
-        mcmc();
-        mcmc();
-        mcmc();
+        makeRewardBlock();
         checkResult(startLottery);
     }
 
@@ -153,7 +152,7 @@ public class LotteryTests extends AbstractIntegrationTest {
         Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), "pay to user"
                 );
         log.debug("block " + (b == null ? "block is null" : b.toString()));
-        mcmc();
+        makeRewardBlock();
         return userkeys;
     }
 
@@ -165,7 +164,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 
         testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)), "人民币", 2, domain, "人民币 CNY",
                 winnerAmount.multiply(BigInteger.valueOf(usernumber * 10000l)));
-        mcmc();
+        makeRewardBlock();
     }
 
     public Address getAddress() {
