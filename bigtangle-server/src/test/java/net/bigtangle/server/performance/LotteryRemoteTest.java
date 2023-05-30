@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import net.bigtangle.apps.lottery.Lottery;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
@@ -26,6 +25,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.params.TestParams;
+import net.bigtangle.server.service.apps.lottery.Lottery;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;

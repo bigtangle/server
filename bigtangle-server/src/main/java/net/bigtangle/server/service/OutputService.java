@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Lists;
@@ -140,20 +138,13 @@ public class OutputService {
        
         return list;
     }
-    
-    
-   // @CacheEvict(value = "OpenTransactionOutputs", key = "#address") 
-    public void  evictTransactionOutputs(String address)   {
-       
-    }
-    
-   // @Cacheable(value = "OpenTransactionOutputs", key = "#address") 
-    private List<UTXO> getOpenTransactionOutputs(String address, FullBlockStore store) throws UTXOProviderException {
+  
+    public List<UTXO> getOpenTransactionOutputs(String address, FullBlockStore store) throws UTXOProviderException {
         return store.getOpenTransactionOutputs(address); 
  
     }
     
-    private List<UTXO> getOpenAllOutputs(String tokenid, FullBlockStore store) throws UTXOProviderException {
+    public List<UTXO> getOpenAllOutputs(String tokenid, FullBlockStore store) throws UTXOProviderException {
         return store.getOpenAllOutputs(tokenid);
 
     }

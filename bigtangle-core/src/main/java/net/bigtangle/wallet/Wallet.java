@@ -1918,12 +1918,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
         List<List<FreeStandingTransactionOutput>> parts = chopped(coinList, split);
         // NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD / 4);
         List<Block> re = new ArrayList<Block>();
-        Coin payAmount = amount;
-        byte[] data = getTipData();
+        Coin payAmount = amount; 
         for (int i = 0; i < parts.size(); i++) {
             Coin canPay = sum(parts.get(i));
-            re.add(payFromListNoSplit(aesKey, destination, canPay, memo, parts.get(i),
-                    params.getDefaultSerializer().makeBlock(data)));
+            byte[] data = getTipData();
+            Block tipBlock = params.getDefaultSerializer().makeBlock(data);
+			re.add(payFromListNoSplit(aesKey, destination, canPay, memo, parts.get(i),
+                    tipBlock));
             if (canPay.compareTo(payAmount) >= 0) {
                 break;
             }

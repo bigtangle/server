@@ -694,8 +694,8 @@ public class FullBlockGraph {
                     }
                 }
                 //reset cache
-                outputService.evictTransactionOutputs(fromAddress);
-                outputService.evictTransactionOutputs( getScriptAddress(script));
+              //  outputService.evictTransactionOutputs(fromAddress);
+              //  outputService.evictTransactionOutputs( getScriptAddress(script));
             }
             blockStore.addUnspentTransactionOutput(utxos);
         }

@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.apps.lottery;
+package net.bigtangle.server.service.apps.lottery;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -54,7 +54,9 @@ public class Lottery {
      * list of (each ticket, address) compute random selection of winner pay to
      * winner address
      * winnerAmount is the minimum defined winnerAmount and paid can be more than this 
-     * utxo is the same amount like 1 or 5 
+     * Defined as contract with  tokenid, winnerAmount, payAmount and consensus check
+     * No sign for consensus method to winner and no the contract address is protected only consensus method.
+     * consensus method will run and verify on each node
      */
     public void start() throws Exception {
         // ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
