@@ -33,14 +33,12 @@ public class ContractExecutionService {
  
     @Autowired
     protected FullBlockGraph blockGraph;
-    @Autowired
-    private BlockService blockService;
+ 
     @Autowired
     protected TipsService tipService;
     @Autowired
     protected ServerConfiguration serverConfiguration;
-    @Autowired
-    private ValidatorService validatorService;
+  
     @Autowired
     protected NetworkParameters networkParameters;
     private final Logger log = LoggerFactory.getLogger(this.getClass());

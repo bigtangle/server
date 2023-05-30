@@ -54,7 +54,7 @@ public class LotteryExecution {
 	private NetworkParameters networkParameters;
 	@Autowired
 	private BlockService blockService;
-	
+
 	private String tokenid;
 
 	private String winner;
@@ -68,7 +68,7 @@ public class LotteryExecution {
 		FullBlockStore store = storeService.getStore();
 
 		try {
-			List<UTXO> player = calUTXo(contractTokenid,store);
+			List<UTXO> player = calUTXo(contractTokenid, store);
 			userUtxos = new ArrayList<UTXO>();
 			if (canTakeWinner(player, userUtxos, store)) {
 				doTakeWinner(store);
@@ -78,12 +78,10 @@ public class LotteryExecution {
 		}
 	}
 
- 
 	private void doTakeWinner(FullBlockStore store) throws Exception {
-		Token t = store.getTokenID(tokenid).get(0); 
+		Token t = store.getTokenID(tokenid).get(0);
 
 		userAddress = baseList(userUtxos, t);
-		  Block rollingBlock = blockService.getBlockPrototype(store);
 		Block r1 = blockService.getBlockPrototype(store);
 		// Deterministic randomization
 		byte[] randomness = Utils.xor(r1.getPrevBlockHash().getBytes(), r1.getPrevBranchBlockHash().getBytes());
@@ -93,74 +91,74 @@ public class LotteryExecution {
 
 		log.debug("winner " + winner + " sum =" + sum() + " \n user address size: " + userAddress.size());
 
-	// no sign for contract	Block b = batchGiveMoneyToECKeyList(winner, sum(), "win lottery", userUtxos);
+		// no sign for contract transaction Block b = batchGiveMoneyToECKeyList(winner, sum(), "win
+		// lottery", userUtxos);
 
-	//	log.debug("block " + (b == null ? "block is null" : b.toString()));
+		// log.debug("block " + (b == null ? "block is null" : b.toString()));
 
 	}
 
+	/*
+	 * split the list for lottery pay
+	 */
+	private List<String> baseList(List<UTXO> player, Token t) {
+		List<String> addresses = new ArrayList<String>();
+		for (UTXO u : player) {
+			addresses.addAll(baseList(u, t));
+		}
+		return addresses;
+	}
 
-    /*
-     * split the list for lottery pay
-     */
-    private List<String> baseList(List<UTXO> player, Token t) {
-        List<String> addresses = new ArrayList<String>();
-        for (UTXO u : player) {
-            addresses.addAll(baseList(u, t));
-        }
-        return addresses;
-    }
-    private List<String> baseList(UTXO u, Token t) {
-        List<String> addresses = new ArrayList<String>();
-        if (checkUTXO(u)) {
-            long roundCoin = roundCoin(u.getValue(), t);
-            for (long i = 0; i < roundCoin; i++) {
+	private List<String> baseList(UTXO u, Token t) {
+		List<String> addresses = new ArrayList<String>();
+		if (checkUTXO(u)) {
+			long roundCoin = roundCoin(u.getValue(), t);
+			for (long i = 0; i < roundCoin; i++) {
 
-                addresses.add(u.getFromaddress());
-            }
-        }
-        return addresses;
-    }
+				addresses.add(u.getFromaddress());
+			}
+		}
+		return addresses;
+	}
 
-  
-    /*
-     * round without decimals
-     */
+	/*
+	 * round without decimals
+	 */
 
-    private long roundCoin(Coin c, Token t) {
+	private long roundCoin(Coin c, Token t) {
 
-        return LongMath.divide(c.getValue().longValue(), LongMath.checkedPow(10, t.getDecimals()), RoundingMode.DOWN);
+		return LongMath.divide(c.getValue().longValue(), LongMath.checkedPow(10, t.getDecimals()), RoundingMode.DOWN);
 
-    }
+	}
 
-    public BigInteger sum() {
-        BigInteger sum = BigInteger.ZERO;
-        for (UTXO u : userUtxos) {
-            sum = sum.add(u.getValue().getValue());
-        }
-        return sum;
-    }
+	public BigInteger sum() {
+		BigInteger sum = BigInteger.ZERO;
+		for (UTXO u : userUtxos) {
+			sum = sum.add(u.getValue().getValue());
+		}
+		return sum;
+	}
 
-    /*
-     * condition for execute the lottery 1) no other pending payment 2) can do
-     * the send failed block again 3) the sum is ok
-     */
-    private boolean canTakeWinner(List<UTXO> player, List<UTXO> userlist) {
+	/*
+	 * condition for execute the lottery 1) no other pending payment 2) can do the
+	 * send failed block again 3) the sum is ok
+	 */
+	private boolean canTakeWinner(List<UTXO> player, List<UTXO> userlist) {
 
-        BigInteger sum = BigInteger.ZERO;
-        for (UTXO u : player) {
-            if (checkUTXO(u)) {
-                sum = sum.add(u.getValue().getValue());
-                userlist.add(u);
-                if (sum.compareTo(winnerAmount) >= 0) {
-                    return macthed = true;
-                }
-            }
-        }
-        log.debug(" sum= " + sum);
-        return macthed = false;
+		BigInteger sum = BigInteger.ZERO;
+		for (UTXO u : player) {
+			if (checkUTXO(u)) {
+				sum = sum.add(u.getValue().getValue());
+				userlist.add(u);
+				if (sum.compareTo(winnerAmount) >= 0) {
+					return macthed = true;
+				}
+			}
+		}
+		log.debug(" sum= " + sum);
+		return macthed = false;
 
-    }
+	}
 
 	/*
 	 * condition for execute the lottery 1) no other pending payment 2) can do the
@@ -188,7 +186,6 @@ public class LotteryExecution {
 				&& !u.getFromaddress().equals(u.getAddress());
 	}
 
- 
 	// get balance for the walletKeys
 	protected List<UTXO> calUTXo(String contractTokenid, FullBlockStore store) throws Exception {
 		ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
@@ -213,7 +210,7 @@ public class LotteryExecution {
 	public void setTokenid(String tokenid) {
 		this.tokenid = tokenid;
 	}
- 
+
 	public String getWinner() {
 		return winner;
 	}
