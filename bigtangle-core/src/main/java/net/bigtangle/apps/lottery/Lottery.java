@@ -53,13 +53,16 @@ public class Lottery {
      * start check balance and check to X amount and collect all user in lottery
      * list of (each ticket, address) compute random selection of winner pay to
      * winner address
+     * winnerAmount is the minimum defined winnerAmount and paid can be more than this 
+     * utxo is the same amount like 1 or 5 
      */
     public void start() throws Exception {
         // ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
         walletAdmin = Wallet.fromKeys(params, accountKey);
         walletAdmin.setServerURL(contextRoot);
+        //TODO the same amount of UTXO for lottery 
         List<UTXO> player = getBalance(accountKey);
-        // TODO 100 millions raw
+        // TODO 1 million raw
         new UtilSort().sortUTXO(player);
         userUtxos = new ArrayList<UTXO>();
         if (canTakeWinner(player, userUtxos)) {
