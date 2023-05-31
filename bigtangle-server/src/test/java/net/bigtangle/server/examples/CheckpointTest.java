@@ -36,7 +36,7 @@ public class CheckpointTest extends AbstractIntegrationTest {
     private DockerService dockerService;
   
 
-    @Test
+    //@Test
     public void testCreateDumpSQL() throws Exception { 
  
          ResultExecution re = dockerService.dockerExec(dockerService.mysqldumpCheck(1l)

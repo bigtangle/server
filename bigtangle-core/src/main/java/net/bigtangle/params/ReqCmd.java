@@ -16,7 +16,7 @@ public enum ReqCmd {
 
 	getTokenSignByTokenid, signToken, getTokenSigns, getTokenPermissionedAddresses, getDomainNameBlockHash,
 	// Block Order
-	getOrders, getOTCMarkets, getOrdersTicker, signOrder,
+	getOrders, getOrdersTicker,
 	// Outputs
 	getOutputByKey, getOutputs, getOutputsHistory, outputsOfTokenid, getBalances,outputsByBlockhash,
 
@@ -24,10 +24,9 @@ public enum ReqCmd {
 	launchPayMultiSign, payMultiSign,
 
 	getPayMultiSignList, getPayMultiSignAddressList, payMultiSignDetails,
-	// Direct exchange
-	getExchangeByOrderid, saveExchange, deleteExchange,
-
-	getUserData, userDataList, getBatchExchange,
+	 
+	//user data
+	getUserData, userDataList,  
 	// subtangle
 	regSubtangle, updateSubtangle, getSessionRandomNum,
 	// permissioned

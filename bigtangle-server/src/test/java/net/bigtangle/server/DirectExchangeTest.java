@@ -9,7 +9,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,7 +44,6 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
-import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
@@ -54,7 +51,6 @@ import net.bigtangle.server.data.BatchBlock;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
-import net.bigtangle.wallet.PayOTCOrder;
 import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 
@@ -314,100 +310,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         log.info("searchBlock resp : " + response);
 
     }
-
-    @Test
-    public void exchangeSignsServer() throws Exception {
-        // testInitWallet();
-        // wallet1();
-        // wallet2();
-
-        File f3 = new File("./logs/", "bigtangle3.wallet");
-        if (f3.exists()) {
-            f3.delete();
-        }
-
-        File f4 = new File("./logs/", "bigtangle4.wallet");
-        if (f4.exists()) {
-            f4.delete();
-        }
-
-        walletAppKit1 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle3");
-        walletAppKit1.wallet().setServerURL(contextRoot);
-        wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
-
-        walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle4");
-        walletAppKit2.wallet().setServerURL(contextRoot);
-        wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
-
-        ECKey yourKey = walletAppKit1.wallet().walletKeys(null).get(0);
-        ECKey myKey = walletAppKit2.wallet().walletKeys(null).get(0);
-        log.debug("toKey : " + yourKey.toAddress(networkParameters).toBase58());
-        testCreateToken(walletKeys.get(0), "test");
-
-        makeRewardBlock();
-        
-        testCreateToken(walletKeys.get(1), "test2");
-
-        makeRewardBlock();
-        
-        payToken(200, yourKey, walletKeys.get(0).getPubKey(), walletAppKit1.wallet());
-        payToken(300, myKey, walletKeys.get(1).getPubKey(), walletAppKit2.wallet());
-
-        String orderid = UUID.randomUUID().toString();
-
-        // fromTokenHex = youkey
-        String fromAddress = myKey.toAddress(networkParameters).toBase58();
-        String fromTokenHex = walletKeys.get(0).getPublicKeyAsHex();
-        String fromAmount = "2";
-
-        // toTokenHex = mykey
-        String toAddress = yourKey.toAddress(networkParameters).toBase58();
-        String toTokenHex = walletKeys.get(1).getPublicKeyAsHex();
-        String toAmount = "3";
-
-        Map<String, Object> request = new HashMap<>();
-        request.put("orderid", orderid);
-
-        request.put("fromAddress", fromAddress);
-        request.put("fromTokenHex", fromTokenHex);
-        request.put("fromAmount", fromAmount);
-
-        request.put("toAddress", toAddress);
-        request.put("toTokenHex", toTokenHex);
-        request.put("toAmount", toAmount);
-        OkHttp3Util.post(contextRoot + ReqCmd.saveExchange.name(),
-                Json.jsonmapper().writeValueAsString(request).getBytes());
-        List<String> addressList = new ArrayList<String>();
-        addressList.add(toAddress);
-
-       byte[] response = OkHttp3Util.post(contextRoot + "/" + ReqCmd.getBatchExchange.name(),
-                Json.jsonmapper().writeValueAsString(addressList).getBytes());
-        log.info("===============");
-        log.info(response.toString());
-
-        PayOTCOrder payOrder1 = new PayOTCOrder(walletAppKit1.wallet(), orderid, contextRoot, contextRoot);
-        payOrder1.sign();
-
-        response = OkHttp3Util.post(contextRoot + ReqCmd.getBatchExchange.name(),
-                Json.jsonmapper().writeValueAsString(addressList).getBytes());
-        log.info(response.toString());
-
-        addressList = new ArrayList<String>();
-        addressList.add(fromAddress);
-        response = OkHttp3Util.post(contextRoot + ReqCmd.getBatchExchange.name(),
-                Json.jsonmapper().writeValueAsString(addressList).getBytes());
-
-        log.info(response.toString());
-        PayOTCOrder payOrder2 = new PayOTCOrder(walletAppKit2.wallet(), orderid, contextRoot, contextRoot);
-        payOrder2.sign();
-        response = OkHttp3Util.post(contextRoot + ReqCmd.getBatchExchange.name(),
-                Json.jsonmapper().writeValueAsString(addressList).getBytes());
-        log.info(response.toString());
-        
-        makeRewardBlock();
-        checkBalance(new Coin(3, walletKeys.get(1).getPubKey()), walletAppKit1.wallet().walletKeys(null));
-        checkBalance(new Coin(2, walletKeys.get(0).getPubKey()), walletAppKit2.wallet().walletKeys(null));
-    }
+ 
 
     // TODO @Test
     public void testExchangeTokenMulti() throws Exception {
@@ -624,18 +527,5 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
         log.info("transaction, datatype : " + transaction.getDataClassName());
     }
 
-    // @Test
-    public void exchangeSign(String orderid) throws Exception {
-
-        String serverURL = "http://localhost:8090";
-
-        // String orderid = (String) exchangemap.get("orderid");
-
-        PayOTCOrder payOrder1 = new PayOTCOrder(walletAppKit.wallet(), orderid, serverURL, serverURL);
-        payOrder1.sign();
-
-        PayOTCOrder payOrder2 = new PayOTCOrder(walletAppKit1.wallet(), orderid, serverURL, serverURL);
-        payOrder2.sign();
-
-    }
+  
 }

@@ -4884,7 +4884,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
             preparedStatement = getConnection()
                     .prepareStatement("  select distinct( blocks.hash) from  blocks  , outputs "
                             + " where spenderblockhash = blocks.hash    "
-                            + "  and blocks.milestone < ? and blocks.milestone !=0  " + " and ( blocks.blocktype = "
+                            + "  and blocks.milestone < ? and blocks.milestone > 0  " + " and ( blocks.blocktype = "
                             + Block.Type.BLOCKTYPE_TRANSFER.ordinal() + " or blocks.blocktype = "
                             + Block.Type.BLOCKTYPE_ORDER_OPEN.ordinal() + " or blocks.blocktype = "
                             + Block.Type.BLOCKTYPE_REWARD.ordinal() + "  ) limit 1000 ");
@@ -4927,7 +4927,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
         PreparedStatement deleteStatement = null;
         try {
             deleteStatement = getConnection().prepareStatement(" delete FROM outputs WHERE  spent=1 AND "
-                    + "spenderblockhash in (select hash from blocks where milestone < ? ) limit 1000 ");
+                    + "spenderblockhash in (select hash from blocks where milestone < ? and milestone > 0 ) limit 1000 ");
             deleteStatement.setLong(1, maxRewardblock);
             deleteStatement.executeUpdate();
         } catch (SQLException e) {

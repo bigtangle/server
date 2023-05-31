@@ -4942,32 +4942,8 @@ public class ServiceBase {
 
 		blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
 	}
-
-	public void cleanUp(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
-		// TODO cleanUpDo(maxConfirmedReward, store);
-	}
-
-	public void cleanUpDo(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
-
-		Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
-		logger.info(" prunedClosedOrders until block " + "" + rewardblock);
-		store.prunedClosedOrders(rewardblock.getTimeSeconds());
-		// max keep 500 blockchain as spendblock number
-		// store.prunedHistoryUTXO(rewardblock.getLastMiningRewardBlock()- 500);
-		// store.prunedPriceTicker(rewardblock.getTimeSeconds() - 30 *
-		// DaySeconds);
-
-	}
-
-	private void cleanupBlocks(FullBlockStore store, Block rewardblock) throws BlockStoreException {
-		RewardInfo currRewardInfo = new RewardInfo().parseChecked(rewardblock.getTransactions().get(0).getData());
-
-		long cutoffHeight = getRewardCutoffHeight(currRewardInfo.getPrevRewardHash(), store);
-		// NetworkParameters.INTERVAL is used for difficulty calculation
-		store.prunedBlocks(cutoffHeight - 1000,
-				rewardblock.getLastMiningRewardBlock() - 1 - NetworkParameters.INTERVAL);
-	}
-
+ 
+ 
 	public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainNameBlockHash,
 			FullBlockStore store) throws BlockStoreException {
 		if (domainNameBlockHash.equals(networkParameters.getGenesisBlock().getHashAsString())) {
