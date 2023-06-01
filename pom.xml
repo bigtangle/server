@@ -11,7 +11,7 @@
 	<inceptionYear>2010</inceptionYear>
 
 	<packaging>pom</packaging>
-	<version>0.3.5</version>
+	<version>0.3.6</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<org.slf4j-version>2.0.6</org.slf4j-version>
