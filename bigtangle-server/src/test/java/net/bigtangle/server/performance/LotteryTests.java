@@ -26,8 +26,10 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenType;
+import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -38,6 +40,7 @@ import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.service.apps.lottery.Lottery;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.Wallet;
 
 public class LotteryTests extends AbstractIntegrationTest {
@@ -129,10 +132,28 @@ public class LotteryTests extends AbstractIntegrationTest {
 	}
 
 	private void createUserPay(ECKey accountKey) throws Exception {
-		List<ECKey> ulist = payKeys();
-		for (ECKey key : ulist) {
-			buyTicket(key, accountKey);
+		List<ECKey> ulist = payKeys(); 
+		List<List<ECKey>> parts = Wallet.chopped(ulist, 1000);
+
+		for (int i = 0; i < parts.size(); i++) {
+			List<Transaction> txs = new ArrayList<Transaction>();
+			for (ECKey key : parts.get(i)) {
+				// 1000 transaction in a block
+				txs.add(buyTicketTransaction(key, accountKey));
+
+			}
+			walletAppKit1.wallet().payTransaction(txs);
 		}
+	}
+
+	public Transaction buyTicketTransaction(ECKey key, ECKey accountKey) throws Exception {
+		Wallet w = Wallet.fromKeys(networkParameters, key);
+		w.setServerURL(contextRoot);
+
+		int satoshis = Math.abs(new Random().nextInt()) % 1000;
+		return w.createTransaction(null, accountKey.toAddress(networkParameters),
+				Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)), new MemoInfo(" buy ticket"));
+
 	}
 
 	/*
@@ -155,13 +176,13 @@ public class LotteryTests extends AbstractIntegrationTest {
 		HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
 		int split = 10000;
 		int mod = usernumber % split;
-	      Stopwatch watch = Stopwatch.createStarted();
+		Stopwatch watch = Stopwatch.createStarted();
 		for (int i = 0; i < usernumber; i++) {
 			ECKey key = new ECKey();
 			giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount.longValue());
-			userkeys.add(key); 
-			
-			if ( (i + 1) % split == 0||(mod>0&&i==usernumber)) {
+			userkeys.add(key);
+
+			if ((i + 1) % split == 0 || (mod > 0 && i == usernumber)) {
 				Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult,
 						Utils.HEX.decode(yuanTokenPub), "pay to user");
 				log.debug("block " + (b == null ? "block is null" : b.toString()));
@@ -171,8 +192,8 @@ public class LotteryTests extends AbstractIntegrationTest {
 
 		}
 		long t = watch.elapsed(TimeUnit.SECONDS);
-		log.debug("rate  ", usernumber/ t );
-		log.debug("payKeys duration",  t );
+		log.debug("rate  ", usernumber / t);
+		log.debug("payKeys duration", t);
 		return userkeys;
 	}
 
