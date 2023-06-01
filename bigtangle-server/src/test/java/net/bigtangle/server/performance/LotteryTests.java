@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -153,12 +155,13 @@ public class LotteryTests extends AbstractIntegrationTest {
 		HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
 		int split = 10000;
 		int mod = usernumber % split;
+	      Stopwatch watch = Stopwatch.createStarted();
 		for (int i = 0; i < usernumber; i++) {
 			ECKey key = new ECKey();
 			giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount.longValue());
-			userkeys.add(key);
-			int count = i + 1;
-			if (count % split == 0||(mod>0&&i==usernumber)) {
+			userkeys.add(key); 
+			
+			if ( (i + 1) % split == 0||(mod>0&&i==usernumber)) {
 				Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult,
 						Utils.HEX.decode(yuanTokenPub), "pay to user");
 				log.debug("block " + (b == null ? "block is null" : b.toString()));
@@ -167,7 +170,9 @@ public class LotteryTests extends AbstractIntegrationTest {
 			}
 
 		}
-
+		long t = watch.elapsed(TimeUnit.SECONDS);
+		log.debug("rate  ", usernumber/ t );
+		log.debug("payKeys duration",  t );
 		return userkeys;
 	}
 
