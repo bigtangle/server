@@ -40,7 +40,6 @@ import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.service.apps.lottery.Lottery;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
-import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.Wallet;
 
 public class LotteryTests extends AbstractIntegrationTest {
@@ -132,17 +131,31 @@ public class LotteryTests extends AbstractIntegrationTest {
 	}
 
 	private void createUserPay(ECKey accountKey) throws Exception {
-		List<ECKey> ulist = payKeys(); 
+		List<ECKey> ulist = payKeys();
 		List<List<ECKey>> parts = Wallet.chopped(ulist, 1000);
 
-		for (int i = 0; i < parts.size(); i++) {
-			List<Transaction> txs = new ArrayList<Transaction>();
-			for (ECKey key : parts.get(i)) {
-				// 1000 transaction in a block
-				txs.add(buyTicketTransaction(key, accountKey));
+		for (List<ECKey> list : parts) {
+			Runnable myRunnable = new Runnable() {
+				@Override
+				public void run() {
+					List<Transaction> txs = new ArrayList<Transaction>();
+					for (ECKey key : list) {
+						// 1000 transaction in a block
+						try {
+							txs.add(buyTicketTransaction(key, accountKey));
+							walletAppKit1.wallet().payTransaction(txs);
+						} catch (Exception e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
 
-			}
-			walletAppKit1.wallet().payTransaction(txs);
+					}
+
+				}
+			};
+			Thread thread = new Thread(myRunnable);
+			thread.start();
+
 		}
 	}
 
