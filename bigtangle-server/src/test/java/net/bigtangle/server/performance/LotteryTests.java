@@ -140,19 +140,17 @@ public class LotteryTests extends AbstractIntegrationTest {
 				@Override
 				public void run() {
 					List<Transaction> txs = new ArrayList<Transaction>();
-					for (ECKey key : list) { 
+					for (ECKey key : list) {
 						try {
-							txs.add(buyTicketTransaction(key, accountKey)); 
+							txs.add(buyTicketTransaction(key, accountKey));
 						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+							log.error("buyTicketTransaction==", e);
 						}
 					}
 					try {
 						walletAppKit1.wallet().payTransaction(txs);
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						log.error("payTransaction==", e);
 					}
 				}
 			};
