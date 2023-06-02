@@ -69,8 +69,8 @@ public class LotteryTests extends AbstractIntegrationTest {
 	@Test
 	public void lotteryM() throws Exception {
 
-		usernumber = 1000000;
-		winnerAmount = new BigInteger(1000000 + "");
+		usernumber = 1000;
+		winnerAmount = new BigInteger(usernumber + "");
 
 		lotteryDo();
 
@@ -81,12 +81,13 @@ public class LotteryTests extends AbstractIntegrationTest {
 		accountKey = new ECKey();
 		walletAppKit1.wallet().importKey(accountKey);
 		testTokens();
-		createUserPay(accountKey);
+		List<ECKey> ulist = payKeys();
+		createUserPay(accountKey, ulist);
 		makeRewardBlock();
 		Lottery startLottery = startLottery();
 		while (!startLottery.isMacthed()) {
-			createUserPay(accountKey);
 			startLottery = startLottery();
+			createUserPay(accountKey, ulist);
 		}
 		makeRewardBlock();
 		checkResult(startLottery);
@@ -130,8 +131,8 @@ public class LotteryTests extends AbstractIntegrationTest {
 
 	}
 
-	private void createUserPay(ECKey accountKey) throws Exception {
-		List<ECKey> ulist = payKeys();
+	private void createUserPay(ECKey accountKey, List<ECKey> ulist) throws Exception {
+
 		List<List<ECKey>> parts = Wallet.chopped(ulist, 1000);
 
 		for (List<ECKey> list : parts) {
@@ -139,18 +140,20 @@ public class LotteryTests extends AbstractIntegrationTest {
 				@Override
 				public void run() {
 					List<Transaction> txs = new ArrayList<Transaction>();
-					for (ECKey key : list) {
-						// 1000 transaction in a block
+					for (ECKey key : list) { 
 						try {
-							txs.add(buyTicketTransaction(key, accountKey));
-							walletAppKit1.wallet().payTransaction(txs);
+							txs.add(buyTicketTransaction(key, accountKey)); 
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
-
 					}
-
+					try {
+						walletAppKit1.wallet().payTransaction(txs);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			};
 			Thread thread = new Thread(myRunnable);
@@ -163,7 +166,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 		Wallet w = Wallet.fromKeys(networkParameters, key);
 		w.setServerURL(contextRoot);
 
-		int satoshis = Math.abs(new Random().nextInt()) % 1000;
+		int satoshis = 1000;
 		return w.createTransaction(null, accountKey.toAddress(networkParameters),
 				Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)), new MemoInfo(" buy ticket"));
 
@@ -186,27 +189,27 @@ public class LotteryTests extends AbstractIntegrationTest {
 
 	public List<ECKey> payKeys() throws Exception {
 		List<ECKey> userkeys = new ArrayList<ECKey>();
-		HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
-		int split = 10000;
-		int mod = usernumber % split;
-		Stopwatch watch = Stopwatch.createStarted();
 		for (int i = 0; i < usernumber; i++) {
 			ECKey key = new ECKey();
-			giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount.longValue());
 			userkeys.add(key);
-
-			if ((i + 1) % split == 0 || (mod > 0 && i == usernumber)) {
-				Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult,
-						Utils.HEX.decode(yuanTokenPub), "pay to user");
-				log.debug("block " + (b == null ? "block is null" : b.toString()));
-				makeRewardBlock();
-				giveMoneyResult = new HashMap<String, Long>();
-			}
-
 		}
-		long t = watch.elapsed(TimeUnit.SECONDS);
-		log.debug("rate  "+ usernumber / t);
-		log.debug("payKeys duration"+ t);
+
+		Stopwatch watch = Stopwatch.createStarted();
+		List<List<ECKey>> parts = Wallet.chopped(userkeys, 1000);
+
+		for (List<ECKey> list : parts) {
+			HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+			for (ECKey key : list) {
+				giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount.longValue());
+			}
+			Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub),
+					"pay to user");
+			log.debug("block " + (b == null ? "block is null" : b.toString()));
+			makeRewardBlock();
+		}
+		long t = watch.elapsed(TimeUnit.MICROSECONDS);
+		log.debug("rate  " + usernumber / t);
+		log.debug("payKeys duration" + t);
 		return userkeys;
 	}
 

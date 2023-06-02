@@ -8,7 +8,7 @@
 
 		<RollingFile name="RollingFile"
 			fileName="./logs/server.log"
-			filePattern="./logs/$${date:yyyy-MM}/server-%d{-dd-MMMM-yyyy}-%i.log.gz">
+			filePattern="./logs/server-%d{-dd-MMMM-yyyy}-%i.log">
 			<PatternLayout>
 				<pattern>%d %p %C{1.} [%t] %m%n</pattern>
 			</PatternLayout>
