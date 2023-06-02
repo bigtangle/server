@@ -24,10 +24,10 @@
 		<junit.platform.version>1.9.1</junit.platform.version>
 	</properties>
 	<modules>
-		<module>./bigtangle-core</module>
-		<module>./bigtangle-docker</module>
-		<module>./bigtangle-servercore</module>
-		<module>./bigtangle-server</module>
+		<module>bigtangle-core</module>
+		<module>bigtangle-docker</module>
+		<module>bigtangle-servercore</module>
+		<module>bigtangle-server</module>
 		<module>bigtangle-subtangle</module>
 
 	</modules>
