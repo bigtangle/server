@@ -86,10 +86,11 @@ public class LotteryTests extends AbstractIntegrationTest {
 		makeRewardBlock();
 		Lottery startLottery = startLottery();
 		while (!startLottery.isMacthed()) {
-			startLottery = startLottery();
+			startLottery = startLottery(); 
 			createUserPay(accountKey, ulist);
+			makeRewardBlock();
 		}
-		makeRewardBlock();
+
 		checkResult(startLottery);
 	}
 
@@ -134,7 +135,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 	private void createUserPay(ECKey accountKey, List<ECKey> ulist) throws Exception {
 
 		List<List<ECKey>> parts = Wallet.chopped(ulist, 1000);
-
+	      List<Thread> threads = new ArrayList<Thread>();
 		for (List<ECKey> list : parts) {
 			Runnable myRunnable = new Runnable() {
 				@Override
@@ -156,8 +157,21 @@ public class LotteryTests extends AbstractIntegrationTest {
 			};
 			Thread thread = new Thread(myRunnable);
 			thread.start();
-
+			threads.add(thread);
 		}
+		
+		  int running = 0;
+	        do {
+	            running = 0;
+	            for (Thread thread : threads) {
+	                if (thread.isAlive()) {
+	                    running++;
+	                }
+	            }
+	            Thread.sleep(2000);
+	            log.debug("There are  " + running + " running threads. ");
+	        } while (running > 0);
+	        
 	}
 
 	public Transaction buyTicketTransaction(ECKey key, ECKey accountKey) throws Exception {
@@ -198,7 +212,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 		for (List<ECKey> list : parts) {
 			HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
 			for (ECKey key : list) {
-				giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount.longValue());
+				giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount.longValue() * 10);
 			}
 			Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub),
 					"pay to user");
