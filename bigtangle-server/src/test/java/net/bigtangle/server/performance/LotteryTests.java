@@ -205,8 +205,8 @@ public class LotteryTests extends AbstractIntegrationTest {
 
 		}
 		long t = watch.elapsed(TimeUnit.SECONDS);
-		log.debug("rate  ", usernumber / t);
-		log.debug("payKeys duration", t);
+		log.debug("rate  "+ usernumber / t);
+		log.debug("payKeys duration"+ t);
 		return userkeys;
 	}
 
