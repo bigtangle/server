@@ -83,10 +83,21 @@ public class LotteryTests extends AbstractIntegrationTest {
 		testTokens();
 		List<ECKey> ulist = payKeys();
 		createUserPay(accountKey, ulist);
-		makeRewardBlock();
+		boolean checkPayOK = true;
 		Lottery startLottery = startLottery();
+		while (checkPayOK) {
+			Thread.sleep(1000);
+			makeRewardBlock();
+			//check pay ok
+			Coin sum = accountSum( ); 
+			if (startLottery.getWinnerAmount().compareTo(sum.getValue()) > 0) {
+				log.debug(sum.toString());
+				checkPayOK = false;
+			}
+		}
+
 		while (!startLottery.isMacthed()) {
-			startLottery = startLottery(); 
+			startLottery = startLottery();
 			createUserPay(accountKey, ulist);
 			makeRewardBlock();
 		}
@@ -110,6 +121,28 @@ public class LotteryTests extends AbstractIntegrationTest {
 	}
 
 	private void checkResult(Lottery startLottery) throws Exception {
+		Coin sum = lotterySum(startLottery);
+
+		assertTrue(sum != null);
+		if (startLottery.getWinnerAmount().compareTo(sum.getValue()) > 0) {
+			log.debug(sum.toString());
+		}
+		assertTrue(" " + startLottery.getWinnerAmount() + " sum=" + sum.getValue(),
+				startLottery.getWinnerAmount().compareTo(sum.getValue()) <= 0);
+
+	}
+
+	private Coin accountSum() throws Exception {
+		List<UTXO> users = getBalance(accountKey.toAddress(networkParameters).toString());
+
+		Coin sum = Coin.valueOf(0, Utils.HEX.decode(yuanTokenPub));
+		for (UTXO u : users) { 
+				sum = sum.add(u.getValue());
+ 
+		}
+		return sum;
+	}
+	private Coin lotterySum(Lottery startLottery) throws Exception {
 		Coin coin = new Coin(startLottery.sum(), yuanTokenPub);
 
 		List<UTXO> users = getBalance(startLottery.getWinner());
@@ -122,20 +155,13 @@ public class LotteryTests extends AbstractIntegrationTest {
 
 			}
 		}
-
-		assertTrue(sum != null);
-		if (startLottery.getWinnerAmount().compareTo(sum.getValue()) > 0) {
-			log.debug(sum.toString());
-		}
-		assertTrue(" " + startLottery.getWinnerAmount() + " sum=" + sum.getValue(),
-				startLottery.getWinnerAmount().compareTo(sum.getValue()) <= 0);
-
+		return sum;
 	}
 
 	private void createUserPay(ECKey accountKey, List<ECKey> ulist) throws Exception {
 
 		List<List<ECKey>> parts = Wallet.chopped(ulist, 1000);
-	      List<Thread> threads = new ArrayList<Thread>();
+		List<Thread> threads = new ArrayList<Thread>();
 		for (List<ECKey> list : parts) {
 			Runnable myRunnable = new Runnable() {
 				@Override
@@ -159,19 +185,19 @@ public class LotteryTests extends AbstractIntegrationTest {
 			thread.start();
 			threads.add(thread);
 		}
-		
-		  int running = 0;
-	        do {
-	            running = 0;
-	            for (Thread thread : threads) {
-	                if (thread.isAlive()) {
-	                    running++;
-	                }
-	            }
-	            Thread.sleep(2000);
-	            log.debug("There are  " + running + " running threads. ");
-	        } while (running > 0);
-	        
+
+		int running = 0;
+		do {
+			running = 0;
+			for (Thread thread : threads) {
+				if (thread.isAlive()) {
+					running++;
+				}
+			}
+			Thread.sleep(2000);
+			log.debug("There are  " + running + " running threads. ");
+		} while (running > 0);
+
 	}
 
 	public Transaction buyTicketTransaction(ECKey key, ECKey accountKey) throws Exception {
