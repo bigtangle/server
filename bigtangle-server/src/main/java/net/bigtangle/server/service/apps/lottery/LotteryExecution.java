@@ -78,13 +78,17 @@ public class LotteryExecution {
 		}
 	}
 
+	/*
+	 * can be check on each node, the winner, the winnerBlock hash
+	 * calculate the unique userAddress,  userUtxos for check and generate the dynamic outputs 
+	 */
 	private void doTakeWinner(FullBlockStore store) throws Exception {
 		Token t = store.getTokenID(tokenid).get(0);
 
 		userAddress = baseList(userUtxos, t);
-		Block r1 = blockService.getBlockPrototype(store);
+		Block winnerBlock = blockService.getBlockPrototype(store);
 		// Deterministic randomization
-		byte[] randomness = Utils.xor(r1.getPrevBlockHash().getBytes(), r1.getPrevBranchBlockHash().getBytes());
+		byte[] randomness = Utils.xor(winnerBlock.getPrevBlockHash().getBytes(), winnerBlock.getPrevBranchBlockHash().getBytes());
 		SecureRandom se = new SecureRandom(randomness);
 
 		winner = userAddress.get(se.nextInt(userAddress.size()));
@@ -186,7 +190,12 @@ public class LotteryExecution {
 				&& !u.getFromaddress().equals(u.getAddress());
 	}
 
-	// get balance for the walletKeys
+	// calculate the open UTXO  and must be repeatable for the selected
+	// block    lastMiningRewardBlock 
+	// all  UTXO blockhash list (=1M too large?)
+	// get output no signs dynamically as 
+	//and no possible to sign transfer from this contractToken address
+	//change the verify with no
 	protected List<UTXO> calUTXo(String contractTokenid, FullBlockStore store) throws Exception {
 		ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
 		Address address = ecKey.toAddress(networkParameters);

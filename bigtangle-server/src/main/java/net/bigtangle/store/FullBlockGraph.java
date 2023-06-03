@@ -1448,12 +1448,12 @@ public class FullBlockGraph {
 	public void cleanUpDo(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
 
 		Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
-		log.info(" prunedClosedOrders until block " + "" + rewardblock);
+		log.info(" cleanUpDo until block " + "" + rewardblock);
 		store.prunedClosedOrders(rewardblock.getTimeSeconds());
 		// max keep 500 blockchain as spendblock number
 		
 		long maxRewardblock = rewardblock.getLastMiningRewardBlock() - 500;
-		log.info(" prunedHistoryUTXO until reward block  " + "" + rewardblock);
+	//	log.info(" prunedHistoryUTXO until reward block  " + "" + rewardblock);
 		store.prunedHistoryUTXO(maxRewardblock);
 		// store.prunedPriceTicker(rewardblock.getTimeSeconds() - 30 *
 		// DaySeconds);
