@@ -426,7 +426,7 @@ public class TokenTest extends AbstractIntegrationTest {
 
         MemoInfo memoInfo = p.encryptToMemo(pharmacy);
         userWallet.setServerURL(contextRoot);
-        Block b = userWallet.pay(null, pharmacy.toAddress(networkParameters), ulist.get(0).getValue(), memoInfo);
+        List<Block> b = userWallet.pay(null, pharmacy.toAddress(networkParameters).toString(), ulist.get(0).getValue(), memoInfo);
         // sendEmpty(10);
         makeRewardBlock();
 

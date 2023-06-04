@@ -58,474 +58,374 @@ import net.bigtangle.wallet.Wallet;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class DirectExchangeTest extends AbstractIntegrationTest {
 
-    private static final Logger log = LoggerFactory.getLogger(DirectExchangeTest.class);
+	private static final Logger log = LoggerFactory.getLogger(DirectExchangeTest.class);
 
-    @Test
-    public void testBatchBlock() throws Exception {
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
-        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        store.insertBatchBlock(block);
+	@Test
+	public void testBatchBlock() throws Exception {
+		byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+				Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
+		Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+		store.insertBatchBlock(block);
 
-        List<BatchBlock> batchBlocks = store.getBatchBlockList();
-        assertTrue(batchBlocks.size() == 1);
+		List<BatchBlock> batchBlocks = store.getBatchBlockList();
+		assertTrue(batchBlocks.size() == 1);
 
-        BatchBlock batchBlock = batchBlocks.get(0);
+		BatchBlock batchBlock = batchBlocks.get(0);
 
-        // String hex1 = Utils.HEX.encode(block.bitcoinSerialize());
-        // String hex2 = Utils.HEX.encode(batchBlock.getBlock());
-        // assertEquals(hex1, hex2);
+		// String hex1 = Utils.HEX.encode(block.bitcoinSerialize());
+		// String hex2 = Utils.HEX.encode(batchBlock.getBlock());
+		// assertEquals(hex1, hex2);
 
-        assertArrayEquals(block.bitcoinSerialize(), batchBlock.getBlock());
+		assertArrayEquals(block.bitcoinSerialize(), batchBlock.getBlock());
 
-        store.deleteBatchBlock(batchBlock.getHash());
-        batchBlocks = store.getBatchBlockList();
-        assertTrue(batchBlocks.size() == 0);
-    }
+		store.deleteBatchBlock(batchBlock.getHash());
+		batchBlocks = store.getBatchBlockList();
+		assertTrue(batchBlocks.size() == 0);
+	}
 
-    @Test
-    public void testTransactionResolveSubtangleID() throws Exception {
-        Transaction transaction = new Transaction(this.networkParameters);
+	@Test
+	public void testTransactionResolveSubtangleID() throws Exception {
+		Transaction transaction = new Transaction(this.networkParameters);
 
-        byte[] subtangleID = new byte[32];
-        new Random().nextBytes(subtangleID);
+		byte[] subtangleID = new byte[32];
+		new Random().nextBytes(subtangleID);
 
-        transaction.setToAddressInSubtangle(subtangleID);
+		transaction.setToAddressInSubtangle(subtangleID);
 
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
-        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.Type.BLOCKTYPE_CROSSTANGLE);
-        block.addTransaction(transaction);
-        block.solve();
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
+		byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+				Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));
+		Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+		block.setBlockType(Block.Type.BLOCKTYPE_CROSSTANGLE);
+		block.addTransaction(transaction);
+		block.solve();
+		OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
 
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-        requestParam.put("hashHex", Utils.HEX.encode(block.getHash().getBytes()));
-        data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getBlockByHash.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        block = networkParameters.getDefaultSerializer().makeBlock(data);
+		HashMap<String, Object> requestParam = new HashMap<String, Object>();
+		requestParam.put("hashHex", Utils.HEX.encode(block.getHash().getBytes()));
+		data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getBlockByHash.name(),
+				Json.jsonmapper().writeValueAsString(requestParam));
+		block = networkParameters.getDefaultSerializer().makeBlock(data);
 
-        Transaction transaction2 = block.getTransactions().get(0);
-        assertNotNull(subtangleID);
-        assertTrue(Arrays.equals(subtangleID, transaction.getToAddressInSubtangle()));
-        assertTrue(Arrays.equals(subtangleID, transaction2.getToAddressInSubtangle()));
-    }
+		Transaction transaction2 = block.getTransactions().get(0);
+		assertNotNull(subtangleID);
+		assertTrue(Arrays.equals(subtangleID, transaction.getToAddressInSubtangle()));
+		assertTrue(Arrays.equals(subtangleID, transaction2.getToAddressInSubtangle()));
+	}
 
-    public void createTokenSubtangle() throws Exception {
-        ECKey ecKey = new ECKey();
-        byte[] pubKey = ecKey.getPubKey();
-        TokenInfo tokenInfo = new TokenInfo();
+	public void createTokenSubtangle() throws Exception {
+		ECKey ecKey = new ECKey();
+		byte[] pubKey = ecKey.getPubKey();
+		TokenInfo tokenInfo = new TokenInfo();
 
-        Token tokens = Token.buildSubtangleTokenInfo(false, null, Utils.HEX.encode(pubKey), "subtangle", "", "");
-        tokenInfo.setToken(tokens);
+		Token tokens = Token.buildSubtangleTokenInfo(false, null, Utils.HEX.encode(pubKey), "subtangle", "", "");
+		tokenInfo.setToken(tokens);
 
-        tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", ecKey.getPublicKeyAsHex()));
+		tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokens.getTokenid(), "", ecKey.getPublicKeyAsHex()));
 
-        Coin basecoin = Coin.valueOf(0L, pubKey);
+		Coin basecoin = Coin.valueOf(0L, pubKey);
 
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block block = networkParameters.getDefaultSerializer().makeBlock(data);
-        block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-        block.addCoinbaseTransaction(ecKey.getPubKey(), basecoin, tokenInfo,new MemoInfo("coinbase"));
+		HashMap<String, String> requestParam = new HashMap<String, String>();
+		byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+				Json.jsonmapper().writeValueAsString(requestParam));
+		Block block = networkParameters.getDefaultSerializer().makeBlock(data);
+		block.setBlockType(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+		block.addCoinbaseTransaction(ecKey.getPubKey(), basecoin, tokenInfo, new MemoInfo("coinbase"));
 
-        Transaction transaction = block.getTransactions().get(0);
+		Transaction transaction = block.getTransactions().get(0);
 
-        Sha256Hash sighash = transaction.getHash();
-        ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
-        byte[] buf1 = party1Signature.encodeToDER();
+		Sha256Hash sighash = transaction.getHash();
+		ECKey.ECDSASignature party1Signature = ecKey.sign(sighash);
+		byte[] buf1 = party1Signature.encodeToDER();
 
-        List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
-        MultiSignBy multiSignBy0 = new MultiSignBy();
-        multiSignBy0.setTokenid(Utils.HEX.encode(pubKey));
-        multiSignBy0.setTokenindex(0);
-        multiSignBy0.setAddress(ecKey.toAddress(networkParameters).toBase58());
-        multiSignBy0.setPublickey(Utils.HEX.encode(ecKey.getPubKey()));
-        multiSignBy0.setSignature(Utils.HEX.encode(buf1));
-        multiSignBies.add(multiSignBy0);
-        MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
-        transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
+		List<MultiSignBy> multiSignBies = new ArrayList<MultiSignBy>();
+		MultiSignBy multiSignBy0 = new MultiSignBy();
+		multiSignBy0.setTokenid(Utils.HEX.encode(pubKey));
+		multiSignBy0.setTokenindex(0);
+		multiSignBy0.setAddress(ecKey.toAddress(networkParameters).toBase58());
+		multiSignBy0.setPublickey(Utils.HEX.encode(ecKey.getPubKey()));
+		multiSignBy0.setSignature(Utils.HEX.encode(buf1));
+		multiSignBies.add(multiSignBy0);
+		MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
+		transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
-        // save block
-        block = adjustSolve(block);
-        OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
-    }
+		// save block
+		block = adjustSolve(block);
+		OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
+	}
 
-    @Test
-    public void testGiveMoney() throws Exception {
-        
+	@Test
+	public void testGiveMoney() throws Exception {
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
-                Utils.HEX.decode(testPub));
-        List<UTXO> balance1 = getBalance(false, genesiskey);
-        log.info("balance1 : " + balance1);
-        // two utxo to spent
-        HashMap<String, Long> giveMoneyResult = new HashMap<>();
-        for (int i = 0; i < 3; i++) {
-            ECKey outKey = new ECKey();
-            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue().longValue());
-        }
-        walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
-        makeRewardBlock();
-        
-        List<UTXO> balance = getBalance(false, genesiskey);
-        log.info("balance : " + balance);
-        for (UTXO utxo : balance) {
+		ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+				Utils.HEX.decode(testPub));
+		List<UTXO> balance1 = getBalance(false, genesiskey);
+		log.info("balance1 : " + balance1);
+		// two utxo to spent
+		HashMap<String, Long> giveMoneyResult = new HashMap<>();
+		for (int i = 0; i < 3; i++) {
+			ECKey outKey = new ECKey();
+			giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue().longValue());
+		}
+		walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
+		makeRewardBlock();
 
-            assertTrue(utxo.getValue().getValue().equals(NetworkParameters.BigtangleCoinTotal
-                    .subtract(Coin.COIN.getValue().multiply(BigInteger.valueOf(3)))));
+		List<UTXO> balance = getBalance(false, genesiskey);
+		log.info("balance : " + balance);
+		for (UTXO utxo : balance) {
 
-        }
-    }
+			assertTrue(utxo.getValue().getValue().equals(NetworkParameters.BigtangleCoinTotal
+					.subtract(Coin.COIN.getValue().multiply(BigInteger.valueOf(3)))));
 
-    @Test
-    public void testRatingRead() throws Exception {
-         
+		}
+	}
 
-        ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
-                Utils.HEX.decode(testPub));
-        List<UTXO> balance1 = getBalance(false, genesiskey);
-        log.info("balance1 : " + balance1);
-        // two utxo to spent
-        HashMap<String, Long> giveMoneyResult = new HashMap<>();
-        for (int i = 0; i < 3; i++) {
-            ECKey outKey = new ECKey();
-            giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue().longValue());
-        }
-        Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
-        makeRewardBlock();
-        
+	@Test
+	public void testRatingRead() throws Exception {
 
-        Map<String, Object> requestParam = new HashMap<String, Object>();
+		ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+				Utils.HEX.decode(testPub));
+		List<UTXO> balance1 = getBalance(false, genesiskey);
+		log.info("balance1 : " + balance1);
+		// two utxo to spent
+		HashMap<String, Long> giveMoneyResult = new HashMap<>();
+		for (int i = 0; i < 3; i++) {
+			ECKey outKey = new ECKey();
+			giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue().longValue());
+		}
+		Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
+		makeRewardBlock();
 
-        List<String> blockhashs = new ArrayList<String>();
-        blockhashs.add(b.getHashAsString());
-        requestParam.put("blockhashs", blockhashs);
+		Map<String, Object> requestParam = new HashMap<String, Object>();
 
-       byte[] response = OkHttp3Util.postString(contextRoot + ReqCmd.searchBlockByBlockHashs.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
+		List<String> blockhashs = new ArrayList<String>();
+		blockhashs.add(b.getHashAsString());
+		requestParam.put("blockhashs", blockhashs);
 
-        GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
-                GetBlockEvaluationsResponse.class);
-        List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
+		byte[] response = OkHttp3Util.postString(contextRoot + ReqCmd.searchBlockByBlockHashs.name(),
+				Json.jsonmapper().writeValueAsString(requestParam));
 
-        assertTrue(!blockEvaluations.isEmpty());
+		GetBlockEvaluationsResponse getBlockEvaluationsResponse = Json.jsonmapper().readValue(response,
+				GetBlockEvaluationsResponse.class);
+		List<BlockEvaluationDisplay> blockEvaluations = getBlockEvaluationsResponse.getEvaluations();
 
-    }
+		assertTrue(!blockEvaluations.isEmpty());
 
-    @Test
+	}
 
-    public void testWalletImportKeyGiveMoney() throws Exception {
-        List<ECKey> keys = new ArrayList<ECKey>();
-        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
+	@Test
+	public void searchBlock() throws Exception {
+		List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+		List<String> address = new ArrayList<String>();
+		for (ECKey ecKey : keys) {
+			address.add(ecKey.toAddress(networkParameters).toBase58());
+		}
+		HashMap<String, Object> request = new HashMap<String, Object>();
+		request.put("address", address);
 
-        Wallet coinbaseWallet = Wallet.fromKeys(networkParameters, keys);
-        coinbaseWallet.setServerURL(contextRoot);
+		byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.findBlockEvaluation.name(),
+				Json.jsonmapper().writeValueAsString(request).getBytes());
 
-        ECKey outKey = new ECKey();
+		log.info("searchBlock resp : " + response);
 
-        for (int i = 0; i < 3; i++) {
-            Transaction transaction = new Transaction(this.networkParameters);
-            Coin amount = Coin.valueOf(1000000, NetworkParameters.BIGTANGLE_TOKENID);
-            transaction.addOutput(amount, outKey);
+	}
 
-            SendRequest request = SendRequest.forTx(transaction);
-            coinbaseWallet.completeTx(request, null);
+	// TODO @Test
+	public void testExchangeTokenMulti() throws Exception {
+		testInitWallet();
+		wallet1();
+		wallet2();
 
-            HashMap<String, String> requestParam = new HashMap<String, String>();
-            byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip,
-                    Json.jsonmapper().writeValueAsString(requestParam));
-            Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-            rollingBlock.addTransaction(request.tx);
-            rollingBlock.solve();
+		List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
+		TokenInfo tokenInfo = new TokenInfo();
+		testCreateMultiSigToken(keys, tokenInfo);
+		UTXO multitemp = null;
+		UTXO systemcoin = null;
+		List<UTXO> utxos = getBalance(false, keys);
+		for (UTXO utxo : utxos) {
+			if (multitemp == null && !Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
+				multitemp = utxo;
+			}
+			if (systemcoin == null && Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
+				systemcoin = utxo;
+			}
+			log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
+		}
+		UTXO yourutxo = utxos.get(0);
+		List<UTXO> ulist = getBalance();
+		UTXO mymultitemp = null;
+		UTXO mysystemcoin = null;
+		for (UTXO utxo : ulist) {
+			if (mymultitemp == null && !Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
+				mymultitemp = utxo;
+			}
+			if (mysystemcoin == null && Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
+				mysystemcoin = utxo;
+			}
+			log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
+		}
+		UTXO myutxo = null;
+		for (UTXO u : ulist) {
+			if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
+				myutxo = u;
+			}
+		}
+		log.debug("outKey : " + myutxo.getAddress());
 
-            OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+		Coin amount = Coin.valueOf(10000, yourutxo.getValue().getTokenid());
 
-            List<FreeStandingTransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(null, false);
-            for (TransactionOutput transactionOutput : candidates) {
-                log.info("UTXO : " + transactionOutput);
-            }
+		SendRequest req = null;
 
-            for (UTXO output : this.getBalance(true, outKey)) {
-                log.info("UTXO : " + output);
-            }
-            makeRewardBlock();
-            
-        }
-    }
+		// ulist.addAll(utxos);
+		Transaction transaction = new Transaction(networkParameters);
 
-    @Test
+		List<ECKey> signKeys = new ArrayList<>();
+		signKeys.add(keys.get(0));
+		signKeys.add(keys.get(1));
+		signKeys.add(keys.get(2));
 
-    public void testWalletBatchGiveMoney() throws Exception {
-        List<ECKey> keys = new ArrayList<ECKey>();
-        keys.add(ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
+		TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, yourutxo);
 
-        Wallet coinbaseWallet = Wallet.fromKeys(networkParameters, keys);
-        coinbaseWallet.setServerURL(contextRoot);
+		transaction.addOutput(amount, Address.fromBase58(networkParameters, myutxo.getAddress()));
 
-        Transaction transaction = new Transaction(this.networkParameters);
-        for (int i = 0; i < 3; i++) {
-            ECKey outKey = new ECKey();
-            Coin amount = Coin.valueOf(300, NetworkParameters.BIGTANGLE_TOKENID);
-            transaction.addOutput(amount, outKey);
-        }
+		Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(3, signKeys);
+		Coin amount2 = multisigOutput.getValue().subtract(amount);
+		transaction.addOutput(amount2, scriptPubKey);
 
-        SendRequest request = SendRequest.forTx(transaction);
-        coinbaseWallet.completeTx(request, null);
+		transaction.addInput(yourutxo.getBlockHash(), multisigOutput);
 
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip,
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
+		List<byte[]> sigs = new ArrayList<byte[]>();
+		for (ECKey ecKey : signKeys) {
+			TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, yourutxo);
+			Script multisigScript_ = multisigOutput_.getScriptPubKey();
 
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+			Sha256Hash sighash = transaction.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
+			TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash, null),
+					Transaction.SigHash.ALL, false);
 
-        List<FreeStandingTransactionOutput> candidates = coinbaseWallet.calculateAllSpendCandidates(null, false);
-        for (TransactionOutput transactionOutput : candidates) {
-            log.info("UTXO : " + transactionOutput);
-        }
-        /*
-         * for (UTXO output : this.testTransactionAndGetBalances(true, outKey))
-         * { log.info("UTXO : logtput); }
-         */
-    }
+			ECKey.ECDSASignature party1Signature = ecKey.sign(transaction.getHash(), null);
+			byte[] signature = party1Signature.encodeToDER();
+			boolean success = ECKey.verify(transaction.getHash().getBytes(), signature, ecKey.getPubKey());
+			if (!success) {
+				throw new BlockStoreException("key multisign signature error");
+			}
+			sigs.add(transactionSignature.encodeToBitcoin());
+		}
+		Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
+		transaction.getInput(0).setScriptSig(inputScript);
+		req = SendRequest.forTx(transaction);
 
-    @Test
-    public void searchBlock() throws Exception {
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
-        List<String> address = new ArrayList<String>();
-        for (ECKey ecKey : keys) {
-            address.add(ecKey.toAddress(networkParameters).toBase58());
-        }
-        HashMap<String, Object> request = new HashMap<String, Object>();
-        request.put("address", address);
+		exchangeTokenComplete(req.tx);
 
-       byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.findBlockEvaluation.name(),
-                Json.jsonmapper().writeValueAsString(request).getBytes());
+		for (UTXO utxo : getBalance(false, keys)) {
+			log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
+		}
+		for (UTXO utxo : getBalance()) {
+			log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
+		}
+		Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
+		amount = Coin.valueOf(1000, myutxo.getValue().getTokenid());
+		req = SendRequest.to(destination, amount);
+		//walletAppKit.wallet().completeTx(req, null);
+		walletAppKit.wallet().signTransaction(req);
 
-        log.info("searchBlock resp : " + response);
+		exchangeTokenComplete(req.tx);
+		UTXO multitemp1 = null;
+		UTXO systemcoin1 = null;
+		for (UTXO utxo : getBalance(false, keys)) {
+			if (multitemp1 == null && !Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
+				multitemp1 = utxo;
+			}
+			if (systemcoin1 == null && Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
+				systemcoin1 = utxo;
+			}
+			log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
+		}
+		UTXO mymultitemp1 = null;
+		UTXO mysystemcoin1 = null;
+		for (UTXO utxo : getBalance()) {
+			if (mymultitemp1 == null && Arrays.equals(utxo.getTokenidBuf(), multitemp.getTokenidBuf())) {
+				mymultitemp1 = utxo;
+			}
+			if (mysystemcoin1 == null && Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
+				mysystemcoin1 = utxo;
+			}
+			log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
+		}
+		assertEquals(multitemp.getValue().getValue().longValue() - 10000, multitemp1.getValue().getValue());
+		assertEquals(1000, systemcoin1.getValue().getValue());
+		assertEquals(10000, mymultitemp1.getValue().getValue());
+		assertEquals(mysystemcoin.getValue().getValue().longValue() - 1000, mysystemcoin1.getValue().getValue());
+	}
 
-    }
+	public void exchangeTokenComplete(Transaction tx) throws Exception {
+		// get new Block to be used from server
+		HashMap<String, String> requestParam = new HashMap<String, String>();
+		byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+				Json.jsonmapper().writeValueAsString(requestParam));
+		Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+		rollingBlock.addTransaction(tx);
+		rollingBlock.solve();
+
+		byte[] res = OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+		log.debug(res.toString());
+	}
+
+	// Pay BIG
+	public void payToken(ECKey outKey, Wallet wallet) throws Exception {
+		payToken(100, outKey, NetworkParameters.BIGTANGLE_TOKENID, wallet);
+	}
+
+	public void payToken(int amount, ECKey outKey, byte[] tokenbuf, Wallet wallet) throws Exception {
+		HashMap<String, String> requestParam = new HashMap<String, String>();
+		byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
+				Json.jsonmapper().writeValueAsString(requestParam));
+		Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
+		log.info("resp block, hex : " + Utils.HEX.encode(data));
+		// get other tokenid from wallet
+		UTXO utxo = null;
+		List<UTXO> ulist = getBalance();
+
+		for (UTXO u : ulist) {
+			if (Arrays.equals(u.getTokenidBuf(), tokenbuf)) {
+				utxo = u;
+			}
+		}
+		log.debug(utxo.getValue().toString());
+		// Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000",
+		// utxo.getValue().getTokenid()));
+		// log.debug(baseCoin);
+		Address destination = outKey.toAddress(networkParameters);
+
+		Coin coinbase = Coin.valueOf(amount, utxo.getValue().getTokenid());
+		walletAppKit.wallet().pay(null, destination.toString(), coinbase, "");
+
+		log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
+		makeRewardBlock();
+
+		checkBalance(coinbase, wallet.walletKeys(null));
+	}
+
+	@Test
+	public void createTransaction() throws Exception {
+		testInitWallet();
+		wallet1();
+		wallet2();
+
  
 
-    // TODO @Test
-    public void testExchangeTokenMulti() throws Exception {
-        testInitWallet();
-        wallet1();
-        wallet2();
+		Address destination = Address.fromBase58(networkParameters, "1NWN57peHapmeNq1ndDeJnjwPmC56Z6x8j");
 
-        List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
-        TokenInfo tokenInfo = new TokenInfo();
-        testCreateMultiSigToken(keys, tokenInfo);
-        UTXO multitemp = null;
-        UTXO systemcoin = null;
-        List<UTXO> utxos = getBalance(false, keys);
-        for (UTXO utxo : utxos) {
-            if (multitemp == null && !Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                multitemp = utxo;
-            }
-            if (systemcoin == null && Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                systemcoin = utxo;
-            }
-            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        UTXO yourutxo = utxos.get(0);
-        List<UTXO> ulist = getBalance();
-        UTXO mymultitemp = null;
-        UTXO mysystemcoin = null;
-        for (UTXO utxo : ulist) {
-            if (mymultitemp == null && !Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                mymultitemp = utxo;
-            }
-            if (mysystemcoin == null && Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                mysystemcoin = utxo;
-            }
-            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        UTXO myutxo = null;
-        for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                myutxo = u;
-            }
-        }
-        log.debug("outKey : " + myutxo.getAddress());
+		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
 
-        Coin amount = Coin.valueOf(10000, yourutxo.getValue().getTokenid());
+		List<Block> rollingBlock= walletAppKit.wallet().pay(null, destination.toString(), amount, "");
 
-        SendRequest req = null;
+		log.info("req block, hex : " + rollingBlock.get(0));
 
-        // ulist.addAll(utxos);
-        Transaction transaction = new Transaction(networkParameters);
+		getBalance();
 
-        List<ECKey> signKeys = new ArrayList<>();
-        signKeys.add(keys.get(0));
-        signKeys.add(keys.get(1));
-        signKeys.add(keys.get(2));
+		// log.info("transaction, tokens : " +
+		// Json.jsonmapper().writeValueAsString(transaction.getTokenInfo()));
 
-        TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, yourutxo);
+	}
 
-        transaction.addOutput(amount, Address.fromBase58(networkParameters, myutxo.getAddress()));
-
-        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(3, signKeys);
-        Coin amount2 = multisigOutput.getValue().subtract(amount);
-        transaction.addOutput(amount2, scriptPubKey);
-
-        transaction.addInput(yourutxo.getBlockHash(), multisigOutput);
-
-        List<byte[]> sigs = new ArrayList<byte[]>();
-        for (ECKey ecKey : signKeys) {
-            TransactionOutput multisigOutput_ = new FreeStandingTransactionOutput(networkParameters, yourutxo);
-            Script multisigScript_ = multisigOutput_.getScriptPubKey();
-
-            Sha256Hash sighash = transaction.hashForSignature(0, multisigScript_, Transaction.SigHash.ALL, false);
-            TransactionSignature transactionSignature = new TransactionSignature(ecKey.sign(sighash, null),
-                    Transaction.SigHash.ALL, false);
-
-            ECKey.ECDSASignature party1Signature = ecKey.sign(transaction.getHash(), null);
-            byte[] signature = party1Signature.encodeToDER();
-            boolean success = ECKey.verify(transaction.getHash().getBytes(), signature, ecKey.getPubKey());
-            if (!success) {
-                throw new BlockStoreException("key multisign signature error");
-            }
-            sigs.add(transactionSignature.encodeToBitcoin());
-        }
-        Script inputScript = ScriptBuilder.createMultiSigInputScriptBytes(sigs);
-        transaction.getInput(0).setScriptSig(inputScript);
-        req = SendRequest.forTx(transaction);
-
-        exchangeTokenComplete(req.tx);
-
-        for (UTXO utxo : getBalance(false, keys)) {
-            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        for (UTXO utxo : getBalance()) {
-            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
-        amount = Coin.valueOf(1000, myutxo.getValue().getTokenid());
-        req = SendRequest.to(destination, amount);
-        walletAppKit.wallet().completeTx(req, null);
-        walletAppKit.wallet().signTransaction(req);
-
-        exchangeTokenComplete(req.tx);
-        UTXO multitemp1 = null;
-        UTXO systemcoin1 = null;
-        for (UTXO utxo : getBalance(false, keys)) {
-            if (multitemp1 == null && !Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                multitemp1 = utxo;
-            }
-            if (systemcoin1 == null && Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                systemcoin1 = utxo;
-            }
-            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        UTXO mymultitemp1 = null;
-        UTXO mysystemcoin1 = null;
-        for (UTXO utxo : getBalance()) {
-            if (mymultitemp1 == null && Arrays.equals(utxo.getTokenidBuf(), multitemp.getTokenidBuf())) {
-                mymultitemp1 = utxo;
-            }
-            if (mysystemcoin1 == null && Arrays.equals(utxo.getTokenidBuf(), NetworkParameters.BIGTANGLE_TOKENID)) {
-                mysystemcoin1 = utxo;
-            }
-            log.debug(utxo.getValue().getValue() + "," + utxo.getTokenId() + "," + utxo.getAddress());
-        }
-        assertEquals(multitemp.getValue().getValue().longValue() - 10000, multitemp1.getValue().getValue());
-        assertEquals(1000, systemcoin1.getValue().getValue());
-        assertEquals(10000, mymultitemp1.getValue().getValue());
-        assertEquals(mysystemcoin.getValue().getValue().longValue() - 1000, mysystemcoin1.getValue().getValue());
-    }
-
-    public void exchangeTokenComplete(Transaction tx) throws Exception {
-        // get new Block to be used from server
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-        rollingBlock.addTransaction(tx);
-        rollingBlock.solve();
-
-          byte[] res = OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        log.debug(res.toString());
-    }
-
-    // Pay BIG
-    public void payToken(ECKey outKey, Wallet wallet) throws Exception {
-        payToken(100, outKey, NetworkParameters.BIGTANGLE_TOKENID, wallet);
-    }
-
-    public void payToken(int amount, ECKey outKey, byte[] tokenbuf, Wallet wallet) throws Exception {
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-        log.info("resp block, hex : " + Utils.HEX.encode(data));
-        // get other tokenid from wallet
-        UTXO utxo = null;
-        List<UTXO> ulist = getBalance();
-
-        for (UTXO u : ulist) {
-            if (Arrays.equals(u.getTokenidBuf(), tokenbuf)) {
-                utxo = u;
-            }
-        }
-        log.debug(utxo.getValue().toString());
-        // Coin baseCoin = utxo.getValue().subtract(Coin.parseCoin("10000",
-        // utxo.getValue().getTokenid()));
-        // log.debug(baseCoin);
-        Address destination = outKey.toAddress(networkParameters);
-
-        Coin coinbase = Coin.valueOf(amount, utxo.getValue().getTokenid());
-        SendRequest request = SendRequest.to(destination, coinbase);
-        walletAppKit.wallet().completeTx(request, null);
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
-        checkResponse(OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize()));
-        log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
-        makeRewardBlock();
-
-        checkBalance(coinbase, wallet.walletKeys(null));
-    }
-
-    @Test
-    public void createTransaction() throws Exception {
-        testInitWallet();
-        wallet1();
-        wallet2();
-
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-        log.info("resp block, hex : " + Utils.HEX.encode(data));
-
-        Address destination = Address.fromBase58(networkParameters, "1NWN57peHapmeNq1ndDeJnjwPmC56Z6x8j");
-
-        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-        SendRequest request = SendRequest.to(destination, amount);
-        request.tx.setMemo(new MemoInfo("memo"));
-        walletAppKit.wallet().completeTx(request, null);
-        // request.tx.setDataclassname(DataClassName.USERDATA.name());
-
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock = adjustSolve(rollingBlock);
-
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
-
-        getBalance();
-
-        Transaction transaction = (Transaction) networkParameters.getDefaultSerializer()
-                .makeTransaction(request.tx.bitcoinSerialize());
-        log.info("transaction, memo : " + transaction.getMemo());
-        // log.info("transaction, tokens : " +
-        // Json.jsonmapper().writeValueAsString(transaction.getTokenInfo()));
-        log.info("transaction, datatype : " + transaction.getDataClassName());
-    }
-
-  
 }

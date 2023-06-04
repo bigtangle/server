@@ -23,6 +23,7 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.UTXO;
@@ -82,8 +83,8 @@ public class FromAddressTests extends AbstractIntegrationTest {
         w.setServerURL(contextRoot);
         try {
 
-            w.pay(null, accountKey.toAddress(networkParameters), Coin.valueOf(100, Utils.HEX.decode(yuanTokenPub)),
-                    " buy ticket");
+            w.pay(null, accountKey.toAddress(networkParameters).toString(), Coin.valueOf(100, Utils.HEX.decode(yuanTokenPub)),
+                    new MemoInfo(" buy ticket"));
         } catch (InsufficientMoneyException e) {
             // TODO: handle exception
         }

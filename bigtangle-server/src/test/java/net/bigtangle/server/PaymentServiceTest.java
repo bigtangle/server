@@ -25,6 +25,7 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
@@ -32,7 +33,6 @@ import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.GetTXRewardListResponse;
 import net.bigtangle.crypto.TransactionSignature;
@@ -42,7 +42,6 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
-import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 
 @RunWith(SpringRunner.class)
@@ -63,34 +62,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         assertTrue(getBalancesResponse.getTxReward().size() > 0);
     }
 
-    // pay to mutilsigns keys wallet1Keys_part
-    public void createMultiSigns(List<ECKey> wallet1Keys_part) throws Exception {
-
-        Transaction multiSigTransaction = new Transaction(networkParameters);
-
-        for (ECKey ecKey : wallet1Keys_part)
-            log.debug(ecKey.getPublicKeyAsHex());
-
-        Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_part);
-
-        Coin amount0 = Coin.valueOf(15, NetworkParameters.BIGTANGLE_TOKENID);
-        multiSigTransaction.addOutput(amount0, scriptPubKey);
-        // get new Block to be used from server
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-
-        SendRequest request = SendRequest.forTx(multiSigTransaction);
-        walletAppKit.wallet().completeTx(request, null);
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock = adjustSolve(rollingBlock);
-        rollingBlock.solve();
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
-        makeRewardBlock();
-
-        checkBalance(amount0, wallet1Keys_part);
-    }
+ 
 
     @Test
     // transfer the coin to address with multisign for spent
@@ -101,8 +73,8 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
         List<ECKey> wallet1Keys_part = new ArrayList<ECKey>();
         wallet1Keys_part.add(wallet1Keys.get(0));
-        wallet1Keys_part.add(new ECKey());
-        createMultiSigns(wallet1Keys_part);
+ 
+        multiSigns(new ECKey(),wallet1Keys_part);
 
     }
 
@@ -158,21 +130,10 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         wallet1();
         wallet2();
 
-        // get new Block to be used from server
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-
+  
         Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
         Address address = walletKeys.get(0).toAddress(networkParameters);
-        SendRequest request = SendRequest.to(address, amount);
-        // request.tx.setMemo(new MemoInfo(createDataSize(5000)));
-        walletAppKit.wallet().completeTx(request, null);
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
-
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        walletAppKit.wallet().pay(null, address.toString(), amount, new MemoInfo(""));
         // sendEmpty(5);
         makeRewardBlock();
 
@@ -195,13 +156,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
         Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
         Address address = walletKeys.get(0).toAddress(networkParameters);
-        SendRequest request = SendRequest.to(address, amount);
-        // request.tx.setMemo(new MemoInfo(createDataSize(5000)));
-        walletAppKit.wallet().completeTx(request, null);
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
-
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        walletAppKit.wallet().pay(null, address.toString(), amount, new MemoInfo(""));
         // sendEmpty(5);
         makeRewardBlock();
 
@@ -252,7 +207,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         testPartsToOne(aCoin, to);
         List<FreeStandingTransactionOutput> uspent = walletAppKit1.wallet().calculateAllSpendCandidates(null, false);
         assertTrue(uspent.size() == 3);
-        walletAppKit1.wallet().payPartsToOne(null, to.toAddress(networkParameters), NetworkParameters.BIGTANGLE_TOKENID,
+        walletAppKit1.wallet().payPartsToOne(null, to.toAddress(networkParameters).toString(), NetworkParameters.BIGTANGLE_TOKENID,
                 "0,3");
         makeRewardBlock();
 
@@ -265,18 +220,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
     public void testPartsToOne(Coin amount, ECKey to) throws Exception {
 
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-
-        SendRequest request = SendRequest.to(to.toAddress(networkParameters), amount);
-
-        walletAppKit.wallet().completeTx(request, null);
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
-
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        walletAppKit.wallet().pay(null, to.toAddress(networkParameters).toString(), amount, new MemoInfo(""));
 
         makeRewardBlock();
 
@@ -298,21 +242,11 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         walletAppKit1.wallet().importKey(to);
         Coin aCoin = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
 
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-
-        SendRequest request = SendRequest.to(to.toAddress(networkParameters), aCoin);
-
-        walletAppKit.wallet().completeTx(request, null);
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
-
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+       List<Block> rollingBlock=walletAppKit.wallet().pay(null, to.toAddress(networkParameters).toString(), aCoin, new MemoInfo(""));
+      
         makeRewardBlock();
         // repay the block
-        walletAppKit.wallet().rePayBlock(null, rollingBlock);
+        walletAppKit.wallet().retryBlocks(  rollingBlock.get(0));
         makeRewardBlock();
         checkBalanceSum(Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID), walletAppKit1.wallet().getImportedKeys());
 
@@ -326,24 +260,15 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
         Coin aCoin = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
 
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-
-        SendRequest request = SendRequest.to(to.toAddress(networkParameters), aCoin);
-
-        walletAppKit.wallet().completeTx(request, null);
-        rollingBlock.addTransaction(request.tx);
-        rollingBlock.solve();
-
-        OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), rollingBlock.bitcoinSerialize());
+        List<Block> rollingBlock=walletAppKit.wallet().pay(null, to.toAddress(networkParameters).toString(), aCoin, new MemoInfo(""));
+        
+        
         makeRewardBlock();
         // pay from burned address
         try {
             Wallet wallet = Wallet.fromKeys(networkParameters, to);
             wallet.setServerURL(contextRoot);
-            wallet.pay(null, to.toAddress(networkParameters), aCoin, "");
+            wallet.pay(null, to.toAddress(networkParameters).toString(), aCoin, new MemoInfo(""));
             fail();
         } catch (RuntimeException e) {
           assertTrue(e.getMessage().contains("Burned"));

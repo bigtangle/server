@@ -22,6 +22,7 @@ import com.google.common.math.LongMath;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.UTXO;
@@ -175,7 +176,7 @@ public class Lottery {
             candidates.add(new FreeStandingTransactionOutput(this.params, u));
         }
         
-        return walletAdmin.payFromList(null, address, new Coin(amount, Utils.HEX.decode(tokenid)), memo, candidates);
+        return walletAdmin.payFromList(null, address, new Coin(amount, Utils.HEX.decode(tokenid)), new MemoInfo(memo), candidates);
 
     }
 

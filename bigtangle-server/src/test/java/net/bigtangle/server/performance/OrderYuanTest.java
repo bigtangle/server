@@ -24,13 +24,13 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
+import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Tokensums;
 import net.bigtangle.core.TokensumsMap;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.AbstractIntegrationTest;
@@ -67,7 +67,7 @@ public class OrderYuanTest extends AbstractIntegrationTest {
         long time1=System.currentTimeMillis();
         for (int i = 0; i < 160; i++) {
             long start = System.currentTimeMillis();
-            walletAppKit.wallet().pay(null, address, amount, "");
+            walletAppKit.wallet().pay(null, address.toString(), amount, new MemoInfo(""));
             makeRewardBlock();
             long end = System.currentTimeMillis();
 

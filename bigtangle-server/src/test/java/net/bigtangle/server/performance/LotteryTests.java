@@ -208,8 +208,8 @@ public class LotteryTests extends AbstractIntegrationTest {
 		w.setServerURL(contextRoot);
 
 		int satoshis = 1000;
-		return w.createTransaction(null, accountKey.toAddress(networkParameters),
-				Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)), new MemoInfo(" buy ticket"));
+		return w.createTransaction(null, accountKey.toAddress(networkParameters).toString(),
+				Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)),  new MemoInfo( "buy ticket") );
 
 	}
 
@@ -245,8 +245,8 @@ public class LotteryTests extends AbstractIntegrationTest {
 		w.setServerURL(contextRoot);
 		try {
 			int satoshis = Math.abs(new Random().nextInt()) % 1000;
-			w.pay(null, accountKey.toAddress(networkParameters), Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)),
-					" buy ticket");
+			w.pay(null, accountKey.toAddress(networkParameters).toString(), Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)),
+					new MemoInfo(" buy ticket"));
 		} catch (InsufficientMoneyException e) {
 			// TODO: handle exception
 		}
