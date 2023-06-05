@@ -29,7 +29,7 @@
 		<module>bigtangle-servercore</module>
 		<module>bigtangle-server</module>
 		<module>bigtangle-subtangle</module>
-
+		<module>bigtangle-seeds</module>
 	</modules>
 	<dependencies>
 		<!-- Logging -->

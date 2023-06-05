@@ -52,7 +52,9 @@ public class FromAddressTests extends AbstractIntegrationTest {
         w.setServerURL(contextRoot);
         accountKey = new ECKey(); 
         testTokens();
-        makeRewardBlock();
+      
+		payBigTo(accountKey, 1000);
+		  makeRewardBlock();
         createUserPay(accountKey);
 
     }
@@ -116,7 +118,12 @@ public class FromAddressTests extends AbstractIntegrationTest {
 
     public void testTokens() throws JsonProcessingException, Exception {
         String domain = "";
-        testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)), "人民币", 2, domain, "人民币 CNY",
+        
+    	
+    	
+        ECKey fromPrivate = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
+        payBigTo(fromPrivate, 10000);
+		testCreateMultiSigToken(fromPrivate, "人民币", 2, domain, "人民币 CNY",
                 BigInteger.valueOf(10000000l));
         makeRewardBlock();
     }

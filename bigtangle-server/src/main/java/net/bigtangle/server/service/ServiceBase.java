@@ -1648,7 +1648,7 @@ public class ServiceBase {
 
 	public SolidityState checkFormalTokenSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
 
-		if (block.getTransactions().size() != 1) {
+		if (block.getTransactions().size() != 2) {
 			if (throwExceptions)
 				throw new IncorrectTransactionCountException();
 			return SolidityState.getFailState();
@@ -1690,7 +1690,8 @@ public class ServiceBase {
 		// given token
 		for (Transaction tx1 : block.getTransactions()) {
 			for (TransactionOutput out : tx1.getOutputs()) {
-				if (!out.getValue().getTokenHex().equals(currentToken.getToken().getTokenid())) {
+				if (!out.getValue().getTokenHex().equals(currentToken.getToken().getTokenid())
+						&& !out.getValue().isBIG()) {
 					if (throwExceptions)
 						throw new InvalidTokenOutputException();
 					return SolidityState.getFailState();
@@ -2402,10 +2403,11 @@ public class ServiceBase {
 		}
 
 		// Check all token issuance transaction outputs are actually of the
-		// given token
+		// given token or fee
 		for (Transaction tx1 : block.getTransactions()) {
 			for (TransactionOutput out : tx1.getOutputs()) {
-				if (!out.getValue().getTokenHex().equals(currentToken.getToken().getTokenid())) {
+				if (!out.getValue().getTokenHex().equals(currentToken.getToken().getTokenid())
+						&& ! out.getValue().isBIG() ) {
 					if (throwExceptions)
 						throw new InvalidTokenOutputException();
 					return SolidityState.getFailState();

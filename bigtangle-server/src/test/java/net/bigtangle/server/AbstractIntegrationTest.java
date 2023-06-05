@@ -742,7 +742,9 @@ public abstract class AbstractIntegrationTest {
             f.delete();
         walletAppKit1 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle1");
         walletAppKit1.wallet().setServerURL(contextRoot);
-
+        walletAppKit1.wallet().importKey(
+                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
+      
         wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
     }
 
@@ -754,7 +756,9 @@ public abstract class AbstractIntegrationTest {
             f.delete();
         walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle2");
         walletAppKit2.wallet().setServerURL(contextRoot);
-
+        walletAppKit2.wallet().importKey(
+                ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub)));
+   
         wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
     }
 
@@ -1128,6 +1132,7 @@ public abstract class AbstractIntegrationTest {
     // for unit tests
     public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
             throws Exception {
+    	payBigTo(outKey, 10000);
         tokenInfo.getToken().setTokenname(UUIDUtil.randomUUID());
         return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null);
     }
@@ -1455,7 +1460,9 @@ public abstract class AbstractIntegrationTest {
     public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
             BigInteger amount, boolean increment, TokenKeyValues tokenKeyValues, int tokentype, String tokenid,
             Wallet w) throws Exception {
-
+    	w.importKey(key);
+    	payBigTo(key,10000);
+    	makeRewardBlock();
         Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
                 amount, !increment, decimals, "");
         token.setTokenKeyValues(tokenKeyValues);

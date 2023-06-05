@@ -719,10 +719,10 @@ public class TokenTest extends AbstractIntegrationTest {
                 walletAppKit1.wallet().multiSign(tokenid, keys.get(i), aesKey);
             }
         }
-
+        makeRewardBlock();
         {
             final String tokenid = walletKeys.get(0).getPublicKeyAsHex();
-            walletAppKit1.wallet().publishDomainName(walletKeys.get(0), tokenid, "de", aesKey, "");
+            walletAppKit1.wallet().publishDomainName(walletKeys.get(1), tokenid, "de", aesKey, "");
 
             List<ECKey> keys = new ArrayList<ECKey>();
             keys.add(preKey);
@@ -750,6 +750,7 @@ public class TokenTest extends AbstractIntegrationTest {
     public void testGetTokenConflict() throws Exception {
 
         testCreateToken(walletKeys.get(0), "test");
+        makeRewardBlock();
         // same token id and index
         testCreateToken(walletKeys.get(0), "test");
 
