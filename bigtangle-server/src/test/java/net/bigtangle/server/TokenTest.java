@@ -1,6 +1,7 @@
 package net.bigtangle.server;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -45,6 +46,7 @@ import net.bigtangle.core.TokenType;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
@@ -403,6 +405,8 @@ public class TokenTest extends AbstractIntegrationTest {
                 userkey.getPubKey(), signedata.encryptToMemo(userkey));
         TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
         walletAppKit1.wallet().multiSign(currentToken.getToken().getTokenid(), key, aesKey);
+        payBigTo(userkey,1000000);
+        
         // sendEmpty(10);
         makeRewardBlock();
 
@@ -752,7 +756,12 @@ public class TokenTest extends AbstractIntegrationTest {
         testCreateToken(walletKeys.get(0), "test");
         makeRewardBlock();
         // same token id and index
+        try {
         testCreateToken(walletKeys.get(0), "test");
+          fail();
+        }catch (RuntimeException e) {
+			// TODO: handle exception
+		}
 
         HashMap<String, Object> requestParam = new HashMap<String, Object>();
         requestParam.put("tokenid", walletKeys.get(0).getPublicKeyAsHex());

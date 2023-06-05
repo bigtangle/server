@@ -148,23 +148,18 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         wallet1();
         wallet2();
 
-        // get new Block to be used from server
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
-                Json.jsonmapper().writeValueAsString(requestParam));
-        Block rollingBlock = networkParameters.getDefaultSerializer().makeBlock(data);
-
+        
         Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
         Address address = walletKeys.get(0).toAddress(networkParameters);
-        walletAppKit.wallet().pay(null, address.toString(), amount, new MemoInfo(""));
+     List<Block> rollingBlock=   walletAppKit.wallet().pay(null, address.toString(), amount, new MemoInfo(""));
         // sendEmpty(5);
         makeRewardBlock();
 
-        // check the output histoty
+        // check the output history
         historyUTXOList(address.toBase58(), amount);
         // retry the block throw possible conflict
         try {
-            walletAppKit.wallet().retryBlocks(rollingBlock);
+            walletAppKit.wallet().retryBlocks(rollingBlock.get(0));
             fail();
         } catch (RuntimeException e) {
 

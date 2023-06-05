@@ -411,14 +411,14 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks) throws Exception {
-
+    		payBigTo(beneficiary, 10000);
         return makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount,
                 NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
     }
 
     protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             List<Block> addedBlocks) throws Exception {
-
+		payBigTo(beneficiary, 10000);
         Block block = makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount,
                 NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
         makeRewardBlock(addedBlocks);
@@ -465,7 +465,7 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             List<Block> addedBlocks) throws Exception {
-
+		payBigTo(beneficiary, 10000);
         Block block = makeBuyOrder(beneficiary, tokenId, buyPrice, buyAmount,
                 NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
         makeRewardBlock(addedBlocks);
@@ -476,6 +476,7 @@ public abstract class AbstractIntegrationTest {
             String basetoken, List<Block> addedBlocks) throws Exception {
         Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
         w.setServerURL(contextRoot);
+		payBigTo(beneficiary, 10000);
         Block block = w.buyOrder(null, tokenId, buyPrice, buyAmount, null, null, basetoken,true);
         addedBlocks.add(block);
         return block;

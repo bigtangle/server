@@ -213,23 +213,7 @@ public class OrderTradeTest extends AbstractIntegrationTest {
     }
 
     public void testBuySellWithDecimalDo(long price, long tradeAmount, int tokendecimal) throws Exception {
-        File f3 = new File("./logs/", "bigtangle3.wallet");
-        if (f3.exists()) {
-            f3.delete();
-        }
-        File f4 = new File("./logs/", "bigtangle4.wallet");
-        if (f4.exists()) {
-            f4.delete();
-        }
-
-        walletAppKit1 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle3");
-        walletAppKit1.wallet().setServerURL(contextRoot);
-        wallet1Keys = walletAppKit1.wallet().walletKeys(aesKey);
-
-        walletAppKit2 = new WalletAppKit(networkParameters, new File("./logs/"), "bigtangle4");
-        walletAppKit2.wallet().setServerURL(contextRoot);
-        wallet2Keys = walletAppKit2.wallet().walletKeys(aesKey);
-
+ 
         ECKey testKey = walletKeys.get(0);
         List<Block> addedBlocks = new ArrayList<>();
 

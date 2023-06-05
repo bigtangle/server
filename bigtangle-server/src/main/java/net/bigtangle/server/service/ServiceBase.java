@@ -1443,12 +1443,6 @@ public class ServiceBase {
 			throws BlockStoreException {
 		List<Transaction> transactions = block.getTransactions();
 
-		if (transactions.size() != 1) {
-			if (throwExceptions)
-				throw new IncorrectTransactionCountException();
-			return SolidityState.getFailState();
-		}
-
 		if (transactions.get(0).getData() == null) {
 			if (throwExceptions)
 				throw new MissingTransactionDataException();
@@ -1647,12 +1641,6 @@ public class ServiceBase {
 	}
 
 	public SolidityState checkFormalTokenSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
-
-		if (block.getTransactions().size() != 2) {
-			if (throwExceptions)
-				throw new IncorrectTransactionCountException();
-			return SolidityState.getFailState();
-		}
 
 		if (!block.getTransactions().get(0).isCoinBase()) {
 			if (throwExceptions)
@@ -2100,12 +2088,6 @@ public class ServiceBase {
 			FullBlockStore store) throws BlockStoreException {
 		List<Transaction> transactions = block.getTransactions();
 
-		if (transactions.size() != 1) {
-			if (throwExceptions)
-				throw new IncorrectTransactionCountException();
-			return SolidityState.getFailState();
-		}
-
 		if (transactions.get(0).getData() == null) {
 			if (throwExceptions)
 				throw new MissingTransactionDataException();
@@ -2142,8 +2124,8 @@ public class ServiceBase {
 			return SolidityState.getFailState();
 		}
 
-		// Check that the tx inputs only burn one type of tokens
-		Coin burnedCoins = countBurnedToken(block, store);
+		// Check that the tx inputs only burn one type of tokens, only for offerTokenid
+		Coin burnedCoins = countBurnedToken(block, store, orderInfo.getOfferTokenid());
 
 		if (burnedCoins == null || burnedCoins.getValue().longValue() == 0) {
 			if (throwExceptions)
@@ -2163,13 +2145,23 @@ public class ServiceBase {
 		}
 
 		// Check that the tx inputs only burn must be the offerValue
+		if (burnedCoins.isBIG()) {
+			// fee
+			if (!burnedCoins.subtract(Coin.FEE_DEFAULT)
+					.equals(new Coin(orderInfo.getOfferValue(), Utils.HEX.decode(orderInfo.getOfferTokenid())))) {
+				if (throwExceptions)
+					throw new InvalidOrderException("The Transaction data burnedCoins is not same as OfferValue .");
+				return SolidityState.getFailState();
 
-		if (!burnedCoins.equals(new Coin(orderInfo.getOfferValue(), Utils.HEX.decode(orderInfo.getOfferTokenid())))) {
-			if (throwExceptions)
-				throw new InvalidOrderException("The Transaction data burnedCoins is not same as OfferValue .");
-			return SolidityState.getFailState();
+			}
+		} else {
+			if (!burnedCoins
+					.equals(new Coin(orderInfo.getOfferValue(), Utils.HEX.decode(orderInfo.getOfferTokenid())))) {
+				if (throwExceptions)
+					throw new InvalidOrderException("The Transaction data burnedCoins is not same as OfferValue .");
+				return SolidityState.getFailState();
+			}
 		}
-
 		// Check that either the burnt token or the target token base token
 		if (checkOrderBaseToken(orderInfo, burnedCoins)) {
 			if (throwExceptions)
@@ -2217,9 +2209,10 @@ public class ServiceBase {
 	 * @return
 	 * @throws BlockStoreException
 	 */
-	public Coin countBurnedToken(Block block, FullBlockStore store) throws BlockStoreException {
+	public Coin countBurnedToken(Block block, FullBlockStore store, String tokenid) throws BlockStoreException {
 		Coin burnedCoins = null;
 		for (final Transaction tx : block.getTransactions()) {
+
 			for (int index = 0; index < tx.getInputs().size(); index++) {
 				TransactionInput in = tx.getInputs().get(index);
 				UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(),
@@ -2228,14 +2221,15 @@ public class ServiceBase {
 					// Cannot happen due to solidity checks before
 					throw new RuntimeException("Block attempts to spend a not yet existent output!");
 				}
+				if (tokenid.equals(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
+					if (burnedCoins == null)
+						burnedCoins = Coin.valueOf(0, Utils.HEX.encode(prevOut.getValue().getTokenid()));
 
-				if (burnedCoins == null)
-					burnedCoins = Coin.valueOf(0, Utils.HEX.encode(prevOut.getValue().getTokenid()));
-
-				try {
-					burnedCoins = burnedCoins.add(prevOut.getValue());
-				} catch (IllegalArgumentException e) {
-					throw new InvalidOrderException(e.getMessage());
+					try {
+						burnedCoins = burnedCoins.add(prevOut.getValue());
+					} catch (IllegalArgumentException e) {
+						throw new InvalidOrderException(e.getMessage());
+					}
 				}
 			}
 
@@ -2243,7 +2237,9 @@ public class ServiceBase {
 				TransactionOutput out = tx.getOutputs().get(index);
 
 				try {
-					burnedCoins = burnedCoins.subtract(out.getValue());
+					if (tokenid.equals(Utils.HEX.encode(out.getValue().getTokenid()))) {
+						burnedCoins = burnedCoins.subtract(out.getValue());
+					}
 				} catch (IllegalArgumentException e) {
 					throw new InvalidOrderException(e.getMessage());
 				}
@@ -2254,11 +2250,6 @@ public class ServiceBase {
 
 	private SolidityState checkFullOrderOpSolidity(Block block, long height, boolean throwExceptions,
 			FullBlockStore store) throws BlockStoreException {
-		if (block.getTransactions().size() != 1) {
-			if (throwExceptions)
-				throw new IncorrectTransactionCountException();
-			return SolidityState.getFailState();
-		}
 
 		// No output creation
 		if (!block.getTransactions().get(0).getOutputs().isEmpty()) {
@@ -2362,12 +2353,8 @@ public class ServiceBase {
 
 	public SolidityState checkFullTokenSolidity(Block block, long height, boolean throwExceptions, FullBlockStore store)
 			throws BlockStoreException {
-		if (block.getTransactions().size() != 2) {
-			if (throwExceptions)
-				throw new IncorrectTransactionCountException();
-			return SolidityState.getFailState();
-		}
-		//TODO	((check fee))
+
+		// TODO (check fee get(1))
 		if (!block.getTransactions().get(0).isCoinBase()) {
 			if (throwExceptions)
 				throw new NotCoinbaseException();
@@ -2407,7 +2394,7 @@ public class ServiceBase {
 		for (Transaction tx1 : block.getTransactions()) {
 			for (TransactionOutput out : tx1.getOutputs()) {
 				if (!out.getValue().getTokenHex().equals(currentToken.getToken().getTokenid())
-						&& ! out.getValue().isBIG() ) {
+						&& !out.getValue().isBIG()) {
 					if (throwExceptions)
 						throw new InvalidTokenOutputException();
 					return SolidityState.getFailState();
@@ -4286,7 +4273,7 @@ public class ServiceBase {
 	public void connectOrder(Block block, FullBlockStore blockStore) throws BlockStoreException {
 		try {
 			OrderOpenInfo reqInfo = new OrderOpenInfo().parse(block.getTransactions().get(0).getData());
-			Coin burned = countBurnedToken(block, blockStore);
+			Coin burned = countBurnedToken(block, blockStore, reqInfo.getOfferTokenid());
 			// calculate the offervalue for version == 1
 			if (reqInfo.getVersion() == 1) {
 				reqInfo.setOfferValue(burned.getValue().longValue());
@@ -4944,8 +4931,7 @@ public class ServiceBase {
 
 		blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
 	}
- 
- 
+
 	public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainNameBlockHash,
 			FullBlockStore store) throws BlockStoreException {
 		if (domainNameBlockHash.equals(networkParameters.getGenesisBlock().getHashAsString())) {
