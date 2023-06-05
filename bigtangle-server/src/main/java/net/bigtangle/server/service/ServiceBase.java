@@ -2361,12 +2361,12 @@ public class ServiceBase {
 
 	public SolidityState checkFullTokenSolidity(Block block, long height, boolean throwExceptions, FullBlockStore store)
 			throws BlockStoreException {
-		if (block.getTransactions().size() != 1) {
+		if (block.getTransactions().size() != 2) {
 			if (throwExceptions)
 				throw new IncorrectTransactionCountException();
 			return SolidityState.getFailState();
 		}
-
+		//TODO	((check fee))
 		if (!block.getTransactions().get(0).isCoinBase()) {
 			if (throwExceptions)
 				throw new NotCoinbaseException();

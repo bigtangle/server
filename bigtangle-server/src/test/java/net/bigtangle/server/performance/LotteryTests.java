@@ -69,7 +69,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 	@Test
 	public void lotteryM() throws Exception {
 
-		usernumber = 100000;
+		usernumber = 1000;
 		winnerAmount = new BigInteger(usernumber + "");
 
 		lotteryDo();
@@ -83,6 +83,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 		testTokens();
 		List<ECKey> ulist = createUserkey();
 		payUserKeys(ulist);
+		payBigUserKeys(ulist);
 		// createUserPay(accountKey, ulist);
 		createUserPayNoThread(accountKey, ulist);
 		boolean checkPayOK = true;
@@ -269,9 +270,26 @@ public class LotteryTests extends AbstractIntegrationTest {
 		}
 		log.debug("pay user " + usernumber + "  duration minutes " + watch.elapsed(TimeUnit.MINUTES));
 		log.debug("rate  " + usernumber * 1.0 / watch.elapsed(TimeUnit.SECONDS));
-
+	
 	}
 
+	public void payBigUserKeys(List<ECKey> userkeys) throws Exception {
+
+		 
+		List<List<ECKey>> parts = Wallet.chopped(userkeys, 1000);
+
+		for (List<ECKey> list : parts) {
+			HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+			for (ECKey key : list) {
+				giveMoneyResult.put(key.toAddress(networkParameters).toString(), 10000l);
+			}
+			Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
+					"pay to user");
+			// log.debug("block " + (b == null ? "block is null" : b.toString()));
+			makeRewardBlock();
+		}
+	 
+	}
 	private List<ECKey> createUserkey() {
 		List<ECKey> userkeys = new ArrayList<ECKey>();
 		for (int i = 0; i < usernumber; i++) {
@@ -283,9 +301,13 @@ public class LotteryTests extends AbstractIntegrationTest {
 
 	public void testTokens() throws JsonProcessingException, Exception {
 
+		
 		String domain = "";
 
-		testCreateMultiSigToken(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)), "人民币", 2, domain, "人民币 CNY",
+		ECKey fromPrivate = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
+		payBigTo(fromPrivate, 1000);
+		payBigTo(accountKey, 1000);
+		testCreateMultiSigToken(fromPrivate, "人民币", 2, domain, "人民币 CNY",
 				winnerAmount.multiply(BigInteger.valueOf(usernumber * 10000l)));
 		makeRewardBlock();
 	}
@@ -299,6 +321,9 @@ public class LotteryTests extends AbstractIntegrationTest {
 			String description, BigInteger amount) throws JsonProcessingException, Exception {
 		try {
 			walletAppKit1.wallet().setServerURL(contextRoot);
+			
+			//pay fee to ECKey key
+			
 			createToken(key, tokename, decimals, domainname, description, amount, true, null,
 					TokenType.identity.ordinal(), key.getPublicKeyAsHex(), walletAppKit1.wallet());
 

@@ -1784,6 +1784,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		}
 
 		for (Block block : re) {
+			if (getFee() && !amount.isBIG()) {
+				//add big fee
+				block.addTransaction(feeTransaction(aesKey, coinList));
+			}
 			log.debug(" " + block.toString());
 			solveAndPost(block);
 		}
@@ -1817,6 +1821,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		multispent.setMemo(memo);
 		multispent.addOutput(amount, Address.fromBase58(params, destination));
 		ECKey beneficiary = null;
+		if (getFee() &&  amount.isBIG()) {
+			amount = amount.add(Coin.FEE_DEFAULT);
+		} 
 		Coin restAmount = amount.negate();
 		for (FreeStandingTransactionOutput spendableOutput : coinList) {
 
@@ -1899,7 +1906,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			}
 		}
 		if (beneficiary == null || amount.isNegative()) {
-			throw new InsufficientMoneyException("");
+			throw new InsufficientMoneyException(summe.toString() + " outputs size= " + coinListTokenid.size());
 		}
 
 		signTransaction(multispent, aesKey);
@@ -1932,7 +1939,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			}
 		}
 		if (beneficiary == null || amount.isNegative()) {
-			throw new InsufficientMoneyException("");
+			throw new InsufficientMoneyException(
+					Coin.FEE_DEFAULT.toString() + " outputs size= " + coinListTokenid.size());
 		}
 
 		signTransaction(spent, aesKey);
@@ -2168,6 +2176,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		// Burn tokens to sell
 		Coin myCoin = Coin.valueOf(offervalue, t.getTokenid()).negate();
 
+		if (getFee() && NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(t.getTokenid())) {
+			myCoin = myCoin.add(Coin.FEE_DEFAULT);
+		}
+
 		Transaction tx = new Transaction(params);
 
 		ECKey beneficiary = null;
@@ -2206,8 +2218,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
 		block.addTransaction(tx);
 		block.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-		if (getFee())
+		if (getFee() && !NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(t.getTokenid())) {
 			block.addTransaction(feeTransaction(aesKey, candidates));
+		}
 		return solveAndPost(block);
 	}
 
