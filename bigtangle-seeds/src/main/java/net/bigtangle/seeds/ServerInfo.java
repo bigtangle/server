@@ -4,9 +4,10 @@
  *******************************************************************************/
 package net.bigtangle.seeds;
 
-public enum ReqCmd {
+public class ServerInfo {
  
-	register, serverinfolist,
-	getChainNumber
-	;
+	String url;
+	String servertype;
+	String chain;
+	String status;
 }
