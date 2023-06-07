@@ -6,6 +6,7 @@ package net.bigtangle.seeds;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import java.util.zip.GZIPOutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +32,7 @@ import com.google.common.base.Stopwatch;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.ErrorResponse;
@@ -42,7 +45,9 @@ public class DispatcherController {
 
 	private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
 
-	public static List<ServerInfo> serverinfo;
+	public static List<ServerInfo> serverinfoList;
+	@Autowired
+	protected SyncBlockService syncBlockService;
 
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -93,15 +98,48 @@ public class DispatcherController {
 			case register: {
 				String reqStr = new String(bodyByte, "UTF-8");
 				Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+				ServerInfo serverInfo = new ServerInfo();
 				String url = (String) request.get("url");
+				logger.debug("url==" + url);
+				String servertype = (String) request.get("servertype");
+				boolean flag = false;
+				if (serverinfoList != null) {
+					for (ServerInfo temp : serverinfoList) {
+						if (temp.getUrl().equals(url) && temp.getServertype().equals(servertype)) {
+							flag = true;
+						}
+					}
+				}
+
+				if (!flag) {
+
+					serverInfo.setUrl(url);
+					serverInfo.setServertype(servertype);
+					serverInfo.setStatus("active");
+					if (serverinfoList == null) {
+						serverinfoList = new ArrayList<ServerInfo>();
+					}
+					serverinfoList.add(serverInfo);
+				}
+
 				// this.outPrintJSONString(httpServletResponse,
 				// GetStringResponse.create(urlTobyte(url)), watch);
 
 			}
 				break;
 			case serverinfolist: {
+				AbstractResponse response = ServerinfoResponse.create(serverinfoList);
+				this.gzipBinary(httpServletResponse, response);
 
-				this.gzipBinary(httpServletResponse, serverinfo);
+			}
+				break;
+			case getChainNumber: {
+				String reqStr = new String(bodyByte, "UTF-8");
+				Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+
+				TXReward reward = syncBlockService.getMaxConfirmedReward(request.get("server").toString());
+				AbstractResponse response = ServerinfoResponse.create(serverinfoList);
+				this.gzipBinary(httpServletResponse, response);
 
 			}
 				break;
