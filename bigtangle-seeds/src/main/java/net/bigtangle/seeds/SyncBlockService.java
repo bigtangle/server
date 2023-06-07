@@ -48,12 +48,22 @@ public class SyncBlockService {
 	public void startSingleProcess() throws BlockStoreException, JsonProcessingException, IOException {
 
 		log.debug(" Start syncServerInfo  : ");
-		syncServerInfo();
+	//	syncServerInfo();
 
 		log.debug(" end syncServerInfo: ");
 
 	}
 
+	/* write to local file and read it at start only  
+	 */
+	public void localFileServerInfoWrite() throws JsonProcessingException, IOException {
+	 
+	}
+
+	
+ 
+
+		
 	public void syncServerInfo() throws JsonProcessingException, IOException {
 
 		List<String> badserver = new ArrayList<String>();
@@ -66,22 +76,25 @@ public class SyncBlockService {
 			data = OkHttp3Util.post(s + ReqCmd.serverinfolist.name(),
 					Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 			ServerinfoResponse response = Json.jsonmapper().readValue(data, ServerinfoResponse.class);
-
-			// update the list DispatcherController.serverinfo;
-			long chainLength=0;
-			if (response.getServerInfoList() != null) {
-				for (ServerInfo serverInfo : response.getServerInfoList()) {
-					TXReward txReward = getMaxConfirmedReward(serverInfo.getUrl());
-					if (txReward.getChainLength()>=chainLength) {
-						chainLength=txReward.getChainLength();
-					}
-
-				}
-			}
+ 
 
 		}
 		// check each server data
 
+	}
+
+	private void checkChain(ServerinfoResponse response) throws JsonProcessingException, IOException {
+		// update the list DispatcherController.serverinfo;
+		long chainLength=0;
+		if (response.getServerInfoList() != null) {
+			for (ServerInfo serverInfo : response.getServerInfoList()) {
+				TXReward txReward = getMaxConfirmedReward(serverInfo.getUrl());
+				if (txReward.getChainLength()>=chainLength) {
+					chainLength=txReward.getChainLength();
+				}
+
+			}
+		}
 	}
 
 	/*

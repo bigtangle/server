@@ -2456,7 +2456,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 				}
 			}
 		}
-		return pay(aesKey, destination, summe, new MemoInfo(memo));
+		return pay(aesKey, destination, summe.subtract(Coin.FEE_DEFAULT), new MemoInfo(memo));
 	}
 
 	 

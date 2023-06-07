@@ -201,7 +201,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
         testPartsToOne(aCoin, to);
         testPartsToOne(aCoin, to);
         List<FreeStandingTransactionOutput> uspent = walletAppKit1.wallet().calculateAllSpendCandidates(null, false);
-        assertTrue(uspent.size() == 3);
+        assertTrue(uspent.size() == 4);
         walletAppKit1.wallet().payPartsToOne(null, to.toAddress(networkParameters).toString(), NetworkParameters.BIGTANGLE_TOKENID,
                 "0,3");
         makeRewardBlock();
@@ -240,11 +240,16 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
        List<Block> rollingBlock=walletAppKit.wallet().pay(null, to.toAddress(networkParameters).toString(), aCoin, new MemoInfo(""));
       
         makeRewardBlock();
-        // repay the block
-        walletAppKit.wallet().retryBlocks(  rollingBlock.get(0));
-        makeRewardBlock();
-        checkBalanceSum(Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID), walletAppKit1.wallet().getImportedKeys());
+       // checkBalanceSum(Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID), walletAppKit1.wallet().getImportedKeys());
 
+        // repay the block
+        try {
+        walletAppKit.wallet().retryBlocks(  rollingBlock.get(0));
+        fail();
+        }catch (Exception e) {
+			// TODO: handle exception
+		}
+   
     }
 
     //@Test

@@ -20,7 +20,7 @@ public class RegisterTest extends AbstractIntegrationTest {
 	@Test
 	public void testURL() throws Exception {
 		HashMap<String, String> requestParam = new HashMap<String, String>();
-		requestParam.put("url", "http://hq.sinajs.cn/list=gb_didi");
+		requestParam.put("url", "https://bigtangle.de:8088");
 		requestParam.put("servertype", "bigtangle");
 		byte[] data = OkHttp3Util.post(getContextRoot() + ReqCmd.register.name(),
 				Json.jsonmapper().writeValueAsString(requestParam).getBytes());
@@ -36,5 +36,12 @@ public class RegisterTest extends AbstractIntegrationTest {
 			}
 		}
 	}
+	@Test
+	public void testChainnumber() throws Exception {
+		HashMap<String, String> requestParam = new HashMap<String, String>();
+		requestParam.put("server", "https://bigtangle.de:8088");
 
+		byte[] data = OkHttp3Util.post(getContextRoot() + ReqCmd.getChainNumber.name(),
+				Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+	}
 }
