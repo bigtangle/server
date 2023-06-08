@@ -1,5 +1,9 @@
 package net.bigtangle.seeds;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.util.HashMap;
 
 import org.junit.Test;
@@ -32,10 +36,11 @@ public class RegisterTest extends AbstractIntegrationTest {
 		if (response.getServerInfoList() != null) {
 			for (ServerInfo serverInfo : response.getServerInfoList()) {
 				logger.info(serverInfo.getUrl() + "," + serverInfo.getServertype());
-
+				assertEquals(serverInfo.getUrl(), "https://bigtangle.de:8088");
 			}
 		}
 	}
+
 	@Test
 	public void testChainnumber() throws Exception {
 		HashMap<String, String> requestParam = new HashMap<String, String>();
