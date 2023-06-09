@@ -9,7 +9,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -25,6 +24,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.response.GetTXRewardResponse;
+import net.bigtangle.core.response.ServerInfo;
+import net.bigtangle.core.response.ServerinfoResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
@@ -42,173 +43,191 @@ import net.bigtangle.utils.OkHttp3Util;
  */
 public class ServerPool {
 
-    private List<ServerState> servers = new ArrayList<ServerState>();
-    private static final Logger log = LoggerFactory.getLogger(ServerPool.class);
-    private ScheduledThreadPoolExecutor houseKeepingExecutorService;
-    private final long HOUSEKEEPING_PERIOD_MS = Long.getLong("net.bigtangle.pool.server.housekeeping.periodMs",
-            SECONDS.toMillis(600));
-    protected final NetworkParameters params;
-    protected String[] fixservers;
+	private List<ServerState> servers = new ArrayList<ServerState>();
+	private static final Logger log = LoggerFactory.getLogger(ServerPool.class);
+	private ScheduledThreadPoolExecutor houseKeepingExecutorService;
+	private final long HOUSEKEEPING_PERIOD_MS = Long.getLong("net.bigtangle.pool.server.housekeeping.periodMs",
+			SECONDS.toMillis(600));
+	protected final NetworkParameters params;
+	protected String[] fixservers;
 
-    public ServerPool(NetworkParameters params) {
-        this.params = params;
-        /*
-        DefaultThreadFactory threadFactory = new DefaultThreadFactory(" housekeeper", true);
-        this.houseKeepingExecutorService = new ScheduledThreadPoolExecutor(1, threadFactory,
-                new ThreadPoolExecutor.DiscardPolicy());
-        this.houseKeepingExecutorService.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
-        this.houseKeepingExecutorService.setRemoveOnCancelPolicy(true);
+	public ServerPool(NetworkParameters params) {
+		this.params = params;
+		/*
+		 * DefaultThreadFactory threadFactory = new DefaultThreadFactory(" housekeeper",
+		 * true); this.houseKeepingExecutorService = new ScheduledThreadPoolExecutor(1,
+		 * threadFactory, new ThreadPoolExecutor.DiscardPolicy());
+		 * this.houseKeepingExecutorService.
+		 * setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+		 * this.houseKeepingExecutorService.setRemoveOnCancelPolicy(true);
+		 * 
+		 * this.houseKeepingExecutorService.scheduleWithFixedDelay(new HouseKeeper(),
+		 * 0L, HOUSEKEEPING_PERIOD_MS, MILLISECONDS);
+		 */
+		// init(params);
+		try {
+			HashMap<String, String> requestParam = new HashMap<String, String>();
+			byte[] data = OkHttp3Util.post(params.serverSeeds()[0] + ReqCmd.serverinfolist.name(),
+					Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+			ServerinfoResponse response = Json.jsonmapper().readValue(data, ServerinfoResponse.class);
+			if (response.getServerInfoList() != null) {
+				for (ServerInfo serverInfo : response.getServerInfoList()) {
+					try {
+						addServer(serverInfo.getUrl());
+					} catch (Exception e) {
+						log.debug("", e);
 
-        this.houseKeepingExecutorService.scheduleWithFixedDelay(new HouseKeeper(), 0L, HOUSEKEEPING_PERIOD_MS,
-                MILLISECONDS);
-                */
-        // init(params);
-    }
+					}
+				}
+			}
+		} catch (Exception e) {
+			log.debug("", e);
+		}
 
-    public void serverSeeds() {
-        for (String s : params.serverSeeds()) {
-            try {
-                addServer(s);
-            } catch (Exception e) {
-                log.debug("", e);
+	}
 
-            }
-        }
-    }
+	public void serverSeeds() {
+		for (String s : params.serverSeeds()) {
+			try {
+				addServer(s);
+			} catch (Exception e) {
+				log.debug("", e);
 
-    public ServerPool(NetworkParameters params, String[] fixservers) {
-        this.fixservers = fixservers;
-        this.params = params; 
-        for (String fixserver : this.fixservers) {
-            try {
-                addServer(fixserver);
-            } catch (Exception e) {
-                log.debug("", e);
-            }
-        }
-    }
+			}
+		}
+	}
 
-    // get a best server to be used and balance with random
-    public ServerState getServer() {
-        return servers.get(0);
-    }
+	public ServerPool(NetworkParameters params, String[] fixservers) {
+		this.fixservers = fixservers;
+		this.params = params;
+		for (String fixserver : this.fixservers) {
+			try {
+				addServer(fixserver);
+			} catch (Exception e) {
+				log.debug("", e);
+			}
+		}
+	}
 
-    public synchronized void addServer(String s) throws JsonProcessingException, IOException {
-        Long time = System.currentTimeMillis();
-        TXReward chain;
-    //    chain = getChainNumber(s);
-        ServerState serverState = new ServerState();
-        serverState.setServerurl(s);
-        serverState.setResponseTime(System.currentTimeMillis() - time);
-     //   serverState.setChainlength(chain.getChainLength());
-        servers.add(serverState);
-      //  Collections.sort(servers, new SortbyChain());
-    }
+	// get a best server to be used and balance with random
+	public ServerState getServer() {
+		return servers.get(0);
+	}
 
-    /*
-     * Check the server of chain number and response time and remove staled
-     * servers
-     */
-    public synchronized void checkServers() {
-        for (Iterator<ServerState> iter = servers.listIterator(); iter.hasNext();) {
-            ServerState a = iter.next();
-            try {
-                addServer(a.getServerurl());
-            } catch (Exception e) {
-                log.debug("addServer failed and remove it", e);
-                iter.remove();
-            }
+	public synchronized void addServer(String s) throws JsonProcessingException, IOException {
+		Long time = System.currentTimeMillis();
+		TXReward chain;
+		// chain = getChainNumber(s);
+		ServerState serverState = new ServerState();
+		serverState.setServerurl(s);
+		serverState.setResponseTime(System.currentTimeMillis() - time);
+		// serverState.setChainlength(chain.getChainLength());
+		servers.add(serverState);
+		// Collections.sort(servers, new SortbyChain());
+	}
 
-        }
-    }
+	/*
+	 * Check the server of chain number and response time and remove staled servers
+	 */
+	public synchronized void checkServers() {
+		for (Iterator<ServerState> iter = servers.listIterator(); iter.hasNext();) {
+			ServerState a = iter.next();
+			try {
+				addServer(a.getServerurl());
+			} catch (Exception e) {
+				log.debug("addServer failed and remove it", e);
+				iter.remove();
+			}
 
-    public synchronized void removeServer(String server  ) {
-        for (Iterator<ServerState> iter = servers.listIterator(); iter.hasNext();) {
-            ServerState a = iter.next();
-            if (a.getServerurl().equals(server)) {
-                iter.remove();
-            }
-        }
-    }
+		}
+	}
 
-    public synchronized void addServers(List<String> serverCandidates) {
-        servers = new ArrayList<ServerState>();
-        for (String s : serverCandidates) {
-            try {
-                addServer(s);
-            } catch (JsonProcessingException e) {
-            } catch (IOException e) {
-            }
-        }
-    }
+	public synchronized void removeServer(String server) {
+		for (Iterator<ServerState> iter = servers.listIterator(); iter.hasNext();) {
+			ServerState a = iter.next();
+			if (a.getServerurl().equals(server)) {
+				iter.remove();
+			}
+		}
+	}
 
-    /*
-     * the order of sort
-     * response time indicate different server zone and service quality
-     * chain number indicate the longest chain is valid, but it is ok, that the
-     * there is small differences
-     * 
-     */
-    public class SortbyChain implements Comparator<ServerState> {
-        // Used for sorting in descending order of chain number and response
-        // time
-        public int compare(ServerState a, ServerState b) {
-            if (a.getChainlength() - b.getChainlength() <= 1) {
-                // if only one chain difference use the response time for sort
-                return a.getResponseTime() > b.getResponseTime() ? 1 : -1;
-            }
-            return a.getChainlength() > b.getChainlength() ? -1 : 1;
-        }
-    }
+	public synchronized void addServers(List<String> serverCandidates) {
+		servers = new ArrayList<ServerState>();
+		for (String s : serverCandidates) {
+			try {
+				addServer(s);
+			} catch (JsonProcessingException e) {
+			} catch (IOException e) {
+			}
+		}
+	}
 
-    public TXReward getChainNumber(String s) throws JsonProcessingException, IOException {
+	/*
+	 * the order of sort response time indicate different server zone and service
+	 * quality chain number indicate the longest chain is valid, but it is ok, that
+	 * the there is small differences
+	 * 
+	 */
+	public class SortbyChain implements Comparator<ServerState> {
+		// Used for sorting in descending order of chain number and response
+		// time
+		public int compare(ServerState a, ServerState b) {
+			if (a.getChainlength() - b.getChainlength() <= 1) {
+				// if only one chain difference use the response time for sort
+				return a.getResponseTime() > b.getResponseTime() ? 1 : -1;
+			}
+			return a.getChainlength() > b.getChainlength() ? -1 : 1;
+		}
+	}
 
-        HashMap<String, String> requestParam = new HashMap<String, String>();
+	public TXReward getChainNumber(String s) throws JsonProcessingException, IOException {
 
-          byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getChainNumber,
-                Json.jsonmapper().writeValueAsString(requestParam));
-        GetTXRewardResponse aTXRewardResponse = Json.jsonmapper().readValue(response, GetTXRewardResponse.class);
+		HashMap<String, String> requestParam = new HashMap<String, String>();
 
-        return aTXRewardResponse.getTxReward();
+		byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.getChainNumber,
+				Json.jsonmapper().writeValueAsString(requestParam));
+		GetTXRewardResponse aTXRewardResponse = Json.jsonmapper().readValue(response, GetTXRewardResponse.class);
 
-    }
+		return aTXRewardResponse.getTxReward();
 
-    /**
-     * The house keeping task to retire idle connections.
-     */
-    private class HouseKeeper implements Runnable {
+	}
 
-        @Override
-        public void run() {
-            log.debug("HouseKeeper running  checkServers");
-            checkServers(); // Try to maintain minimum connections
-        }
-    }
+	/**
+	 * The house keeping task to retire idle connections.
+	 */
+	private class HouseKeeper implements Runnable {
 
-    public static final class DefaultThreadFactory implements ThreadFactory {
+		@Override
+		public void run() {
+			log.debug("HouseKeeper running  checkServers");
+			checkServers(); // Try to maintain minimum connections
+		}
+	}
 
-        private final String threadName;
-        private final boolean daemon;
+	public static final class DefaultThreadFactory implements ThreadFactory {
 
-        public DefaultThreadFactory(String threadName, boolean daemon) {
-            this.threadName = threadName;
-            this.daemon = daemon;
-        }
+		private final String threadName;
+		private final boolean daemon;
 
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread thread = new Thread(r, threadName);
-            thread.setDaemon(daemon);
-            return thread;
-        }
-    }
+		public DefaultThreadFactory(String threadName, boolean daemon) {
+			this.threadName = threadName;
+			this.daemon = daemon;
+		}
 
-    public List<ServerState> getServers() {
-        return servers;
-    }
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread thread = new Thread(r, threadName);
+			thread.setDaemon(daemon);
+			return thread;
+		}
+	}
 
-    public void setServers(List<ServerState> servers) {
-        this.servers = servers;
-    }
+	public List<ServerState> getServers() {
+		return servers;
+	}
+
+	public void setServers(List<ServerState> servers) {
+		this.servers = servers;
+	}
 
 }

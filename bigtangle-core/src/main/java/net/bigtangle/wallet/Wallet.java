@@ -1715,8 +1715,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 					Thread.sleep(sleep);
 				} catch (InterruptedException e1) {
 				}
-				return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo, calculateAllSpendCandidates(aesKey, false),
-						repeat, sleep);
+				return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo,
+						calculateAllSpendCandidates(aesKey, false), repeat, sleep);
 			}
 		} catch (RuntimeException e) {
 			if (e.getMessage() != null && e.getMessage()
@@ -1745,12 +1745,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
 			String memo)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-		return payMoneyToECKeyListNoSplit(aesKey, giveMoneyResult, tokenid, memo, calculateAllSpendCandidates(aesKey, false));
+		return payMoneyToECKeyListNoSplit(aesKey, giveMoneyResult, tokenid, memo,
+				calculateAllSpendCandidates(aesKey, false));
 	}
 
 	public List<Block> payFromList(KeyParameter aesKey, String destination, Coin amount, MemoInfo memo)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-		return payFromList(aesKey, destination, amount, memo,calculateAllSpendCandidates(aesKey, false));
+		return payFromList(aesKey, destination, amount, memo, calculateAllSpendCandidates(aesKey, false));
 	}
 
 	public List<Block> payFromList(KeyParameter aesKey, String destination, Coin amount, MemoInfo memo,
@@ -1763,21 +1764,21 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 	public List<Block> payFromList(KeyParameter aesKey, String destination, Coin amount, MemoInfo memo,
 			List<FreeStandingTransactionOutput> coinList, int split)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-	 
-		List<FreeStandingTransactionOutput> coinTokenList = filterTokenid(amount.getTokenid(),coinList);
-	 	
+
+		List<FreeStandingTransactionOutput> coinTokenList = filterTokenid(amount.getTokenid(), coinList);
+
 		Coin sum = sum(coinTokenList);
 		if (sum.compareTo(amount) < 0)
 			throw new InsufficientMoneyException("to pay " + amount + " account sum: " + sum);
 		// split the coinList into sub list, there is limit for transactions in a block
 		// NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD / 4);
 		List<List<FreeStandingTransactionOutput>> parts = chopped(coinTokenList, split);
-		
+
 		List<Block> re = new ArrayList<Block>();
 		Coin payAmount = amount;
 		for (int i = 0; i < parts.size(); i++) {
-			Coin canPay = sum(parts.get(i));  
-			re.add(payFromListNoSplit(aesKey, destination, payAmount, memo, parts.get(i),  getTip()));
+			Coin canPay = sum(parts.get(i));
+			re.add(payFromListNoSplit(aesKey, destination, payAmount, memo, parts.get(i), getTip()));
 			if (canPay.compareTo(payAmount) >= 0) {
 				break;
 			}
@@ -1786,7 +1787,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
 		for (Block block : re) {
 			if (getFee() && !amount.isBIG()) {
-				//add big fee
+				// add big fee
 				block.addTransaction(feeTransaction(aesKey, coinList));
 			}
 			log.debug(" " + block.toString());
@@ -1817,19 +1818,19 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 	}
 
 	private Transaction payFromListNoSplitTransaction(KeyParameter aesKey, String destination, Coin amount,
-			MemoInfo memo, List<FreeStandingTransactionOutput> coinList) throws UTXOProviderException, InsufficientMoneyException {
+			MemoInfo memo, List<FreeStandingTransactionOutput> coinList)
+			throws UTXOProviderException, InsufficientMoneyException {
 		Transaction multispent = new Transaction(params);
 		multispent.setMemo(memo);
 		multispent.addOutput(amount, Address.fromBase58(params, destination));
 		Coin restAmount = amount.negate();
 		ECKey beneficiary = null;
-		if (getFee() &&  amount.isBIG()) {
+		if (getFee() && amount.isBIG()) {
 			restAmount = restAmount.add(Coin.FEE_DEFAULT.negate());
-		} 
-		
-		
-		List<FreeStandingTransactionOutput> coinTokenList = filterTokenid(restAmount.getTokenid(),coinList);
-		 
+		}
+
+		List<FreeStandingTransactionOutput> coinTokenList = filterTokenid(restAmount.getTokenid(), coinList);
+
 		for (FreeStandingTransactionOutput spendableOutput : coinTokenList) {
 
 			beneficiary = getECKey(aesKey, spendableOutput.getUTXO().getAddress());
@@ -1902,11 +1903,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			summe = summe.add(a);
 		}
 		Coin amount = summe.negate();
-		
-		if (getFee() &&  amount.isBIG()) {
+
+		if (getFee() && amount.isBIG()) {
 			amount = amount.add(Coin.FEE_DEFAULT.negate());
-		} 
-		
+		}
+
 		ECKey beneficiary = null;
 		// filter only for tokenid
 		List<FreeStandingTransactionOutput> coinListTokenid = filterTokenid(tokenid, coinList);
@@ -2016,7 +2017,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		if (targetToken.getTokenid().equals(orderBaseToken))
 			throw new OrderImpossibleException("buy token is base token ");
 
-		List<FreeStandingTransactionOutput> candidates =calculateAllSpendCandidates(aesKey, false);
+		List<FreeStandingTransactionOutput> candidates = calculateAllSpendCandidates(aesKey, false);
 
 		return buyOrder(aesKey, targetToken, buyPrice, targetValue, validToTime, validFromTime, orderBaseToken,
 				allowRemainder, candidates);
@@ -2136,7 +2137,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			throw new OrderImpossibleException("sell token is not allowed as base token ");
 		// Burn tokens to sell
 		Coin myCoin = Coin.valueOf(offervalue, t.getTokenid()).negate();
-		List<FreeStandingTransactionOutput> candidates =calculateAllSpendCandidates(aesKey, false);
+		List<FreeStandingTransactionOutput> candidates = calculateAllSpendCandidates(aesKey, false);
 
 		return sellOrder(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken, allowRemainder,
 				candidates);
@@ -2277,7 +2278,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		// Burn BIG to buy
 		Coin amount = new Coin(payAmount, tokenId).negate();
 		Transaction tx = new Transaction(params);
-		List<FreeStandingTransactionOutput> coinList =calculateAllSpendCandidates(aesKey, false);
+		List<FreeStandingTransactionOutput> coinList = calculateAllSpendCandidates(aesKey, false);
 		ECKey beneficiary = null;
 		for (FreeStandingTransactionOutput spendableOutput : coinList) {
 			beneficiary = getECKey(aesKey, spendableOutput.getUTXO().getAddress());
@@ -2323,8 +2324,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		}
 
 	}
-
- 
 
 	private List<FreeStandingTransactionOutput> filterTokenid(byte[] tokenid, List<FreeStandingTransactionOutput> l) {
 		List<FreeStandingTransactionOutput> re = new ArrayList<FreeStandingTransactionOutput>();
@@ -2459,7 +2458,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		return pay(aesKey, destination, summe.subtract(Coin.FEE_DEFAULT), new MemoInfo(memo));
 	}
 
-	 
 	public Block saveUserdata(ECKey userKey, Transaction transaction, boolean encrypt)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, InvalidCipherTextException {
 		// transaction.getData() is not encrypted
