@@ -212,17 +212,13 @@ public class TokenTest extends AbstractIntegrationTest {
 	@Test
 	public void testCreateTokenWithDomain() throws Exception {
 
-		createShopToken();
+		ECKey shopkey=	createShopToken();
 
-		ECKey key = new ECKey();
-
-		wallet.importKey(key);
-		// wallet.importKey(preKey) ;
-		final String tokenid = key.getPublicKeyAsHex();
+		ECKey key = new ECKey(); 
+		  String tokenid = key.getPublicKeyAsHex();
 		wallet.publishDomainName(key, tokenid, "myshopname.shop", aesKey, "");
-		wallet.multiSign(tokenid, key, aesKey);
-
-		// sendEmpty(10);
+		wallet.multiSign(tokenid, shopkey, aesKey);
+ 
 		makeRewardBlock();
 
 		{
@@ -407,8 +403,8 @@ public class TokenTest extends AbstractIntegrationTest {
 		TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
 		wallet.multiSign(currentToken.getToken().getTokenid(), key, aesKey);
 		payBigTo(userkey, Coin.FEE_DEFAULT.getValue(), null);
-
-		// sendEmpty(10);
+		payBigTo(userkey, Coin.FEE_DEFAULT.getValue(), null);
+ 
 		makeRewardBlock();
 
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -430,7 +426,7 @@ public class TokenTest extends AbstractIntegrationTest {
 		Wallet userWallet = Wallet.fromKeys(networkParameters, userkey, contextRoot);
 
 		MemoInfo memoInfo = p.encryptToMemo(pharmacy);
-		userWallet.setServerURL(contextRoot);
+		 
 		List<Block> b = userWallet.pay(null, pharmacy.toAddress(networkParameters).toString(), ulist.get(0).getValue(),
 				memoInfo);
 		// sendEmpty(10);
