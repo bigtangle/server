@@ -48,10 +48,10 @@ public class OrderYuanTest extends AbstractIntegrationTest {
 
     @Test
     public void payTokenTime() throws Exception {
-        walletAppKit.wallet().importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
-        walletAppKit.wallet().importKey(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+        wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+        wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
 
-        ECKey testKey = walletKeys.get(0);
+        ECKey testKey = wallet.walletKeys().get(0);
         List<Block> addedBlocks = new ArrayList<>();
 
         // base token
@@ -61,13 +61,13 @@ public class OrderYuanTest extends AbstractIntegrationTest {
         makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
         // Make test token
         makeTestToken(testKey, BigInteger.valueOf(tokennumber), addedBlocks, 2);
-        Address address = walletAppKit.wallet().walletKeys().get(0).toAddress(networkParameters);
+        Address address = wallet.walletKeys().get(0).toAddress(networkParameters);
         Coin amount = MonetaryFormat.FIAT.noCode().parse("1", Utils.HEX.decode(yuanTokenPub), 2);
         List<Long> list = new ArrayList<Long>();
         long time1=System.currentTimeMillis();
         for (int i = 0; i < 160; i++) {
             long start = System.currentTimeMillis();
-            walletAppKit.wallet().pay(null, address.toString(), amount, new MemoInfo(""));
+            wallet.pay(null, address.toString(), amount, new MemoInfo(""));
             makeRewardBlock();
             long end = System.currentTimeMillis();
 
@@ -83,10 +83,10 @@ public class OrderYuanTest extends AbstractIntegrationTest {
 
     @Test
     public void buyBaseToken() throws Exception {
-        walletAppKit.wallet().importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
-        walletAppKit.wallet().importKey(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
+        wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+        wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));
 
-        ECKey testKey = walletKeys.get(0);
+        ECKey testKey = wallet.walletKeys().get(0);
         List<Block> addedBlocks = new ArrayList<>();
 
         // base token
@@ -132,14 +132,14 @@ public class OrderYuanTest extends AbstractIntegrationTest {
     }
 
     public void sell() throws Exception {
-        List<UTXO> utxos = getBalance(false, walletKeys);
+        List<UTXO> utxos = getBalance(false, wallet.walletKeys());
         Collections.shuffle(utxos);
         long q = Math.abs((new Random()).nextInt() % 10) + 1;
         for (UTXO utxo : utxos) {
             if (!yuanTokenPub.equals(utxo.getTokenId()) && utxo.getValue().getValue().signum() > 0
                     && !utxo.isSpendPending() && utxo.getValue().getValue().compareTo(BigInteger.valueOf(q)) >= 0) {
                 try {
-                    walletAppKit.wallet().sellOrder(null, utxo.getTokenId(),
+                    wallet.sellOrder(null, utxo.getTokenId(),
                             100000000000l * (Math.abs((new Random()).nextInt() % 10) + 1), q, null, null, yuanTokenPub,
                             true);
                 } catch (Exception e) {
@@ -171,7 +171,7 @@ public class OrderYuanTest extends AbstractIntegrationTest {
     public void buy(OrderRecord orderRecord) throws Exception {
         // sell order and make buy
         long price = orderRecord.getPrice();
-        walletAppKit.wallet().buyOrder(null, orderRecord.getOfferTokenid(), price, orderRecord.getOfferValue(), null,
+        wallet.buyOrder(null, orderRecord.getOfferTokenid(), price, orderRecord.getOfferValue(), null,
                 null, orderRecord.getOrderBaseToken(), false);
 
     }

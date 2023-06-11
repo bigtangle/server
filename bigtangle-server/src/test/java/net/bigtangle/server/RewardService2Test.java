@@ -6,6 +6,7 @@ package net.bigtangle.server;
 
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,184 +44,184 @@ import net.bigtangle.utils.OkHttp3Util;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class RewardService2Test extends AbstractIntegrationTest {
 
-    @Autowired
-    CheckpointService checkpointService;
+	@Autowired
+	CheckpointService checkpointService;
 
-    public Block createReward(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
-        for (int j = 1; j < 2; j++) {
-            payMoneyToWallet1(j, blocksAddedAll);
-            makeRewardBlock(blocksAddedAll);
+	public Block createReward(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
+		for (int j = 1; j < 2; j++) {
+			payMoneyToWallet1(j, blocksAddedAll);
+			makeRewardBlock(blocksAddedAll);
 
-            sell(blocksAddedAll);
-            buy(blocksAddedAll);
-        }
+			sell(blocksAddedAll);
+			buy(blocksAddedAll);
+		}
 
-        // Generate mining reward block
-        Block next = makeRewardBlock(blocksAddedAll);
-        blocksAddedAll.add(next);
+		// Generate mining reward block
+		Block next = makeRewardBlock(blocksAddedAll);
+		blocksAddedAll.add(next);
 
-        return next;
-    }
+		return next;
+	}
 
-    @Test
-    // the switch to longest chain
-    public void testReorgMiningReward() throws Exception {
-        List<Block> a1 = new ArrayList<Block>();
-        List<Block> a2 = new ArrayList<Block>();
-        // first chains
-        testToken(a1);
-        Block r1 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < 3; i++) {
-            r1 = createReward(r1, a1);
-        }
-        log.debug(r1.toString());
-        checkSum();
-        store.resetStore();
-        testToken(a2);
-        // second chain
-        Block r2 = networkParameters.getGenesisBlock();
-        for (int i = 0; i < 10; i++) {
-            r2 = createReward(r2, a2);
-        }
-        checkSum();
-        log.debug(r2.toString());
-        assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
+	@Test
+	// the switch to longest chain
+	public void testReorgMiningReward() throws Exception {
+		List<Block> a1 = new ArrayList<Block>();
+		List<Block> a2 = new ArrayList<Block>();
+		// first chains
+		testToken(a1);
+		Block r1 = networkParameters.getGenesisBlock();
+		for (int i = 0; i < 3; i++) {
+			r1 = createReward(r1, a1);
+		}
+		log.debug(r1.toString());
+		checkSum();
+		store.resetStore();
+		testToken(a2);
+		// second chain
+		Block r2 = networkParameters.getGenesisBlock();
+		for (int i = 0; i < 10; i++) {
+			r2 = createReward(r2, a2);
+		}
+		checkSum();
+		log.debug(r2.toString());
+		assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
 
-        Sha256Hash hash = checkpointService.checkToken(store).hash();
-        // replay
-        store.resetStore();
+		Sha256Hash hash = checkpointService.checkToken(store).hash();
+		// replay
+		store.resetStore();
 
-        // replay first chain
-        for (Block b : a1) {
-            if (b != null)
-                blockGraph.add(b, true, true, store);
-        }
-        // check
-        assertTrue(r1.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
-        // replay second chain
-        for (Block b : a2) {
-            if (b != null)
-                blockGraph.add(b, true, true, store);
+		// replay first chain
+		for (Block b : a1) {
+			if (b != null)
+				blockGraph.add(b, true, true, store);
+		}
+		// check
+		assertTrue(r1.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
+		// replay second chain
+		for (Block b : a2) {
+			if (b != null)
+				blockGraph.add(b, true, true, store);
 
-        }
-        assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
+		}
+		assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
 
-        Sha256Hash hash1 = checkSum();
-        assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
-        // replay second and then replay first
-        store.resetStore();
-        for (Block b : a2) {
-            if (b != null)
-                blockGraph.add(b, true, true, store);
+		Sha256Hash hash1 = checkSum();
+		assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
+		// replay second and then replay first
+		store.resetStore();
+		for (Block b : a2) {
+			if (b != null)
+				blockGraph.add(b, true, true, store);
 
-        }
-        for (Block b : a1) {
-            if (b != null)
-                blockGraph.add(b, true, true, store);
-        }
-        assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
-        assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
-        Sha256Hash hash2 = checkSum();
-        assertTrue(hash1.equals(hash2));
-    }
+		}
+		for (Block b : a1) {
+			if (b != null)
+				blockGraph.add(b, true, true, store);
+		}
+		assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
+		assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
+		Sha256Hash hash2 = checkSum();
+		assertTrue(hash1.equals(hash2));
+	}
 
-    private Sha256Hash checkSum() throws JsonProcessingException, Exception {
-        TokensumsMap map = checkpointService.checkToken(store);
-        Map<String, Tokensums> r11 = map.getTokensumsMap();
-        for (Entry<String, Tokensums> a : r11.entrySet()) {
-            assertTrue(" " + a.toString(), a.getValue().check());
-        }
-        return map.hash();
-    }
+	private Sha256Hash checkSum() throws JsonProcessingException, Exception {
+		TokensumsMap map = checkpointService.checkToken(store);
+		Map<String, Tokensums> r11 = map.getTokensumsMap();
+		for (Entry<String, Tokensums> a : r11.entrySet()) {
+			assertTrue(" " + a.toString(), a.getValue().check());
+		}
+		return map.hash();
+	}
 
-    public void testToken(List<Block> blocksAddedAll) throws Exception {
+	public void testToken(List<Block> blocksAddedAll) throws Exception {
 
-        blocksAddedAll.add(testCreateToken(walletAppKit.wallet().walletKeys().get(0), "test"));
-        makeRewardBlock(blocksAddedAll);
+		blocksAddedAll.add(testCreateToken(wallet.walletKeys().get(0), "test"));
+		makeRewardBlock(blocksAddedAll);
 
-        // testCreateToken(walletAppKit.wallet().walletKeys().get(1));
-        // makeRewardBlock(blocksAddedAll);
-        // testCreateToken(walletAppKit.wallet().walletKeys().get(2));
-        // makeRewardBlock(blocksAddedAll);
-        // testCreateToken(walletAppKit.wallet().walletKeys().get(3));
-        // makeRewardBlock(blocksAddedAll);
-        // sendEmpty(20);
-    }
+		// testCreateToken(walletAppKit.wallet().walletKeys().get(1));
+		// makeRewardBlock(blocksAddedAll);
+		// testCreateToken(walletAppKit.wallet().walletKeys().get(2));
+		// makeRewardBlock(blocksAddedAll);
+		// testCreateToken(walletAppKit.wallet().walletKeys().get(3));
+		// makeRewardBlock(blocksAddedAll);
+		// sendEmpty(20);
+	}
 
-    public void sell(List<Block> blocksAddedAll) throws Exception {
+	public void sell(List<Block> blocksAddedAll) throws Exception {
 
-        List<String> keyStrHex000 = new ArrayList<String>();
+		List<String> keyStrHex000 = new ArrayList<String>();
 
-        for (ECKey ecKey : walletAppKit.wallet().walletKeys()) {
-            keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
-        }
+		for (ECKey ecKey : wallet.walletKeys()) {
+			keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+		}
 
-       byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
-                Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+		byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+				Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 
-        GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
-        List<UTXO> utxos = getBalancesResponse.getOutputs();
-        Collections.shuffle(utxos);
-        long q = 8;
-        for (UTXO utxo : utxos) {
-            if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())) {
-                walletAppKit.wallet().setServerURL(contextRoot);
-                try {
-                    blocksAddedAll.add(walletAppKit.wallet().sellOrder(null, utxo.getTokenId(), 10000000,
-                            utxo.getValue().getValue().longValue(), null, null,
-                            NetworkParameters.BIGTANGLE_TOKENID_STRING, true));
-                } catch (InsufficientMoneyException e) {
-                    // ignore: handle exception
-                }
-            }
-        }
-    }
+		GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+		List<UTXO> utxos = getBalancesResponse.getOutputs();
+		Collections.shuffle(utxos);
+		long q = 8;
+		for (UTXO utxo : utxos) {
+			if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())) {
+				wallet.setServerURL(contextRoot);
+				try {
+					blocksAddedAll.add(
+							wallet.sellOrder(null, utxo.getTokenId(), 10000000, utxo.getValue().getValue().longValue(),
+									null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, true));
+				} catch (InsufficientMoneyException e) {
+					// ignore: handle exception
+				}
+			}
+		}
+	}
 
-    public void payMoneyToWallet1(int j, List<Block> blocksAddedAll) throws Exception {
-        ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
-        wallet1();
-        for (int i = 0; i < 10; i++) {
-            giveMoneyResult.put(wallet1Keys.get(i % wallet1Keys.size()).toAddress(networkParameters).toString(),
-                    3333000000L / LongMath.pow(2, j));
-        }
-        walletAppKit1.wallet().importKey(fromkey);
-        Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
-        blocksAddedAll.add(b);
-        makeRewardBlock(blocksAddedAll);
-    }
+	public void payMoneyToWallet1(int j, List<Block> blocksAddedAll) throws Exception {
 
-    public void buy(List<Block> blocksAddedAll) throws Exception {
+		HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
 
-        HashMap<String, Object> requestParam = new HashMap<String, Object>();
-       byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
-                Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+		for (int i = 0; i < 10; i++) {
+			giveMoneyResult.put(new ECKey().toAddress(networkParameters).toString(),
+					BigInteger.valueOf(3333000000l / LongMath.pow(2, j)));
+		}
 
-        OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
+		blocksAddedAll.add(b);
+		makeRewardBlock(blocksAddedAll);
+	}
 
-        for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
-            try {
-                buy(orderRecord, blocksAddedAll);
-            } catch (InsufficientMoneyException e) {
-                Thread.sleep(4000);
-            } catch (Exception e) {
-                log.debug("", e);
-            }
-        }
-    }
+	public void buy(List<Block> blocksAddedAll) throws Exception {
 
-    public void buy(OrderRecord orderRecord, List<Block> blocksAddedAll) throws Exception {
+		HashMap<String, Object> requestParam = new HashMap<String, Object>();
+		byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+				Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
-        if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
-            // sell order and make buy
-            long price = orderRecord.getTargetValue() / orderRecord.getOfferValue();
-            walletAppKit.wallet().setServerURL(contextRoot);
-            blocksAddedAll.add(walletAppKit.wallet().buyOrder(null, orderRecord.getOfferTokenid(), price,
-                    orderRecord.getOfferValue(), null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, false));
-            makeRewardBlock(blocksAddedAll);
+		OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
 
-        }
+		for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+			try {
+				buy(orderRecord, blocksAddedAll);
+			} catch (InsufficientMoneyException e) {
+				Thread.sleep(4000);
+			} catch (Exception e) {
+				log.debug("", e);
+			}
+		}
+	}
 
-    }
+	public void buy(OrderRecord orderRecord, List<Block> blocksAddedAll) throws Exception {
+
+		if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
+			// sell order and make buy
+			long price = orderRecord.getTargetValue() / orderRecord.getOfferValue();
+
+			blocksAddedAll.add(wallet.buyOrder(null, orderRecord.getOfferTokenid(), price, orderRecord.getOfferValue(),
+					null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, false));
+			makeRewardBlock(blocksAddedAll);
+
+		}
+
+	}
 
 }

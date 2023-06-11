@@ -201,7 +201,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 	private List<TransactionSigner> signers;
 
 	public static Wallet fromSeed(NetworkParameters params, DeterministicSeed seed) {
-		return new Wallet(params, new KeyChainGroup(params, seed));
+		return new Wallet(params, new KeyChainGroup(params, seed), null);
 	}
 
 	/**
@@ -228,12 +228,17 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 	 */
 	public static Wallet fromKeys(NetworkParameters params, ECKey key) {
 
+		return fromKeys(params, key, null);
+	}
+
+	public static Wallet fromKeys(NetworkParameters params, ECKey key, String url) {
+
 		checkArgument(!(key instanceof DeterministicKey));
 		List<ECKey> keys = new ArrayList<ECKey>();
 		keys.add(key);
 		KeyChainGroup group = new KeyChainGroup(params);
 		group.importKeys(keys);
-		return new Wallet(params, group);
+		return new Wallet(params, group, url);
 	}
 
 	public Wallet(NetworkParameters params, KeyChainGroup keyChainGroup) {
@@ -260,8 +265,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
 		signers = new ArrayList<TransactionSigner>();
 		addTransactionSigner(new LocalTransactionSigner());
-
-		this.serverPool = new ServerPool(params);
+		if (url == null) {
+			this.serverPool = new ServerPool(params);
+		}else {
+			setServerURL(url);
+		}
 	}
 
 	public NetworkParameters getNetworkParameters() {
@@ -1685,14 +1693,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 	// and repeat 3 times and wait as there may be a transaction pending for
 	// this key
 
-	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, String memo)
+	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, String memo)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
 		return payMoneyToECKeyList(aesKey, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, memo,
 				calculateAllSpendCandidates(aesKey, false), 3, 60000);
 	}
 
-	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, String memo,
+	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, String memo,
 			List<FreeStandingTransactionOutput> coinList)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
@@ -1700,7 +1708,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 				60000);
 	}
 
-	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
+	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, byte[] tokenid,
 			String memo, List<FreeStandingTransactionOutput> coinList, int repeat, int sleep)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
@@ -1742,7 +1750,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
 	// pay the tokenid from the list HashMap<String, Long> giveMoneyResult of
 	// address and amount and return the remainder back to fromkey.
-	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
+	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, byte[] tokenid,
 			String memo)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 		return payMoneyToECKeyListNoSplit(aesKey, giveMoneyResult, tokenid, memo,
@@ -1871,7 +1879,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		return parts;
 	}
 
-	public Block payMoneyToECKeyListNoSplit(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult, byte[] tokenid,
+	public Block payMoneyToECKeyListNoSplit(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, byte[] tokenid,
 			String memo, List<FreeStandingTransactionOutput> coinList)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
@@ -1890,14 +1898,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		return solveAndPost(rollingBlock);
 	}
 
-	public Transaction payMoneyToECKeyListNoSplitTransaction(KeyParameter aesKey, HashMap<String, Long> giveMoneyResult,
+	public Transaction payMoneyToECKeyListNoSplitTransaction(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult,
 			byte[] tokenid, String memo, List<FreeStandingTransactionOutput> coinList)
 			throws UTXOProviderException, InsufficientMoneyException {
 		Coin summe = Coin.valueOf(0, tokenid);
 		Transaction multispent = new Transaction(params);
 		multispent.setMemo(new MemoInfo(memo));
-		for (Map.Entry<String, Long> entry : giveMoneyResult.entrySet()) {
-			Coin a = Coin.valueOf(entry.getValue(), tokenid);
+		for (Map.Entry<String, BigInteger> entry : giveMoneyResult.entrySet()) {
+			Coin a = new Coin(entry.getValue(), tokenid);
 			Address address = Address.fromBase58(params, entry.getKey());
 			multispent.addOutput(a, address);
 			summe = summe.add(a);
@@ -2293,8 +2301,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			throw new InsufficientMoneyException("");
 		}
 
-		ContractEventInfo info = new ContractEventInfo(payAmount, tokenId, beneficiary.getPubKey(), validToTime,
-				validFromTime, contractTokenid, beneficiary.toAddress(params).toBase58());
+		ContractEventInfo info = new ContractEventInfo(contractTokenid, payAmount, tokenId,
+				beneficiary.toAddress(params).toBase58(), validToTime, validFromTime, "");
 		tx.setData(info.toByteArray());
 		tx.setDataClassName("ContractEventInfo");
 		signTransaction(tx, aesKey);
@@ -2598,6 +2606,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 				Json.jsonmapper().writeValueAsString(requestParam));
 
 		MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
+		if( multiSignResponse.getMultiSigns()==null || multiSignResponse.getMultiSigns().isEmpty()) return;
 		MultiSign multiSign = multiSignResponse.getMultiSigns().get(0);
 
 		byte[] payloadBytes = Utils.HEX.decode((String) multiSign.getBlockhashHex());

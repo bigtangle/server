@@ -4707,7 +4707,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
                         record.getSpenderBlockHash() != null ? record.getSpenderBlockHash().getBytes() : null);
                 preparedStatement.setBytes(6, record.getTargetValue().toByteArray());
                 preparedStatement.setString(7, record.getTargetTokenid());
-                preparedStatement.setBytes(8, record.getBeneficiaryPubKey());
+             
                 preparedStatement.setLong(9, record.getValidToTime());
                 preparedStatement.setLong(10, record.getValidFromTime());
 

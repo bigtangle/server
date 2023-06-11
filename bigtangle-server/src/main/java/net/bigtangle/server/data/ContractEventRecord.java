@@ -6,7 +6,6 @@
 package net.bigtangle.server.data;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.SpentBlock;
@@ -20,8 +19,6 @@ public class ContractEventRecord extends SpentBlock {
     private String contractTokenid;
     private BigInteger targetValue;
     private String targetTokenid;
-    // owner public key of the order
-    private byte[] beneficiaryPubKey;
     // owner public address of the order for query
     private String beneficiaryAddress;
 
@@ -29,19 +26,14 @@ public class ContractEventRecord extends SpentBlock {
     private Long validToTime;
     // order will be traded after this time
     private Long validFromTime;
-      /*
-     * for wallet set the order status from cancel
-     */
 
-    private boolean cancelPending;
-    private long cancelPendingTime;
 
     public ContractEventRecord() {
     }
 
     public ContractEventRecord(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, 
             String contractTokenid, boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, BigInteger targetValue,
-            String targetTokenid, byte[] beneficiaryPubKey, Long validToTime, Long validFromTime, 
+            String targetTokenid,   Long validToTime, Long validFromTime, 
             String beneficiaryAddress) {
         super();
         this.setBlockHash(initialBlockHash);
@@ -52,7 +44,7 @@ public class ContractEventRecord extends SpentBlock {
         this.setSpenderBlockHash(spenderBlockHash);
         this.targetValue = targetValue;
         this.targetTokenid = targetTokenid;
-        this.beneficiaryPubKey = beneficiaryPubKey;
+ 
         this.validToTime = validToTime;
 
         this.validFromTime = validFromTime;
@@ -63,7 +55,7 @@ public class ContractEventRecord extends SpentBlock {
     public static ContractEventRecord cloneOrderRecord(ContractEventRecord old) {
         return new ContractEventRecord(old.getBlockHash(), old.issuingMatcherBlockHash,   old.contractTokenid,
                 old.isConfirmed(), old.isSpent(), old.getSpenderBlockHash(), old.targetValue, old.targetTokenid,
-                old.beneficiaryPubKey, old.validToTime, old.validFromTime, old.beneficiaryAddress);
+                  old.validToTime, old.validFromTime, old.beneficiaryAddress);
     }
 
     
@@ -103,13 +95,7 @@ public class ContractEventRecord extends SpentBlock {
         this.targetTokenid = targetTokenid;
     }
 
-    public byte[] getBeneficiaryPubKey() {
-        return beneficiaryPubKey;
-    }
-
-    public void setBeneficiaryPubKey(byte[] beneficiaryPubKey) {
-        this.beneficiaryPubKey = beneficiaryPubKey;
-    }
+ 
 
     public Long getValidToTime() {
         return validToTime;
@@ -140,23 +126,7 @@ public class ContractEventRecord extends SpentBlock {
     public void setBeneficiaryAddress(String beneficiaryAddress) {
         this.beneficiaryAddress = beneficiaryAddress;
     }
-
-    public boolean isCancelPending() {
-        return cancelPending;
-    }
-
-    public void setCancelPending(boolean cancelPending) {
-        this.cancelPending = cancelPending;
-    }
-
-    public long getCancelPendingTime() {
-        return cancelPendingTime;
-    }
-
-    public void setCancelPendingTime(long cancelPendingTime) {
-        this.cancelPendingTime = cancelPendingTime;
-    }
-
+ 
 	public String getContractTokenid() {
 		return contractTokenid;
 	}
@@ -169,10 +139,10 @@ public class ContractEventRecord extends SpentBlock {
 	public String toString() {
 		return "ContractEventRecord [issuingMatcherBlockHash=" + issuingMatcherBlockHash + ", contractTokenid="
 				+ contractTokenid + ", targetValue=" + targetValue + ", targetTokenid=" + targetTokenid
-				+ ", beneficiaryPubKey=" + Arrays.toString(beneficiaryPubKey) + ", beneficiaryAddress="
-				+ beneficiaryAddress + ", validToTime=" + validToTime + ", validFromTime=" + validFromTime
-				+ ", cancelPending=" + cancelPending + ", cancelPendingTime=" + cancelPendingTime + "]";
+				+ ", beneficiaryAddress=" + beneficiaryAddress + ", validToTime=" + validToTime + ", validFromTime="
+				+ validFromTime + "]";
 	}
 
+	 
  
 }

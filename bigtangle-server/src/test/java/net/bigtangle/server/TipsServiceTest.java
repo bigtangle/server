@@ -10,7 +10,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -214,7 +213,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     @Test
     public void testConflictSameTokenSubsequentIssuance() throws Exception {
         
-        ECKey outKey = walletKeys.get(1);
+        ECKey outKey = new ECKey();
         byte[] pubKey = outKey.getPubKey();
         
         TokenInfo tokenInfo = new TokenInfo();
@@ -287,7 +286,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     @Test
     public void testConflictSameTokenidSubsequentIssuance() throws Exception {
         
-        ECKey outKey = walletKeys.get(1);
+        ECKey outKey = new ECKey();
         byte[] pubKey = outKey.getPubKey();
 
         // Generate an eligible issuance
@@ -361,7 +360,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         
 
         // Generate an eligible issuance
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey =new ECKey();
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
 
@@ -416,11 +415,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
     }
 
     @Test
-    public void testConflictSameTokenidFirstIssuance() throws Exception {
-        
-
+    public void testConflictSameTokenidFirstIssuance() throws Exception { 
         // Generate an issuance
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey =new ECKey();
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
 

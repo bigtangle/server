@@ -12,7 +12,6 @@ import static org.junit.Assert.fail;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -330,7 +329,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testUnsolidMissingToken() throws Exception {
 
         // Generate an eligible issuance
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
 
@@ -936,7 +935,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityTokenMalformedData1() throws Exception {
 
         // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -970,7 +969,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityTokenMalformedData2() throws Exception {
 
         // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -1004,7 +1003,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityTokenMalformedDataSignature1() throws Exception {
 
         // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -1040,7 +1039,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityTokenMalformedDataSignature2() throws Exception {
 
         // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -1078,7 +1077,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
         ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 
         // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(1);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo0 = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -1711,7 +1710,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityTokenMutatedDataSignatures() throws Exception {
 
         // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
+        ECKey outKey2 = new ECKey();
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -1992,7 +1992,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityTokenMultipleTransactions1() throws Exception {
 
         // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -2045,7 +2045,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityTokenMultipleTransactions2() throws Exception {
 
         // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -2120,7 +2120,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityTokenPredecessorWrongTokenid() throws JsonProcessingException, Exception {
 
         // Generate an eligible issuance
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);
@@ -2154,7 +2154,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityTokenWrongTokenindex() throws JsonProcessingException, Exception {
 
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
 
         // Generate an eligible issuance
@@ -2189,7 +2189,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityTokenPredecessorStopped() throws JsonProcessingException, Exception {
 
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
 
         // Generate an eligible issuance
@@ -2224,7 +2224,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityTokenPredecessorConflictingType() throws JsonProcessingException, Exception {
 
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
 
         // Generate an eligible issuance
@@ -2260,7 +2260,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     @Test
     public void testSolidityTokenPredecessorConflictingName() throws JsonProcessingException, Exception {
 
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
 
         // Generate an eligible issuance
@@ -2296,7 +2296,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
     public void testSolidityTokenWrongTokenCoinbase() throws Exception {
 
         // Generate an eligible issuance tokenInfo
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = wallet.walletKeys().get(0);
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
         Coin coinbase = Coin.valueOf(77777L, pubKey);

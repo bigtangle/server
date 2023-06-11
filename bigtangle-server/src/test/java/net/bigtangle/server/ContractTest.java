@@ -26,7 +26,7 @@ public class ContractTest extends AbstractIntegrationTest {
 
         ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
                 Utils.HEX.decode(testPub));
-        ECKey testKey = walletKeys.get(0);
+        ECKey testKey = new ECKey();
         List<Block> addedBlocks = new ArrayList<>();
 
         // Make test token

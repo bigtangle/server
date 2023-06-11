@@ -138,7 +138,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
     @Test
     public void testConflictSameTokenSubsequentIssuance() throws Exception {
 
-        ECKey outKey = walletKeys.get(1);
+        ECKey outKey = new ECKey();;
         byte[] pubKey = outKey.getPubKey();
 
         // Generate an eligible issuance
@@ -204,7 +204,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
     @Test
     public void testConflictSameTokenidSubsequentIssuance() throws Exception {
 
-        ECKey outKey = walletKeys.get(1);
+        ECKey outKey = new ECKey();;
         byte[] pubKey = outKey.getPubKey();
 
         // Generate an eligible issuance
@@ -255,7 +255,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
     public void testConflictSameTokenFirstIssuance() throws Exception {
 
         // Generate an eligible issuance
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = new ECKey();;
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
 
@@ -295,7 +295,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
     public void testConflictSameTokenidFirstIssuance() throws Exception {
 
         // Generate an issuance
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = new ECKey();;
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
 
@@ -385,7 +385,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
     public void testUpdateConflictingTokenMilestoneCandidates() throws Exception {
 
         // Generate an eligible issuance
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = new ECKey();;
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
 
@@ -606,7 +606,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
     public void testReorgToken() throws Exception {
 
         // Generate an eligible issuance
-        ECKey outKey = walletKeys.get(0);
+        ECKey outKey = new ECKey();;
         byte[] pubKey = outKey.getPubKey();
         TokenInfo tokenInfo = new TokenInfo();
 

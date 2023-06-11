@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,7 +20,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Utils;
 import net.bigtangle.server.AbstractIntegrationTest;
 
 @RunWith(SpringRunner.class)
@@ -29,16 +27,7 @@ import net.bigtangle.server.AbstractIntegrationTest;
 
 @Ignore
 public class RangeAttackTest extends AbstractIntegrationTest {
-
-    @Before
-    public void setUp() throws Exception {
-        Utils.unsetMockClock();
-
-        this.walletKeys();
-        this.initWalletKeysMapper();
-
-    }
-
+ 
     // Test limit of blocks in reward chain and build very long chain on local
     // server and publish to network
     @Test

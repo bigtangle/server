@@ -53,12 +53,12 @@ public class UserdataTest extends AbstractIntegrationTest {
         // TODO encrypt and decrypt the  UserSettingData
         
         
-        walletAppKit.wallet().saveUserdata(outKey, transaction,true);
+       wallet.saveUserdata(outKey, transaction,true);
 
         makeRewardBlock();
 
     
-        UserSettingDataInfo contactInfo1 = walletAppKit.wallet().getUserSettingDataInfo(outKey,true);
+        UserSettingDataInfo contactInfo1 =wallet.getUserSettingDataInfo(outKey,true);
         assertTrue(contactInfo1.getUserSettingDatas().size() == 1);
 
         UserSettingData contact0 = contactInfo1.getUserSettingDatas().get(0);
@@ -69,11 +69,11 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.UserSettingDataInfo.name());
         transaction.setData(contactInfo1.toByteArray());
 
-        walletAppKit.wallet().saveUserdata(outKey, transaction,true);
+       wallet.saveUserdata(outKey, transaction,true);
         makeRewardBlock();
  
 
-        contactInfo1 = walletAppKit.wallet().getUserSettingDataInfo(outKey,true);
+        contactInfo1 =wallet.getUserSettingDataInfo(outKey,true);
         assertTrue(contactInfo1.getUserSettingDatas().size() == 0);
     }
     @Test
@@ -94,12 +94,12 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.UserSettingDataInfo.name());
         transaction.setData(contactInfo0.toByteArray());      
         
-        walletAppKit.wallet().saveUserdata(outKey, transaction,true);
+       wallet.saveUserdata(outKey, transaction,true);
 
         makeRewardBlock();
 
 
-        UserSettingDataInfo contactInfo1 =  walletAppKit.wallet().getUserSettingDataInfo(outKey,true);
+        UserSettingDataInfo contactInfo1 = wallet.getUserSettingDataInfo(outKey,true);
         assertTrue(contactInfo1.getUserSettingDatas().size() == 1);
 
         UserSettingData contact0 = contactInfo1.getUserSettingDatas().get(0);
@@ -128,7 +128,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.SERVERURL.name());
         transaction.setData(contactInfo0.toByteArray());
         // TODO encrypt and decrypt the contactInfo0
-        walletAppKit.wallet().saveUserdata(outKey, transaction,false);
+       wallet.saveUserdata(outKey, transaction,false);
 
     }
 
@@ -155,7 +155,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.CONTACTINFO.name());
         transaction.setData(contactInfo0.toByteArray());
 
-        walletAppKit.wallet().saveUserdata(outKey, transaction,false);
+       wallet.saveUserdata(outKey, transaction,false);
         makeRewardBlock();
        byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.searchExchangeTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());

@@ -278,15 +278,15 @@ public class FullBlockGraph {
 			Block block = networkParameters.getDefaultSerializer().makeBlock(chainBlockQueue.getBlock());
 
 			// Check the block is partially formally valid and fulfills PoW
-			block.verifyHeader();
+		 	block.verifyHeader();
 			// block.verifyTransactions();
 
 			ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
 			SolidityState solidityState = serviceBase.checkChainSolidity(block, true, store);
 
 			if (solidityState.isDirectlyMissing()) {
-				log.debug("Block isDirectlyMissing. remove it from ChainBlockQueue,  Chain is out of date."
-						+ block.toString());
+			 	log.debug("Block isDirectlyMissing. saveChainConnected stop to save."
+			 			+ block.toString());
 				// sync the lastest chain from remote start from the -2 rewards
 				// syncBlockService.startSingleProcess(block.getLastMiningRewardBlock()
 				// - 2, false);
@@ -793,8 +793,8 @@ public class FullBlockGraph {
 			ContractEventInfo reqInfo = new ContractEventInfo().parse(block.getTransactions().get(0).getData());
 
 			ContractEventRecord record = new ContractEventRecord(block.getHash(), Sha256Hash.ZERO_HASH,
-					reqInfo.getContractTokenid(), false, false, null, reqInfo.getTargetValue(),
-					reqInfo.getTargetTokenid(), reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(),
+					reqInfo.getContractTokenid(), false, false, null, reqInfo.getOfferValue(),
+					reqInfo.getOfferTokenid(),  reqInfo.getValidToTime(),
 					reqInfo.getValidFromTime(), reqInfo.getBeneficiaryAddress());
 			List<ContractEventRecord> orders = new ArrayList<ContractEventRecord>();
 			orders.add(record);
@@ -1448,7 +1448,7 @@ public class FullBlockGraph {
 	public void cleanUpDo(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
 
 		Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
-		log.info(" cleanUpDo until block " + "" + rewardblock);
+		//log.info(" cleanUpDo until block " + "" + rewardblock);
 		store.prunedClosedOrders(rewardblock.getTimeSeconds());
 		// max keep 500 blockchain as spendblock number
 		

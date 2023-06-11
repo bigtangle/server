@@ -55,7 +55,7 @@ public class LotteryRemoteTest {
 	@Test
 	public void pay() throws Exception {
 
-		wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
+		wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)), contextRoot);
 		accountKey = ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv));
 		wallet.importKey(accountKey);
 		wallet.setServerURL(contextRoot);
@@ -83,7 +83,7 @@ public class LotteryRemoteTest {
 
 		proxy();
 
-		Wallet w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv)));
+		Wallet w = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv)), contextRoot);
 		w.setServerURL(contextRoot);
 
 		w.payFromList(null, "1GDsvV5Vgwa7VYULyDmW9Unj9v1hWFxBJ5", Coin.valueOf(1234, USDTokenPub),
@@ -97,7 +97,7 @@ public class LotteryRemoteTest {
 	}
 
 	public void lotteryDo() throws Exception {
-		wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)));
+		wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(USDTokenPriv)), contextRoot);
 		accountKey = ECKey.fromPrivate(Utils.HEX.decode(ETHTokenPriv));
 		wallet.importKey(accountKey);
 		wallet.setServerURL(contextRoot);
@@ -204,7 +204,7 @@ public class LotteryRemoteTest {
 	 * pay money to the key and use the key to buy lottery
 	 */
 	public void buyTicket(ECKey key, ECKey accountKey) throws Exception {
-		Wallet w = Wallet.fromKeys(networkParameters, key);
+		Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
 		w.setServerURL(contextRoot);
 		try {
 
@@ -218,11 +218,11 @@ public class LotteryRemoteTest {
 
 	public List<ECKey> payKeys() throws Exception {
 		List<ECKey> userkeys = new ArrayList<ECKey>();
-		HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+		HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
 
 		for (int i = 0; i < usernumber; i++) {
 			ECKey key = new ECKey();
-			giveMoneyResult.put(key.toAddress(networkParameters).toString(), payamount);
+			giveMoneyResult.put(key.toAddress(networkParameters).toString(), BigInteger.valueOf(payamount));
 			userkeys.add(key);
 		}
 

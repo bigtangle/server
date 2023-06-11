@@ -1528,12 +1528,7 @@ public class ServiceBase {
 			return SolidityState.getFailState();
 		}
 
-		// NotNull checks
-		if (contractEventInfo.getTargetTokenid() == null) {
-			if (throwExceptions)
-				throw new InvalidTransactionDataException("Invalid target tokenid");
-			return SolidityState.getFailState();
-		}
+ 
 
 		// NotNull checks
 		if (contractEventInfo.getContractTokenid() == null) {
@@ -1542,12 +1537,7 @@ public class ServiceBase {
 			return SolidityState.getFailState();
 		}
 
-		// Check bounds for target coin values
-		if (contractEventInfo.getTargetValue().signum() < 0) {
-			if (throwExceptions)
-				throw new InvalidTransactionDataException("Invalid target value max: " + Long.MAX_VALUE);
-			return SolidityState.getFailState();
-		}
+	 
 
 		if (contractEventInfo.getValidToTime() > Math.addExact(contractEventInfo.getValidFromTime(),
 				NetworkParameters.ORDER_TIMEOUT_MAX)) {
@@ -1555,14 +1545,7 @@ public class ServiceBase {
 				throw new InvalidOrderException("The given order's timeout is too long.");
 			return SolidityState.getFailState();
 		}
-
-		if (!ECKey.fromPublicOnly(contractEventInfo.getBeneficiaryPubKey()).toAddress(networkParameters).toBase58()
-				.equals(contractEventInfo.getBeneficiaryAddress())) {
-			if (throwExceptions)
-				throw new InvalidOrderException("The address does not match with the given pubkey.");
-			return SolidityState.getFailState();
-		}
-
+ 
 		return SolidityState.getSuccessState();
 	}
 
@@ -4338,8 +4321,8 @@ public class ServiceBase {
 			ContractEventInfo reqInfo = new ContractEventInfo().parse(block.getTransactions().get(0).getData());
 
 			ContractEventRecord record = new ContractEventRecord(block.getHash(), Sha256Hash.ZERO_HASH,
-					reqInfo.getContractTokenid(), false, false, null, reqInfo.getTargetValue(),
-					reqInfo.getTargetTokenid(), reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(),
+					reqInfo.getContractTokenid(), false, false, null, reqInfo.getOfferValue(),
+					reqInfo.getOfferTokenid(),   reqInfo.getValidToTime(),
 					reqInfo.getValidFromTime(), reqInfo.getBeneficiaryAddress());
 			List<ContractEventRecord> orders = new ArrayList<ContractEventRecord>();
 			orders.add(record);

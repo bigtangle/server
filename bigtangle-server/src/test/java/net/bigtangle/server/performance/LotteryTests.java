@@ -77,9 +77,9 @@ public class LotteryTests extends AbstractIntegrationTest {
 	}
 
 	public void lotteryDo() throws Exception {
-		walletAppKit1.wallet().importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+		wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
 		accountKey = new ECKey();
-		walletAppKit1.wallet().importKey(accountKey);
+		wallet.importKey(accountKey);
 		testTokens();
 		List<ECKey> ulist = createUserkey();
 		payUserKeys(ulist);
@@ -179,7 +179,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 						}
 					}
 					try {
-						walletAppKit1.wallet().payTransaction(txs);
+						wallet.payTransaction(txs);
 					} catch (Exception e) {
 						log.error("payTransaction==", e);
 					}
@@ -205,12 +205,11 @@ public class LotteryTests extends AbstractIntegrationTest {
 	}
 
 	public Transaction buyTicketTransaction(ECKey key, ECKey accountKey) throws Exception {
-		Wallet w = Wallet.fromKeys(networkParameters, key);
-		w.setServerURL(contextRoot);
+		Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
 
 		int satoshis = 1000;
 		return w.createTransaction(null, accountKey.toAddress(networkParameters).toString(),
-				Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)),  new MemoInfo( "buy ticket") );
+				Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)), new MemoInfo("buy ticket"));
 
 	}
 
@@ -228,13 +227,12 @@ public class LotteryTests extends AbstractIntegrationTest {
 				}
 			}
 			try {
-				walletAppKit1.wallet().payTransaction(txs);
+				wallet.payTransaction(txs);
 			} catch (Exception e) {
 				log.error("payTransaction==", e);
 			}
 
 		}
- 
 
 	}
 
@@ -242,12 +240,12 @@ public class LotteryTests extends AbstractIntegrationTest {
 	 * pay money to the key and use the key to buy lottery
 	 */
 	public void buyTicket(ECKey key, ECKey accountKey) throws Exception {
-		Wallet w = Wallet.fromKeys(networkParameters, key);
-		w.setServerURL(contextRoot);
+		Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
+
 		try {
 			int satoshis = Math.abs(new Random().nextInt()) % 1000;
-			w.pay(null, accountKey.toAddress(networkParameters).toString(), Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)),
-					new MemoInfo(" buy ticket"));
+			w.pay(null, accountKey.toAddress(networkParameters).toString(),
+					Coin.valueOf(satoshis, Utils.HEX.decode(yuanTokenPub)), new MemoInfo(" buy ticket"));
 		} catch (InsufficientMoneyException e) {
 			// TODO: handle exception
 		}
@@ -259,37 +257,36 @@ public class LotteryTests extends AbstractIntegrationTest {
 		List<List<ECKey>> parts = Wallet.chopped(userkeys, 1000);
 
 		for (List<ECKey> list : parts) {
-			HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+			HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
 			for (ECKey key : list) {
-				giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount.longValue() * 10);
+				giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount);
 			}
-			Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub),
-					"pay to user");
+			Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), "pay to user");
 			// log.debug("block " + (b == null ? "block is null" : b.toString()));
 			makeRewardBlock();
 		}
 		log.debug("pay user " + usernumber + "  duration minutes " + watch.elapsed(TimeUnit.MINUTES));
 		log.debug("rate  " + usernumber * 1.0 / watch.elapsed(TimeUnit.SECONDS));
-	
+
 	}
 
 	public void payBigUserKeys(List<ECKey> userkeys) throws Exception {
 
-		 
 		List<List<ECKey>> parts = Wallet.chopped(userkeys, 1000);
 
 		for (List<ECKey> list : parts) {
-			HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+			HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
 			for (ECKey key : list) {
-				giveMoneyResult.put(key.toAddress(networkParameters).toString(), 10000l);
+				giveMoneyResult.put(key.toAddress(networkParameters).toString(), BigInteger.valueOf(10000));
 			}
-			Block b = walletAppKit1.wallet().payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
+			Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
 					"pay to user");
 			// log.debug("block " + (b == null ? "block is null" : b.toString()));
 			makeRewardBlock();
 		}
-	 
+
 	}
+
 	private List<ECKey> createUserkey() {
 		List<ECKey> userkeys = new ArrayList<ECKey>();
 		for (int i = 0; i < usernumber; i++) {
@@ -301,12 +298,10 @@ public class LotteryTests extends AbstractIntegrationTest {
 
 	public void testTokens() throws JsonProcessingException, Exception {
 
-		
 		String domain = "";
 
 		ECKey fromPrivate = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
-		payBigTo(fromPrivate, 1000);
-		payBigTo(accountKey, 1000);
+
 		testCreateMultiSigToken(fromPrivate, "人民币", 2, domain, "人民币 CNY",
 				winnerAmount.multiply(BigInteger.valueOf(usernumber * 10000l)));
 		makeRewardBlock();
@@ -320,16 +315,16 @@ public class LotteryTests extends AbstractIntegrationTest {
 	protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals, String domainname,
 			String description, BigInteger amount) throws JsonProcessingException, Exception {
 		try {
-			walletAppKit1.wallet().setServerURL(contextRoot);
-			
-			//pay fee to ECKey key
-			
+			wallet.setServerURL(contextRoot);
+
+			// pay fee to ECKey key
+
 			createToken(key, tokename, decimals, domainname, description, amount, true, null,
-					TokenType.identity.ordinal(), key.getPublicKeyAsHex(), walletAppKit1.wallet());
+					TokenType.identity.ordinal(), key.getPublicKeyAsHex(), wallet);
 
 			ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
 
-			walletAppKit1.wallet().multiSign(key.getPublicKeyAsHex(), signkey, null);
+			wallet.multiSign(key.getPublicKeyAsHex(), signkey, null);
 
 		} catch (Exception e) {
 			// TODO: handle exception

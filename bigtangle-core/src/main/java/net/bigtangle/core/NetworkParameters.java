@@ -506,15 +506,7 @@ public abstract class NetworkParameters {
         return rootPermission;
     }
 
-   
-    public ServerPool getServerPool() {
-        return serverPool;
-    }
-
-    public void setServerPool(ServerPool serverPool) {
-        this.serverPool = serverPool;
-    }
-
+ 
     /*
      * Order Price is in orderBaseToken and is used as Long, 
      * to enable the representation of value smaller than the unit of  orderBaseToken

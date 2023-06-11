@@ -190,18 +190,14 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
 
     // TODO fix @Test
     public void testCreateMultiSigList() throws Exception {
-        this.store.resetStore();
-        testInitWallet();
-        wallet1();
-        wallet2();
+
 
         List<ECKey> signKeys = new LinkedList<ECKey>();
-        signKeys.add(walletAppKit.wallet().walletKeys(null).get(0));
-        signKeys.add(walletAppKit1.wallet().walletKeys(null).get(0));
-        signKeys.add(walletAppKit2.wallet().walletKeys(null).get(0));
+        signKeys.add( wallet.walletKeys(null).get(0));
+      
         TokenInfo tokenInfo = new TokenInfo();
         testCreateMultiSigToken(signKeys, tokenInfo);
-        ECKey toKey = walletKeys.get(1);
+        ECKey toKey = new ECKey();
 
         String tokenid = tokenInfo.getToken().getTokenid();
         Coin amount = Coin.valueOf(1200, Utils.HEX.decode(tokenid));
@@ -378,7 +374,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     // @Test(expected = RuntimeException.class)
     // TODO @Test
     public void testMultiSigTokenIsNull() throws Exception {
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        List<ECKey> keys =wallet.walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -401,7 +397,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     @SuppressWarnings("unchecked")
     // @Test
     public void testMultiSigTokenInfoIsNull() throws Exception {
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        List<ECKey> keys =wallet.walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -423,7 +419,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     @SuppressWarnings("unchecked")
     // @Test
     public void testMultiSigTokenInfoSignnumberZero() throws Exception {
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        List<ECKey> keys =wallet.walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -451,7 +447,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     @SuppressWarnings("unchecked")
     // @Test
     public void testMultiSigTokenSerialIsNull() throws Exception {
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        List<ECKey> keys =wallet.walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -480,7 +476,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     @SuppressWarnings("unchecked")
     // @Test
     public void testMultiSigMultiSignAddressSizeZero() throws Exception {
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        List<ECKey> keys =wallet.walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -517,7 +513,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     @SuppressWarnings("unchecked")
     // @Test
     public void testMultiSigMultiSignAddressSizeSignnumber() throws Exception {
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        List<ECKey> keys =wallet.walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -557,7 +553,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     @SuppressWarnings("unchecked")
     @Test(expected = RuntimeException.class)
     public void testMultiSigMultiSignDatasignatureAddress() throws Exception {
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        List<ECKey> keys =wallet.walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -638,7 +634,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     @SuppressWarnings("unchecked")
     @Test(expected = RuntimeException.class)
     public void testMultiSigMultiSignSignatureError() throws Exception {
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+        List<ECKey> keys =wallet.walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -717,16 +713,16 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     
     @Test
     public void testMultiSigMultiSignSignatureSuccess() throws Exception {
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+        List<ECKey> keys =wallet.walletKeys(null);
         HashMap<String, String> requestParam = new HashMap<String, String>();
         byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
                 Json.jsonmapper().writeValueAsString(requestParam));
@@ -755,7 +751,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(1).getPublicKeyAsHex()));
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", keys.get(2).getPublicKeyAsHex()));
 
-        walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
+       wallet.saveToken(tokenInfo, basecoin, keys.get(3), null);
 
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
         requestParam0.put("address", keys.get(0).toAddress(networkParameters).toBase58());
@@ -789,21 +785,21 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         multiSignBies.add(multiSignBy0);
         MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
         transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
-        walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
+       wallet.saveToken(tokenInfo, basecoin, keys.get(3), null);
     }
 
     @Test
     public void testCreateSingleTokenIndexCheckTokenExist() throws Exception {
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+        List<ECKey> keys =wallet.walletKeys(null);
         ECKey outKey = keys.get(6);
         byte[] pubKey = outKey.getPubKey();
         String tokenid = Utils.HEX.encode(pubKey);
@@ -865,11 +861,16 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     // @Test(expected = RuntimeException.class)
 
     public void testCreateMultiSigTokenIndexCheckTokenExist() throws JsonProcessingException, Exception {
-        testInitWallet();
-        wallet1();
-        wallet2();
-
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+    
+        wallet.importKey(new ECKey() );
+        wallet.importKey(new ECKey() );
+        wallet.importKey(new ECKey() );
+        wallet.importKey(new ECKey() );
+        wallet.importKey(new ECKey() );
+        wallet.importKey(new ECKey() );
+        wallet.importKey(new ECKey() );
+        wallet.importKey(new ECKey() );
+        List<ECKey> keys =wallet.walletKeys(null);
         String tokenid = keys.get(3).getPublicKeyAsHex();
 
         TokenInfo tokenInfo = new TokenInfo();
@@ -1002,16 +1003,16 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
     @Test
     public void testUpdateMultiSig() throws JsonProcessingException, Exception {
         // Setup transaction and signatures
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        walletAppKit.wallet().importKey(new ECKey() );
-        List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+       wallet.importKey(new ECKey() );
+        List<ECKey> keys =wallet.walletKeys(null);
         String tokenid =  new ECKey().getPublicKeyAsHex();
         TokenInfo tokenInfo = new TokenInfo();
 
@@ -1040,7 +1041,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         ECKey key3 = keys.get(2);
         tokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key3.getPublicKeyAsHex()));
 
-        walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
+       wallet.saveToken(tokenInfo, basecoin, keys.get(3), null);
         
      
         HashMap<String, Object> requestParam0 = new HashMap<String, Object>();
@@ -1059,7 +1060,7 @@ public class TokenAndPayTests extends AbstractIntegrationTest {
         updateTokenInfo.getToken().setTokenname("UPDATE_TOKEN");
         ECKey key4 = keys.get(3);
         updateTokenInfo.getMultiSignAddresses().add(new MultiSignAddress(tokenid, "", key4.getPublicKeyAsHex()));
-        walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
+       wallet.saveToken(tokenInfo, basecoin, key4, null);
 
         // save block
        // OkHttp3Util.post(contextRoot + ReqCmd.updateTokenInfo.name(), block_.bitcoinSerialize());

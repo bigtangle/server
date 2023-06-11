@@ -219,26 +219,26 @@ public abstract class AbstractIntegrationTest {
         store.close();
     }
 
-    protected void payBigTo(ECKey beneficiary, long amount) throws Exception {
+    protected void payBigTo(ECKey beneficiary, BigInteger amount) throws Exception {
     	payBigTo(beneficiary, amount, new ArrayList<>());
     }
 
-    protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, long amount)
+    protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, BigInteger amount)
             throws Exception {
     	payTestTokenTo(beneficiary, testKey, amount, new ArrayList<>());
     }
 
-    protected void payBig(long amount) throws Exception {
+    protected void payBig(BigInteger amount) throws Exception {
     	payBig(amount, new ArrayList<>());
     }
 
-    protected void payTestToken(ECKey testKey, long amount)
+    protected void payTestToken(ECKey testKey, BigInteger amount)
             throws Exception {
     	payTestToken(testKey, amount, new ArrayList<>());
     }
 
-    protected void payBigTo(ECKey beneficiary, long amount, List<Block> addedBlocks) throws Exception {
-        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+    protected void payBigTo(ECKey beneficiary, BigInteger amount, List<Block> addedBlocks) throws Exception {
+        HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
 
         giveMoneyResult.put(beneficiary.toAddress(networkParameters).toString(), amount);
 
@@ -249,10 +249,10 @@ public abstract class AbstractIntegrationTest {
         makeRewardBlock(addedBlocks);
     }
 
-    protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, long amount, List<Block> addedBlocks)
+    protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, BigInteger amount, List<Block> addedBlocks)
             throws Exception {
 
-        HashMap<String, Long> giveMoneyTestToken = new HashMap<String, Long>();
+        HashMap<String, BigInteger> giveMoneyTestToken = new HashMap< >();
 
         giveMoneyTestToken.put(beneficiary.toAddress(networkParameters).toString(), amount);
 
@@ -264,8 +264,8 @@ public abstract class AbstractIntegrationTest {
         // Open sell order for test tokens
     }
 
-    protected void payBig(long amount, List<Block> addedBlocks) throws Exception {
-        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+    protected void payBig(BigInteger amount, List<Block> addedBlocks) throws Exception {
+        HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
 
         giveMoneyResult.put(wallet1Keys.get(0).toAddress(networkParameters).toString(), amount);
 
@@ -276,10 +276,10 @@ public abstract class AbstractIntegrationTest {
         makeRewardBlock(addedBlocks);
     }
 
-    protected void payTestToken(ECKey testKey, long amount, List<Block> addedBlocks)
+    protected void payTestToken(ECKey testKey, BigInteger amount, List<Block> addedBlocks)
             throws Exception {
 
-        HashMap<String, Long> giveMoneyTestToken = new HashMap<String, Long>();
+        HashMap<String, BigInteger> giveMoneyTestToken = new HashMap<>();
 
         giveMoneyTestToken.put(wallet2Keys.get(0).toAddress(networkParameters).toString(), amount);
 
@@ -297,25 +297,7 @@ public abstract class AbstractIntegrationTest {
 		return block;
     }
 
-    protected Block resetAndMakeTestTokenWithSpare(ECKey testKey, List<Block> addedBlocks)
-            throws JsonProcessingException, Exception, BlockStoreException {
-        Block block = makeTestToken(testKey, BigInteger.valueOf(77777L), addedBlocks, 0);
-        payTestTokenTo(testKey, testKey, 50000, addedBlocks);
-        payTestTokenTo(testKey, testKey, 40000, addedBlocks);
-        payTestTokenTo(testKey, testKey, 30000, addedBlocks);
-        payTestTokenTo(testKey, testKey, 20000, addedBlocks);
-        payTestTokenTo(testKey, testKey, 10000, addedBlocks);
-		return block;
-    }
-
-    protected void generateSpareChange(ECKey beneficiary, List<Block> addedBlocks)
-            throws JsonProcessingException, Exception, BlockStoreException {
-        payBigTo(beneficiary, 500000, addedBlocks);
-        payBigTo(beneficiary, 400000, addedBlocks);
-        payBigTo(beneficiary, 300000, addedBlocks);
-        payBigTo(beneficiary, 200000, addedBlocks);
-        payBigTo(beneficiary, 100000, addedBlocks);
-    }
+ 
 
     protected Block resetAndMakeTestToken(ECKey testKey, BigInteger amount, List<Block> addedBlocks)
             throws JsonProcessingException, Exception, BlockStoreException {
@@ -426,8 +408,8 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
             String basetoken, List<Block> addedBlocks) throws Exception {
-        Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
-        w.setServerURL(contextRoot);
+        Wallet w = Wallet.fromKeys(networkParameters, beneficiary,contextRoot);
+ 
         Block block = w.sellOrder(null, tokenId, sellPrice, sellAmount, null, null, basetoken, true);
         addedBlocks.add(block);
         return block;
@@ -445,7 +427,7 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeAndConfirmPayContract(ECKey beneficiary, String tokenId, BigInteger buyAmount,
             String contractTokenid, List<Block> addedBlocks) throws Exception {
-        Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
+        Wallet w = Wallet.fromKeys(networkParameters, beneficiary,contextRoot);
         w.setServerURL(contextRoot);
         Block block = w.payContract(null, tokenId, buyAmount, null, null, contractTokenid);
         addedBlocks.add(block);
@@ -473,7 +455,7 @@ public abstract class AbstractIntegrationTest {
 
     protected Block makeBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
             String basetoken, List<Block> addedBlocks) throws Exception {
-        Wallet w = Wallet.fromKeys(networkParameters, beneficiary);
+        Wallet w = Wallet.fromKeys(networkParameters, beneficiary,contextRoot);
         w.setServerURL(contextRoot);
         Block block = w.buyOrder(null, tokenId, buyPrice, buyAmount, null, null, basetoken,true);
         addedBlocks.add(block);
@@ -848,9 +830,9 @@ public abstract class AbstractIntegrationTest {
 
     protected void testInitTransferWallet() throws Exception {
         ECKey fromkey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        HashMap<String, Long> giveMoneyResult = new HashMap<String, Long>();
+        HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
         giveMoneyResult.put(walletKeys.get(1).toAddress(networkParameters).toString(),
-                MonetaryFormat.FIAT.noCode().parse("33333").getValue().longValue());
+                MonetaryFormat.FIAT.noCode().parse("33333").getValue() );
         walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testInitTransferWallet");
     }
 

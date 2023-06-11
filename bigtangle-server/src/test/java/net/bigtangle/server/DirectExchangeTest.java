@@ -161,12 +161,12 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 		List<UTXO> balance1 = getBalance(false, genesiskey);
 		log.info("balance1 : " + balance1);
 		// two utxo to spent
-		HashMap<String, Long> giveMoneyResult = new HashMap<>();
+		HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
 		for (int i = 0; i < 3; i++) {
 			ECKey outKey = new ECKey();
-			giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue().longValue());
+			giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue() );
 		}
-		walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
+		wallet.payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
 		makeRewardBlock();
 
 		List<UTXO> balance = getBalance(false, genesiskey);
@@ -187,12 +187,12 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 		List<UTXO> balance1 = getBalance(false, genesiskey);
 		log.info("balance1 : " + balance1);
 		// two utxo to spent
-		HashMap<String, Long> giveMoneyResult = new HashMap<>();
+		HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
 		for (int i = 0; i < 3; i++) {
 			ECKey outKey = new ECKey();
-			giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue().longValue());
+			giveMoneyResult.put(outKey.toAddress(networkParameters).toBase58(), Coin.COIN.getValue() );
 		}
-		Block b = walletAppKit.wallet().payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
+		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, "testGiveMoney");
 		makeRewardBlock();
 
 		Map<String, Object> requestParam = new HashMap<String, Object>();
@@ -214,7 +214,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
 	@Test
 	public void searchBlock() throws Exception {
-		List<ECKey> keys = walletAppKit.wallet().walletKeys(null);
+		List<ECKey> keys = wallet.walletKeys(null);
 		List<String> address = new ArrayList<String>();
 		for (ECKey ecKey : keys) {
 			address.add(ecKey.toAddress(networkParameters).toBase58());
@@ -231,11 +231,9 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
 	// TODO @Test
 	public void testExchangeTokenMulti() throws Exception {
-		testInitWallet();
-		wallet1();
-		wallet2();
+		 
 
-		List<ECKey> keys = walletAppKit1.wallet().walletKeys(null);
+		List<ECKey> keys =  wallet.walletKeys(null);
 		TokenInfo tokenInfo = new TokenInfo();
 		testCreateMultiSigToken(keys, tokenInfo);
 		UTXO multitemp = null;
@@ -325,8 +323,8 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 		Address destination = Address.fromBase58(networkParameters, yourutxo.getAddress());
 		amount = Coin.valueOf(1000, myutxo.getValue().getTokenid());
 		req = SendRequest.to(destination, amount);
-		//walletAppKit.wallet().completeTx(req, null);
-		walletAppKit.wallet().signTransaction(req);
+		//wallet.completeTx(req, null);
+		wallet.signTransaction(req);
 
 		exchangeTokenComplete(req.tx);
 		UTXO multitemp1 = null;
@@ -397,7 +395,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 		Address destination = outKey.toAddress(networkParameters);
 
 		Coin coinbase = Coin.valueOf(amount, utxo.getValue().getTokenid());
-		walletAppKit.wallet().pay(null, destination.toString(), coinbase, "");
+		wallet.pay(null, destination.toString(), coinbase, "");
 
 		log.info("req block, hex : " + Utils.HEX.encode(rollingBlock.bitcoinSerialize()));
 		makeRewardBlock();
@@ -407,17 +405,13 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
 	@Test
 	public void createTransaction() throws Exception {
-		testInitWallet();
-		wallet1();
-		wallet2();
-
- 
+		 
 
 		Address destination = Address.fromBase58(networkParameters, "1NWN57peHapmeNq1ndDeJnjwPmC56Z6x8j");
 
 		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
 
-		List<Block> rollingBlock= walletAppKit.wallet().pay(null, destination.toString(), amount, "");
+		List<Block> rollingBlock= wallet.pay(null, destination.toString(), amount, "");
 
 		log.info("req block, hex : " + rollingBlock.get(0));
 
