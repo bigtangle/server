@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -29,7 +29,7 @@ public class BeforeStartup {
 		/*
 		 * At Start read server info list
 		 */
-		String path = "d:/java/serverinfo.json";
+		String path = "./log/serverinfo.json";
 		File file = new File(path);
 		if (file.exists()) {
 			String jsonString = file2String(file);
@@ -50,11 +50,27 @@ public class BeforeStartup {
 				}
 
 			}
+		} else {
+			initSetting();
 		}
 
 	}
 
-	public static String file2String(final File file) throws IOException {
+	public void initSetting() {
+		if (DispatcherController.serverinfoList != null) {
+			ServerInfo serverInfo = new ServerInfo();
+			serverInfo.setUrl("https://81.169.156.203:8089/");
+			serverInfo.setServertype("");
+			serverInfo.setStatus("active");
+
+			List<ServerInfo> serverinfoList = new ArrayList<ServerInfo>();
+			serverinfoList.add(serverInfo);
+			DispatcherController.serverinfoList = serverinfoList;
+		}
+
+	}
+
+	public String file2String(final File file) throws IOException {
 		if (file.exists()) {
 			byte[] data = new byte[(int) file.length()];
 			boolean result;

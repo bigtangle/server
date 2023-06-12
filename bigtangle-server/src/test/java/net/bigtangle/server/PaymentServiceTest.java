@@ -7,6 +7,7 @@ package net.bigtangle.server;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -74,7 +75,8 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 	}
 
 	public void multiSigns(ECKey receiverkey, List<ECKey> wallet1Keys_part) throws Exception {
-		payBigTo(wallet1Keys_part.get(0), Coin.FEE_DEFAULT.getValue(),null);
+		payBigTo(wallet1Keys_part.get(0), Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(2)),null);
+		
 		List<UTXO> ulist = getBalance(false, wallet1Keys_part);
 
 		TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0));
@@ -82,13 +84,14 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
 		Coin amount1 = Coin.valueOf(3, NetworkParameters.BIGTANGLE_TOKENID);
 
-		Coin amount2 = multisigOutput.getValue().subtract(amount1);
+		Coin outputCoin = multisigOutput.getValue().subtract(amount1).subtract(Coin.FEE_DEFAULT);
 
 		Transaction transaction0 = new Transaction(networkParameters);
-		transaction0.addOutput(amount1, receiverkey);
-		// add remainder back
 		Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_part);
-		transaction0.addOutput(amount2, scriptPubKey);
+		transaction0.addOutput(amount1, scriptPubKey);
+		// add remainder back
+	
+	//	transaction0.addOutput(outputCoin, ulist.get(0).getAddress());
 
 		transaction0.addInput(ulist.get(0).getBlockHash(), multisigOutput);
 

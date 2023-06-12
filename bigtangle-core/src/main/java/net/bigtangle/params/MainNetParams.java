@@ -82,8 +82,7 @@ public class MainNetParams extends AbstractBitcoinNetParams {
     }
 
     public String[] serverSeeds() {
-        return new String[] { "https://81.169.156.203:8088/", "https://61.181.128.236:8088/",
-                "https://61.181.128.230:8088/" };
+        return new String[] { "https://81.169.156.203:8089/" };
 
     }
 

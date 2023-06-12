@@ -50,8 +50,8 @@ public class SyncBlockService {
 	public void startSingleProcess() throws BlockStoreException, JsonProcessingException, IOException {
 
 		log.debug(" Start syncServerInfo  : ");
-		// syncServerInfo();
-
+		 // syncServerInfo();
+		localFileServerInfoWrite();
 		log.debug(" end syncServerInfo: ");
 
 	}
@@ -62,7 +62,7 @@ public class SyncBlockService {
 	public void localFileServerInfoWrite() throws JsonProcessingException, IOException {
 
 		if (DispatcherController.serverinfoList != null) {
-			String path = "d:/java/serverinfo.json";
+			String path = "./log/serverinfo.json";
 			File file = new File(path);
 			if (file.exists()) {
 				file.delete();
@@ -73,6 +73,8 @@ public class SyncBlockService {
 
 	}
 
+	 
+		
 	public static File writeString2File(String Data, String filePath)
 
 	{
