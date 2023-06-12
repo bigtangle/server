@@ -180,6 +180,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 	public void testPartsToOne() throws Exception {
 
 		ECKey to = new ECKey();
+		payBigTo(to, Coin.FEE_DEFAULT.getValue(), null);
 		Wallet w= Wallet.fromKeys(networkParameters, to,contextRoot);
 		Coin aCoin = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
 		testPartsToOne(aCoin, to);

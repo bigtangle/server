@@ -261,7 +261,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 			for (ECKey key : list) {
 				giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount);
 			}
-			Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), "pay to user");
+			Block b = wallet.payToList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), "pay to user");
 			// log.debug("block " + (b == null ? "block is null" : b.toString()));
 			makeRewardBlock();
 		}
@@ -279,7 +279,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 			for (ECKey key : list) {
 				giveMoneyResult.put(key.toAddress(networkParameters).toString(), BigInteger.valueOf(10000));
 			}
-			Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
+			Block b = wallet.payToList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
 					"pay to user");
 			// log.debug("block " + (b == null ? "block is null" : b.toString()));
 			makeRewardBlock();

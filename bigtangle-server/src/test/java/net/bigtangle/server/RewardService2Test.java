@@ -136,7 +136,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 
 	public void testToken(List<Block> blocksAddedAll) throws Exception {
 
-		blocksAddedAll.add(testCreateToken(wallet.walletKeys().get(0), "test"));
+		testCreateToken(wallet.walletKeys().get(0), "test", blocksAddedAll);
 		makeRewardBlock(blocksAddedAll);
 
 		// testCreateToken(walletAppKit.wallet().walletKeys().get(1));

@@ -1713,7 +1713,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
 		try {
-			return payMoneyToECKeyListNoSplit(aesKey, giveMoneyResult, tokenid, memo, filterTokenid(tokenid, coinList));
+			return payToList(aesKey, giveMoneyResult, tokenid, memo, filterTokenid(tokenid, coinList));
 		} catch (InsufficientMoneyException e) {
 			log.debug(
 					" InsufficientMoneyException  " + giveMoneyResult + " repeat time =" + repeat + " sleep=" + sleep);
@@ -1750,10 +1750,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
 	// pay the tokenid from the list HashMap<String, Long> giveMoneyResult of
 	// address and amount and return the remainder back to fromkey.
-	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, byte[] tokenid,
+	public Block payToList(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, byte[] tokenid,
 			String memo)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-		return payMoneyToECKeyListNoSplit(aesKey, giveMoneyResult, tokenid, memo,
+		return payToList(aesKey, giveMoneyResult, tokenid, memo,
 				calculateAllSpendCandidates(aesKey, false));
 	}
 
@@ -1879,14 +1879,14 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		return parts;
 	}
 
-	public Block payMoneyToECKeyListNoSplit(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, byte[] tokenid,
+	public Block payToList(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, byte[] tokenid,
 			String memo, List<FreeStandingTransactionOutput> coinList)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
 
 		if (giveMoneyResult.isEmpty()) {
 			return null;
 		}
-		Transaction multispent = payMoneyToECKeyListNoSplitTransaction(aesKey, giveMoneyResult, tokenid, memo,
+		Transaction multispent = payToListTransaction(aesKey, giveMoneyResult, tokenid, memo,
 				coinList);
 
 		HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -1898,7 +1898,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		return solveAndPost(rollingBlock);
 	}
 
-	public Transaction payMoneyToECKeyListNoSplitTransaction(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult,
+	public Transaction payToListTransaction(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult,
 			byte[] tokenid, String memo, List<FreeStandingTransactionOutput> coinList)
 			throws UTXOProviderException, InsufficientMoneyException {
 		Coin summe = Coin.valueOf(0, tokenid);

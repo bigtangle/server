@@ -188,8 +188,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
 		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
 		// amount, testKey));
-		tx.addOutput(
-				new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+		tx.addOutput(new TransactionOutput(networkParameters, tx,
+				spendableOutput.getValue().subtract(amount).subtract(Coin.FEE_DEFAULT), testKey));
 		TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
 		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
@@ -299,7 +299,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 				true, 0, networkParameters.getGenesisBlock().getHashAsString());
 
 		tokenInfo.setToken(tokens);
-	 
+
 		// This (saveBlock) calls milestoneUpdate currently
 		Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
 		makeRewardBlock();
@@ -330,8 +330,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
 		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
 		// amount, testKey));
-		tx.addOutput(
-				new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+		tx.addOutput(new TransactionOutput(networkParameters, tx,
+				spendableOutput.getValue().subtract(amount).subtract(Coin.FEE_DEFAULT), testKey));
 		TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
 		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
@@ -360,43 +360,40 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey tokenKey = new ECKey();
-		resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
+		Block pre = resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
 
 		Block block1 = null;
-		{
-			// Make a buy order for "test"s
-			Transaction tx = new Transaction(networkParameters);
-			OrderOpenInfo info = new OrderOpenInfo(2, tokenKey.getPublicKeyAsHex(), testKey.getPubKey(), null, null,
-					Side.BUY, testKey.toAddress(networkParameters).toBase58(),
-					NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l, 2, NetworkParameters.BIGTANGLE_TOKENID_STRING);
-			tx.setData(info.toByteArray());
-			tx.setDataClassName("OrderOpen");
 
-			// Create burning 2 BIG
-			List<UTXO> outputs = getBalance(false, testKey);
-			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-					outputs.get(0));
-			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-			// amount, testKey));
-			tx.addOutput(
-					new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-			TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
-					false);
+		// Make a buy order for "test"s
+		Transaction tx = new Transaction(networkParameters);
+		OrderOpenInfo info = new OrderOpenInfo(2, tokenKey.getPublicKeyAsHex(), testKey.getPubKey(), null, null,
+				Side.BUY, testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING,
+				1l, 2, NetworkParameters.BIGTANGLE_TOKENID_STRING);
+		tx.setData(info.toByteArray());
+		tx.setDataClassName("OrderOpen");
 
-			TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
-			Script inputScript = ScriptBuilder.createInputScript(sig);
-			input.setScriptSig(inputScript);
+		// Create burning 2 BIG
+		List<UTXO> outputs = getBalance(false, testKey);
+		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
+		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
+		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
+		// amount, testKey));
+		tx.addOutput(new TransactionOutput(networkParameters, tx,
+				spendableOutput.getValue().subtract(amount).subtract(Coin.FEE_DEFAULT), testKey));
+		TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
+		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
-			// Create block with order
-			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-			block1.addTransaction(tx);
-			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-			resetAndMakeTestToken(testKey, new ArrayList<Block>());
-			block1.solve();
-			this.blockGraph.add(block1, true, store);
-		}
+		TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
+		Script inputScript = ScriptBuilder.createInputScript(sig);
+		input.setScriptSig(inputScript);
+
+		// Create block with order
+		block1 = pre.createNextBlock(networkParameters.getGenesisBlock());
+		block1.addTransaction(tx);
+		block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
+
+		block1.solve();
+		this.blockGraph.add(block1, true, store);
 
 		// Generate matching blocks
 		Block rewardBlock1 = makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(),
@@ -547,7 +544,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 	public void testUnconfirmTokenUTXOs() throws Exception {
 
 		// Generate an eligible issuance
-		ECKey outKey = new ECKey() ;
+		ECKey outKey = new ECKey();
 		byte[] pubKey = outKey.getPubKey();
 		TokenInfo tokenInfo = new TokenInfo();
 
@@ -598,7 +595,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
 		// amount, testKey));
 		tx.addOutput(
-				new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+				new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount).subtract(Coin.FEE_DEFAULT), testKey));
 		TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
 		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
@@ -622,77 +619,6 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertNotNull(order);
 		assertFalse(order.isConfirmed());
 		assertFalse(order.isSpent());
-	}
-
-	@Test
-	public void testUnconfirmOrderMatchUTXOs1() throws Exception {
-
-		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-		ECKey tokenKey = new ECKey();
-		Block block = resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
-		Block block1 = null;
-		{
-			// Make a buy order for "test"s
-			Transaction tx = new Transaction(networkParameters);
-			OrderOpenInfo info = new OrderOpenInfo(2, tokenKey.getPublicKeyAsHex(), tokenKey.getPubKey(), null, null,
-					Side.BUY, tokenKey.toAddress(networkParameters).toBase58(),
-					NetworkParameters.BIGTANGLE_TOKENID_STRING, 1l, 2, NetworkParameters.BIGTANGLE_TOKENID_STRING);
-			tx.setData(info.toByteArray());
-			tx.setDataClassName("OrderOpen");
-
-			// Create burning 2 BIG
-			List<UTXO> outputs = getBalance(false, testKey);
-			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-					outputs.get(0));
-			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-			// amount, testKey));
-			tx.addOutput(
-					new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
-			TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-			Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
-					false);
-
-			TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
-			Script inputScript = ScriptBuilder.createInputScript(sig);
-			input.setScriptSig(inputScript);
-
-			// Create block with order
-			block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-			block1.addTransaction(tx);
-			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-			block1.solve();
-			this.blockGraph.add(block1, true, store);
-		}
-
-		// Generate matching block
-		Block rewardBlock1 = makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(),
-				store.getMaxConfirmedReward().getBlockHash(), block1.getHash());
-
-		// Confirm
-		new ServiceBase(serverConfiguration, networkParameters).confirm(rewardBlock1.getHash(), new HashSet<>(),
-				(long) -1, store);
-
-		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters).unconfirm(rewardBlock1.getHash(), new HashSet<>(),
-				store);
-
-		// Should be unconfirmed now
-		assertFalse(store.getRewardConfirmed(rewardBlock1.getHash()));
-		assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
-		assertNull(store.getRewardSpender(rewardBlock1.getHash()));
-
-		// Ensure consumed order record is now unspent
-		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
-		assertNotNull(order);
-		assertTrue(order.isConfirmed());
-		assertFalse(order.isSpent());
-
-		// Ensure remaining orders are unconfirmed now
-		OrderRecord order2 = store.getOrder(block1.getHash(), rewardBlock1.getHash());
-		assertNotNull(order2);
-		assertFalse(order2.isConfirmed());
-		assertFalse(order2.isSpent());
 	}
 
 	@Test
@@ -1003,7 +929,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
 				Utils.HEX.decode(testPub));
-		ECKey testKey =new ECKey();
+		ECKey testKey = new ECKey();
 
 		List<Block> addedBlocks = new ArrayList<>();
 

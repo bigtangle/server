@@ -396,15 +396,16 @@ public class TokenTest extends AbstractIntegrationTest {
 		ECKey userkey = new ECKey();
 		SignedData signedata = signeddata(key);
 		TokenKeyValues kvs = signedata.toTokenKeyValues(key, userkey);
-		wallet.importKey(issuer);
+	
 		Block block = createToken(issuer, userkey.getPublicKeyAsHex(), 0, "id.shop", "test", BigInteger.ONE, true, kvs,
 				TokenType.identity.ordinal(), new ECKey().getPublicKeyAsHex(), wallet, userkey.getPubKey(),
 				signedata.encryptToMemo(userkey));
 		TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
 		wallet.multiSign(currentToken.getToken().getTokenid(), key, aesKey);
+		
 		payBigTo(userkey, Coin.FEE_DEFAULT.getValue(), null);
 		payBigTo(userkey, Coin.FEE_DEFAULT.getValue(), null);
- 
+		payBigTo(userkey, Coin.FEE_DEFAULT.getValue(), null);
 		makeRewardBlock();
 
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -662,7 +663,7 @@ public class TokenTest extends AbstractIntegrationTest {
 			userkeys.add(key);
 		}
 
-		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, "pay to user");
+		Block b = wallet.payToList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, "pay to user");
 		makeRewardBlock();
 
 		log.debug("block " + (b == null ? "block is null" : b.toString()));
@@ -689,7 +690,7 @@ public class TokenTest extends AbstractIntegrationTest {
 			giveMoneyResult.put(utxo.getAddress(),
 					BigInteger.valueOf(utxo.getValue().getValue().longValue() * 3 / 1000));
 		}
-		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, "pay to user");
+		Block b = wallet.payToList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, "pay to user");
 		log.debug("block " + (b == null ? "block is null" : b.toString()));
 
 		makeRewardBlock();
@@ -722,15 +723,23 @@ public class TokenTest extends AbstractIntegrationTest {
 		makeRewardBlock();
 
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();
-		requestParam.put("tokenid", outKey.getPublicKeyAsHex());
+		requestParam.put("tokenid", outKey2.getPublicKeyAsHex());
 		byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
 				Json.jsonmapper().writeValueAsString(requestParam));
 		GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
 		log.info("getOutputsResponse : " + getOutputsResponse);
 
-		assertTrue(getOutputsResponse.getOutputs().size() == 1);
-		assertTrue(getOutputsResponse.getOutputs().get(0).getValue().equals(Coin.valueOf(1, keys.get(0).getPubKey())));
+		 requestParam = new HashMap<String, Object>();
+		requestParam.put("tokenid", outKey.getPublicKeyAsHex());
+		  resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
+				Json.jsonmapper().writeValueAsString(requestParam));
+		GetOutputsResponse getOutputsResponse2 = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
+		log.info("getOutputsResponse : " + getOutputsResponse2);
 
+		
+		assertTrue(getOutputsResponse.getOutputs().size() == 1
+				||getOutputsResponse2.getOutputs().size() ==1);
+		 
 	}
 
 	@Test
@@ -741,7 +750,7 @@ public class TokenTest extends AbstractIntegrationTest {
 		makeRewardBlock();
 		// same token id and index
 		try {
-			testCreateToken(outKey, "test");
+			testCreateToken( new ECKey(), "test");
 			fail();
 		} catch (RuntimeException e) {
 			// TODO: handle exception

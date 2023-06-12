@@ -481,9 +481,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	@Test
 	public void buyBaseTokenSmallRemainder() throws Exception {
 		ECKey testKey = new ECKey();
-		;
+	 
 		List<Block> addedBlocks = new ArrayList<>();
-
+		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(), addedBlocks);
 		// base token
 		ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
 		int priceshift = 1000000;

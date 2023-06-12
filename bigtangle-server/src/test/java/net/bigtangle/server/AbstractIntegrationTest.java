@@ -218,7 +218,7 @@ public abstract class AbstractIntegrationTest {
 		giveMoneyTestToken.put(beneficiary.toAddress(networkParameters).toString(), amount);
 		Wallet w = Wallet.fromKeys(networkParameters, testKey, contextRoot);
 
-		Block b = w.payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "");
+		Block b = w.payToList(null, giveMoneyTestToken, testKey.getPubKey(), "");
 		// log.debug("block " + (b == null ? "block is null" : b.toString()));
 
 		addedBlocks.add(b);
@@ -233,7 +233,7 @@ public abstract class AbstractIntegrationTest {
 		giveMoneyTestToken.put(testKey.toAddress(networkParameters).toString(), amount);
 		Wallet w = Wallet.fromKeys(networkParameters, testKey, contextRoot);
 
-		Block b = w.payMoneyToECKeyList(null, giveMoneyTestToken, testKey.getPubKey(), "");
+		Block b = w.payToList(null, giveMoneyTestToken, testKey.getPubKey(), "");
 		// log.debug("block " + (b == null ? "block is null" : b.toString()));
 
 		addedBlocks.add(b);
@@ -742,11 +742,16 @@ public abstract class AbstractIntegrationTest {
 		return getBalance(withZero, keys);
 	}
 
-	protected Block testCreateToken(ECKey outKey, String tokennameName) throws JsonProcessingException, Exception {
-		return testCreateToken(outKey, tokennameName, networkParameters.getGenesisBlock().getHashAsString());
+	protected Block testCreateToken(ECKey outKey, String tokennameName, List<Block> blocksAddedAll) throws JsonProcessingException, Exception {
+		return testCreateToken(outKey, tokennameName, networkParameters.getGenesisBlock().getHashAsString(),  blocksAddedAll);
 	}
 
-	protected Block testCreateToken(ECKey outKey, String tokennameName, String domainpre)
+	
+	protected Block testCreateToken(ECKey outKey, String tokennameName) throws JsonProcessingException, Exception {
+		return testCreateToken(outKey, tokennameName, networkParameters.getGenesisBlock().getHashAsString(),null);
+	}
+
+	protected Block testCreateToken(ECKey outKey, String tokennameName, String domainpre, List<Block> blocksAddedAll)
 			throws JsonProcessingException, Exception {
 		// ECKey outKey = walletKeys.get(0);
 		byte[] pubKey = outKey.getPubKey();
@@ -776,10 +781,12 @@ public abstract class AbstractIntegrationTest {
 			}
 		}
 
-		wallet.saveToken(tokenInfo, basecoin, outKey, null);
+		Block b=wallet.saveToken(tokenInfo, basecoin, outKey, null);
+		if(blocksAddedAll!=null) blocksAddedAll.add(b);
 
-		return this.pullBlockDoMultiSign(tokenid, outKey, aesKey);
-
+		Block re= this.pullBlockDoMultiSign(tokenid, outKey, aesKey);
+		if(blocksAddedAll!=null) blocksAddedAll.add(re);
+		 return re;
 	}
 
 	protected void checkResponse(byte[] resp) throws JsonParseException, JsonMappingException, IOException {
