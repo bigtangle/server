@@ -1,17 +1,10 @@
 server:
   port: ${SERVER_PORT:8089}
-  net: ${SERVER_NET:Unittest}
-  requester: ${REQUESTER:}
-  mineraddress: ${SERVER_MINERADDRESS:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
-  serverversion: ${SERVERVERSION:0.3.0}
-  clientversion: ${CLIENTVERSION:0.3.0}
   ssl:
-    enabled: ${SSL:false}
+    enabled: ${SSL:true}
     key-store: ${KEYSTORE:src/main/resources/ca.pkcs12}
     key-store-password: ${KEYSTOREPW:changeit}
     keyStoreType: ${KEYSTORETYPE:PKCS12}
-  permissioned: ${PERMISSIONED:false}
-  permissionadmin: ${PERMISSIONADMIN:mjWvzPZz4YJtWqb7ux7cdgq5G7rzkg3bXG}
 
 management:
   metrics:
