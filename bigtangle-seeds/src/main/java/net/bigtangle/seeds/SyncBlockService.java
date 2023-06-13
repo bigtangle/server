@@ -62,7 +62,7 @@ public class SyncBlockService {
 	public void localFileServerInfoWrite() throws JsonProcessingException, IOException {
 
 		if (DispatcherController.serverinfoList != null) {
-			String path = "./log/serverinfo.json";
+			String path = DispatcherController.PATH;;
 			File file = new File(path);
 			if (file.exists()) {
 				file.delete();
@@ -115,7 +115,7 @@ public class SyncBlockService {
 			bufferedWriter.close();
 
 		} catch (Exception e) {
-
+			e.printStackTrace();
 		}
 
 		return distFile;

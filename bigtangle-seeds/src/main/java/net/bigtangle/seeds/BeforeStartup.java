@@ -29,7 +29,7 @@ public class BeforeStartup {
 		/*
 		 * At Start read server info list
 		 */
-		String path = "./log/serverinfo.json";
+		String path = DispatcherController.PATH;
 		File file = new File(path);
 		if (file.exists()) {
 			String jsonString = file2String(file);
@@ -57,7 +57,7 @@ public class BeforeStartup {
 	}
 
 	public void initSetting() {
-		if (DispatcherController.serverinfoList != null) {
+		if (DispatcherController.serverinfoList == null) {
 			ServerInfo serverInfo = new ServerInfo();
 			serverInfo.setUrl("https://81.169.156.203:8089/");
 			serverInfo.setServertype("");

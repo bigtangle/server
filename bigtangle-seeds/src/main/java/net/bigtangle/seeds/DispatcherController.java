@@ -46,6 +46,7 @@ public class DispatcherController {
 	private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
 
 	public static List<ServerInfo> serverinfoList;
+	public static String PATH="./logs/serverinfo.json";
 	@Autowired
 	protected SyncBlockService syncBlockService;
 
