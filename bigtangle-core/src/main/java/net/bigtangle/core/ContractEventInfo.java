@@ -21,7 +21,6 @@ public class ContractEventInfo extends DataClass implements java.io.Serializable
 
 	private static final long FROMTIME = System.currentTimeMillis() / 1000 - 5;
 
- 
 	// valid until this date, maximum is set in Network parameter
 	private Long validToTime;
 	// valid from this date, maximum is set in Network parameter
@@ -68,30 +67,14 @@ public class ContractEventInfo extends DataClass implements java.io.Serializable
 
 			dos.writeLong(validToTime);
 			dos.writeLong(validFromTime);
-  
-			dos.writeBoolean(beneficiaryAddress != null);
-			if (beneficiaryAddress != null) {
-				dos.writeInt(beneficiaryAddress.getBytes("UTF-8").length);
-				dos.write(beneficiaryAddress.getBytes("UTF-8"));
-			}
+
+			Utils.writeNBytesString(dos, beneficiaryAddress);
+
+			Utils.writeNBytesString(dos, offerTokenid);
+			Utils.writeNBytesString(dos, contractTokenid);
+			Utils.writeNBytesString(dos, offerSystem);
+
 			Utils.writeNBytes(dos, offerValue.toByteArray());
-			if (offerTokenid != null) {
-				dos.writeInt(offerTokenid.getBytes("UTF-8").length);
-				dos.write(offerTokenid.getBytes("UTF-8"));
-			}
-
-			dos.writeBoolean(contractTokenid != null);
-			if (contractTokenid != null) {
-				dos.writeInt(contractTokenid.getBytes("UTF-8").length);
-				dos.write(contractTokenid.getBytes("UTF-8"));
-			}
-
-			dos.writeBoolean(offerSystem != null);
-			if (offerSystem != null) {
-				dos.writeInt(offerSystem.getBytes("UTF-8").length);
-				dos.write(offerSystem.getBytes("UTF-8"));
-			}
-
 			dos.close();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -103,12 +86,12 @@ public class ContractEventInfo extends DataClass implements java.io.Serializable
 		super.parseDIS(dis);
 
 		validToTime = dis.readLong();
-		validFromTime = dis.readLong(); 
+		validFromTime = dis.readLong();
 		beneficiaryAddress = Utils.readNBytesString(dis);
-		offerValue = new BigInteger(Utils.readNBytes(dis));
+		offerTokenid = Utils.readNBytesString(dis);
 		contractTokenid = Utils.readNBytesString(dis);
 		offerSystem = Utils.readNBytesString(dis);
-
+		offerValue = new BigInteger(Utils.readNBytes(dis));
 		return this;
 	}
 
@@ -130,7 +113,6 @@ public class ContractEventInfo extends DataClass implements java.io.Serializable
 			throw new RuntimeException();
 		}
 	}
- 
 
 	public Long getValidToTime() {
 		return validToTime;
@@ -186,6 +168,13 @@ public class ContractEventInfo extends DataClass implements java.io.Serializable
 
 	public void setOfferSystem(String offerSystem) {
 		this.offerSystem = offerSystem;
+	}
+
+	@Override
+	public String toString() {
+		return "ContractEventInfo [validToTime=" + validToTime + ", validFromTime=" + validFromTime
+				+ ", beneficiaryAddress=" + beneficiaryAddress + ", offerValue=" + offerValue + ", offerTokenid="
+				+ offerTokenid + ", contractTokenid=" + contractTokenid + ", offerSystem=" + offerSystem + "]";
 	}
 
 }

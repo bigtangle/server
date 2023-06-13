@@ -346,11 +346,9 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    contracttokenid varchar(255),\n" 
              + "   targetcoinvalue mediumblob,\n" 
             + "    targettokenid varchar(255),\n" 
-                // public address
-            + "    beneficiaryaddress varchar(255),\n" 
-                // the pubkey that will receive the targettokens
+                // public address  will receive the targettokens
                 // on completion or returned   tokens on cancels 
-            + "    beneficiarypubkey binary(33),\n"
+            + "    beneficiaryaddress varchar(255),\n" 
                //  valid until this time
             + "    validToTime bigint,\n" 
             + "    validFromTime bigint,\n" 

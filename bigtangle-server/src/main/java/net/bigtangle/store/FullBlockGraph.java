@@ -796,9 +796,9 @@ public class FullBlockGraph {
 					reqInfo.getContractTokenid(), false, false, null, reqInfo.getOfferValue(),
 					reqInfo.getOfferTokenid(),  reqInfo.getValidToTime(),
 					reqInfo.getValidFromTime(), reqInfo.getBeneficiaryAddress());
-			List<ContractEventRecord> orders = new ArrayList<ContractEventRecord>();
-			orders.add(record);
-			blockStore.insertContractEvent(orders);
+			List<ContractEventRecord> contracts = new ArrayList<ContractEventRecord>();
+			contracts.add(record);
+			blockStore.insertContractEvent(contracts);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

@@ -37,7 +37,7 @@ public class ContractTest extends AbstractIntegrationTest {
         HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
         // Open buy order for test tokens
-        makeAndConfirmPayContract(genesisKey,  NetworkParameters.BIGTANGLE_TOKENID_STRING , new BigInteger("1000"), testTokenId, addedBlocks);
+        makeAndConfirmPayContract(genesisKey,  NetworkParameters.BIGTANGLE_TOKENID_STRING , new BigInteger("8888"), testTokenId, addedBlocks);
        
 
 
