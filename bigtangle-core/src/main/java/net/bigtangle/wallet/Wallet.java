@@ -2143,8 +2143,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
 		if (t.getTokenid().equals(orderBaseToken))
 			throw new OrderImpossibleException("sell token is not allowed as base token ");
-		// Burn tokens to sell
-		Coin myCoin = Coin.valueOf(offervalue, t.getTokenid()).negate();
+		
 		List<FreeStandingTransactionOutput> candidates = calculateAllSpendCandidates(aesKey, false);
 
 		return sellOrder(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken, allowRemainder,
@@ -2284,7 +2283,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		// add client check if the tokenid exists
 		// Token t = checkTokenId(tokenId);
 		// Burn BIG to buy
+
+		
+
 		Coin amount = new Coin(payAmount, tokenId).negate();
+		
+		if (getFee() && NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenId)) {
+			amount = amount.add(Coin.FEE_DEFAULT.negate());
+		}
+		
 		Transaction tx = new Transaction(params);
 		List<FreeStandingTransactionOutput> coinList = calculateAllSpendCandidates(aesKey, false);
 		ECKey beneficiary = null;
@@ -2315,7 +2322,10 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		// block = predecessor.createNextBlock();
 		block.addTransaction(tx);
 		block.setBlockType(Type.BLOCKTYPE_CONTRACT_EVENT);
-
+		
+		if (getFee() && !NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenId)) {
+			block.addTransaction(feeTransaction(aesKey, coinList));
+		}
 		return solveAndPost(block);
 	}
 
