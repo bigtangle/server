@@ -163,7 +163,10 @@ public class DispatcherController {
 			watch.stop();
 		}
 	}
-
+    @RequestMapping("/")
+    public String index() {
+        return "Bigtangle-seeds";
+    }
 	public void gzipBinary(HttpServletResponse httpServletResponse, List<ServerInfo> response) throws Exception {
 		GZIPOutputStream servletOutputStream = new GZIPOutputStream(httpServletResponse.getOutputStream());
 
