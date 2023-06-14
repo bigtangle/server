@@ -26,6 +26,7 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.AbstractIntegrationTest;
+import net.bigtangle.store.FullBlockService;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @RunWith(SpringRunner.class)
@@ -45,7 +46,7 @@ public class ConflictTest extends AbstractIntegrationTest {
 
             Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                     networkParameters.getGenesisBlock(), doublespendTX);
-            blockGraph.add(b1, true, store);
+            new FullBlockService(serverConfiguration,networkParameters) .add(b1, true, store);
             sendEmpty(3);
             // add blocks and want to get fast resolve of double spending
             mcmcServiceUpdate();

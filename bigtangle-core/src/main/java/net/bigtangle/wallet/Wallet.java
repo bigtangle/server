@@ -267,7 +267,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		addTransactionSigner(new LocalTransactionSigner());
 		if (url == null) {
 			this.serverPool = new ServerPool(params);
-		}else {
+		} else {
 			setServerURL(url);
 		}
 	}
@@ -1753,8 +1753,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 	public Block payToList(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, byte[] tokenid,
 			String memo)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, UTXOProviderException {
-		return payToList(aesKey, giveMoneyResult, tokenid, memo,
-				calculateAllSpendCandidates(aesKey, false));
+		return payToList(aesKey, giveMoneyResult, tokenid, memo, calculateAllSpendCandidates(aesKey, false));
 	}
 
 	public List<Block> payFromList(KeyParameter aesKey, String destination, Coin amount, MemoInfo memo)
@@ -1886,8 +1885,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		if (giveMoneyResult.isEmpty()) {
 			return null;
 		}
-		Transaction multispent = payToListTransaction(aesKey, giveMoneyResult, tokenid, memo,
-				coinList);
+		Transaction multispent = payToListTransaction(aesKey, giveMoneyResult, tokenid, memo, coinList);
 
 		HashMap<String, String> requestParam = new HashMap<String, String>();
 		byte[] data = OkHttp3Util.postAndGetBlock(getServerURL() + ReqCmd.getTip,
@@ -2143,7 +2141,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			throws IOException, InsufficientMoneyException, UTXOProviderException, NoTokenException {
 		if (t.getTokenid().equals(orderBaseToken))
 			throw new OrderImpossibleException("sell token is not allowed as base token ");
-		
+
 		List<FreeStandingTransactionOutput> candidates = calculateAllSpendCandidates(aesKey, false);
 
 		return sellOrder(aesKey, t, sellPrice, offervalue, validToTime, validFromTime, orderBaseToken, allowRemainder,
@@ -2284,18 +2282,17 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		// Token t = checkTokenId(tokenId);
 		// Burn BIG to buy
 
-		
-
 		Coin amount = new Coin(payAmount, tokenId).negate();
-		
+
 		if (getFee() && NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenId)) {
 			amount = amount.add(Coin.FEE_DEFAULT.negate());
 		}
-		
+
 		Transaction tx = new Transaction(params);
 		List<FreeStandingTransactionOutput> coinList = calculateAllSpendCandidates(aesKey, false);
 		ECKey beneficiary = null;
-		for (FreeStandingTransactionOutput spendableOutput : coinList) {
+		for (FreeStandingTransactionOutput spendableOutput : filterTokenid(amount.getTokenid(), coinList)) {
+
 			beneficiary = getECKey(aesKey, spendableOutput.getUTXO().getAddress());
 			amount = spendableOutput.getValue().add(amount);
 			tx.addInput(spendableOutput.getUTXO().getBlockHash(), spendableOutput);
@@ -2322,7 +2319,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		// block = predecessor.createNextBlock();
 		block.addTransaction(tx);
 		block.setBlockType(Type.BLOCKTYPE_CONTRACT_EVENT);
-		
+
 		if (getFee() && !NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenId)) {
 			block.addTransaction(feeTransaction(aesKey, coinList));
 		}
@@ -2616,7 +2613,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 				Json.jsonmapper().writeValueAsString(requestParam));
 
 		MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
-		if( multiSignResponse.getMultiSigns()==null || multiSignResponse.getMultiSigns().isEmpty()) return;
+		if (multiSignResponse.getMultiSigns() == null || multiSignResponse.getMultiSigns().isEmpty())
+			return;
 		MultiSign multiSign = multiSignResponse.getMultiSigns().get(0);
 
 		byte[] payloadBytes = Utils.HEX.decode((String) multiSign.getBlockhashHex());

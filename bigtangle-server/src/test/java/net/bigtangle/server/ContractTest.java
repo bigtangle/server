@@ -48,7 +48,7 @@ public class ContractTest extends AbstractIntegrationTest {
         // Verify token amount invariance
      //   assertCurrentTokenAmountEquals(origTokenAmounts);
 
-        // Verify deterministic overall execution
+       
 
     }
  
