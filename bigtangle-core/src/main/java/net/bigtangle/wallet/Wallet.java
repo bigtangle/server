@@ -1820,6 +1820,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		Transaction multispent = payFromListNoSplitTransaction(aesKey, destination, amount, memo, coinList);
 		tipBlock.addTransaction(multispent);
 
+		if (getFee() && !amount.isBIG()) {
+			// add big fee
+			tipBlock.addTransaction(feeTransaction(aesKey, coinList));
+		}
+		
 		return tipBlock;
 
 	}

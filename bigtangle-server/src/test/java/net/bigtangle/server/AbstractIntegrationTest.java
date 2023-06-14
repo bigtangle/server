@@ -194,10 +194,7 @@ public abstract class AbstractIntegrationTest {
 		payTestTokenTo(beneficiary, testKey, amount, new ArrayList<>());
 	}
 
-	protected void payTestToken(ECKey testKey, BigInteger amount) throws Exception {
-		payTestToken(testKey, amount, new ArrayList<>());
-	}
-
+ 
 	protected void payBigTo(ECKey beneficiary, BigInteger amount, List<Block> addedBlocks) throws Exception {
 		HashMap<String, BigInteger> giveMoneyResult = new HashMap<String, BigInteger>();
 
@@ -226,11 +223,11 @@ public abstract class AbstractIntegrationTest {
 		// Open sell order for test tokens
 	}
 
-	protected void payTestToken(ECKey testKey, BigInteger amount, List<Block> addedBlocks) throws Exception {
+	protected void payTestToken(ECKey testKey, BigInteger amount, List<Block> addedBlocks, ECKey toKey) throws Exception {
 
 		HashMap<String, BigInteger> giveMoneyTestToken = new HashMap<String, BigInteger>();
 
-		giveMoneyTestToken.put(testKey.toAddress(networkParameters).toString(), amount);
+		giveMoneyTestToken.put(toKey.toAddress(networkParameters).toString(), amount);
 		Wallet w = Wallet.fromKeys(networkParameters, testKey, contextRoot);
 
 		Block b = w.payToList(null, giveMoneyTestToken, testKey.getPubKey(), "");
@@ -839,7 +836,7 @@ public abstract class AbstractIntegrationTest {
 		if (coin.getValue().compareTo(sum.getValue()) != 0) {
 			log.error(" expected: " + coin + " got: " + sum);
 		}
-		assertTrue(coin.getValue().compareTo(sum.getValue()) == 0);
+		assertTrue(coin+" "+ sum, coin.getValue().compareTo(sum.getValue()) == 0);
 
 	}
 
