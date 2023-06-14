@@ -134,16 +134,7 @@ public class DispatcherController {
 
 			}
 				break;
-			case getChainNumber: {
-				String reqStr = new String(bodyByte, "UTF-8");
-				Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
 
-				TXReward reward = syncBlockService.getMaxConfirmedReward(request.get("server").toString());
-				AbstractResponse response = ServerinfoResponse.create(serverinfoList);
-				this.gzipBinary(httpServletResponse, response);
-
-			}
-				break;
 
 			default:
 				break;

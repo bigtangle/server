@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,7 +51,7 @@ public class SyncBlockService {
 	public void startSingleProcess() throws BlockStoreException, JsonProcessingException, IOException {
 
 		log.debug(" Start syncServerInfo  : ");
-		 // syncServerInfo();
+		// syncServerInfo();
 		localFileServerInfoWrite();
 		log.debug(" end syncServerInfo: ");
 
@@ -62,7 +63,8 @@ public class SyncBlockService {
 	public void localFileServerInfoWrite() throws JsonProcessingException, IOException {
 
 		if (DispatcherController.serverinfoList != null) {
-			String path = DispatcherController.PATH;;
+			String path = DispatcherController.PATH;
+
 			File file = new File(path);
 			if (file.exists()) {
 				file.delete();
@@ -73,8 +75,6 @@ public class SyncBlockService {
 
 	}
 
-	 
-		
 	public static File writeString2File(String Data, String filePath)
 
 	{
@@ -115,7 +115,7 @@ public class SyncBlockService {
 			bufferedWriter.close();
 
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("", e);
 		}
 
 		return distFile;
@@ -134,23 +134,30 @@ public class SyncBlockService {
 			data = OkHttp3Util.post(s + ReqCmd.serverinfolist.name(),
 					Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 			ServerinfoResponse response = Json.jsonmapper().readValue(data, ServerinfoResponse.class);
+			checkChain(response);
 
 		}
-		// check each server data
 
 	}
 
 	private void checkChain(ServerinfoResponse response) throws JsonProcessingException, IOException {
 		// update the list DispatcherController.serverinfo;
-		long chainLength = 0;
+
 		if (response.getServerInfoList() != null) {
+			long chainLength = 0;
 			for (ServerInfo serverInfo : response.getServerInfoList()) {
-				TXReward txReward = getMaxConfirmedReward(serverInfo.getUrl());
-				if (txReward.getChainLength() >= chainLength) {
+				try {
+					TXReward txReward = getMaxConfirmedReward(serverInfo.getUrl());
 					chainLength = txReward.getChainLength();
+					serverInfo.status = "active";
+				} catch (Exception e) {
+					serverInfo.status = "inactive";
+					log.error("", e);
 				}
 
 			}
+			DispatcherController.serverinfoList = response.getServerInfoList();
+			localFileServerInfoWrite();
 		}
 	}
 
