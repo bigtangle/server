@@ -1,19 +1,19 @@
 package net.bigtangle.server.data;
 
-import java.util.Set;
+import java.util.List;
 
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 
 public class ContractResult {
-	Set<ContractEventRecord> spentContractEventRecord;
+	List<ContractEventRecord> spentContractEventRecord;
 	Transaction outputTx;
 
 	public ContractResult() {
 
 	}
 
-	public ContractResult(Set<ContractEventRecord> spentOrders, Transaction outputTx) {
+	public ContractResult(List<ContractEventRecord> spentOrders, Transaction outputTx) {
 		this.spentContractEventRecord = spentOrders;
 		this.outputTx = outputTx;
 
@@ -28,11 +28,11 @@ public class ContractResult {
 
  
 
-	public Set<ContractEventRecord> getSpentContractEventRecord() {
+	public List<ContractEventRecord> getSpentContractEventRecord() {
 		return spentContractEventRecord;
 	}
 
-	public void setSpentContractEventRecord(Set<ContractEventRecord> spentContractEventRecord) {
+	public void setSpentContractEventRecord(List<ContractEventRecord> spentContractEventRecord) {
 		this.spentContractEventRecord = spentContractEventRecord;
 	}
 

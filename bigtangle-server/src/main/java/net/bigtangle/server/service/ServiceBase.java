@@ -136,8 +136,8 @@ import net.bigtangle.utils.Json;
 
 public class ServiceBase {
 
-	private ServerConfiguration serverConfiguration;
-	private NetworkParameters networkParameters;
+	protected ServerConfiguration serverConfiguration;
+	protected NetworkParameters networkParameters;
 
 	private static final Logger logger = LoggerFactory.getLogger(ServiceBase.class);
 
@@ -4488,7 +4488,7 @@ public class ServiceBase {
 		return new OrderMatchingResult(toBeSpentOrders, tx, remainingOrders.values(), tokenId2Events);
 	}
 
-	private Transaction createOrderPayoutTransaction(Block block,
+	public Transaction createOrderPayoutTransaction(Block block,
 			TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts) {
 		Transaction tx = new Transaction(networkParameters);
 		for (Entry<ByteBuffer, TreeMap<String, BigInteger>> payout : payouts.entrySet()) {
@@ -4654,7 +4654,7 @@ public class ServiceBase {
 		}
 	}
 
-	private void payout(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts, byte[] beneficiaryPubKey,
+	protected void payout(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts, byte[] beneficiaryPubKey,
 			String tokenid, long tokenValue) {
 		TreeMap<String, BigInteger> proceeds = payouts.get(ByteBuffer.wrap(beneficiaryPubKey));
 		if (proceeds == null) {
