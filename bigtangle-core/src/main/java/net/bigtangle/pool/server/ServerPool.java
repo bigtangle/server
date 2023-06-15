@@ -72,6 +72,9 @@ public class ServerPool {
 			ServerinfoResponse response = Json.jsonmapper().readValue(data, ServerinfoResponse.class);
 			if (response.getServerInfoList() != null) {
 				for (ServerInfo serverInfo : response.getServerInfoList()) {
+					if (serverInfo.getStatus().equals("inactive")) {
+						continue;
+					}
 					try {
 						addServer(serverInfo.getUrl());
 					} catch (Exception e) {
