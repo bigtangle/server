@@ -44,8 +44,9 @@ public class BeforeStartup {
 					serverInfo.setStatus(jsonObject.getString("status"));
 					if (DispatcherController.serverinfoList == null) {
 						DispatcherController.serverinfoList = new ArrayList<ServerInfo>();
-						DispatcherController.serverinfoList.add(serverInfo);
+
 					}
+					DispatcherController.serverinfoList.add(serverInfo);
 
 				}
 
