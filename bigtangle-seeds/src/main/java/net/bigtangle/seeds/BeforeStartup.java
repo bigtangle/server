@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import jakarta.annotation.PostConstruct;
 
 @Component
@@ -65,8 +67,14 @@ public class BeforeStartup {
 			serverInfo.setStatus("active");
 
 			List<ServerInfo> serverinfoList = new ArrayList<ServerInfo>();
-			serverinfoList.add(serverInfo);
-			DispatcherController.serverinfoList = serverinfoList;
+			try {
+				SyncBlockService.getMaxConfirmedReward(serverInfo.getUrl());
+				serverinfoList.add(serverInfo);
+				DispatcherController.serverinfoList = serverinfoList;
+			} catch (Exception e) {
+				logger.error("", e);
+			}
+
 		}
 
 	}

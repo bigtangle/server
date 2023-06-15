@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.seeds;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Stopwatch;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -46,7 +48,7 @@ public class DispatcherController {
 	private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
 
 	public static List<ServerInfo> serverinfoList;
-	public static String PATH="./logs/serverinfo.json";
+	public static String PATH = "./logs/serverinfo.json";
 	@Autowired
 	protected SyncBlockService syncBlockService;
 
@@ -120,7 +122,13 @@ public class DispatcherController {
 					if (serverinfoList == null) {
 						serverinfoList = new ArrayList<ServerInfo>();
 					}
-					serverinfoList.add(serverInfo);
+					try {
+						SyncBlockService.getMaxConfirmedReward(serverInfo.getUrl());
+						serverinfoList.add(serverInfo);
+					} catch (Exception e) {
+						logger.error("", e);
+					}
+
 				}
 
 				// this.outPrintJSONString(httpServletResponse,
@@ -129,12 +137,14 @@ public class DispatcherController {
 			}
 				break;
 			case serverinfolist: {
+				for (ServerInfo serverInfo : serverinfoList) {
+					
+				}
 				AbstractResponse response = ServerinfoResponse.create(serverinfoList);
 				this.gzipBinary(httpServletResponse, response);
 
 			}
 				break;
-
 
 			default:
 				break;
@@ -155,10 +165,12 @@ public class DispatcherController {
 			watch.stop();
 		}
 	}
-    @RequestMapping("/")
-    public String index() {
-        return "Bigtangle-seeds";
-    }
+
+	@RequestMapping("/")
+	public String index() {
+		return "Bigtangle-seeds";
+	}
+
 	public void gzipBinary(HttpServletResponse httpServletResponse, List<ServerInfo> response) throws Exception {
 		GZIPOutputStream servletOutputStream = new GZIPOutputStream(httpServletResponse.getOutputStream());
 

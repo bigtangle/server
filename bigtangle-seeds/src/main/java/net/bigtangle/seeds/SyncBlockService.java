@@ -60,7 +60,7 @@ public class SyncBlockService {
 	/*
 	 * write to local file and read it at start only
 	 */
-	public void localFileServerInfoWrite() throws JsonProcessingException, IOException {
+	public static void localFileServerInfoWrite() throws JsonProcessingException, IOException {
 
 		if (DispatcherController.serverinfoList != null) {
 			String path = DispatcherController.PATH;
@@ -140,7 +140,7 @@ public class SyncBlockService {
 
 	}
 
-	private void checkChain(ServerinfoResponse response) throws JsonProcessingException, IOException {
+	public static void checkChain(ServerinfoResponse response) throws JsonProcessingException, IOException {
 		// update the list DispatcherController.serverinfo;
 
 		if (response.getServerInfoList() != null) {
@@ -165,7 +165,7 @@ public class SyncBlockService {
 	 * last chain max
 	 */
 
-	public TXReward getMaxConfirmedReward(String server) throws JsonProcessingException, IOException {
+	public static TXReward getMaxConfirmedReward(String server) throws JsonProcessingException, IOException {
 
 		HashMap<String, String> requestParam = new HashMap<String, String>();
 
