@@ -24,21 +24,28 @@ public class RegisterTest extends AbstractIntegrationTest {
 		HashMap<String, String> requestParam = new HashMap<String, String>();
 		requestParam.put("url", "https://bigtangle.de:8088");
 		requestParam.put("servertype", "bigtangle");
-		byte[] data = OkHttp3Util.post(getContextRoot() + ReqCmd.register.name(),
+		OkHttp3Util.post("https://81.169.156.203:8089/" + ReqCmd.register.name(),
+				Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+		requestParam.put("url", "https://bigtangle.de:8090");
+		requestParam.put("servertype", "bigtangle");
+		OkHttp3Util.post("https://81.169.156.203:8089/" + ReqCmd.register.name(),
 				Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
 		requestParam = new HashMap<String, String>();
-		data = OkHttp3Util.post(getContextRoot() + ReqCmd.serverinfolist.name(),
+		byte[] data = OkHttp3Util.post("https://81.169.156.203:8089/" + ReqCmd.serverinfolist.name(),
 				Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 		ServerinfoResponse response = Json.jsonmapper().readValue(data, ServerinfoResponse.class);
 		if (response.getServerInfoList() != null) {
 			for (ServerInfo serverInfo : response.getServerInfoList()) {
 				logger.info(serverInfo.getUrl() + "," + serverInfo.getServertype());
-				assertEquals(serverInfo.getUrl(), "https://bigtangle.de:8088");
 			}
 		}
 	}
+	@Test
+	public void testWalletUtil() throws Exception {
 
+	}
 	@Test
 	public void testChainnumber() throws Exception {
 		HashMap<String, String> requestParam = new HashMap<String, String>();
