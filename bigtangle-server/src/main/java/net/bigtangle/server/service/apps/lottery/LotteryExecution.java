@@ -5,9 +5,7 @@
 
 package net.bigtangle.server.service.apps.lottery;
 
-import java.io.IOException;
 import java.math.BigInteger;
-import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,20 +14,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.math.LongMath;
-
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.ContractEventInfo;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.core.exception.InsufficientMoneyException;
-import net.bigtangle.core.exception.UTXOProviderException;
+import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.StoreService;
 import net.bigtangle.store.FullBlockStore;
@@ -58,7 +50,7 @@ public class LotteryExecution {
 	private String tokenid;
 
 	private String winner;
-	private List<UTXO> userUtxos;
+	private List<ContractEventRecord> userUtxos;
 	private BigInteger winnerAmount;
 	private boolean macthed;
 	private String contractTokenid;
@@ -68,8 +60,8 @@ public class LotteryExecution {
 		FullBlockStore store = storeService.getStore();
 
 		try {
-			List<UTXO> player = calUTXo(contractTokenid, store);
-			userUtxos = new ArrayList<UTXO>();
+			List<ContractEventRecord> player = calContractEventRecord(contractTokenid, store);
+			userUtxos = new ArrayList<>();
 			if (canTakeWinner(player, userUtxos, store)) {
 				doTakeWinner(store);
 			}
@@ -105,108 +97,48 @@ public class LotteryExecution {
 	/*
 	 * split the list for lottery pay
 	 */
-	private List<String> baseList(List<UTXO> player, Token t) {
+	private List<String> baseList(List<ContractEventRecord> player, Token t) {
 		List<String> addresses = new ArrayList<String>();
-		for (UTXO u : player) {
-			addresses.addAll(baseList(u, t));
+		for (ContractEventRecord u : player) {
+			addresses.add(u.getBeneficiaryAddress());
 		}
 		return addresses;
 	}
 
-	private List<String> baseList(UTXO u, Token t) {
-		List<String> addresses = new ArrayList<String>();
-		if (checkUTXO(u)) {
-			long roundCoin = roundCoin(u.getValue(), t);
-			for (long i = 0; i < roundCoin; i++) {
+	 
 
-				addresses.add(u.getFromaddress());
-			}
-		}
-		return addresses;
-	}
-
-	/*
-	 * round without decimals
-	 */
-
-	private long roundCoin(Coin c, Token t) {
-
-		return LongMath.divide(c.getValue().longValue(), LongMath.checkedPow(10, t.getDecimals()), RoundingMode.DOWN);
-
-	}
-
+	 
 	public BigInteger sum() {
 		BigInteger sum = BigInteger.ZERO;
-		for (UTXO u : userUtxos) {
-			sum = sum.add(u.getValue().getValue());
+		for (ContractEventRecord u : userUtxos) {
+			sum = sum.add( u.getTargetValue() );
 		}
 		return sum;
 	}
-
+ 
 	/*
 	 * condition for execute the lottery 1) no other pending payment 2) can do the
 	 * send failed block again 3) the sum is ok
 	 */
-	private boolean canTakeWinner(List<UTXO> player, List<UTXO> userlist) {
+	private boolean canTakeWinner(List<ContractEventRecord> player, List<ContractEventRecord> userlist, FullBlockStore store) {
 
 		BigInteger sum = BigInteger.ZERO;
-		for (UTXO u : player) {
-			if (checkUTXO(u)) {
-				sum = sum.add(u.getValue().getValue());
-				userlist.add(u);
-				if (sum.compareTo(winnerAmount) >= 0) {
-					return macthed = true;
-				}
-			}
+		for (ContractEventRecord u : player) {
+			 
 		}
 		log.debug(" sum= " + sum);
 		return macthed = false;
 
 	}
 
-	/*
-	 * condition for execute the lottery 1) no other pending payment 2) can do the
-	 * send failed block again 3) the sum is ok
-	 */
-	private boolean canTakeWinner(List<UTXO> player, List<UTXO> userlist, FullBlockStore store) {
-
-		BigInteger sum = BigInteger.ZERO;
-		for (UTXO u : player) {
-			if (checkUTXO(u)) {
-				sum = sum.add(u.getValue().getValue());
-				userlist.add(u);
-				if (sum.compareTo(winnerAmount) >= 0) {
-					return macthed = true;
-				}
-			}
-		}
-		log.debug(" sum= " + sum);
-		return macthed = false;
-
-	}
-
-	private boolean checkUTXO(UTXO u) {
-		return u.getFromaddress() != null && !"".equals(u.getFromaddress())
-				&& !u.getFromaddress().equals(u.getAddress());
-	}
-
-	// calculate the open UTXO  and must be repeatable for the selected
-	// block    lastMiningRewardBlock 
-	// all  UTXO blockhash list (=1M too large?)
-	// get output no signs dynamically as 
-	//and no possible to sign transfer from this contractToken address
-	//change the verify with no
-	protected List<UTXO> calUTXo(String contractTokenid, FullBlockStore store) throws Exception {
+ 
+	// calculate the open ContractEventRecord  and must be repeatable for the selected
+ 
+	protected List<ContractEventRecord> calContractEventRecord(String contractTokenid, FullBlockStore store) throws Exception {
 		ECKey ecKey = ECKey.fromPublicOnly(Utils.HEX.decode(tokenid));
 		Address address = ecKey.toAddress(networkParameters);
-		List<UTXO> listUTXO = new ArrayList<UTXO>();
-		// no pending utxo
-		for (UTXO utxo : store.getOpenTransactionOutputs(address.toString())) {
-			if (utxo.getValue().getValue().signum() > 0 || utxo.getTokenId().equals(tokenid)) {
-				if (!utxo.isSpendPending())
-					listUTXO.add(utxo);
-			}
-		}
+		List<ContractEventRecord> listUTXO = new ArrayList<>();
+	 
 
 		return listUTXO;
 

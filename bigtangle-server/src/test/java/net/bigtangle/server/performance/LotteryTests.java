@@ -47,8 +47,8 @@ public class LotteryTests extends AbstractIntegrationTest {
 	public NetworkParameters networkParameters;
 	public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
 	public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
-	int usernumber = Math.abs(new Random().nextInt()) % 88;
-	BigInteger winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
+		public	int usernumber = Math.abs(new Random().nextInt()) % 88;
+	public BigInteger winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
 
 	public ECKey accountKey;
 
@@ -123,7 +123,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 		return startLottery;
 	}
 
-	private void checkResult(Lottery startLottery) throws Exception {
+	public void checkResult(Lottery startLottery) throws Exception {
 		Coin sum = lotterySum(startLottery);
 
 		assertTrue(sum != null);
@@ -287,7 +287,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 
 	}
 
-	private List<ECKey> createUserkey() {
+	public List<ECKey> createUserkey() {
 		List<ECKey> userkeys = new ArrayList<ECKey>();
 		for (int i = 0; i < usernumber; i++) {
 			ECKey key = new ECKey();

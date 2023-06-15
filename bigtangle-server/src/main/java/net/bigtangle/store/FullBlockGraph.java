@@ -7,21 +7,16 @@ package net.bigtangle.store;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -58,7 +53,6 @@ import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Side;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
@@ -71,10 +65,6 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.GenericInvalidityException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
-import net.bigtangle.core.ordermatch.OrderBookEvents;
-import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
-import net.bigtangle.core.ordermatch.OrderBookEvents.Match;
-import net.bigtangle.core.ordermatch.TradePair;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
@@ -82,14 +72,11 @@ import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.DepthAndWeight;
 import net.bigtangle.server.data.LockObject;
-import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.data.SolidityState.State;
-import net.bigtangle.server.service.OrderTickerService;
-import net.bigtangle.server.service.OutputService;
 import net.bigtangle.server.service.ServiceBase;
+import net.bigtangle.server.service.ServiceContract;
 import net.bigtangle.server.service.StoreService;
-import net.bigtangle.server.utils.OrderBook;
 import net.bigtangle.utils.Gzip;
 
 /**
@@ -108,22 +95,19 @@ import net.bigtangle.utils.Gzip;
 @Service
 public class FullBlockGraph {
 
-	private static final long DaySeconds = 24 * 60 * 60L;
+ 
 	private static final Logger log = LoggerFactory.getLogger(FullBlockGraph.class);
 
 	@Autowired
 	protected NetworkParameters networkParameters;
-
-	@Autowired
-	private OrderTickerService tickerService;
+ 
 	@Autowired
 	ServerConfiguration serverConfiguration;
 
 	@Autowired
 	private StoreService storeService;
 
-	@Autowired
-	private OutputService outputService;
+ 
 
 	public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
 		boolean added;
@@ -278,15 +262,14 @@ public class FullBlockGraph {
 			Block block = networkParameters.getDefaultSerializer().makeBlock(chainBlockQueue.getBlock());
 
 			// Check the block is partially formally valid and fulfills PoW
-		 	block.verifyHeader();
+			block.verifyHeader();
 			// block.verifyTransactions();
 
 			ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
 			SolidityState solidityState = serviceBase.checkChainSolidity(block, true, store);
 
 			if (solidityState.isDirectlyMissing()) {
-			 	log.debug("Block isDirectlyMissing. saveChainConnected stop to save."
-			 			+ block.toString());
+				log.debug("Block isDirectlyMissing. saveChainConnected stop to save." + block.toString());
 				// sync the lastest chain from remote start from the -2 rewards
 				// syncBlockService.startSingleProcess(block.getLastMiningRewardBlock()
 				// - 2, false);
@@ -441,87 +424,8 @@ public class FullBlockGraph {
 		}
 		return address;
 	}
-
-	/**
-	 * Calculates and inserts any virtual transaction outputs so dependees can
-	 * become solid
-	 * 
-	 * @param block
-	 * @return
-	 * @throws BlockStoreException
-	 */
-	public Optional<OrderMatchingResult> calculateBlock(Block block, FullBlockStore blockStore)
-			throws BlockStoreException {
-
-		Transaction tx = null;
-		OrderMatchingResult matchingResult = null;
-
-		switch (block.getBlockType()) {
-		case BLOCKTYPE_CROSSTANGLE:
-			break;
-		case BLOCKTYPE_FILE:
-			break;
-		case BLOCKTYPE_GOVERNANCE:
-			break;
-		case BLOCKTYPE_INITIAL:
-			break;
-		case BLOCKTYPE_REWARD:
-			tx = generateVirtualMiningRewardTX(block, blockStore);
-			insertVirtualUTXOs(block, tx, blockStore);
-
-			// Get list of consumed orders, virtual order matching tx and newly
-			// generated remaining order book
-			matchingResult = generateOrderMatching(block, blockStore);
-			tx = matchingResult.getOutputTx();
-
-			insertVirtualUTXOs(block, tx, blockStore);
-			insertVirtualOrderRecords(block, matchingResult.getRemainingOrders(), blockStore);
-			break;
-		case BLOCKTYPE_TOKEN_CREATION:
-			break;
-		case BLOCKTYPE_TRANSFER:
-			break;
-		case BLOCKTYPE_USERDATA:
-			break;
-		case BLOCKTYPE_CONTRACT_EVENT:
-			break;
-		case BLOCKTYPE_CONTRACT_EXECUTE:
-			break;
-		case BLOCKTYPE_ORDER_OPEN:
-			break;
-		case BLOCKTYPE_ORDER_CANCEL:
-			break;
-		default:
-			throw new RuntimeException("Not Implemented");
-
-		}
-
-		// Return the computation result
-		return Optional.ofNullable(matchingResult);
-	}
-
-	private void insertVirtualOrderRecords(Block block, Collection<OrderRecord> orders, FullBlockStore blockStore) {
-		try {
-
-			blockStore.insertOrder(orders);
-
-		} catch (BlockStoreException e) {
-			// Expected after reorgs
-			log.warn("Probably reinserting orders: ", e);
-		}
-	}
-
-	private void insertVirtualUTXOs(Block block, Transaction virtualTx, FullBlockStore blockStore) {
-		try {
-			ArrayList<Transaction> txs = new ArrayList<Transaction>();
-			txs.add(virtualTx);
-			connectUTXOs(block, txs, blockStore);
-		} catch (BlockStoreException e) {
-			// Expected after reorgs
-			log.warn("Probably reinserting reward: ", e);
-		}
-	}
-
+ 
+ 
 	public void solidifyBlock(Block block, SolidityState solidityState, boolean setMilestoneSuccess,
 			FullBlockStore blockStore) throws BlockStoreException {
 
@@ -558,7 +462,7 @@ public class FullBlockGraph {
 			// before
 			connectUTXOs(block, blockStore);
 			connectTypeSpecificUTXOs(block, blockStore);
-			calculateBlock(block, blockStore);
+			new ServiceBase(serverConfiguration, networkParameters).calculateBlock(block, blockStore);
 
 			if (block.getBlockType() == Type.BLOCKTYPE_REWARD && !setMilestoneSuccess) {
 				// If we don't want to set the milestone success, initialize as
@@ -794,11 +698,13 @@ public class FullBlockGraph {
 
 			ContractEventRecord record = new ContractEventRecord(block.getHash(), Sha256Hash.ZERO_HASH,
 					reqInfo.getContractTokenid(), false, false, null, reqInfo.getOfferValue(),
-					reqInfo.getOfferTokenid(),  reqInfo.getValidToTime(),
-					reqInfo.getValidFromTime(), reqInfo.getBeneficiaryAddress());
+					reqInfo.getOfferTokenid(), reqInfo.getValidToTime(), reqInfo.getValidFromTime(),
+					reqInfo.getBeneficiaryAddress());
 			List<ContractEventRecord> contracts = new ArrayList<ContractEventRecord>();
 			contracts.add(record);
 			blockStore.insertContractEvent(contracts);
+			new ServiceContract(serverConfiguration, networkParameters).connectContractEvent(block, blockStore);
+			;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -834,264 +740,10 @@ public class FullBlockGraph {
 
 		}
 	}
-
-	private void insertIntoOrderBooks(OrderRecord o, TreeMap<TradePair, OrderBook> orderBooks,
-			ArrayList<OrderRecord> orderId2Order, long orderId, FullBlockStore blockStore) throws BlockStoreException {
-
-		Side side = o.getSide();
-		// must be in in base unit ;
-
-		long price = o.getPrice();
-		if (price <= 0)
-			log.warn(" price is wrong " + price);
-		// throw new RuntimeException(" price is wrong " +price);
-		String tradetokenId = o.getOfferTokenid().equals(o.getOrderBaseToken()) ? o.getTargetTokenid()
-				: o.getOfferTokenid();
-
-		long size = o.getOfferTokenid().equals(o.getOrderBaseToken()) ? o.getTargetValue() : o.getOfferValue();
-
-		TradePair tokenPaar = new TradePair(tradetokenId, o.getOrderBaseToken());
-
-		OrderBook orderBook = orderBooks.get(tokenPaar);
-		if (orderBook == null) {
-			orderBook = new OrderBook(new OrderBookEvents());
-			orderBooks.put(tokenPaar, orderBook);
-		}
-		orderId2Order.add(o);
-		orderBook.enter(orderId, side, price, size);
-	}
-
-	/**
-	 * Deterministically execute the order matching algorithm on this block.
-	 * 
-	 * @return new consumed orders, virtual order matching tx and newly generated
-	 *         remaining MODIFIED order book
-	 * @throws BlockStoreException
-	 */
-	public OrderMatchingResult generateOrderMatching(Block rewardBlock, FullBlockStore blockStore)
-			throws BlockStoreException {
-
-		RewardInfo rewardInfo = new RewardInfo().parseChecked(rewardBlock.getTransactions().get(0).getData());
-
-		return generateOrderMatching(rewardBlock, rewardInfo, blockStore);
-	}
-
-	public OrderMatchingResult generateOrderMatching(Block block, RewardInfo rewardInfo, FullBlockStore blockStore)
-			throws BlockStoreException {
-		TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts = new TreeMap<>();
-
-		// Get previous order matching block
-		Sha256Hash prevHash = rewardInfo.getPrevRewardHash();
-		Set<Sha256Hash> collectedBlocks = rewardInfo.getBlocks();
-		final Block prevMatchingBlock = blockStore.getBlockWrap(prevHash).getBlock();
-
-		// Deterministic randomization
-		byte[] randomness = Utils.xor(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes());
-
-		// Collect all orders approved by this block in the interval
-		List<OrderCancelInfo> cancels = new ArrayList<>();
-		Map<Sha256Hash, OrderRecord> sortedNewOrders = new TreeMap<>(
-				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
-		HashMap<Sha256Hash, OrderRecord> remainingOrders = blockStore.getOrderMatchingIssuedOrders(prevHash);
-		Set<OrderRecord> toBeSpentOrders = new HashSet<>();
-		Set<OrderRecord> cancelledOrders = new HashSet<>();
-		for (OrderRecord r : remainingOrders.values()) {
-			toBeSpentOrders.add(OrderRecord.cloneOrderRecord(r));
-		}
-		collectOrdersWithCancel(block, collectedBlocks, cancels, sortedNewOrders, toBeSpentOrders, blockStore);
-		// sort order for execute in deterministic randomness
-		Map<Sha256Hash, OrderRecord> sortedOldOrders = new TreeMap<>(
-				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
-		sortedOldOrders.putAll(remainingOrders);
-		remainingOrders.putAll(sortedNewOrders);
-
-		// Issue timeout cancels, set issuing order blockhash
-		setIssuingBlockHash(block, remainingOrders);
-		timeoutOrdersToCancelled(block, remainingOrders, cancelledOrders);
-		cancelOrderstoCancelled(cancels, remainingOrders, cancelledOrders);
-
-		// Remove the now cancelled orders from rest of orders
-		for (OrderRecord c : cancelledOrders) {
-			remainingOrders.remove(c.getBlockHash());
-			sortedOldOrders.remove(c.getBlockHash());
-			sortedNewOrders.remove(c.getBlockHash());
-		}
-
-		// Add to proceeds all cancelled orders going back to the beneficiary
-		payoutCancelledOrders(payouts, cancelledOrders);
-
-		// From all orders and ops, begin order matching algorithm by filling
-		// order books
-		int orderId = 0;
-		ArrayList<OrderRecord> orderId2Order = new ArrayList<>();
-		TreeMap<TradePair, OrderBook> orderBooks = new TreeMap<TradePair, OrderBook>();
-
-		// Add old orders first without not valid yet
-		for (OrderRecord o : sortedOldOrders.values()) {
-			if (o.isValidYet(block.getTimeSeconds()) && o.isValidYet(prevMatchingBlock.getTimeSeconds()))
-				insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
-		}
-
-		// Now orders not valid before but valid now
-		for (OrderRecord o : sortedOldOrders.values()) {
-			if (o.isValidYet(block.getTimeSeconds()) && !o.isValidYet(prevMatchingBlock.getTimeSeconds()))
-				insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
-		}
-
-		// Now new orders that are valid yet
-		for (OrderRecord o : sortedNewOrders.values()) {
-			if (o.isValidYet(block.getTimeSeconds()))
-				insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
-		}
-
-		// Collect and process all matching events
-		Map<TradePair, List<Event>> tokenId2Events = new HashMap<>();
-		for (Entry<TradePair, OrderBook> orderBook : orderBooks.entrySet()) {
-			processOrderBook(payouts, remainingOrders, orderId2Order, tokenId2Events, orderBook);
-		}
-
-		for (OrderRecord o : remainingOrders.values()) {
-			o.setDefault();
-		}
-
-		// Make deterministic tx with proceeds
-		Transaction tx = createOrderPayoutTransaction(block, payouts);
-		// log.debug(tx.toString());
-		return new OrderMatchingResult(toBeSpentOrders, tx, remainingOrders.values(), tokenId2Events);
-	}
-
-	private Transaction createOrderPayoutTransaction(Block block,
-			TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts) {
-		Transaction tx = new Transaction(networkParameters);
-		for (Entry<ByteBuffer, TreeMap<String, BigInteger>> payout : payouts.entrySet()) {
-			byte[] beneficiaryPubKey = payout.getKey().array();
-
-			for (Entry<String, BigInteger> tokenProceeds : payout.getValue().entrySet()) {
-				String tokenId = tokenProceeds.getKey();
-				BigInteger proceedsValue = tokenProceeds.getValue();
-
-				if (proceedsValue.signum() != 0)
-					tx.addOutput(new Coin(proceedsValue, tokenId), ECKey.fromPublicOnly(beneficiaryPubKey));
-			}
-		}
-
-		// The coinbase input does not really need to be a valid signature
-		TransactionInput input = new TransactionInput(networkParameters, tx, Script
-				.createInputScript(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes()));
-		tx.addInput(input);
-		tx.setMemo(new MemoInfo("Order Payout"));
-
-		return tx;
-	}
-
-	private void processOrderBook(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
-			HashMap<Sha256Hash, OrderRecord> remainingOrders, ArrayList<OrderRecord> orderId2Order,
-			Map<TradePair, List<Event>> tokenId2Events, Entry<TradePair, OrderBook> orderBook)
-			throws BlockStoreException {
-		String orderBaseToken = orderBook.getKey().getOrderBaseToken();
-
-		List<Event> events = ((OrderBookEvents) orderBook.getValue().listener()).collect();
-
-		for (Event event : events) {
-			if (!(event instanceof Match))
-				continue;
-
-			Match matchEvent = (Match) event;
-			OrderRecord restingOrder = orderId2Order.get(Integer.parseInt(matchEvent.restingOrderId));
-			OrderRecord incomingOrder = orderId2Order.get(Integer.parseInt(matchEvent.incomingOrderId));
-			byte[] restingPubKey = restingOrder.getBeneficiaryPubKey();
-			byte[] incomingPubKey = incomingOrder.getBeneficiaryPubKey();
-
-			// Now disburse proceeds accordingly
-			long executedPrice = matchEvent.price;
-			long executedAmount = matchEvent.executedQuantity;
-			// if
-			// (!orderBook.getKey().getOrderToken().equals(incomingOrder.getTargetTokenid()))
-
-			if (matchEvent.incomingSide == Side.BUY) {
-				processIncomingBuy(payouts, remainingOrders, orderBaseToken, restingOrder, incomingOrder, restingPubKey,
-						incomingPubKey, executedPrice, executedAmount);
-			} else {
-				processIncomingSell(payouts, remainingOrders, orderBaseToken, restingOrder, incomingOrder,
-						restingPubKey, incomingPubKey, executedPrice, executedAmount);
-
-			}
-		}
-		tokenId2Events.put(orderBook.getKey(), events);
-	}
-
-	private void processIncomingSell(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
-			HashMap<Sha256Hash, OrderRecord> remainingOrders, String baseToken, OrderRecord restingOrder,
-			OrderRecord incomingOrder, byte[] restingPubKey, byte[] incomingPubKey, long executedPrice,
-			long executedAmount) {
-		long sellableAmount = incomingOrder.getOfferValue();
-		long buyableAmount = restingOrder.getTargetValue();
-		long incomingPrice = incomingOrder.getPrice();
-		Integer priceshift = networkParameters.getOrderPriceShift(baseToken);
-		// The resting order receives the tokens
-		payout(payouts, restingPubKey, restingOrder.getTargetTokenid(), executedAmount);
-
-		// The incoming order receives the base token according to the
-		// resting price
-		payout(payouts, incomingPubKey, baseToken,
-				totalAmount(executedAmount, executedPrice, incomingOrder.getTokenDecimals() + priceshift));
-
-		// Finally, the orders could be fulfilled now, so we can
-		// remove them from the order list
-		// Otherwise, we will make the orders smaller by the
-		// executed amounts
-		incomingOrder.setOfferValue(incomingOrder.getOfferValue() - executedAmount);
-		incomingOrder.setTargetValue(incomingOrder.getTargetValue()
-				- totalAmount(executedAmount, incomingPrice, incomingOrder.getTokenDecimals() + priceshift));
-		restingOrder.setOfferValue(restingOrder.getOfferValue()
-				- totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals() + priceshift));
-		restingOrder.setTargetValue(restingOrder.getTargetValue() - executedAmount);
-		if (sellableAmount == executedAmount) {
-			remainingOrders.remove(incomingOrder.getBlockHash());
-		}
-		if (buyableAmount == executedAmount) {
-			remainingOrders.remove(restingOrder.getBlockHash());
-		}
-	}
-
-	private void processIncomingBuy(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
-			HashMap<Sha256Hash, OrderRecord> remainingOrders, String baseToken, OrderRecord restingOrder,
-			OrderRecord incomingOrder, byte[] restingPubKey, byte[] incomingPubKey, long executedPrice,
-			long executedAmount) {
-		long sellableAmount = restingOrder.getOfferValue();
-		long buyableAmount = incomingOrder.getTargetValue();
-		long incomingPrice = incomingOrder.getPrice();
-
-		// The resting order receives the basetoken according to its price
-		// resting is sell order
-		Integer priceshift = networkParameters.getOrderPriceShift(baseToken);
-		payout(payouts, restingPubKey, baseToken,
-				totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals() + priceshift));
-
-		// The incoming order receives the tokens
-		payout(payouts, incomingPubKey, incomingOrder.getTargetTokenid(), executedAmount);
-
-		// The difference in price is returned to the incoming
-		// beneficiary
-		payout(payouts, incomingPubKey, baseToken, totalAmount(executedAmount, (incomingPrice - executedPrice),
-				incomingOrder.getTokenDecimals() + priceshift));
-
-		// Finally, the orders could be fulfilled now, so we can
-		// remove them from the order list
-		restingOrder.setOfferValue(restingOrder.getOfferValue() - executedAmount);
-		restingOrder.setTargetValue(restingOrder.getTargetValue()
-				- totalAmount(executedAmount, executedPrice, restingOrder.getTokenDecimals() + priceshift));
-		incomingOrder.setOfferValue(incomingOrder.getOfferValue()
-				- totalAmount(executedAmount, incomingPrice, incomingOrder.getTokenDecimals() + priceshift));
-		incomingOrder.setTargetValue(incomingOrder.getTargetValue() - executedAmount);
-		if (sellableAmount == executedAmount) {
-			remainingOrders.remove(restingOrder.getBlockHash());
-		}
-		if (buyableAmount == executedAmount) {
-			remainingOrders.remove(incomingOrder.getBlockHash());
-		}
-	}
-
+ 
+	 
+  
+ 
 	/*
 	 * It must use BigInteger to calculation to avoid overflow. Order can handle
 	 * only Long
@@ -1114,81 +766,8 @@ public class FullBlockGraph {
 		}
 		return re.longValue();
 	}
-
-	private void payoutCancelledOrders(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
-			Set<OrderRecord> cancelledOrders) {
-		for (OrderRecord o : cancelledOrders) {
-			byte[] beneficiaryPubKey = o.getBeneficiaryPubKey();
-			String offerTokenid = o.getOfferTokenid();
-			long offerValue = o.getOfferValue();
-
-			payout(payouts, beneficiaryPubKey, offerTokenid, offerValue);
-		}
-	}
-
-	private void payout(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts, byte[] beneficiaryPubKey,
-			String tokenid, long tokenValue) {
-		TreeMap<String, BigInteger> proceeds = payouts.get(ByteBuffer.wrap(beneficiaryPubKey));
-		if (proceeds == null) {
-			proceeds = new TreeMap<>();
-			payouts.put(ByteBuffer.wrap(beneficiaryPubKey), proceeds);
-		}
-		BigInteger offerTokenProceeds = proceeds.get(tokenid);
-		if (offerTokenProceeds == null) {
-			offerTokenProceeds = BigInteger.ZERO;
-			proceeds.put(tokenid, offerTokenProceeds);
-		}
-		proceeds.put(tokenid, offerTokenProceeds.add(BigInteger.valueOf(tokenValue)));
-	}
-
-	private void cancelOrderstoCancelled(List<OrderCancelInfo> cancels,
-			HashMap<Sha256Hash, OrderRecord> remainingOrders, Set<OrderRecord> cancelledOrders) {
-		for (OrderCancelInfo c : cancels) {
-			if (remainingOrders.containsKey(c.getBlockHash())) {
-				cancelledOrders.add(remainingOrders.get(c.getBlockHash()));
-			}
-		}
-	}
-
-	private void setIssuingBlockHash(Block block, HashMap<Sha256Hash, OrderRecord> remainingOrders) {
-		Iterator<Entry<Sha256Hash, OrderRecord>> it = remainingOrders.entrySet().iterator();
-		while (it.hasNext()) {
-			OrderRecord order = it.next().getValue();
-			order.setIssuingMatcherBlockHash(block.getHash());
-		}
-	}
-
-	private void timeoutOrdersToCancelled(Block block, HashMap<Sha256Hash, OrderRecord> remainingOrders,
-			Set<OrderRecord> cancelledOrders) {
-		// Issue timeout cancels, set issuing order blockhash
-		Iterator<Entry<Sha256Hash, OrderRecord>> it = remainingOrders.entrySet().iterator();
-		while (it.hasNext()) {
-			OrderRecord order = it.next().getValue();
-			if (order.isTimeouted(block.getTimeSeconds())) {
-				cancelledOrders.add(order);
-			}
-		}
-	}
-
-	private void collectOrdersWithCancel(Block block, Set<Sha256Hash> collectedBlocks, List<OrderCancelInfo> cancels,
-			Map<Sha256Hash, OrderRecord> newOrders, Set<OrderRecord> spentOrders, FullBlockStore blockStore)
-			throws BlockStoreException {
-		for (Sha256Hash bHash : collectedBlocks) {
-			BlockWrap b = blockStore.getBlockWrap(bHash);
-			if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
-				final Sha256Hash blockHash = b.getBlock().getHash();
-				OrderRecord order = blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH);
-				newOrders.put(blockHash, OrderRecord.cloneOrderRecord(order));
-				spentOrders.add(order);
-
-			} else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_CANCEL) {
-				OrderCancelInfo info = new OrderCancelInfo()
-						.parseChecked(b.getBlock().getTransactions().get(0).getData());
-				cancels.add(info);
-			}
-		}
-	}
-
+ 
+ 
 	/**
 	 * Deterministically creates a mining reward transaction based on the previous
 	 * blocks and previous reward transaction. DOES NOT CHECK FOR SOLIDITY. You have
@@ -1448,12 +1027,12 @@ public class FullBlockGraph {
 	public void cleanUpDo(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
 
 		Block rewardblock = store.get(maxConfirmedReward.getBlockHash());
-		//log.info(" cleanUpDo until block " + "" + rewardblock);
+		// log.info(" cleanUpDo until block " + "" + rewardblock);
 		store.prunedClosedOrders(rewardblock.getTimeSeconds());
 		// max keep 500 blockchain as spendblock number
-		
+
 		long maxRewardblock = rewardblock.getLastMiningRewardBlock() - 500;
-	//	log.info(" prunedHistoryUTXO until reward block  " + "" + rewardblock);
+		// log.info(" prunedHistoryUTXO until reward block " + "" + rewardblock);
 		store.prunedHistoryUTXO(maxRewardblock);
 		// store.prunedPriceTicker(rewardblock.getTimeSeconds() - 30 *
 		// DaySeconds);

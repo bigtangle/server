@@ -452,7 +452,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertTrue(order2.isSpent());
 
 		// Ensure virtual UTXOs are now confirmed
-		Transaction tx = blockGraph.generateOrderMatching(rewardBlock1, store).getOutputTx();
+		Transaction tx = new ServiceBase(serverConfiguration, networkParameters).generateOrderMatching(rewardBlock1, store).getOutputTx();
 		final UTXO utxo1 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(rewardBlock1.getHash()), store);
 		assertTrue(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
@@ -662,7 +662,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertFalse(order3.isSpent());
 
 		// Ensure virtual UTXOs are now confirmed
-		Transaction tx = blockGraph.generateOrderMatching(rewardBlock1, store).getOutputTx();
+		Transaction tx = new ServiceBase(serverConfiguration, networkParameters).generateOrderMatching(rewardBlock1, store).getOutputTx();
 		final UTXO utxo1 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(rewardBlock1.getHash()), store);
 		assertFalse(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
