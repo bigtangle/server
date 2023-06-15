@@ -137,10 +137,16 @@ public class DispatcherController {
 			}
 				break;
 			case serverinfolist: {
-				for (ServerInfo serverInfo : serverinfoList) {
-					
+				List<ServerInfo> tempList = new ArrayList<ServerInfo>();
+				if (serverinfoList != null && !serverinfoList.isEmpty()) {
+					for (ServerInfo serverInfo : serverinfoList) {
+						if (serverInfo.getStatus().equals("active")) {
+							tempList.add(serverInfo);
+						}
+					}
 				}
-				AbstractResponse response = ServerinfoResponse.create(serverinfoList);
+
+				AbstractResponse response = ServerinfoResponse.create(tempList);
 				this.gzipBinary(httpServletResponse, response);
 
 			}

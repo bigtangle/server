@@ -144,11 +144,9 @@ public class SyncBlockService {
 		// update the list DispatcherController.serverinfo;
 
 		if (response.getServerInfoList() != null) {
-			long chainLength = 0;
 			for (ServerInfo serverInfo : response.getServerInfoList()) {
 				try {
 					TXReward txReward = getMaxConfirmedReward(serverInfo.getUrl());
-					chainLength = txReward.getChainLength();
 					serverInfo.status = "active";
 				} catch (Exception e) {
 					serverInfo.status = "inactive";
