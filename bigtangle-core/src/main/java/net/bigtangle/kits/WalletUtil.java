@@ -32,6 +32,7 @@ import org.spongycastle.crypto.InvalidCipherTextException;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.encrypt.ECIESCoder;
+import net.bigtangle.pool.server.ServerPool;
 import net.bigtangle.wallet.KeyChainGroup;
 import net.bigtangle.wallet.Protos;
 import net.bigtangle.wallet.UnreadableWalletException;
@@ -74,7 +75,7 @@ public class WalletUtil {
             Protos.Wallet proto = WalletProtobufSerializer.parseToProto(walletStream);
             final WalletProtobufSerializer serializer = new WalletProtobufSerializer();
             wallet = serializer.readWallet(params, null, proto);
-
+            wallet.setServerPool(new ServerPool(params));
         } finally {
             walletStream.close();
         }

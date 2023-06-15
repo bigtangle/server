@@ -59,7 +59,7 @@ public class BeforeStartup {
 	public void initSetting() {
 		if (DispatcherController.serverinfoList == null) {
 			ServerInfo serverInfo = new ServerInfo();
-			serverInfo.setUrl("https://81.169.156.203:8089/");
+			serverInfo.setUrl("https://p.bigtangle.org:8088/");
 			serverInfo.setServertype("");
 			serverInfo.setStatus("active");
 
