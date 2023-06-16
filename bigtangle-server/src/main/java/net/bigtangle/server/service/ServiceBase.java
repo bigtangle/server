@@ -1500,12 +1500,7 @@ public class ServiceBase {
 			throws BlockStoreException {
 		List<Transaction> transactions = block.getTransactions();
 
-		if (transactions.size() != 1) {
-			if (throwExceptions)
-				throw new IncorrectTransactionCountException();
-			return SolidityState.getFailState();
-		}
-
+	 
 		if (transactions.get(0).getData() == null) {
 			if (throwExceptions)
 				throw new MissingTransactionDataException();

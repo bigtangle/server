@@ -2306,7 +2306,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			}
 		}
 		if (beneficiary == null || amount.isNegative()) {
-			throw new InsufficientMoneyException("");
+			throw new InsufficientMoneyException(amount.toString() + " outputs size= " + coinList.size());
+
 		}
 
 		ContractEventInfo info = new ContractEventInfo(contractTokenid, payAmount, tokenId,
