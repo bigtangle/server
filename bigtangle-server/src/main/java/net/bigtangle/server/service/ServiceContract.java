@@ -12,10 +12,10 @@ import org.slf4j.LoggerFactory;
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
-import net.bigtangle.core.ContractEventInfo;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.Transaction;
@@ -40,47 +40,44 @@ public class ServiceContract extends ServiceBase {
 	/*
 	 * the ContractEvent received and do next action
 	 */
-	public void connectContractEvent(Block block, FullBlockStore blockStore) throws BlockStoreException {
-		try {
-			ContractEventInfo reqInfo = new ContractEventInfo().parse(block.getTransactions().get(0).getData());
-			Token contract = blockStore.getTokenID(reqInfo.getContractTokenid()).get(0);
+	public ContractResult executeContract(Block block, FullBlockStore blockStore, String contractid)
+			throws BlockStoreException {
 
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		Token contract = blockStore.getTokenID(contractid).get(0);
+		return lotteryContract(block, blockStore, contract);
 
 	}
 
 	/*
 	 * 
 	 */
-	public void lotteryContract(Block block, FullBlockStore blockStore, ContractEventInfo reqInfo, Token contract)
-			throws Exception {
+	public ContractResult lotteryContract(Block block, FullBlockStore blockStore, Token contract)
+			throws BlockStoreException {
 
-		List<ContractEventRecord> opens = calContractEventRecord(reqInfo.getContractTokenid(), blockStore);
+		List<ContractEventRecord> opens = calContractEventRecord(contract.getTokenid(), blockStore);
 		String winnerAmount = getValue("winnerAmount", contract.getTokenKeyValues());
-		if(winnerAmount!=null && new BigInteger(winnerAmount).compareTo(sum(opens)) < 0 ) {
-			doTakeWinner(block, blockStore, opens);
+		if (winnerAmount != null && new BigInteger(winnerAmount).compareTo(sum(opens)) < 0) {
+			return doTakeWinner(block, blockStore, opens);
 		}
-		
 
+		return null;
 	}
 
-	public String getValue( String key, TokenKeyValues kvs  ) {
-		for(KeyValue k: kvs.getKeyvalues()) {
-			if(key.equals(k.getKey())) {
+	public String getValue(String key, TokenKeyValues kvs) {
+		for (KeyValue k : kvs.getKeyvalues()) {
+			if (key.equals(k.getKey())) {
 				return k.getValue();
 			}
 		}
 		return null;
 
-}
+	}
+
 	/*
 	 * can be check on each node, the winner, the winnerBlock hash calculate the
 	 * unique userAddress, userUtxos for check and generate the dynamic outputs
 	 */
-	private ContractResult doTakeWinner(Block winnerBlock, FullBlockStore blockStore, List<ContractEventRecord> opens)
-			throws Exception {
+	private ContractResult doTakeWinner(Block winnerBlock, FullBlockStore blockStore, List<ContractEventRecord> opens) {
 
 		// Deterministic randomization
 		byte[] randomness = Utils.xor(winnerBlock.getPrevBlockHash().getBytes(),
@@ -91,7 +88,11 @@ public class ServiceContract extends ServiceBase {
 
 		Transaction tx = createOrderPayoutTransaction(winnerBlock, winner,
 				new Coin(sum(opens), winner.getTargetTokenid()));
-		return new ContractResult(opens, tx);
+		List<Sha256Hash> spentContractEventRecord = new ArrayList<>();
+		for (ContractEventRecord o : opens) {
+			spentContractEventRecord.add(o.getBlockHash());
+		}
+		return new ContractResult(winner.getTargetTokenid(), spentContractEventRecord, tx.getHash());
 	}
 
 	public Transaction createOrderPayoutTransaction(Block block, ContractEventRecord winner, Coin outCoin) {
@@ -119,11 +120,37 @@ public class ServiceContract extends ServiceBase {
 	// calculate the open ContractEventRecord and must be repeatable for the
 	// selected
 
-	protected List<ContractEventRecord> calContractEventRecord(String contractTokenid, FullBlockStore store) {
+	protected List<ContractEventRecord> calContractEventRecord(String contractTokenid, FullBlockStore store)
+			throws BlockStoreException {
 
-		List<ContractEventRecord> listUTXO = new ArrayList<>();
-
-		return listUTXO;
+		return store.getOpenContractEvent(contractTokenid);
 
 	}
+
+	/*
+	 * connect from the contract Execution Do the check of the contract execution
+	 * and update contract event and execute the contract coin base output
+	 */
+	public void connectContractExecute(Block block, FullBlockStore blockStore) {
+
+		try {
+			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
+
+			// blockStore.updateContractEvent( );
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public void checkContractExecute(Block block, FullBlockStore blockStore) {
+
+		try {
+			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
+
+			// blockStore.updateContractEvent( );
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 }

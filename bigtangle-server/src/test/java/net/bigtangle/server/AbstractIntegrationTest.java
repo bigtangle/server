@@ -78,6 +78,7 @@ import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.ContractExecutionService;
 import net.bigtangle.server.service.MCMCService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.StoreService;
@@ -136,6 +137,9 @@ public abstract class AbstractIntegrationTest {
 	@Autowired
 	protected ServerConfiguration serverConfiguration;
 
+	@Autowired
+	protected ContractExecutionService contractExecutionService;
+	
 	@Autowired
 	protected void prepareContextRoot(@Value("${local.server.port}") int port) {
 		contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);

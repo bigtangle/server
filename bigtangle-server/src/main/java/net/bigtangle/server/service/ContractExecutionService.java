@@ -23,7 +23,6 @@ import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Transaction;
@@ -32,8 +31,8 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.server.data.LockObject;
-import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
 
@@ -107,6 +106,18 @@ public class ContractExecutionService {
 
 	}
 
+	public void createContractExecution(FullBlockStore store) throws Exception {
+
+		// select all contractid from the table with unspent event
+		for (String contractid : store.getOpenContractid()) {
+			Block contractExecution = createContractExecution(store, contractid);
+			if (contractExecution != null) {
+				log.debug(" contractExecution block is created: " + contractExecution);
+				blockService.saveBlock(contractExecution, store);
+			}
+		}
+	}
+
 	/**
 	 * Runs the ContractExecution making logic
 	 * 
@@ -114,59 +125,30 @@ public class ContractExecutionService {
 	 * @throws Exception
 	 */
 
-	public Block createContractExecution(FullBlockStore store) throws Exception {
+	public Block createContractExecution(FullBlockStore store, String contractid) throws Exception {
 
 		Sha256Hash prevContractExecutionHash = store.getMaxConfirmedReward().getBlockHash();
-		Block contractExecution = createContractExecution(prevContractExecutionHash, store);
+		Block contractExecution = createContractExecution(prevContractExecutionHash, contractid, store);
 		if (contractExecution != null) {
 			log.debug(" contractExecution block is created: " + contractExecution);
 		}
 		return contractExecution;
 	}
 
-	public Block createContractExecution(Sha256Hash prevContractExecutionHash, FullBlockStore store) throws Exception {
+	public Block createContractExecution(Sha256Hash prevContractExecutionHash, String contractid, FullBlockStore store)
+			throws Exception {
 
 		Stopwatch watch = Stopwatch.createStarted();
-		Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair( 
-				store);
+		Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair(store);
 		log.debug("  getValidatedContractExecutionBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-		return createContractExecution(prevContractExecutionHash, tipsToApprove.getLeft(), tipsToApprove.getRight(),
-				store);
+		return createContractExecution(tipsToApprove.getLeft(), tipsToApprove.getRight(), contractid, store);
 
 	}
 
-	public Block createContractExecution(Sha256Hash prevContractExecutionHash, Sha256Hash prevTrunk,
-			Sha256Hash prevBranch, FullBlockStore store) throws Exception {
-		return createContractExecution(prevContractExecutionHash, prevTrunk, prevBranch, null, store);
-	}
+	public Block createContractExecution(Sha256Hash prevTrunk, Sha256Hash prevBranch, String contractid,
+			FullBlockStore store)
 
-	public Block createContractExecution(Sha256Hash prevContractExecutionHash, Sha256Hash prevTrunk,
-			Sha256Hash prevBranch, Long timeOverride, FullBlockStore store) throws Exception {
-
-		Block block = createMiningContractExecutionBlock(prevContractExecutionHash, prevTrunk, prevBranch, timeOverride,
-				store);
-
-		if (block != null) {
-			// check, if the contractExecution block is too old to avoid conflict.
-			TXReward latest = store.getMaxConfirmedReward();
-			if (latest.getChainLength() >= block.getLastMiningRewardBlock()) {
-				log.debug("resolved contractExecution is out of date.");
-			} else {
-				blockService.saveBlock(block, store);
-			}
-		}
-		return block;
-	}
-
-	public Block createMiningContractExecutionBlock(Sha256Hash prevContractExecutionHash, Sha256Hash prevTrunk,
-			Sha256Hash prevBranch, FullBlockStore store)
-			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-		return createMiningContractExecutionBlock(prevContractExecutionHash, prevTrunk, prevBranch, null, store);
-	}
-
-	public Block createMiningContractExecutionBlock(Sha256Hash prevContractExecutionHash, Sha256Hash prevTrunk,
-			Sha256Hash prevBranch, Long timeOverride, FullBlockStore store)
 			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
 		Stopwatch watch = Stopwatch.createStarted();
 
@@ -175,30 +157,25 @@ public class ContractExecutionService {
 
 		long currentTime = Math.max(System.currentTimeMillis() / 1000,
 				Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
-		if (timeOverride != null)
-			currentTime = timeOverride;
-		// Build transaction for block
-		Transaction tx = new Transaction(networkParameters);
 
 		Block block = Block.createBlock(networkParameters, r1, r2);
 
 		block.setBlockType(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
 		block.setHeight(Math.max(r1.getHeight(), r2.getHeight()) + 1);
 
-		RewardInfo currRewardInfo = new RewardInfo().parseChecked(tx.getData());
-		block.setLastMiningRewardBlock(currRewardInfo.getChainlength());
-		block.setDifficultyTarget(currRewardInfo.getDifficultyTargetReward());
+		// Build transaction for block
+		Transaction tx = new Transaction(networkParameters);
 
 		// Enforce timestamp equal to previous max for contractExecution blocktypes
 		block.setTime(currentTime);
-		BigInteger chainTarget = Utils.decodeCompactBits(store.getRewardDifficulty(prevContractExecutionHash));
+
+		BigInteger chainTarget = Utils.decodeCompactBits(block.getDifficultyTarget());
 
 		block.addTransaction(tx);
-		OrderMatchingResult ordermatchresult = new ServiceBase(serverConfiguration, networkParameters)
-				.generateOrderMatching(block, currRewardInfo, store);
-		currRewardInfo.setOrdermatchingResult(ordermatchresult.getOrderMatchingResultHash());
-		tx.setData(currRewardInfo.toByteArray());
-		tx.setData(currRewardInfo.toByteArray());
+		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
+				store, contractid);
+
+		tx.setData(result.toByteArray());
 
 		blockService.adjustHeightRequiredBlocks(block, store);
 		final BigInteger chainTargetFinal = chainTarget;

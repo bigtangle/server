@@ -14,8 +14,7 @@ public class ContractEventRecord extends SpentBlock {
 
     private static final long serialVersionUID = -2331665478149550684L;
 
-    // order matching block
-    private Sha256Hash issuingMatcherBlockHash;
+  
     private String contractTokenid;
     private BigInteger targetValue;
     private String targetTokenid;
@@ -31,14 +30,12 @@ public class ContractEventRecord extends SpentBlock {
     public ContractEventRecord() {
     }
 
-    public ContractEventRecord(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, 
+    public ContractEventRecord(Sha256Hash initialBlockHash, 
             String contractTokenid, boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, BigInteger targetValue,
             String targetTokenid,   Long validToTime, Long validFromTime, 
             String beneficiaryAddress) {
         super();
-        this.setBlockHash(initialBlockHash);
-        this.issuingMatcherBlockHash = issuingMatcherBlockHash;
- 
+        this.setBlockHash(initialBlockHash); 
         this.setConfirmed(confirmed);
         this.setSpent(spent);
         this.setSpenderBlockHash(spenderBlockHash);
@@ -53,7 +50,7 @@ public class ContractEventRecord extends SpentBlock {
     }
 
     public static ContractEventRecord cloneOrderRecord(ContractEventRecord old) {
-        return new ContractEventRecord(old.getBlockHash(), old.issuingMatcherBlockHash,   old.contractTokenid,
+        return new ContractEventRecord(old.getBlockHash(),    old.contractTokenid,
                 old.isConfirmed(), old.isSpent(), old.getSpenderBlockHash(), old.targetValue, old.targetTokenid,
                   old.validToTime, old.validFromTime, old.beneficiaryAddress);
     }
@@ -68,15 +65,7 @@ public class ContractEventRecord extends SpentBlock {
         return blockTime >= validFromTime;
     }
 
-    public Sha256Hash getIssuingMatcherBlockHash() {
-        return issuingMatcherBlockHash;
-    }
-
-    public void setIssuingMatcherBlockHash(Sha256Hash issuingMatcherBlockHash) {
-        this.issuingMatcherBlockHash = issuingMatcherBlockHash;
-    }
-
-   
+ 
  
 
     public BigInteger getTargetValue() {
@@ -135,14 +124,14 @@ public class ContractEventRecord extends SpentBlock {
 		this.contractTokenid = contractTokenid;
 	}
 
+ 
+
 	@Override
 	public String toString() {
-		return "ContractEventRecord [issuingMatcherBlockHash=" + issuingMatcherBlockHash + ", contractTokenid="
-				+ contractTokenid + ", targetValue=" + targetValue + ", targetTokenid=" + targetTokenid
-				+ ", beneficiaryAddress=" + beneficiaryAddress + ", validToTime=" + validToTime + ", validFromTime="
-				+ validFromTime + "]";
+		return "ContractEventRecord [blockhash=" + getBlockHashHex() + ", contractTokenid=" + contractTokenid
+				+ ", targetValue=" + targetValue + ", targetTokenid=" + targetTokenid + ", beneficiaryAddress="
+				+ beneficiaryAddress + ", validToTime=" + validToTime + ", validFromTime=" + validFromTime + "]";
 	}
-
 	 
  
 }

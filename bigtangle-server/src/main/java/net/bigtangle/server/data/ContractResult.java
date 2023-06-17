@@ -1,47 +1,97 @@
 package net.bigtangle.server.data;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
+import net.bigtangle.core.DataClass;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Transaction;
+import net.bigtangle.core.Utils;
 
-public class ContractResult {
-	List<ContractEventRecord> spentContractEventRecord;
-	Transaction outputTx;
+public class ContractResult extends DataClass {
+	String contractid;
+	Sha256Hash outputTxHash;
+	List<Sha256Hash> spentContractEventRecord = new ArrayList<>();
 
 	public ContractResult() {
 
 	}
 
-	public ContractResult(List<ContractEventRecord> spentOrders, Transaction outputTx) {
-		this.spentContractEventRecord = spentOrders;
-		this.outputTx = outputTx;
+	public ContractResult(String contractid, List<Sha256Hash> toBeSpent, Sha256Hash outputTx) {
+		this.contractid = contractid;
+		this.spentContractEventRecord = toBeSpent;
+		this.outputTxHash = outputTx;
 
 	}
 
-	/*
-	 * This is unique for ResultHash
-	 */
-	public Sha256Hash getResultHash() {
-		return getOutputTx().getHash();
+	public byte[] toByteArray() {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		try {
+			DataOutputStream dos = new DataOutputStream(baos);
+			dos.write(super.toByteArray());
+			Utils.writeNBytesString(dos, contractid);
+			Utils.writeNBytes(dos, outputTxHash.getBytes());
+			dos.writeInt(spentContractEventRecord.size());
+			for (Sha256Hash c : spentContractEventRecord)
+				Utils.writeNBytes(dos, c.getBytes());
+
+			dos.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		return baos.toByteArray();
 	}
 
- 
+	@Override
+	public ContractResult parseDIS(DataInputStream dis) throws IOException {
+		super.parseDIS(dis);
+		contractid = Utils.readNBytesString(dis);
+		outputTxHash   = Sha256Hash.wrap(Utils. readNBytes(dis));
+		spentContractEventRecord = new ArrayList<>();
+		int size = dis.readInt();
+		for (int i = 0; i < size; i++) {
+			spentContractEventRecord.add(
+					 Sha256Hash.wrap(Utils. readNBytes(dis)));
+		}
 
-	public List<ContractEventRecord> getSpentContractEventRecord() {
+		return this;
+	}
+
+	public ContractResult parse(byte[] buf) throws IOException {
+		ByteArrayInputStream bain = new ByteArrayInputStream(buf);
+		DataInputStream dis = new DataInputStream(bain);
+		parseDIS(dis);
+		dis.close();
+		bain.close();
+		return this;
+	}
+
+	public List<Sha256Hash> getSpentContractEventRecord() {
 		return spentContractEventRecord;
 	}
 
-	public void setSpentContractEventRecord(List<ContractEventRecord> spentContractEventRecord) {
+	public void setSpentContractEventRecord(List<Sha256Hash> spentContractEventRecord) {
 		this.spentContractEventRecord = spentContractEventRecord;
 	}
 
-	public Transaction getOutputTx() {
-		return outputTx;
+	public String getContractid() {
+		return contractid;
 	}
 
-	public void setOutputTx(Transaction outputTx) {
-		this.outputTx = outputTx;
+	public void setContractid(String contractid) {
+		this.contractid = contractid;
+	}
+
+	public Sha256Hash getOutputTxHash() {
+		return outputTxHash;
+	}
+
+	public void setOutputTxHash(Sha256Hash outputTxHash) {
+		this.outputTxHash = outputTxHash;
 	}
 
 }

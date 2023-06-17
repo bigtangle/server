@@ -4315,7 +4315,7 @@ public class ServiceBase {
 		try {
 			ContractEventInfo reqInfo = new ContractEventInfo().parse(block.getTransactions().get(0).getData());
 
-			ContractEventRecord record = new ContractEventRecord(block.getHash(), Sha256Hash.ZERO_HASH,
+			ContractEventRecord record = new ContractEventRecord(block.getHash(),  
 					reqInfo.getContractTokenid(), false, false, null, reqInfo.getOfferValue(),
 					reqInfo.getOfferTokenid(),   reqInfo.getValidToTime(),
 					reqInfo.getValidFromTime(), reqInfo.getBeneficiaryAddress());

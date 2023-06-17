@@ -20,7 +20,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockMCMC;
-import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
@@ -446,8 +445,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     void updateDatabse() throws BlockStoreException, SQLException;
 
     void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException;
-
-    ContractExecution getMaxConfirmedContractExecution() throws BlockStoreException;
+ 
 
     void insertChainBlockQueue(ChainBlockQueue chainBlockQueue) throws BlockStoreException;
 
@@ -476,4 +474,10 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
  
 
     List<Token> getTokenID(Set<String> tokenids) throws BlockStoreException;
+    
+    public void updateContractEventSpent(Set<ContractEventRecord> contractEventRecords) throws BlockStoreException;
+	public void updateContractEventConfirmed(Collection<ContractEventRecord> orderRecords, boolean confirm) throws BlockStoreException;
+	public List<ContractEventRecord> getOpenContractEvent(String contractid) throws BlockStoreException;
+	public List<String> getOpenContractid() throws BlockStoreException;
+	 
 }

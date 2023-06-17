@@ -24,7 +24,7 @@ public class LotteryRemoteTest extends LotteryTests {
 
 		usernumber = 10;
 		winnerAmount = new BigInteger(usernumber*100 + "");
-		  contractKey= new ECKey();
+		contractKey = new ECKey();
 		lotteryDo();
 
 	}
@@ -38,7 +38,7 @@ public class LotteryRemoteTest extends LotteryTests {
 		payBigUserKeys(ulist);
 		// createUserPay(accountKey, ulist);
 		payContract( ulist);
- 
+		contractExecutionService.createContractExecution(store);
 	}
 	
 	public void testContractTokens() throws JsonProcessingException, Exception {

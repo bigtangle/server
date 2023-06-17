@@ -633,6 +633,7 @@ public class FullBlockGraph {
 		case BLOCKTYPE_USERDATA:
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
+			new ServiceContract(serverConfiguration, networkParameters).connectContractExecute(block, blockStore);
 			break;
 		case BLOCKTYPE_ORDER_OPEN:
 			new ServiceBase(serverConfiguration, networkParameters).connectOrder(block, blockStore);
@@ -696,15 +697,13 @@ public class FullBlockGraph {
 		try {
 			ContractEventInfo reqInfo = new ContractEventInfo().parse(block.getTransactions().get(0).getData());
 
-			ContractEventRecord record = new ContractEventRecord(block.getHash(), Sha256Hash.ZERO_HASH,
+			ContractEventRecord record = new ContractEventRecord(block.getHash(),
 					reqInfo.getContractTokenid(), false, false, null, reqInfo.getOfferValue(),
 					reqInfo.getOfferTokenid(), reqInfo.getValidToTime(), reqInfo.getValidFromTime(),
 					reqInfo.getBeneficiaryAddress());
 			List<ContractEventRecord> contracts = new ArrayList<ContractEventRecord>();
 			contracts.add(record);
 			blockStore.insertContractEvent(contracts);
-			new ServiceContract(serverConfiguration, networkParameters).connectContractEvent(block, blockStore);
-			;
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import net.bigtangle.core.ContractEventInfo;
-import net.bigtangle.core.ContractExecution;
 import net.bigtangle.core.Token;
 
 public class GetContractEventInfoResponse extends AbstractResponse {
@@ -20,7 +19,7 @@ public class GetContractEventInfoResponse extends AbstractResponse {
 
 	private List<ContractEventInfo> outputs;
 
-	private ContractExecution contractExecution;
+ 
  
 
 	private Map<String, Token> tokennames;
@@ -32,16 +31,7 @@ public class GetContractEventInfoResponse extends AbstractResponse {
 
 	public void setOutputs(List<ContractEventInfo> outputs) {
 		this.outputs = outputs;
-	}
-
-	public ContractExecution getContractExecution() {
-		return contractExecution;
-	}
-
-	public void setContractExecution(ContractExecution contractExecution) {
-		this.contractExecution = contractExecution;
-	}
- 
+	} 
 
 	public Map<String, Token> getTokennames() {
 		return tokennames;
