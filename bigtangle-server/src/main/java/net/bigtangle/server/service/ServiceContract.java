@@ -93,7 +93,7 @@ public class ServiceContract extends ServiceBase {
 		for (ContractEventRecord o : opens) {
 			spentContractEventRecord.add(o.getBlockHash());
 		}
-		return new ContractResult(winner.getTargetTokenid(), spentContractEventRecord, tx.getHash());
+		return new ContractResult(winner.getTargetTokenid(), spentContractEventRecord, tx.getHash(), tx);
 	}
 
 	public Transaction createOrderPayoutTransaction(Block block, ContractEventRecord winner, Coin outCoin) {
@@ -133,21 +133,7 @@ public class ServiceContract extends ServiceBase {
 
 	}
 
-	/*
-	 * connect from the contract Execution Do the check of the contract execution
-	 * and update contract event and execute the contract coin base output
-	 */
-	public void connectContractExecute(Block block, FullBlockStore blockStore) {
-
-		try {
-			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
-
-			// blockStore.updateContractEvent( );
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
+	 
 	public void checkContractExecute(Block block, FullBlockStore blockStore) {
 
 		try {

@@ -3548,7 +3548,7 @@ public class ServiceBase {
 
 		// Update block's transactions in db
 		for (final Transaction tx : block.getBlock().getTransactions()) {
-			confirmTransaction(block, tx, blockStore);
+			confirmTransaction(block.getBlock(), tx, blockStore);
 		}
 
 		// type-specific updates
@@ -3680,6 +3680,7 @@ public class ServiceBase {
 			if (result.getOutputTxHash().equals(result.getOutputTxHash())
 					&& result.getSpentContractEventRecord().equals(result.getSpentContractEventRecord())) {
 				blockStore.updateContractEventSpent(result.getSpentContractEventRecord(), block.getHash(), true);
+				confirmTransaction(block, check.getOutputTx(), blockStore);
 			} else {
 				throw new InvalidTransactionException(result.toString());
 			}
@@ -3696,7 +3697,8 @@ public class ServiceBase {
 			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
 
 			blockStore.updateContractEventSpent(result.getSpentContractEventRecord(), null, false);
- 
+			blockStore.updateTransactionOutputConfirmed(block.getHash(), result.getOutputTxHash(), 0, false);
+
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -3759,8 +3761,7 @@ public class ServiceBase {
 		blockStore.updateContractEventConfirmed(bs, confirm);
 	}
 
-	private void confirmTransaction(BlockWrap block, Transaction tx, FullBlockStore blockStore)
-			throws BlockStoreException {
+	private void confirmTransaction(Block block, Transaction tx, FullBlockStore blockStore) throws BlockStoreException {
 		// Set used other outputs spent
 		if (!tx.isCoinBase()) {
 			for (TransactionInput in : tx.getInputs()) {
@@ -3774,13 +3775,13 @@ public class ServiceBase {
 				// throw new RuntimeException("Attempted to spend an already spent output!");
 
 				blockStore.updateTransactionOutputSpent(prevOut.getBlockHash(), prevOut.getTxHash(), prevOut.getIndex(),
-						true, block.getBlockHash());
+						true, block.getHash());
 			}
 		}
 
 		// Set own outputs confirmed
 		for (TransactionOutput out : tx.getOutputs()) {
-			blockStore.updateTransactionOutputConfirmed(block.getBlockHash(), tx.getHash(), out.getIndex(), true);
+			blockStore.updateTransactionOutputConfirmed(block.getHash(), tx.getHash(), out.getIndex(), true);
 		}
 	}
 

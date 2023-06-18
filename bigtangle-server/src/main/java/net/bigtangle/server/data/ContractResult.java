@@ -10,6 +10,7 @@ import java.util.List;
 
 import net.bigtangle.core.DataClass;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 
 public class ContractResult extends DataClass {
@@ -17,14 +18,18 @@ public class ContractResult extends DataClass {
 	Sha256Hash outputTxHash;
 	List<Sha256Hash> spentContractEventRecord = new ArrayList<>();
 
+	// not part of toArray for check
+	Transaction outputTx;
+	
 	public ContractResult() {
 
 	}
 
-	public ContractResult(String contractid, List<Sha256Hash> toBeSpent, Sha256Hash outputTx) {
+	public ContractResult(String contractid, List<Sha256Hash> toBeSpent, Sha256Hash outputTxHash, Transaction outputTx) {
 		this.contractid = contractid;
 		this.spentContractEventRecord = toBeSpent;
-		this.outputTxHash = outputTx;
+		this.outputTxHash = outputTxHash;
+		this.outputTx=   outputTx;
 
 	}
 
@@ -92,6 +97,14 @@ public class ContractResult extends DataClass {
 
 	public void setOutputTxHash(Sha256Hash outputTxHash) {
 		this.outputTxHash = outputTxHash;
+	}
+
+	public Transaction getOutputTx() {
+		return outputTx;
+	}
+
+	public void setOutputTx(Transaction outputTx) {
+		this.outputTx = outputTx;
 	}
 
 }
