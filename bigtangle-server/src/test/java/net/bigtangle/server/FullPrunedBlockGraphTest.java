@@ -279,7 +279,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertEquals(store.getRewardSpender(networkParameters.getGenesisBlock().getHash()), rewardBlock1.getHash());
 
 		// Check the virtual txs too
-		Transaction virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock1, store);
+		Transaction virtualTX =  new ServiceBase(serverConfiguration, networkParameters).generateVirtualMiningRewardTX(rewardBlock1, store);
 		final UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock1.getHash()), store);
 		assertTrue(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
@@ -534,7 +534,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertNull(store.getRewardSpender(networkParameters.getGenesisBlock().getHash()));
 
 		// Check the virtual txs too
-		Transaction virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock11, store);
+		Transaction virtualTX =  new ServiceBase(serverConfiguration, networkParameters).generateVirtualMiningRewardTX(rewardBlock11, store);
 		final UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock11.getHash()), store);
 		assertFalse(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
@@ -769,11 +769,11 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertNull(store.getRewardSpender(rewardBlock11.getHash()));
 
 		// Check the virtual txs too
-		Transaction virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock11, store);
+		Transaction virtualTX =  new ServiceBase(serverConfiguration, networkParameters).generateVirtualMiningRewardTX(rewardBlock11, store);
 		UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock11.getHash()), store);
 		assertFalse(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
-		virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock2, store);
+		virtualTX =  new ServiceBase(serverConfiguration, networkParameters).generateVirtualMiningRewardTX(rewardBlock2, store);
 		utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock2.getHash()), store);
 		assertFalse(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
@@ -851,7 +851,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertFalse(utxo2.isSpent());
 
 		// Check the virtual txs too
-		Transaction virtualTX = blockGraph.generateVirtualMiningRewardTX(rewardBlock, store);
+		Transaction virtualTX =  new ServiceBase(serverConfiguration, networkParameters).generateVirtualMiningRewardTX(rewardBlock, store);
 		UTXO utxo3 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock.getHash()), store);
 		assertFalse(utxo3.isConfirmed());
 		assertFalse(utxo3.isSpent());

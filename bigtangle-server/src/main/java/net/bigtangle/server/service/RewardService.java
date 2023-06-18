@@ -44,7 +44,6 @@ import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.OrderMatchingResult;
-import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.service.ServiceBase.RewardBuilderResult;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
@@ -212,11 +211,13 @@ public class RewardService {
 		}
 
 		block.addTransaction(tx);
-		OrderMatchingResult ordermatchresult = new ServiceBase(serverConfiguration, networkParameters)
+		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
+		OrderMatchingResult ordermatchresult = serviceBase
 				.generateOrderMatching(block, currRewardInfo, store);
 		currRewardInfo.setOrdermatchingResult(ordermatchresult.getOrderMatchingResultHash());
 		tx.setData(currRewardInfo.toByteArray());
-		Transaction miningTx = blockGraph.generateVirtualMiningRewardTX(block, store);
+		Transaction miningTx = serviceBase
+				.generateVirtualMiningRewardTX(block, store);
 		currRewardInfo.setMiningResult(miningTx.getHash());
 		tx.setData(currRewardInfo.toByteArray());
 
@@ -324,14 +325,6 @@ public class RewardService {
 		}
 
 		return Utils.encodeCompactBits(difficultyChain);
-	}
-
-	public boolean solidifyWaiting(Block block, FullBlockStore store) throws BlockStoreException {
-
-		SolidityState solidityState = new ServiceBase(serverConfiguration, networkParameters).checkSolidity(block,
-				false, store);
-		blockGraph.solidifyBlock(block, solidityState, false, store);
-		return true;
 	}
 
 }

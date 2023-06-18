@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +57,7 @@ public class ServiceContract extends ServiceBase {
 
 		List<ContractEventRecord> opens = calContractEventRecord(contract.getTokenid(), blockStore);
 		String winnerAmount = getValue("winnerAmount", contract.getTokenKeyValues());
-		if (winnerAmount != null && new BigInteger(winnerAmount).compareTo(sum(opens)) < 0) {
+		if (winnerAmount != null && new BigInteger(winnerAmount).compareTo(sum(opens)) <= 0) {
 			return doTakeWinner(block, blockStore, opens);
 		}
 
@@ -123,7 +124,12 @@ public class ServiceContract extends ServiceBase {
 	protected List<ContractEventRecord> calContractEventRecord(String contractTokenid, FullBlockStore store)
 			throws BlockStoreException {
 
-		return store.getOpenContractEvent(contractTokenid);
+		return store.getOpenContractEvent(contractTokenid).stream().sorted(
+				 (o1, o2)->o1.getBlockHash() .
+                        compareTo(o2.getBlockHash()))
+				 .collect(Collectors.toList());    
+		 
+	
 
 	}
 

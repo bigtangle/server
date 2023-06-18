@@ -124,6 +124,7 @@ import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
+import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.data.SolidityState.State;
@@ -1500,7 +1501,6 @@ public class ServiceBase {
 			throws BlockStoreException {
 		List<Transaction> transactions = block.getTransactions();
 
-	 
 		if (transactions.get(0).getData() == null) {
 			if (throwExceptions)
 				throw new MissingTransactionDataException();
@@ -1523,8 +1523,6 @@ public class ServiceBase {
 			return SolidityState.getFailState();
 		}
 
- 
-
 		// NotNull checks
 		if (contractEventInfo.getContractTokenid() == null) {
 			if (throwExceptions)
@@ -1532,15 +1530,13 @@ public class ServiceBase {
 			return SolidityState.getFailState();
 		}
 
-	 
-
 		if (contractEventInfo.getValidToTime() > Math.addExact(contractEventInfo.getValidFromTime(),
 				NetworkParameters.ORDER_TIMEOUT_MAX)) {
 			if (throwExceptions)
 				throw new InvalidOrderException("The given order's timeout is too long.");
 			return SolidityState.getFailState();
 		}
- 
+
 		return SolidityState.getSuccessState();
 	}
 
@@ -1923,17 +1919,17 @@ public class ServiceBase {
 					throw e;
 			}
 		} catch (VerificationException e) {
-			scriptVerificationExecutor.shutdownNow();
 			logger.info("", e);
 			if (throwExceptions)
 				throw e;
 			return SolidityState.getFailState();
 		} catch (BlockStoreException e) {
-			scriptVerificationExecutor.shutdownNow();
 			logger.error("", e);
 			if (throwExceptions)
 				throw new VerificationException(e);
 			return SolidityState.getFailState();
+		} finally {
+			scriptVerificationExecutor.shutdownNow();
 		}
 
 		return SolidityState.getSuccessState();
@@ -3577,11 +3573,13 @@ public class ServiceBase {
 		case BLOCKTYPE_TRANSFER:
 			break;
 		case BLOCKTYPE_USERDATA:
-		case BLOCKTYPE_CONTRACT_EVENT:
 			confirmVOSOrUserData(block, blockStore);
 			break;
+		case BLOCKTYPE_CONTRACT_EVENT:
+			confirmContract(block.getBlock(), blockStore, true);
+			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
-			// confirmVOSExecute(block);
+			confirmContractExecute(block.getBlock(), blockStore);
 			break;
 		case BLOCKTYPE_ORDER_OPEN:
 			confirmOrderOpen(block, blockStore);
@@ -3669,6 +3667,41 @@ public class ServiceBase {
 		}
 	}
 
+	/*
+	 * connect from the contract Execution Do the check of the contract execution
+	 * and update contract event and execute the contract coin base output
+	 */
+	public void confirmContractExecute(Block block, FullBlockStore blockStore) throws BlockStoreException {
+
+		try {
+			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
+			ContractResult check = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
+					blockStore, result.getContractid());
+			if (result.getOutputTxHash().equals(result.getOutputTxHash())
+					&& result.getSpentContractEventRecord().equals(result.getSpentContractEventRecord())) {
+				blockStore.updateContractEventSpent(result.getSpentContractEventRecord(), block.getHash(), true);
+			} else {
+				throw new InvalidTransactionException(result.toString());
+			}
+
+			// blockStore.updateContractEvent( );
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public void unConfirmContractExecute(Block block, FullBlockStore blockStore) throws BlockStoreException {
+
+		try {
+			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
+
+			blockStore.updateContractEventSpent(result.getSpentContractEventRecord(), null, false);
+ 
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	private void confirmOrderOpen(BlockWrap block, FullBlockStore blockStore) throws BlockStoreException {
 		// Set own output confirmed
 		blockStore.updateOrderConfirmed(block.getBlock().getHash(), Sha256Hash.ZERO_HASH, true);
@@ -3716,6 +3749,14 @@ public class ServiceBase {
 
 		// Set own output confirmed
 		blockStore.updateTokenConfirmed(block.getBlock().getHash(), true);
+	}
+
+	private void confirmContract(Block block, FullBlockStore blockStore, boolean confirm) throws BlockStoreException {
+
+		// Set own output confirmed
+		List<Sha256Hash> bs = new ArrayList<>();
+		bs.add(block.getHash());
+		blockStore.updateContractEventConfirmed(bs, confirm);
 	}
 
 	private void confirmTransaction(BlockWrap block, Transaction tx, FullBlockStore blockStore)
@@ -3868,7 +3909,6 @@ public class ServiceBase {
 
 		// Disconnect all virtual transaction output dependents
 		Transaction tx = matchingResult.getOutputTx();
-		;
 		for (TransactionOutput txout : tx.getOutputs()) {
 			UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
 			if (utxo != null && utxo.isSpent()) {
@@ -3962,8 +4002,11 @@ public class ServiceBase {
 		case BLOCKTYPE_USERDATA:
 			break;
 		case BLOCKTYPE_CONTRACT_EVENT:
+			confirmContract(block, blockStore, false);
+			unConfirmContractExecute(block, blockStore);
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
+			unConfirmContractExecute(block, blockStore);
 			break;
 		case BLOCKTYPE_ORDER_OPEN:
 			unconfirmOrderOpen(block, blockStore);
@@ -4315,13 +4358,12 @@ public class ServiceBase {
 		try {
 			ContractEventInfo reqInfo = new ContractEventInfo().parse(block.getTransactions().get(0).getData());
 
-			ContractEventRecord record = new ContractEventRecord(block.getHash(),  
-					reqInfo.getContractTokenid(), false, false, null, reqInfo.getOfferValue(),
-					reqInfo.getOfferTokenid(),   reqInfo.getValidToTime(),
+			ContractEventRecord record = new ContractEventRecord(block.getHash(), reqInfo.getContractTokenid(), false,
+					false, null, reqInfo.getOfferValue(), reqInfo.getOfferTokenid(), reqInfo.getValidToTime(),
 					reqInfo.getValidFromTime(), reqInfo.getBeneficiaryAddress());
-			List<ContractEventRecord> orders = new ArrayList<ContractEventRecord>();
-			orders.add(record);
-			blockStore.insertContractEvent(orders);
+			List<ContractEventRecord> events = new ArrayList<ContractEventRecord>();
+			events.add(record);
+			blockStore.insertContractEvent(events);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

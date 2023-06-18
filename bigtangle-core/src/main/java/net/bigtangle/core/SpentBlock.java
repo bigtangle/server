@@ -5,6 +5,8 @@
 
 package net.bigtangle.core;
 
+import java.util.Objects;
+
 import org.apache.commons.lang3.StringUtils;
 
 /*
@@ -69,6 +71,23 @@ public class SpentBlock extends DataClass {
     public void setTime(long time) {
         this.time = time;
     }
+	@Override
+	public int hashCode() {
+		return Objects.hash(blockHash, confirmed, spenderBlockHash, spent, time);
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SpentBlock other = (SpentBlock) obj;
+		return Objects.equals(blockHash, other.blockHash) && confirmed == other.confirmed
+				&& Objects.equals(spenderBlockHash, other.spenderBlockHash) && spent == other.spent
+				&& time == other.time;
+	}
 
  
 }

@@ -343,12 +343,12 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
     private static final String CREATE_CONTRACT_EVENT_TABLE = "CREATE TABLE contractevent (\n"
                 // initial issuing block  hash
             + "    blockhash binary(32) NOT NULL,\n" 
-            + "    contracttokenid varchar(255),\n" 
+            + "    contracttokenid varchar(255) NOT NULL,\n" 
              + "   targetcoinvalue mediumblob,\n" 
             + "    targettokenid varchar(255),\n" 
                 // public address  will receive the targettokens
                 // on completion or returned   tokens on cancels 
-            + "    beneficiaryaddress varchar(255),\n" 
+            + "    beneficiaryaddress varchar(255) NOT NULL,\n" 
                //  valid until this time
             + "    validToTime bigint,\n" 
             + "    validFromTime bigint,\n" 

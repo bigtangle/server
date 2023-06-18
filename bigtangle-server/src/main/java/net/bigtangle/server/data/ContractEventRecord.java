@@ -6,6 +6,7 @@
 package net.bigtangle.server.data;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.SpentBlock;
@@ -47,6 +48,7 @@ public class ContractEventRecord extends SpentBlock {
         this.validFromTime = validFromTime;
    
         this.beneficiaryAddress = beneficiaryAddress;
+        this.contractTokenid=contractTokenid;
     }
 
     public static ContractEventRecord cloneOrderRecord(ContractEventRecord old) {
@@ -125,6 +127,27 @@ public class ContractEventRecord extends SpentBlock {
 	}
 
  
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(beneficiaryAddress, contractTokenid, targetTokenid, targetValue, validFromTime,
+				validToTime);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ContractEventRecord other = (ContractEventRecord) obj;
+		return Objects.equals(beneficiaryAddress, other.beneficiaryAddress)
+				&& Objects.equals(contractTokenid, other.contractTokenid)
+				&& Objects.equals(targetTokenid, other.targetTokenid) && Objects.equals(targetValue, other.targetValue)
+				&& Objects.equals(validFromTime, other.validFromTime) && Objects.equals(validToTime, other.validToTime);
+	}
 
 	@Override
 	public String toString() {

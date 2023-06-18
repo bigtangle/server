@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Objects;
 
 /*
  * Block may contains data with the dataClassName and the class has a version number
@@ -37,5 +38,22 @@ public abstract class DataClass {
     public void setVersion(long version) {
         this.version = version;
     }
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(version);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		DataClass other = (DataClass) obj;
+		return version == other.version;
+	}
 
 }

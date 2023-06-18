@@ -1,5 +1,6 @@
 select * from blocks  where milestone <0 order by height desc ;
 select * from orders   ;
+select * from contractevent   ;
 select count( *) from blocks   ;
 select count( *) from blocks  WHERE milestone>9;
 select count( *) from unsolidblocks   where inserttime < 1515432033 ;

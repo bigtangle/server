@@ -174,7 +174,7 @@ public class ContractExecutionService {
 		block.addTransaction(tx);
 		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
 				store, contractid);
-
+		if(result==null) return null;
 		tx.setData(result.toByteArray());
 
 		blockService.adjustHeightRequiredBlocks(block, store);

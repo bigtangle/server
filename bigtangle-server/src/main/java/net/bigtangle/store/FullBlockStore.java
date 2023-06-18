@@ -192,10 +192,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
     public void updateOrderConfirmed(Collection<OrderRecord> orderRecords, boolean confirm) throws BlockStoreException;
 
     public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException;
-
-    public void updateOrderSpent(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean spent,
-            Sha256Hash spenderBlockHash) throws BlockStoreException;
-
+  
     public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
             throws BlockStoreException;
 
@@ -444,8 +441,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
     void updateDatabse() throws BlockStoreException, SQLException;
 
-    void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException;
- 
+  
 
     void insertChainBlockQueue(ChainBlockQueue chainBlockQueue) throws BlockStoreException;
 
@@ -474,9 +470,10 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
  
 
     List<Token> getTokenID(Set<String> tokenids) throws BlockStoreException;
+    void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException;
     
-    public void updateContractEventSpent(Set<ContractEventRecord> contractEventRecords) throws BlockStoreException;
-	public void updateContractEventConfirmed(Collection<ContractEventRecord> orderRecords, boolean confirm) throws BlockStoreException;
+    public void updateContractEventSpent(List<Sha256Hash> contractEventRecords, Sha256Hash spentBlock, boolean spent) throws BlockStoreException;
+	public void updateContractEventConfirmed(Collection<Sha256Hash> contracts, boolean confirm) throws BlockStoreException;
 	public List<ContractEventRecord> getOpenContractEvent(String contractid) throws BlockStoreException;
 	public List<String> getOpenContractid() throws BlockStoreException;
 	 
