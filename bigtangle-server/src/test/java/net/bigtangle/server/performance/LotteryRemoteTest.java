@@ -16,6 +16,7 @@ import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
+import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.wallet.Wallet;
 
 public class LotteryRemoteTest extends LotteryTests {
@@ -42,11 +43,22 @@ public class LotteryRemoteTest extends LotteryTests {
 		// createUserPay(accountKey, ulist);
 		payContract(ulist);
 		makeRewardBlock();
-		Block result = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
-	    assertTrue(result!=null);
-	     
+		Block resultBlock = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
+		assertTrue(resultBlock != null);
+		// ContractResult result = new
+		// ContractResult().parse(resultBlock.getTransactions().get(0).getData());
+		blockService.saveBlock(resultBlock, store);
+		
 		makeRewardBlock();
-
+		// check one of user get the winnerAmount
+	
+		//second is empty
+		Block second = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
+		assertTrue(second == null);
+		
+		//exception 
+		blockService.saveBlock(resultBlock, store);
+		
 	}
 
 	public void testContractTokens() throws JsonProcessingException, Exception {
@@ -60,7 +72,7 @@ public class LotteryRemoteTest extends LotteryTests {
 		tokenKeyValues.addKeyvalue(kv);
 		kv = new KeyValue();
 		kv.setKey("classname");
-		kv.setValue("net.bigtangle.server.service.ServiceContract");
+		kv.setValue("net.bigtangle.server.service.LotteryContract");
 		tokenKeyValues.addKeyvalue(kv);
 		kv = new KeyValue();
 		kv.setKey("winnerAmount");
@@ -91,8 +103,7 @@ public class LotteryRemoteTest extends LotteryTests {
 	public void payContract(List<ECKey> userkeys) throws Exception {
 		for (ECKey key : userkeys) {
 			Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
-			Block block = w.payContract(null, yuanTokenPub,  winnerAmount , null, null,
-					contractKey.getPublicKeyAsHex());
+			Block block = w.payContract(null, yuanTokenPub, winnerAmount, null, null, contractKey.getPublicKeyAsHex());
 		}
 	}
 

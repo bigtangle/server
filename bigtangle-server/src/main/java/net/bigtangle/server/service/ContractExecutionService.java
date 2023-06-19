@@ -127,15 +127,14 @@ public class ContractExecutionService {
 
 	public Block createContractExecution(FullBlockStore store, String contractid) throws Exception {
 
-		Sha256Hash prevContractExecutionHash = store.getMaxConfirmedReward().getBlockHash();
-		Block contractExecution = createContractExecution(prevContractExecutionHash, contractid, store);
+		Block contractExecution = createContractExecution( contractid, store);
 		if (contractExecution != null) {
 			log.debug(" contractExecution block is created: " + contractExecution);
 		}
 		return contractExecution;
 	}
 
-	public Block createContractExecution(Sha256Hash prevContractExecutionHash, String contractid, FullBlockStore store)
+	public Block createContractExecution( String contractid, FullBlockStore store)
 			throws Exception {
 
 		Stopwatch watch = Stopwatch.createStarted();

@@ -45,7 +45,13 @@ public class ServiceContract extends ServiceBase {
 			throws BlockStoreException {
 
 		Token contract = blockStore.getTokenID(contractid).get(0);
-		return lotteryContract(block, blockStore, contract);
+		String classname = getValue("classname", contract.getTokenKeyValues());
+		if ("net.bigtangle.server.service.LotteryContract".equals(classname)) {
+			return lotteryContract(block, blockStore, contract);
+		} else {
+			//TODO run others
+			return null;
+		}
 
 	}
 
@@ -93,7 +99,7 @@ public class ServiceContract extends ServiceBase {
 		for (ContractEventRecord o : opens) {
 			spentContractEventRecord.add(o.getBlockHash());
 		}
-		return new ContractResult(winner.getTargetTokenid(), spentContractEventRecord, tx.getHash(), tx);
+		return new ContractResult(winner.getContractTokenid(), spentContractEventRecord, tx.getHash(), tx);
 	}
 
 	public Transaction createOrderPayoutTransaction(Block block, ContractEventRecord winner, Coin outCoin) {
@@ -124,16 +130,11 @@ public class ServiceContract extends ServiceBase {
 	protected List<ContractEventRecord> calContractEventRecord(String contractTokenid, FullBlockStore store)
 			throws BlockStoreException {
 
-		return store.getOpenContractEvent(contractTokenid).stream().sorted(
-				 (o1, o2)->o1.getBlockHash() .
-                        compareTo(o2.getBlockHash()))
-				 .collect(Collectors.toList());    
-		 
-	
+		return store.getOpenContractEvent(contractTokenid).stream()
+				.sorted((o1, o2) -> o1.getBlockHash().compareTo(o2.getBlockHash())).collect(Collectors.toList());
 
 	}
 
-	 
 	public void checkContractExecute(Block block, FullBlockStore blockStore) {
 
 		try {
