@@ -610,7 +610,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		sqlStatements.add(DROP_ACCESS_PERMISSION_TABLE);
 		sqlStatements.add(DROP_ACCESS_GRANT_TABLE);
 		sqlStatements.add(DROP_CONTRACT_EVENT_TABLE);
-		sqlStatements.add(DROP_CONTRACT_ACCOUNT_TABLE);
 		sqlStatements.add(DROP_CHAINBLOCKQUEUE_TABLE);
 		sqlStatements.add(DROP_MCMC_TABLE);
 		sqlStatements.add(DROP_LOCKOBJECT_TABLE);
