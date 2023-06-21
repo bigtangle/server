@@ -796,12 +796,12 @@ public class ServiceBase {
 		case DOMAINISSUANCE:
 			// exception for the block
 			final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
-			// if
-			// ("0201ad11827c4ed13a079ecca5e0506757065278bfda325533379fdc29ddb905f0"
-			// .equals(connectedDomainToken.getTokenid()))
-			// return false;
 			return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
 					connectedDomainToken.getDomainNameBlockHash(), connectedDomainToken.getTokenindex()) != null;
+		case CONTRACTEXECUTE:
+			final ContractResult  connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
+			return  store.checkContractEventSpent(connectedContracExecute.getSpentContractEventRecord())!=null;
+
 		default:
 			throw new RuntimeException("Not Implemented");
 		}
@@ -825,6 +825,10 @@ public class ServiceBase {
 		case DOMAINISSUANCE:
 			final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
 			return store.getTokenConfirmed(Sha256Hash.wrap(connectedDomainToken.getDomainNameBlockHash()));
+		case CONTRACTEXECUTE:
+			final ContractResult  connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
+			return  store.checkContractEventConfirmed(connectedContracExecute.getSpentContractEventRecord());
+
 		default:
 			throw new RuntimeException("not implemented");
 		}
@@ -1217,6 +1221,12 @@ public class ServiceBase {
 			// predecessing domain tokenid that is confirmed
 			return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
 					connectedDomainToken.getDomainNameBlockHash(), connectedDomainToken.getTokenindex());
+		case CONTRACTEXECUTE:
+			final ContractResult  connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
+			 Sha256Hash t = store.checkContractEventSpent(connectedContracExecute.getSpentContractEventRecord()) ;
+			 if (t == null)
+					return null;
+				return store.getBlockWrap(t);
 		default:
 			throw new RuntimeException("No Implementation");
 		}
@@ -3677,9 +3687,9 @@ public class ServiceBase {
 			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
 			ContractResult check = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
 					blockStore, result.getContractid());
-			if (result.getOutputTxHash().equals(result.getOutputTxHash())
-					&& result.getSpentContractEventRecord().equals(result.getSpentContractEventRecord())) {
-				blockStore.updateContractEventSpent(result.getSpentContractEventRecord(), block.getHash(), true);
+			if ( check !=null && result.getOutputTxHash().equals(check.getOutputTxHash())
+					&& result.getSpentContractEventRecord().equals(check.getSpentContractEventRecord())) {
+				blockStore.updateContractEventSpent(check.getSpentContractEventRecord(), block.getHash(), true);
 				confirmTransaction(block, check.getOutputTx(), blockStore);
 			} else {
 				throw new InvalidTransactionException(result.toString());

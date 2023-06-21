@@ -341,7 +341,6 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
     
 
     private static final String CREATE_CONTRACT_EVENT_TABLE = "CREATE TABLE contractevent (\n"
-                // initial issuing block  hash
             + "    blockhash binary(32) NOT NULL,\n" 
             + "    contracttokenid varchar(255) NOT NULL,\n" 
              + "   targetcoinvalue mediumblob,\n" 
@@ -352,7 +351,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
                //  valid until this time
             + "    validToTime bigint,\n" 
             + "    validFromTime bigint,\n" 
-            // true iff a order block of this order is confirmed
+            // true if a order block of this order is confirmed
             + "    confirmed boolean NOT NULL,\n" 
             // true if used by a confirmed  block (either
             // returned or used for another  )
@@ -361,25 +360,17 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    CONSTRAINT contractevent_pk PRIMARY KEY (blockhash) "
             + " USING HASH \n" + ") ENGINE=InnoDB \n";
 
-    private static final String CREATE_CONTRACT_ACCOUNT_TABLE = "CREATE TABLE contractaccount (\n"
-        + "    contracttokenid varchar(255)  NOT NULL,\n" 
-        + "    tokenid varchar(255)  NOT NULL,\n" 
-        + "    coinvalue mediumblob, \n" 
-        //  block  hash of the last execution block
-        + "    blockhash binary(32) NOT NULL,\n" 
-        + "    CONSTRAINT contractaccount_pk PRIMARY KEY (contracttokenid, tokenid) "
-        + ") ENGINE=InnoDB \n";
 
-    private static final String CREATE_CONTRACT_EXECUTION_TABLE = "CREATE TABLE contractexecution (\n"
+    //account for the contract execution
+    private static final String CREATE_CONTRACT_RESULT_TABLE = "CREATE TABLE contractexecution (\n"
             + "   blockhash binary(32) NOT NULL,\n" 
             + "   contracttokenid varchar(255)  NOT NULL,\n" 
+            + "   contractresult mediumblob NOT NULL,\n" 
+            //prev contract execution blockhash 
+            + "   prevblockhash binary(32) NOT NULL,\n" 
             + "   confirmed boolean NOT NULL,\n" 
             + "   spent boolean NOT NULL,\n"
             + "   spenderblockhash binary(32),\n" 
-            + "   prevblockhash binary(32) NOT NULL,\n" 
-            + "   difficulty bigint NOT NULL,\n" 
-            + "   chainlength bigint NOT NULL,\n" 
-            + "   resultdata blob NOT NULL,\n"
             + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
    
     private static final String CREATE_CHAINBLOCKQUEUE_TABLE = "CREATE TABLE chainblockqueue (\n" 
@@ -466,8 +457,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_ACCESS_PERMISSION_TABLE);
         sqlStatements.add(CREATE_ACCESS_GRANT_TABLE);
         sqlStatements.add(CREATE_CONTRACT_EVENT_TABLE);
-        sqlStatements.add(CREATE_CONTRACT_ACCOUNT_TABLE);
-        sqlStatements.add(CREATE_CONTRACT_EXECUTION_TABLE); 
+        sqlStatements.add(CREATE_CONTRACT_RESULT_TABLE); 
         sqlStatements.add(CREATE_CHAINBLOCKQUEUE_TABLE);
         sqlStatements.add(CREATE_LOCKOBJECT_TABLE); 
         sqlStatements.add(CREATE_MATCHINGDAILY_TABLE); 

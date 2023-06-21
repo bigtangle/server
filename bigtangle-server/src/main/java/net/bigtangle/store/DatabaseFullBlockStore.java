@@ -4814,14 +4814,73 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		}
 	}
 
+ 
 	@Override
-	public void updateContractEventConfirmed(Collection<Sha256Hash> orderRecords, boolean confirm)
+	public Sha256Hash checkContractEventSpent(List<Sha256Hash> contractEventRecords ) throws BlockStoreException {
+		//one of the block is spent then, return Sha256Hash, otherwise null
+		maybeConnect();
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = getConnection().prepareStatement(
+					  " select spenderblockhash  from contractevent " + " WHERE blockhash = ? ");
+		 
+			for (Sha256Hash o : contractEventRecords) {
+				preparedStatement.setBytes(1, o.getBytes());
+				ResultSet resultSet = preparedStatement.executeQuery(); 
+				if( resultSet.next()) {
+				  byte[] spentbytes = resultSet.getBytes(1);
+				if(spentbytes!=null) return Sha256Hash.wrap(spentbytes);
+				}
+			}
+			return null;
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+	@Override
+	public boolean checkContractEventConfirmed(List<Sha256Hash> contractEventRecords ) throws BlockStoreException {
+		//one of the block is spent then, return true
+		maybeConnect();
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = getConnection().prepareStatement(
+					  " select confirmed  from contractevent " + " WHERE blockhash = ? ");
+			for (Sha256Hash o : contractEventRecords) {
+				preparedStatement.setBytes(1, o.getBytes());
+				ResultSet resultSet = preparedStatement.executeQuery(); 
+				if( resultSet.next()) {
+				  if(resultSet.getBoolean("confirmed")) return true;
+				}
+			}
+			return false;
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+	@Override
+	public void updateContractEventConfirmed(Collection<Sha256Hash> records, boolean confirm)
 			throws BlockStoreException {
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_CONTRACT_CONFIRMED_SQL);
-			for (Sha256Hash o : orderRecords) {
+			for (Sha256Hash o : records) {
 				preparedStatement.setBoolean(1, confirm);
 				preparedStatement.setBytes(2, o.getBytes());		 
 				preparedStatement.addBatch();

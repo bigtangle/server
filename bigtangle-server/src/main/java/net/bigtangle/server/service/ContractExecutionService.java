@@ -24,7 +24,6 @@ import com.google.common.base.Stopwatch;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -127,15 +126,14 @@ public class ContractExecutionService {
 
 	public Block createContractExecution(FullBlockStore store, String contractid) throws Exception {
 
-		Block contractExecution = createContractExecution( contractid, store);
+		Block contractExecution = createContractExecution(contractid, store);
 		if (contractExecution != null) {
 			log.debug(" contractExecution block is created: " + contractExecution);
 		}
 		return contractExecution;
 	}
 
-	public Block createContractExecution( String contractid, FullBlockStore store)
-			throws Exception {
+	public Block createContractExecution(String contractid, FullBlockStore store) throws Exception {
 
 		Stopwatch watch = Stopwatch.createStarted();
 		Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair(store);
@@ -162,24 +160,20 @@ public class ContractExecutionService {
 		block.setBlockType(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
 		block.setHeight(Math.max(r1.getHeight(), r2.getHeight()) + 1);
 
-		// Build transaction for block
-		Transaction tx = new Transaction(networkParameters);
-
 		// Enforce timestamp equal to previous max for contractExecution blocktypes
 		block.setTime(currentTime);
-
-		BigInteger chainTarget = Utils.decodeCompactBits(block.getDifficultyTarget());
-
+		// Build transaction for block
+		Transaction tx = new Transaction(networkParameters);
 		block.addTransaction(tx);
 		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
 				store, contractid);
-		if(result==null) return null;
+		if (result == null)
+			return null;
 		tx.setData(result.toByteArray());
 
 		blockService.adjustHeightRequiredBlocks(block, store);
-		final BigInteger chainTargetFinal = chainTarget;
-		log.debug("prepare contractExecution time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-		return blockSolve(block, chainTargetFinal);
+
+		return blockSolve(block, Utils.decodeCompactBits(block.getDifficultyTarget()));
 	}
 
 	private Block blockSolve(Block block, final BigInteger chainTargetFinal)

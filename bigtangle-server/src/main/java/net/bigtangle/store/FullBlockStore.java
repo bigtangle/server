@@ -43,6 +43,7 @@ import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.BatchBlock;
 import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
+import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.server.data.DepthAndWeight;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.Rating;
@@ -476,5 +477,6 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 	public void updateContractEventConfirmed(Collection<Sha256Hash> contracts, boolean confirm) throws BlockStoreException;
 	public List<ContractEventRecord> getOpenContractEvent(String contractid) throws BlockStoreException;
 	public List<String> getOpenContractid() throws BlockStoreException;
-	 
+	public Sha256Hash checkContractEventSpent(List<Sha256Hash> contractEventRecords ) throws BlockStoreException;
+	public boolean checkContractEventConfirmed(List<Sha256Hash> contractEventRecords ) throws BlockStoreException;
 }

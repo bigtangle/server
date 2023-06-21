@@ -8,17 +8,17 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.bigtangle.core.DataClass;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.SpentBlock;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 
-public class ContractResult extends DataClass {
+public class ContractResult extends SpentBlock {
 	String contractid;
 	Sha256Hash outputTxHash;
 	List<Sha256Hash> spentContractEventRecord = new ArrayList<>();
 
-	// not part of toArray for check
+	//not persistent not part of toArray for check
 	Transaction outputTx;
 	
 	public ContractResult() {
