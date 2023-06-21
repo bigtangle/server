@@ -1,9 +1,12 @@
 package net.bigtangle.server.performance;
 
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.startsWith;
 
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +18,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.TokenType;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.wallet.Wallet;
@@ -40,25 +44,49 @@ public class LotteryRemoteTest extends LotteryTests {
 		List<ECKey> ulist = createUserkey();
 		payUserKeys(ulist);
 		payBigUserKeys(ulist);
+		Map<String, BigInteger> startMap = new HashMap<>();
+		check(ulist, startMap);
 		// createUserPay(accountKey, ulist);
 		payContract(ulist);
 		makeRewardBlock();
 		Block resultBlock = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
 		assertTrue(resultBlock != null);
-		// ContractResult result = new
-		// ContractResult().parse(resultBlock.getTransactions().get(0).getData());
+		ContractResult result = new ContractResult().parse(resultBlock.getTransactions().get(0).getData());
 		blockService.saveBlock(resultBlock, store);
-		
+
 		makeRewardBlock();
 		// check one of user get the winnerAmount
-	
-		//second is empty
-		Block second = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
-		assertTrue(second == null);
-		
-		//exception 
-		blockService.saveBlock(resultBlock, store);
-		
+		Map<String, BigInteger> endMap = new HashMap<>();
+		check(ulist, endMap);
+		for (String address : startMap.keySet()) {
+			log.debug("start address==" + address + "  ;  balance==" + startMap.get(address));
+			if (endMap.containsKey(address)) {
+				log.debug("end address==" + address + "  ;  balance==" + endMap.get(address));
+				assertTrue(startMap.get(address).compareTo(endMap.get(address)) == 0);
+			}
+		}
+		// second is empty
+		// Block second = contractExecutionService.createContractExecution(store,
+		// contractKey.getPublicKeyAsHex());
+		// assertTrue(second == null);
+
+		// exception
+		// blockService.saveBlock(resultBlock, store);
+
+	}
+
+	public void check(List<ECKey> ulist, Map<String, BigInteger> map) throws Exception {
+
+		for (ECKey ecKey : ulist) {
+			List<UTXO> utxos = getBalance(ecKey.toAddress(networkParameters).toString());
+			for (UTXO u : utxos) {
+				if (u.getTokenId().equals(yuanTokenPub)) {
+					map.put(u.getAddress(), u.getValue().getValue());
+					break;
+				}
+			}
+		}
+
 	}
 
 	public void testContractTokens() throws JsonProcessingException, Exception {
