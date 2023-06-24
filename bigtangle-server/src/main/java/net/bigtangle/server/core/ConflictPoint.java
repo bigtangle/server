@@ -87,10 +87,8 @@ public class ConflictPoint {
                     && getConnectedDomainToken().getTokenname().equals(other.getConnectedDomainToken().getTokenname())
                     && getConnectedDomainToken().getTokenindex() == other.getConnectedDomainToken().getTokenindex();
         case CONTRACTEXECUTE:
-            return getConnectedContracExecute().getContractid().equals(other.getConnectedContracExecute().getContractid())
-                    && getConnectedContracExecute().getOutputTxHash() == other.getConnectedContracExecute().getOutputTxHash()
-            		&& getConnectedContracExecute().getSpentContractEventRecord() == other.getConnectedContracExecute().getSpentContractEventRecord();
- 
+            return getConnectedContracExecute().getPrevblockhash().equals(other.getConnectedContracExecute().getPrevblockhash());
+                   
         default:
             throw new RuntimeException("Conflicts not implemented.");
         }
@@ -109,8 +107,7 @@ public class ConflictPoint {
             return Objects.hashCode(type, getConnectedDomainToken().getDomainNameBlockHash(),
                     getConnectedDomainToken().getTokenname(), getConnectedDomainToken().getTokenindex());
         case CONTRACTEXECUTE:
-            return Objects.hashCode(type, getConnectedContracExecute().getContractid(), getConnectedContracExecute().getOutputTxHash()
-            		, getConnectedContracExecute().getSpentContractEventRecord());
+            return Objects.hashCode(type, getConnectedContracExecute().getPrevblockhash());
   
         default:
             throw new RuntimeException("Conflicts not implemented.");

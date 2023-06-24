@@ -5,7 +5,14 @@
 
 package net.bigtangle.utils;
 
+import static org.junit.Assert.assertTrue;
+
+import java.security.SecureRandom;
+import java.util.Random;
+
 import org.junit.Test;
+
+import net.bigtangle.core.Utils;
 
 public class ProbabilityTest {
 
@@ -18,5 +25,18 @@ public class ProbabilityTest {
         }
 
     }
+    @Test
+    public void testRandomness() throws Exception {
 
+	byte[] randomness = "test123".getBytes();
+	Random se = new  Random(31243565477l);
+	
+	int randomWin = se.nextInt(1000);
+  
+    for (int i=0; i<100;i++  ) {
+    	  se = new  Random(31243565477l);
+    	assertTrue(randomWin ==	se.nextInt(1000)) ;
+    }
+	
+    }
 }

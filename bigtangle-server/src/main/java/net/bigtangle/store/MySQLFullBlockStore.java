@@ -362,7 +362,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
 
 
     //account for the contract execution
-    private static final String CREATE_CONTRACT_RESULT_TABLE = "CREATE TABLE contractexecution (\n"
+    private static final String CREATE_CONTRACT_RESULT_TABLE = "CREATE TABLE contractresult (\n"
             + "   blockhash binary(32) NOT NULL,\n" 
             + "   contracttokenid varchar(255)  NOT NULL,\n" 
             + "   contractresult mediumblob NOT NULL,\n" 
@@ -371,6 +371,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "   confirmed boolean NOT NULL,\n" 
             + "   spent boolean NOT NULL,\n"
             + "   spenderblockhash binary(32),\n" 
+            + "    inserttime bigint NOT NULL,\n"
             + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
    
     private static final String CREATE_CHAINBLOCKQUEUE_TABLE = "CREATE TABLE chainblockqueue (\n" 
@@ -401,11 +402,12 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
     private static final String CREATE_BLOCKS_HEIGHT_INDEX = "CREATE INDEX blocks_height_idx ON blocks (height)  USING btree ";
     private static final String CREATE_TXREARD_CHAINLENGTH_INDEX = "CREATE INDEX txreard_chainlength_idx ON txreward (chainlength)  USING btree ";
     private static final String CREATE_CONTRACT_EVENT_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractevent_contracttokenid_idx ON contractevent (contracttokenid) USING btree";
-    private static final String CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractexecution_contracttokenid_idx ON contractexecution (contracttokenid) USING btree";
+    private static final String CREATE_CONTRACT_EXECUTION_CONTRACTTOKENID_TABLE_INDEX = "CREATE INDEX contractresult_contracttokenid_idx ON contractresult (contracttokenid) USING btree";
     private static final String CREATE_ORDERS_SPENT_TABLE_INDEX = "CREATE INDEX orders_spent_idx ON orders (confirmed, spent) ";
     private static final String CREATE_MATCHING_TOKEN_TABLE_INDEX = "CREATE INDEX matching_inserttime_idx ON matching (inserttime) ";
       
     private static final String CREATE_TOKEN_TOKENID_TABLE_INDEX = "CREATE INDEX tokens_tokenid_idx ON tokens (tokenid) ";
+    
     
   
     public MySQLFullBlockStore(NetworkParameters params, Connection conn)  {

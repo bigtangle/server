@@ -169,6 +169,13 @@ public class ContractExecutionService {
 				store, contractid);
 		if (result == null)
 			return null;
+		// calculate prev
+		ContractResult prev = store.getOpenLastContractResult(contractid);
+		if (prev != null) {
+			result.setPrevblockhash(prev.getBlockHash());
+		} else {
+			result.setPrevblockhash(networkParameters.getGenesisBlock().getHash());
+		}
 		tx.setData(result.toByteArray());
 
 		blockService.adjustHeightRequiredBlocks(block, store);

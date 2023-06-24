@@ -879,23 +879,7 @@ public abstract class AbstractIntegrationTest {
 
     }
 
-    protected void testCreateMarket() throws JsonProcessingException, Exception {
-        ECKey outKey = walletKeys.get(1);
-        byte[] pubKey = outKey.getPubKey();
-        TokenInfo tokenInfo = new TokenInfo();
-
-        String tokenid = Utils.HEX.encode(pubKey);
-        Token tokens = Token.buildMarketTokenInfo(true, null, tokenid, "p2p", "", null);
-        tokenInfo.setToken(tokens);
-
-        // add MultiSignAddress item
-        tokenInfo.getMultiSignAddresses()
-                .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
-        Coin basecoin = Coin.valueOf(0, pubKey);
-        walletAppKit.wallet().saveToken(tokenInfo, basecoin, outKey, null);
-    }
-
+ 
     protected void checkResponse(byte[]  resp) throws JsonParseException, JsonMappingException, IOException {
         checkResponse(resp, 0);
     }

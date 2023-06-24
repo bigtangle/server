@@ -282,24 +282,7 @@ public class Token extends SpentBlock implements java.io.Serializable {
         return tokens;
     }
 
-    public static Token buildMarketTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid,
-            String tokenname, String description, String domainname) {
-        Token tokens = new Token();
-        tokens.setTokenid(tokenid);
-        tokens.setTokenname(tokenname);
-        tokens.setDescription(description);
-        tokens.setDomainName(domainname);
-        tokens.tokenstop = true;
-
-        tokens.tokentype = TokenType.market.ordinal();
-        tokens.signnumber = 1;
-        tokens.amount = BigInteger.ZERO;
-        tokens.tokenindex = 0;
-        tokens.setConfirmed(confirmed);
-        tokens.prevblockhash = prevblockhash;
-
-        return tokens;
-    }
+ 
 
     public static Token buildSubtangleTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid,
             String tokenname, String description, String domainname) {

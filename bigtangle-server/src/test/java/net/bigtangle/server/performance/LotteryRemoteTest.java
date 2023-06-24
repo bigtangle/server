@@ -1,18 +1,19 @@
 package net.bigtangle.server.performance;
 
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.startsWith;
 
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.KeyValue;
@@ -21,6 +22,7 @@ import net.bigtangle.core.TokenType;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.server.data.ContractResult;
+import net.bigtangle.server.service.ServiceContract;
 import net.bigtangle.wallet.Wallet;
 
 public class LotteryRemoteTest extends LotteryTests {
@@ -51,20 +53,20 @@ public class LotteryRemoteTest extends LotteryTests {
 		makeRewardBlock();
 		Block resultBlock = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
 		assertTrue(resultBlock != null);
-		ContractResult result = new ContractResult().parse(resultBlock.getTransactions().get(0).getData());
+		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(resultBlock,
+				store, contractKey.getPublicKeyAsHex());
+		Address winnerAddress = result.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
 		blockService.saveBlock(resultBlock, store);
 
 		makeRewardBlock();
 		// check one of user get the winnerAmount
 		Map<String, BigInteger> endMap = new HashMap<>();
 		check(ulist, endMap);
-		for (String address : startMap.keySet()) {
-			log.debug("start address==" + address + "  ;  balance==" + startMap.get(address));
-			if (endMap.containsKey(address)) {
-				log.debug("end address==" + address + "  ;  balance==" + endMap.get(address));
-				assertTrue(startMap.get(address).compareTo(endMap.get(address)) == 0);
-			}
-		}
+
+		assertTrue(endMap.get(winnerAddress.toString()) != null);
+
+		assertTrue(endMap.get(winnerAddress.toString()).equals(winnerAmount.multiply(BigInteger.valueOf(10))));
+
 		// second is empty
 		// Block second = contractExecutionService.createContractExecution(store,
 		// contractKey.getPublicKeyAsHex());
@@ -81,11 +83,53 @@ public class LotteryRemoteTest extends LotteryTests {
 			List<UTXO> utxos = getBalance(ecKey.toAddress(networkParameters).toString());
 			for (UTXO u : utxos) {
 				if (u.getTokenId().equals(yuanTokenPub)) {
-					map.put(u.getAddress(), u.getValue().getValue());
-					break;
+					BigInteger p = map.get(u.getAddress());
+					if (p != null) {
+						map.put(u.getAddress(), p.add(u.getValue().getValue()));
+					} else {
+						map.put(u.getAddress(), u.getValue().getValue());
+					}
 				}
 			}
 		}
+		for (String address : map.keySet()) {
+			log.debug("start address==" + address + "  ;  balance==" + map.get(address));
+		}
+	}
+
+	@Test
+	public void lotteryConflict() throws Exception {
+
+		usernumber = 10;
+		winnerAmount = new BigInteger(usernumber * 100 + "");
+		contractKey = new ECKey();
+		wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+		testTokens();
+		testContractTokens();
+		List<ECKey> ulist = createUserkey();
+		payUserKeys(ulist);
+		payBigUserKeys(ulist);
+		Map<String, BigInteger> startMap = new HashMap<>();
+		check(ulist, startMap);
+		// createUserPay(accountKey, ulist);
+		payContract(ulist);
+		makeRewardBlock();
+		// check all payContract ok?
+		Map<String, BigInteger> payContractMap = new HashMap<>();
+		check(ulist, payContractMap);
+
+		Block resultBlock = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
+		assertTrue(resultBlock != null);
+
+		blockService.saveBlock(resultBlock, store);
+
+		Block resultBlock2 = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
+		assertTrue(resultBlock2 != null);
+		blockService.saveBlock(resultBlock2, store);
+		makeRewardBlock();
+		// check one of user get the winnerAmount
+		Map<String, BigInteger> endMap = new HashMap<>();
+		check(ulist, endMap);
 
 	}
 

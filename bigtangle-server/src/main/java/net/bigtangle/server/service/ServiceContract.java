@@ -2,9 +2,9 @@ package net.bigtangle.server.service;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -21,7 +21,6 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.script.Script;
 import net.bigtangle.server.config.ServerConfiguration;
@@ -49,7 +48,7 @@ public class ServiceContract extends ServiceBase {
 		if ("net.bigtangle.server.service.LotteryContract".equals(classname)) {
 			return lotteryContract(block, blockStore, contract);
 		} else {
-			//TODO run others
+			// TODO run others
 			return null;
 		}
 
@@ -87,19 +86,22 @@ public class ServiceContract extends ServiceBase {
 	private ContractResult doTakeWinner(Block winnerBlock, FullBlockStore blockStore, List<ContractEventRecord> opens) {
 
 		// Deterministic randomization
-		byte[] randomness = Utils.xor(winnerBlock.getPrevBlockHash().getBytes(),
-				winnerBlock.getPrevBranchBlockHash().getBytes());
-		SecureRandom se = new SecureRandom(randomness);
-
-		ContractEventRecord winner = opens.get(se.nextInt(opens.size()));
-
+		long randomness = winnerBlock.getPrevBlockHash().toBigInteger()
+				.xor(winnerBlock.getPrevBranchBlockHash().toBigInteger()).longValue();
+		Random se = new Random(randomness);
+		int randomWin = se.nextInt(opens.size());
+		log.debug("randomn win = " + randomWin + " open size =" + opens.size());
+		ContractEventRecord winner = opens.get(randomWin);
+		log.debug("winner = " + winner.toString());
 		Transaction tx = createOrderPayoutTransaction(winnerBlock, winner,
 				new Coin(sum(opens), winner.getTargetTokenid()));
 		List<Sha256Hash> spentContractEventRecord = new ArrayList<>();
 		for (ContractEventRecord o : opens) {
 			spentContractEventRecord.add(o.getBlockHash());
 		}
-		return new ContractResult(winner.getContractTokenid(), spentContractEventRecord, tx.getHash(), tx);
+		
+		return new ContractResult(winnerBlock.getHash(), winner.getContractTokenid(), spentContractEventRecord,
+				tx.getHash(), tx, null, winnerBlock.getTimeSeconds());
 	}
 
 	public Transaction createOrderPayoutTransaction(Block block, ContractEventRecord winner, Coin outCoin) {

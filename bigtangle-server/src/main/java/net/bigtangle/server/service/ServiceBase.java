@@ -799,9 +799,12 @@ public class ServiceBase {
 			return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
 					connectedDomainToken.getDomainNameBlockHash(), connectedDomainToken.getTokenindex()) != null;
 		case CONTRACTEXECUTE:
-			final ContractResult  connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
-			return  store.checkContractEventSpent(connectedContracExecute.getSpentContractEventRecord())!=null;
-
+			final ContractResult connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
+			if (connectedContracExecute.getPrevblockhash().equals(networkParameters.getGenesisBlock().getHash())) {
+				return false;
+			} else {
+				return store.checkContractResultSpent(connectedContracExecute.getPrevblockhash()) != null;
+			}
 		default:
 			throw new RuntimeException("Not Implemented");
 		}
@@ -826,8 +829,12 @@ public class ServiceBase {
 			final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
 			return store.getTokenConfirmed(Sha256Hash.wrap(connectedDomainToken.getDomainNameBlockHash()));
 		case CONTRACTEXECUTE:
-			final ContractResult  connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
-			return  store.checkContractEventConfirmed(connectedContracExecute.getSpentContractEventRecord());
+			final ContractResult connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
+			if (connectedContracExecute.getPrevblockhash().equals(networkParameters.getGenesisBlock().getHash())) {
+				return true;
+			} else {
+				return store.checkContractResultConfirmed(connectedContracExecute.getPrevblockhash());
+			}
 
 		default:
 			throw new RuntimeException("not implemented");
@@ -1222,11 +1229,11 @@ public class ServiceBase {
 			return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
 					connectedDomainToken.getDomainNameBlockHash(), connectedDomainToken.getTokenindex());
 		case CONTRACTEXECUTE:
-			final ContractResult  connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
-			 Sha256Hash t = store.checkContractEventSpent(connectedContracExecute.getSpentContractEventRecord()) ;
-			 if (t == null)
-					return null;
-				return store.getBlockWrap(t);
+			final ContractResult connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
+			Sha256Hash t = connectedContracExecute.getSpenderBlockHash();
+			if (t == null)
+				return null;
+			return store.getBlockWrap(t);
 		default:
 			throw new RuntimeException("No Implementation");
 		}
@@ -3390,12 +3397,6 @@ public class ServiceBase {
 		}
 	}
 
-	private void deleteChainQueue(ChainBlockQueue chainBlockQueue, FullBlockStore store) throws BlockStoreException {
-		List<ChainBlockQueue> l = new ArrayList<ChainBlockQueue>();
-		l.add(chainBlockQueue);
-		store.deleteChainBlockQueue(l);
-	}
-
 	/**
 	 * Inserts the specified block into the DB
 	 * 
@@ -3504,7 +3505,7 @@ public class ServiceBase {
 	 * @return
 	 * @throws BlockStoreException
 	 */
-	public Optional<OrderMatchingResult> calculateBlock(Block block, FullBlockStore blockStore)
+	public Optional<OrderMatchingResult> calculateBlockOrderMatchingResult(Block block, FullBlockStore blockStore)
 			throws BlockStoreException {
 
 		Transaction tx = null;
@@ -3586,7 +3587,7 @@ public class ServiceBase {
 			confirmVOSOrUserData(block, blockStore);
 			break;
 		case BLOCKTYPE_CONTRACT_EVENT:
-			confirmContract(block.getBlock(), blockStore, true);
+			confirmContractEvent(block.getBlock(), blockStore, true);
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			confirmContractExecute(block.getBlock(), blockStore);
@@ -3678,19 +3679,21 @@ public class ServiceBase {
 	}
 
 	/*
-	 * connect from the contract Execution Do the check of the contract execution
-	 * and update contract event and execute the contract coin base output
+	 * connect from the contract Execution
 	 */
 	public void confirmContractExecute(Block block, FullBlockStore blockStore) throws BlockStoreException {
 
 		try {
 			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
 			ContractResult check = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
-					blockStore, result.getContractid());
-			if ( check !=null && result.getOutputTxHash().equals(check.getOutputTxHash())
+					blockStore, result.getContracttokenid());
+			if (check != null && result.getOutputTxHash().equals(check.getOutputTxHash())
 					&& result.getSpentContractEventRecord().equals(check.getSpentContractEventRecord())) {
 				blockStore.updateContractEventSpent(check.getSpentContractEventRecord(), block.getHash(), true);
+				blockStore.updateContractResultConfirmed(result.getBlockHash(), true);
+				blockStore.updateContractResultSpent(result.getBlockHash(), result.getPrevblockhash(), true);
 				confirmTransaction(block, check.getOutputTx(), blockStore);
+				// Set virtual outputs confirmed
 			} else {
 				throw new InvalidTransactionException(result.toString());
 			}
@@ -3763,7 +3766,8 @@ public class ServiceBase {
 		blockStore.updateTokenConfirmed(block.getBlock().getHash(), true);
 	}
 
-	private void confirmContract(Block block, FullBlockStore blockStore, boolean confirm) throws BlockStoreException {
+	private void confirmContractEvent(Block block, FullBlockStore blockStore, boolean confirm)
+			throws BlockStoreException {
 
 		// Set own output confirmed
 		List<Sha256Hash> bs = new ArrayList<>();
@@ -4013,7 +4017,7 @@ public class ServiceBase {
 		case BLOCKTYPE_USERDATA:
 			break;
 		case BLOCKTYPE_CONTRACT_EVENT:
-			confirmContract(block, blockStore, false);
+			confirmContractEvent(block, blockStore, false);
 			unConfirmContractExecute(block, blockStore);
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
@@ -4147,7 +4151,7 @@ public class ServiceBase {
 			// before
 			connectUTXOs(block, blockStore);
 			connectTypeSpecificUTXOs(block, blockStore);
-			calculateBlock(block, blockStore);
+			calculateBlockOrderMatchingResult(block, blockStore);
 
 			if (block.getBlockType() == Type.BLOCKTYPE_REWARD && !setMilestoneSuccess) {
 				// If we don't want to set the milestone success, initialize as
@@ -4174,27 +4178,6 @@ public class ServiceBase {
 			throws BlockStoreException, VerificationException {
 		List<Transaction> transactions = block.getTransactions();
 		connectUTXOs(block, transactions, blockStore);
-	}
-
-	private void updateTransactionOutputSpendPending(Block block, FullBlockStore blockStore)
-			throws BlockStoreException {
-		for (final Transaction tx : block.getTransactions()) {
-			boolean isCoinBase = tx.isCoinBase();
-			List<UTXO> spendPending = new ArrayList<UTXO>();
-			if (!isCoinBase) {
-				for (int index = 0; index < tx.getInputs().size(); index++) {
-					TransactionInput in = tx.getInputs().get(index);
-					UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getBlockHash(),
-							in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
-					if (prevOut != null) {
-						spendPending.add(prevOut);
-					}
-				}
-			}
-
-			blockStore.updateTransactionOutputSpendPending(spendPending);
-
-		}
 	}
 
 	private void connectUTXOs(Block block, List<Transaction> transactions, FullBlockStore blockStore)
@@ -4276,6 +4259,7 @@ public class ServiceBase {
 		case BLOCKTYPE_USERDATA:
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
+			connectContractExecute(block, blockStore);
 			break;
 		case BLOCKTYPE_ORDER_OPEN:
 			connectOrder(block, blockStore);
@@ -4375,6 +4359,24 @@ public class ServiceBase {
 			List<ContractEventRecord> events = new ArrayList<ContractEventRecord>();
 			events.add(record);
 			blockStore.insertContractEvent(events);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void connectContractExecute(Block block, FullBlockStore blockStore) throws BlockStoreException {
+		try {
+			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
+			ContractResult check = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
+					blockStore, result.getContracttokenid());
+			if (check != null && result.getOutputTxHash().equals(check.getOutputTxHash())
+					&& result.getSpentContractEventRecord().equals(check.getSpentContractEventRecord())) {
+				blockStore.insertContractResult(result);
+				insertVirtualUTXOs(block, check.getOutputTx(), blockStore);
+				// Set virtual outputs confirmed
+			} else {
+				throw new InvalidTransactionException(result.toString());
+			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
