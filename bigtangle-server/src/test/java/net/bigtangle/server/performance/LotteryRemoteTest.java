@@ -126,10 +126,19 @@ public class LotteryRemoteTest extends LotteryTests {
 		Block resultBlock2 = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
 		assertTrue(resultBlock2 != null);
 		blockService.saveBlock(resultBlock2, store);
+		
+		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(resultBlock,
+				store, contractKey.getPublicKeyAsHex());
+		Address winnerAddress = result.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
+
+		
 		makeRewardBlock();
 		// check one of user get the winnerAmount
 		Map<String, BigInteger> endMap = new HashMap<>();
 		check(ulist, endMap);
+		assertTrue(endMap.get(winnerAddress.toString()) != null);
+
+		assertTrue(endMap.get(winnerAddress.toString()).equals(winnerAmount.multiply(BigInteger.valueOf(10))));
 
 	}
 
