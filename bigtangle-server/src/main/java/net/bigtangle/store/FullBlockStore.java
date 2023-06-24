@@ -478,7 +478,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
 	public List<String> getOpenContractid() throws BlockStoreException;
 
-	public Sha256Hash checkContractEventSpent(List<Sha256Hash> contractEventRecords) throws BlockStoreException;
+	public Sha256Hash getContractEventSpent( Sha256Hash  contractEvent) throws BlockStoreException;
 
 	public boolean checkContractEventConfirmed(List<Sha256Hash> contractEventRecords) throws BlockStoreException;
 

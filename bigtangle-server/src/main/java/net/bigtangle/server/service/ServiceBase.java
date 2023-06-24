@@ -3587,7 +3587,7 @@ public class ServiceBase {
 			confirmVOSOrUserData(block, blockStore);
 			break;
 		case BLOCKTYPE_CONTRACT_EVENT:
-			confirmContractEvent(block.getBlock(), blockStore, true);
+			confirmContractEvent(block.getBlock(), blockStore);
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			confirmContractExecute(block.getBlock(), blockStore);
@@ -3691,7 +3691,7 @@ public class ServiceBase {
 					&& result.getSpentContractEventRecord().equals(check.getSpentContractEventRecord())) {
 				blockStore.updateContractEventSpent(check.getSpentContractEventRecord(), block.getHash(), true);
 				blockStore.updateContractResultConfirmed(result.getBlockHash(), true);
-				blockStore.updateContractResultSpent(result.getBlockHash(), result.getPrevblockhash(), true);
+				blockStore.updateContractResultSpent(result.getPrevblockhash(), result.getBlockHash(), true);
 				confirmTransaction(block, check.getOutputTx(), blockStore);
 				// Set virtual outputs confirmed
 			} else {
@@ -3708,8 +3708,9 @@ public class ServiceBase {
 
 		try {
 			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
-
+			blockStore.updateContractResultSpent(result.getBlockHash(), null, false);
 			blockStore.updateContractEventSpent(result.getSpentContractEventRecord(), null, false);
+			blockStore.updateContractResultConfirmed(result.getBlockHash(), false);
 			blockStore.updateTransactionOutputConfirmed(block.getHash(), result.getOutputTxHash(), 0, false);
 
 		} catch (IOException e) {
@@ -3766,13 +3767,26 @@ public class ServiceBase {
 		blockStore.updateTokenConfirmed(block.getBlock().getHash(), true);
 	}
 
-	private void confirmContractEvent(Block block, FullBlockStore blockStore, boolean confirm)
-			throws BlockStoreException {
+	private void confirmContractEvent(Block block, FullBlockStore blockStore) throws BlockStoreException {
 
 		// Set own output confirmed
 		List<Sha256Hash> bs = new ArrayList<>();
 		bs.add(block.getHash());
-		blockStore.updateContractEventConfirmed(bs, confirm);
+		blockStore.updateContractEventConfirmed(bs, true);
+	}
+
+	private void unConfirmContractEvent(Block block, FullBlockStore blockStore) throws BlockStoreException {
+
+		// Set own output confirmed
+		List<Sha256Hash> bs = new ArrayList<>();
+		bs.add(block.getHash());
+		blockStore.updateContractEventConfirmed(bs, false);
+		// unconfirm the Contractexecution
+		Sha256Hash result = blockStore.getContractEventSpent(block.getHash());
+		if (result != null) {
+			// unconfirm the contract result
+			unConfirmContractExecute(getBlock(result, blockStore), blockStore);
+		}
 	}
 
 	private void confirmTransaction(Block block, Transaction tx, FullBlockStore blockStore) throws BlockStoreException {
@@ -4017,7 +4031,7 @@ public class ServiceBase {
 		case BLOCKTYPE_USERDATA:
 			break;
 		case BLOCKTYPE_CONTRACT_EVENT:
-			confirmContractEvent(block, blockStore, false);
+			unConfirmContractEvent(block, blockStore);
 			unConfirmContractExecute(block, blockStore);
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:

@@ -4811,7 +4811,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	}
 
 	@Override
-	public Sha256Hash checkContractEventSpent(List<Sha256Hash> contractEventRecords) throws BlockStoreException {
+	public Sha256Hash getContractEventSpent(Sha256Hash contractevent) throws BlockStoreException {
 		// one of the block is spent then, return Sha256Hash, otherwise null
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
@@ -4819,15 +4819,15 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			preparedStatement = getConnection()
 					.prepareStatement(" select spenderblockhash  from contractevent " + " WHERE blockhash = ? ");
 
-			for (Sha256Hash o : contractEventRecords) {
-				preparedStatement.setBytes(1, o.getBytes());
+			 
+				preparedStatement.setBytes(1, contractevent.getBytes());
 				ResultSet resultSet = preparedStatement.executeQuery();
 				if (resultSet.next()) {
 					byte[] spentbytes = resultSet.getBytes(1);
 					if (spentbytes != null)
 						return Sha256Hash.wrap(spentbytes);
 				}
-			}
+		 
 			return null;
 		} catch (SQLException e) {
 			throw new BlockStoreException(e);
