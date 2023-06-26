@@ -174,7 +174,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 		for (UTXO utxo : balance) {
 
 			assertTrue(utxo.getValue().getValue().equals(NetworkParameters.BigtangleCoinTotal
-					.subtract(Coin.COIN.getValue().multiply(BigInteger.valueOf(3)))));
+					.subtract(Coin.COIN.getValue().multiply(BigInteger.valueOf(3))).subtract(Coin.FEE_DEFAULT.getValue())));
 
 		}
 	}
