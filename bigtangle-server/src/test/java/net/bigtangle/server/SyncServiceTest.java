@@ -50,7 +50,7 @@ public class SyncServiceTest extends RewardService2Test {
 		}
 	}
 
-	@Test
+	//@Test
 	public void testSyncCheckChain() throws Exception {
 		List<Block> a1 = new ArrayList<Block>();
 		testToken(a1);

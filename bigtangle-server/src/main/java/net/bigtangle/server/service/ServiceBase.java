@@ -3916,6 +3916,7 @@ public class ServiceBase {
 		case BLOCKTYPE_USERDATA:
 			break;
 		case BLOCKTYPE_CONTRACT_EVENT:
+			unconfirmContractEventDependents(block, traversedBlockHashes, blockStore);
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			break;
@@ -3958,6 +3959,16 @@ public class ServiceBase {
 		}
 	}
 
+
+	private void unconfirmContractEventDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes,
+			FullBlockStore blockStore) throws BlockStoreException { 
+		Sha256Hash contractEventSpent = blockStore.getContractEventSpent(block.getHash());
+		if (contractEventSpent!=null) {
+			unconfirmRecursive(contractEventSpent, traversedBlockHashes,
+					blockStore);
+		}
+	}
+	
 	private void unconfirmTokenDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes,
 			FullBlockStore blockStore) throws BlockStoreException {
 

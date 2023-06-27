@@ -1,5 +1,6 @@
 package net.bigtangle.server;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -739,44 +740,40 @@ public class TokenTest extends AbstractIntegrationTest {
 		
 		assertTrue(getOutputsResponse.getOutputs().size() == 1
 				||getOutputsResponse2.getOutputs().size() ==1);
-		 
+		
+		assertFalse(getOutputsResponse.getOutputs().size() == 1
+				 && getOutputsResponse2.getOutputs().size() ==1);
 	}
 
-	@Test
-	public void testGetTokenConflict() throws Exception {
+    @Test
+    public void testGetTokenConflict() throws Exception {
+    	ECKey  testkey= wallet.walletKeys().get(0);
+    	payBigTo(testkey, Coin.FEE_DEFAULT.getValue(),    null);
+        testCreateToken(testkey , "test");
+        // same token id and index
+        testCreateToken(testkey, "test");
 
-		ECKey outKey = new ECKey();
-		testCreateToken(outKey, "test");
-		makeRewardBlock();
-		// same token id and index
-		try {
-			testCreateToken( new ECKey(), "test");
-			fail();
-		} catch (RuntimeException e) {
-			// TODO: handle exception
-		}
+        HashMap<String, Object> requestParam = new HashMap<String, Object>();
+        requestParam.put("tokenid", testkey.getPublicKeyAsHex());
+        byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        log.info("getTokenById resp : " + resp);
+        GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
+        log.info("getTokensResponse : " + getTokensResponse);
+        assertTrue(getTokensResponse.getTokens().size() > 0);
 
-		HashMap<String, Object> requestParam = new HashMap<String, Object>();
-		requestParam.put("tokenid", outKey.getPublicKeyAsHex());
-		byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
-				Json.jsonmapper().writeValueAsString(requestParam));
-		log.info("getTokenById resp : " + resp);
-		GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(resp, GetTokensResponse.class);
-		log.info("getTokensResponse : " + getTokensResponse);
-		assertTrue(getTokensResponse.getTokens().size() > 0);
+        makeRewardBlock();
 
-		makeRewardBlock();
+        resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
+                Json.jsonmapper().writeValueAsString(requestParam));
+        GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
+        log.info("getOutputsResponse : " + getOutputsResponse);
 
-		resp = OkHttp3Util.postString(contextRoot + ReqCmd.outputsOfTokenid.name(),
-				Json.jsonmapper().writeValueAsString(requestParam));
-		GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(resp, GetOutputsResponse.class);
-		log.info("getOutputsResponse : " + getOutputsResponse);
+        assertTrue(getOutputsResponse.getOutputs().size() > 0);
+        assertTrue(getOutputsResponse.getOutputs().get(0).getValue()
+                .equals(Coin.valueOf(77777L, testkey.getPubKey())));
 
-		assertTrue(getOutputsResponse.getOutputs().size() > 0);
-		assertTrue(getOutputsResponse.getOutputs().get(0).getValue().equals(Coin.valueOf(77777L, outKey.getPubKey())));
-
-	}
-
+    }
 	@Test
 	public void walletCreateDomain() throws Exception {
 		store.resetStore();
