@@ -19,11 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -844,7 +840,7 @@ public abstract class AbstractIntegrationTest {
 		if (coin.getValue().compareTo(sum.getValue()) != 0) {
 			log.error(" expected: " + coin + " got: " + sum);
 		}
-		assertTrue(coin+" "+ sum, coin.getValue().compareTo(sum.getValue()) == 0);
+		assertTrue( coin.getValue().compareTo(sum.getValue()) == 0,coin+" "+ sum);
 
 	}
 
@@ -1256,7 +1252,7 @@ public abstract class AbstractIntegrationTest {
 
 	public void mcmcServiceUpdate() throws InterruptedException, ExecutionException, BlockStoreException {
 		mcmcService.update(store);
-//        blockGraph.updateConfirmed();
+        blockGraph.updateConfirmed();
 	}
 
 	public void mcmc() throws JsonProcessingException, InterruptedException, ExecutionException, BlockStoreException {

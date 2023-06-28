@@ -59,7 +59,7 @@ public class LotteryRemoteTest extends LotteryTests {
 		Map<String, BigInteger> startMap = new HashMap<>();
 		check(ulist, startMap);
 		// createUserPay(accountKey, ulist);
-		payContract(ulist);
+		payContract(ulist, new ArrayList<>());
 		makeRewardBlock();
 		Block resultBlock = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
 		assertTrue(resultBlock != null);
@@ -109,7 +109,7 @@ public class LotteryRemoteTest extends LotteryTests {
 
 	@Test
 	public void lotteryConflict() throws Exception {
-
+		// create two blocks for the ContractExecution and only one is taken
 		usernumber = 10;
 		winnerAmount = new BigInteger(usernumber * 100 + "");
 		contractKey = new ECKey();
@@ -122,7 +122,7 @@ public class LotteryRemoteTest extends LotteryTests {
 		Map<String, BigInteger> startMap = new HashMap<>();
 		check(ulist, startMap);
 		// createUserPay(accountKey, ulist);
-		payContract(ulist);
+		payContract(ulist, new ArrayList<>());
 		makeRewardBlock();
 		// check all payContract ok?
 		Map<String, BigInteger> payContractMap = new HashMap<>();
@@ -152,12 +152,13 @@ public class LotteryRemoteTest extends LotteryTests {
 	}
 
 	@Test
-	public void testUnconfirm() throws Exception {
+	public void unconfirmEvent() throws Exception {
+		// unconfirm the a event, -> unconfirm result
+		// create two blocks for the ContractExecution and only one is taken
 		usernumber = 10;
 		winnerAmount = new BigInteger(usernumber * 100 + "");
 		contractKey = new ECKey();
 		wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
- 
 		testTokens();
 		testContractTokens();
 		List<ECKey> ulist = createUserkey();
@@ -166,7 +167,50 @@ public class LotteryRemoteTest extends LotteryTests {
 		Map<String, BigInteger> startMap = new HashMap<>();
 		check(ulist, startMap);
 		// createUserPay(accountKey, ulist);
-		payContract(ulist);
+		List<Block> events = new ArrayList<>();
+		payContract(ulist, events);
+		mcmc();
+
+		Block resultBlock = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
+		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(resultBlock,
+				store, contractKey.getPublicKeyAsHex());
+		assertTrue(resultBlock != null);
+
+		blockService.saveBlock(resultBlock, store);
+
+		mcmc();
+		Address winnerAddress = result.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
+		blockService.saveBlock(resultBlock, store);
+		// check one of user get the winnerAmount
+		HashMap endMap = new HashMap<>();
+		check(ulist, endMap);
+		assertTrue(endMap.get(winnerAddress.toString()).equals(winnerAmount.multiply(BigInteger.valueOf(10))));
+		// unconfirm enven and will lead to unconfirm result
+
+		new ServiceBase(serverConfiguration, networkParameters).unconfirm(events.get(0).getHash(), new HashSet<>(),
+				store);
+		endMap = new HashMap<>();
+		check(ulist, endMap);
+		assertTrue(endMap.get(winnerAddress.toString())==null);
+
+	}
+
+	@Test
+	public void testUnconfirmChain() throws Exception {
+		usernumber = 10;
+		winnerAmount = new BigInteger(usernumber * 100 + "");
+		contractKey = new ECKey();
+		wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+
+		testTokens();
+		testContractTokens();
+		List<ECKey> ulist = createUserkey();
+		payUserKeys(ulist);
+		payBigUserKeys(ulist);
+		Map<String, BigInteger> startMap = new HashMap<>();
+		check(ulist, startMap);
+		// createUserPay(accountKey, ulist);
+		payContract(ulist,new ArrayList<>());
 		makeRewardBlock();
 		Block resultBlock = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
 		assertTrue(resultBlock != null);
@@ -181,24 +225,20 @@ public class LotteryRemoteTest extends LotteryTests {
 		check(ulist, endMap);
 
 		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters).unconfirm(rewardBlock1.getHash(), new HashSet<>(),
-				store);
+		new ServiceBase(serverConfiguration, networkParameters).unconfirmRecursive(resultBlock.getHash(),
+				new HashSet<>(), store);
 
-		// Should be unconfirmed now
-		assertFalse(store.getRewardConfirmed(rewardBlock1.getHash()));
-		assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
-		assertNull(store.getRewardSpender(rewardBlock1.getHash()));
-
-		assertTrue(endMap.get(winnerAddress.toString()) != null);
+		// Winner Should be unconfirmed now
 		endMap = new HashMap<>();
 		check(ulist, endMap);
-		assertTrue(endMap.get(winnerAddress.toString()).equals(BigInteger.valueOf(0)));
+		assertTrue(endMap.get(winnerAddress.toString()) == null);
+		// new chain will ok again
+		Block rewardBlock2 = makeRewardBlock();
+		endMap = new HashMap<>();
+		check(ulist, endMap);
 
-		BlockWrap b = store.getBlockWrap(resultBlock.getHash());
-		assertNotNull(b);
-		assertFalse(b.getBlockEvaluation().isConfirmed());
+		assertTrue(endMap.get(winnerAddress.toString()).equals(winnerAmount.multiply(BigInteger.valueOf(10))));
 
- 
 	}
 
 	public void testContractTokens() throws JsonProcessingException, Exception {
@@ -240,10 +280,10 @@ public class LotteryRemoteTest extends LotteryTests {
 	/*
 	 * pay money to the contract
 	 */
-	public void payContract(List<ECKey> userkeys) throws Exception {
+	public void payContract(List<ECKey> userkeys, List<Block> blocks) throws Exception {
 		for (ECKey key : userkeys) {
 			Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
-			Block block = w.payContract(null, yuanTokenPub, winnerAmount, null, null, contractKey.getPublicKeyAsHex());
+			blocks.add(w.payContract(null, yuanTokenPub, winnerAmount, null, null, contractKey.getPublicKeyAsHex()));
 		}
 	}
 

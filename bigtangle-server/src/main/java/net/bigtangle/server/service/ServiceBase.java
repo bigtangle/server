@@ -4042,8 +4042,7 @@ public class ServiceBase {
 		case BLOCKTYPE_USERDATA:
 			break;
 		case BLOCKTYPE_CONTRACT_EVENT:
-			unConfirmContractEvent(block, blockStore);
-			unConfirmContractExecute(block, blockStore);
+			unConfirmContractEvent(block, blockStore); 
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			unConfirmContractExecute(block, blockStore);

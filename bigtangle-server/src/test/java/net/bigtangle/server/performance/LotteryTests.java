@@ -47,7 +47,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 	public NetworkParameters networkParameters;
 	public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
 	public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
-		public	int usernumber = Math.abs(new Random().nextInt()) % 88;
+	public int usernumber = Math.abs(new Random().nextInt()) % 88;
 	public BigInteger winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
 
 	public ECKey accountKey;
@@ -130,8 +130,8 @@ public class LotteryTests extends AbstractIntegrationTest {
 		if (startLottery.getWinnerAmount().compareTo(sum.getValue()) > 0) {
 			log.debug(sum.toString());
 		}
-		assertTrue(" " + startLottery.getWinnerAmount() + " sum=" + sum.getValue(),
-				startLottery.getWinnerAmount().compareTo(sum.getValue()) <= 0);
+		assertTrue(startLottery.getWinnerAmount().compareTo(sum.getValue()) <= 0,
+				" " + startLottery.getWinnerAmount() + " sum=" + sum.getValue());
 
 	}
 
@@ -279,8 +279,7 @@ public class LotteryTests extends AbstractIntegrationTest {
 			for (ECKey key : list) {
 				giveMoneyResult.put(key.toAddress(networkParameters).toString(), BigInteger.valueOf(10000));
 			}
-			Block b = wallet.payToList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID,
-					"pay to user");
+			Block b = wallet.payToList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, "pay to user");
 			// log.debug("block " + (b == null ? "block is null" : b.toString()));
 			makeRewardBlock();
 		}
