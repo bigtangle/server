@@ -6,12 +6,12 @@
 package net.bigtangle.core;
 
 import static net.bigtangle.core.Utils.HEX;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.utils.DumpedPrivateKey;

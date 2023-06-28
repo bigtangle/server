@@ -8,11 +8,11 @@ package net.bigtangle.core;
 import static net.bigtangle.core.Coin.COIN;
 import static net.bigtangle.core.Coin.ZERO;
 import static net.bigtangle.core.Coin.valueOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.google.common.math.LongMath;
 
@@ -29,10 +29,10 @@ public class CoinTest {
         assertEquals(COIN.negate(), MonetaryFormat.FIAT.noCode().parse("-1"));
         try {
             MonetaryFormat.FIAT.noCode().parse("2E-20");
-            org.junit.Assert.fail("should not have accepted fractional satoshis");
+            org.junit.jupiter.api.Assertions.fail("should not have accepted fractional satoshis");
         } catch (IllegalArgumentException expected) {
         } catch (Exception e) {
-            org.junit.Assert.fail("should throw IllegalArgumentException");
+            org.junit.jupiter.api.Assertions.fail("should throw IllegalArgumentException");
         }
     }
 

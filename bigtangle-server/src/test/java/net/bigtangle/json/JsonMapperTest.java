@@ -2,7 +2,7 @@ package net.bigtangle.json;
 
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.NetworkParameters;

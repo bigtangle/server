@@ -1,11 +1,11 @@
 package net.bigtangle.encrypt;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 
 import java.math.BigInteger;
 import java.util.Random;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.params.TestParams;

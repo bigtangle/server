@@ -7,12 +7,12 @@ package net.bigtangle.utils;
 
 import static net.bigtangle.core.Coin.COIN;
 import static net.bigtangle.core.Coin.ZERO;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.math.BigInteger;
 import java.util.Locale;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.google.common.math.LongMath;
 

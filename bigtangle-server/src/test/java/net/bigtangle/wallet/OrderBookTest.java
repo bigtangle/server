@@ -5,10 +5,10 @@
 package net.bigtangle.wallet;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import net.bigtangle.core.Side;
 import net.bigtangle.core.ordermatch.OrderBookEvents;

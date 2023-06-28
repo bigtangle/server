@@ -10,8 +10,8 @@ import com.google.common.collect.ImmutableList;
 import net.bigtangle.crypto.ChildNumber;
 import net.bigtangle.crypto.HDUtils;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import static net.bigtangle.core.Utils.HEX;
 
@@ -103,7 +103,7 @@ public class HDUtilsTest {
         };
 
         for (int i = 0; i < tv.length; i += 3) {
-            Assert.assertArrayEquals("Case " + i, getBytes(tv, i + 2), HDUtils.hmacSha512(getBytes(tv, i), getBytes(tv, i + 1)));
+        	Assertions.assertArrayEquals( getBytes(tv, i + 2), HDUtils.hmacSha512(getBytes(tv, i), getBytes(tv, i + 1)),"Case " + i);
         }
     }
 
@@ -114,7 +114,7 @@ public class HDUtilsTest {
     @Test
     public void testLongToByteArray() throws Exception {
         byte[] bytes = HDUtils.longTo4ByteArray(1026);
-        Assert.assertEquals("00000402", HEX.encode(bytes));
+        Assertions.assertEquals("00000402", HEX.encode(bytes));
     }
 
 
@@ -142,7 +142,7 @@ public class HDUtilsTest {
 
             String generatedStrPath = HDUtils.formatPath(path);
 
-            Assert.assertEquals(generatedStrPath, expectedStrPath);
+            Assertions.assertEquals(generatedStrPath, expectedStrPath);
         }
 
     }
@@ -171,7 +171,7 @@ public class HDUtilsTest {
 
             List<ChildNumber> path = HDUtils.parsePath(strPath);
 
-            Assert.assertEquals(path, expectedPath);
+            Assertions.assertEquals(path, expectedPath);
         }
     }
 }

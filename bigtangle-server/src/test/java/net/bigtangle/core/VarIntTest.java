@@ -8,7 +8,7 @@ package net.bigtangle.core;
 import junit.framework.TestCase;
 import net.bigtangle.core.VarInt;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class VarIntTest extends TestCase {
 

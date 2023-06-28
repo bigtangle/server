@@ -3053,11 +3053,11 @@ public class ServiceBase {
 		for (Block oldBlock : oldBlocks) {
 			// Sanity check:
 			if (!oldBlock.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
-				// Unset the milestone of this one
+				// Unset the milestone (Chain length) of this one
 				long milestoneNumber = oldBlock.getRewardInfo().getChainlength();
 				List<BlockWrap> blocksInMilestoneInterval = store.getBlocksInMilestoneInterval(milestoneNumber,
 						milestoneNumber);
-				// Unconfirm anything not confirmed by milestone
+				// Unconfirm anything not in milestone
 				for (BlockWrap wipeBlock : blocksInMilestoneInterval)
 					unconfirm(wipeBlock.getBlockHash(), new HashSet<>(), store);
 			}

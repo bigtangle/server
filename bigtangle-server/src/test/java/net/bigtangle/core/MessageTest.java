@@ -5,7 +5,7 @@
 
 package net.bigtangle.core;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import net.bigtangle.core.Message;
 import net.bigtangle.core.NetworkParameters;

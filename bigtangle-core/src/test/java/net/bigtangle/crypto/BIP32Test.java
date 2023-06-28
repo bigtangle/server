@@ -5,28 +5,24 @@
 
 package net.bigtangle.crypto;
 
-import com.google.common.base.Functions;
-import com.google.common.base.Joiner;
-import com.google.common.collect.Iterables;
-
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.crypto.ChildNumber;
-import net.bigtangle.crypto.DeterministicHierarchy;
-import net.bigtangle.crypto.DeterministicKey;
-import net.bigtangle.crypto.HDKeyDerivation;
-import net.bigtangle.params.MainNetParams;
-import net.bigtangle.utils.Base58;
-
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static net.bigtangle.core.Utils.HEX;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import static net.bigtangle.core.Utils.HEX;
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Functions;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Iterables;
+
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.params.MainNetParams;
+import net.bigtangle.utils.Base58;
 
 /**
  * A test with test vectors as per BIP 32 spec: https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Test_Vectors

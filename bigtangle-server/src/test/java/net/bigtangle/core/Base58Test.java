@@ -9,7 +9,7 @@ import junit.framework.TestCase;
 import net.bigtangle.core.exception.AddressFormatException;
 import net.bigtangle.utils.Base58;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
 import java.util.Arrays;
