@@ -4,14 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Sha256Hash;
 
-@Ignore
+@Disabled
 public class EquihashSolverTest {
 	private Sha256Hash hash1 = Sha256Hash.of("test".getBytes());
 	private Sha256Hash hash2 = Sha256Hash.of("test123".getBytes());

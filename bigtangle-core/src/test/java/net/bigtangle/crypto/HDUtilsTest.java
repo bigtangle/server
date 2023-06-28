@@ -5,17 +5,14 @@
 
 package net.bigtangle.crypto;
 
-import com.google.common.collect.ImmutableList;
+import static net.bigtangle.core.Utils.HEX;
 
-import net.bigtangle.crypto.ChildNumber;
-import net.bigtangle.crypto.HDUtils;
+import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static net.bigtangle.core.Utils.HEX;
-
-import java.util.List;
+import com.google.common.collect.ImmutableList;
 
 public class HDUtilsTest {
     @Test

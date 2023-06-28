@@ -5,16 +5,14 @@
 
 package net.bigtangle.crypto;
 
-import org.junit.Ignore;
-import org.junit.jupiter.api.Test;
-
-import net.bigtangle.crypto.X509Utils;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-@Ignore
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+@Disabled
 public class X509UtilsTest {
 
     @Test

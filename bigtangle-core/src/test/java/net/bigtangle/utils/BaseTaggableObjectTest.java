@@ -18,33 +18,35 @@
 
 package net.bigtangle.utils;
 
-import com.google.protobuf.ByteString;
-
-import net.bigtangle.utils.BaseTaggableObject;
-
-import org.junit.Before;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.google.protobuf.ByteString;
 
 public class BaseTaggableObjectTest {
-    private BaseTaggableObject obj;
+	private BaseTaggableObject obj;
 
-    @Before
-    public void setUp() throws Exception {
-        obj = new BaseTaggableObject();
-    }
+	@BeforeEach
+	public void setUp() throws Exception {
+		obj = new BaseTaggableObject();
+	}
 
-    @Test
-    public void tags() throws Exception {
-        assertNull(obj.maybeGetTag("foo"));
-        obj.setTag("foo", ByteString.copyFromUtf8("bar"));
-        assertEquals("bar", obj.getTag("foo").toStringUtf8());
-    }
+	@Test
+	public void tags() throws Exception {
+		assertNull(obj.maybeGetTag("foo"));
+		obj.setTag("foo", ByteString.copyFromUtf8("bar"));
+		assertEquals("bar", obj.getTag("foo").toStringUtf8());
+	}
 
-    @Test(expected = IllegalArgumentException.class)
-    public void exception() throws Exception {
-        obj.getTag("non existent");
-    }
+	@Test
+	public void exception() throws Exception {
+		assertThrows(IllegalArgumentException.class, () -> {
+			obj.getTag("non existent");
+		});
+
+	}
 }

@@ -5,25 +5,25 @@
 
 package net.bigtangle.crypto;
 
-import com.google.protobuf.ByteString;
-
-import net.bigtangle.core.Utils;
-import net.bigtangle.crypto.EncryptedData;
-import net.bigtangle.crypto.KeyCrypterException;
-import net.bigtangle.crypto.KeyCrypterScrypt;
-import net.bigtangle.utils.BriefLogFormatter;
-import net.bigtangle.wallet.Protos;
-import net.bigtangle.wallet.Protos.ScryptParameters;
-
-import org.junit.Before;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Random;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.protobuf.ByteString;
+
+import net.bigtangle.core.Utils;
+import net.bigtangle.utils.BriefLogFormatter;
+import net.bigtangle.wallet.Protos;
+import net.bigtangle.wallet.Protos.ScryptParameters;
 
 public class KeyCrypterScryptTest {
 
@@ -39,7 +39,7 @@ public class KeyCrypterScryptTest {
 
     private ScryptParameters scryptParameters;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         Protos.ScryptParameters.Builder scryptParametersBuilder = Protos.ScryptParameters.newBuilder()
                 .setSalt(ByteString.copyFrom(KeyCrypterScrypt.randomSalt()));
