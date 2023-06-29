@@ -10,6 +10,7 @@ import static net.bigtangle.core.Coin.ZERO;
 import static net.bigtangle.core.Coin.valueOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -116,13 +117,14 @@ public class CoinTest {
 
     }
 
-    @Test(expected = NumberFormatException.class)
+    @Test
     public void testToPlainStringFail() {
+    	assertThrows(NumberFormatException.class, () -> {
         MonetaryFormat format = MonetaryFormat.FIAT.noCode();
 
         assertEquals("7654321.1234567", format.format(format.parse("7654321.1234567")));
         assertEquals("87654321.12345678", format.format(format.parse("87654321.12345678")));
-
+    	});
     }
 
     @Test

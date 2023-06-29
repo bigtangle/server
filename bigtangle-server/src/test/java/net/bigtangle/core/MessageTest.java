@@ -5,53 +5,58 @@
 
 package net.bigtangle.core;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import org.junit.jupiter.api.Test;
 
-import net.bigtangle.core.Message;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.VarInt;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.params.MainNetParams;
 
 public class MessageTest {
 
-    // If readStr() is vulnerable this causes OutOfMemory
-    @Test(expected = ProtocolException.class)
-    public void readStrOfExtremeLength() throws Exception {
-        NetworkParameters params = MainNetParams.get();
-        VarInt length = new VarInt(Integer.MAX_VALUE);
-        byte[] payload = length.encode();
-        new VarStrMessage(params, payload);
-    }
+	// If readStr() is vulnerable this causes OutOfMemory
+	@Test
+	public void readStrOfExtremeLength() throws Exception {
+		assertThrows(ProtocolException.class, () -> {
+			NetworkParameters params = MainNetParams.get();
+			VarInt length = new VarInt(Integer.MAX_VALUE);
+			byte[] payload = length.encode();
+			new VarStrMessage(params, payload);
+		});
 
-    static class VarStrMessage extends Message {
-        public VarStrMessage(NetworkParameters params, byte[] payload) {
-            super(params, payload, 0);
-        }
+	}
 
-        @Override
-        protected void parse() throws ProtocolException {
-            readStr();
-        }
-    }
+	static class VarStrMessage extends Message {
+		public VarStrMessage(NetworkParameters params, byte[] payload) {
+			super(params, payload, 0);
+		}
 
-    // If readBytes() is vulnerable this causes OutOfMemory
-    @Test(expected = ProtocolException.class)
-    public void readByteArrayOfExtremeLength() throws Exception {
-        NetworkParameters params = MainNetParams.get();
-        VarInt length = new VarInt(Integer.MAX_VALUE);
-        byte[] payload = length.encode();
-        new VarBytesMessage(params, payload);
-    }
+		@Override
+		protected void parse() throws ProtocolException {
+			readStr();
+		}
+	}
 
-    static class VarBytesMessage extends Message {
-        public VarBytesMessage(NetworkParameters params, byte[] payload) {
-            super(params, payload, 0);
-        }
+	// If readBytes() is vulnerable this causes OutOfMemory
+	@Test
+	public void readByteArrayOfExtremeLength() throws Exception {
+		assertThrows(ProtocolException.class, () -> {
+			NetworkParameters params = MainNetParams.get();
+			VarInt length = new VarInt(Integer.MAX_VALUE);
+			byte[] payload = length.encode();
+			new VarBytesMessage(params, payload);
+		});
 
-        @Override
-        protected void parse() throws ProtocolException {
-            readByteArray();
-        }
-    }
+	}
+
+	static class VarBytesMessage extends Message {
+		public VarBytesMessage(NetworkParameters params, byte[] payload) {
+			super(params, payload, 0);
+		}
+
+		@Override
+		protected void parse() throws ProtocolException {
+			readByteArray();
+		}
+	}
 }

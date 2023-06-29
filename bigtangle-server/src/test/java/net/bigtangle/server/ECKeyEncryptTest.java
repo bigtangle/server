@@ -3,33 +3,20 @@ package net.bigtangle.server;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.File;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.KeyValue;
-import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Utils;
-import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.encrypt.ECIESCoder;
-import net.bigtangle.kits.WalletAppKit;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class ECKeyEncryptTest extends AbstractIntegrationTest {
 

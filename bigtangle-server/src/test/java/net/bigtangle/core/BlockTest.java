@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import org.junit.Ignore;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -25,7 +25,7 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.ScriptOpCodes;
 //TODO no binary blockBytes
-@Ignore
+@Disabled
 public class BlockTest {
     private static final NetworkParameters PARAMS = MainNetParams.get();
 

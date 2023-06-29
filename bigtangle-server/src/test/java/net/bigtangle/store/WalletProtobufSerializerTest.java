@@ -7,13 +7,14 @@ package net.bigtangle.store;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.Date;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.google.protobuf.ByteString;
@@ -29,104 +30,96 @@ import net.bigtangle.wallet.Wallet;
 import net.bigtangle.wallet.WalletProtobufSerializer;
 
 public class WalletProtobufSerializerTest {
-    private static final NetworkParameters PARAMS = MainNetParams.get();
-    private ECKey myKey;
-    private ECKey myWatchedKey;
-    private Address myAddress;
-    private Wallet myWallet;
+	private static final NetworkParameters PARAMS = MainNetParams.get();
+	private ECKey myKey;
+	private ECKey myWatchedKey;
+	private Address myAddress;
+	private Wallet myWallet;
 
-    public static String WALLET_DESCRIPTION  = "The quick brown fox lives in \u4f26\u6566"; // Beijing in Chinese
-    private long mScriptCreationTime;
+	public static String WALLET_DESCRIPTION = "The quick brown fox lives in \u4f26\u6566"; // Beijing in Chinese
+	private long mScriptCreationTime;
 
-    @Before
-    public void setUp() throws Exception {
-        BriefLogFormatter.initVerbose();
-    
-        myWatchedKey = new ECKey();
-        myWallet =   Wallet.fromKeys(PARAMS,myWatchedKey);
-        myKey = new ECKey();
-        myKey.setCreationTimeSeconds(123456789L);
-        myWallet.importKey(myKey);
-        myAddress = myKey.toAddress(PARAMS);
-        myWallet =  Wallet.fromKeys(PARAMS,myKey);
-        myWallet.importKey(myKey);
-        mScriptCreationTime = new Date().getTime() / 1000 - 1234;
- 
-    }
+	@BeforeEach
+	public void setUp() throws Exception {
+		BriefLogFormatter.initVerbose();
 
-    @Test
-    public void empty() throws Exception {
-        // Check the base case of a wallet with one key and no transactions.
-        Wallet wallet1 = roundTrip(myWallet);
- 
-       
-        assertArrayEquals(myKey.getPubKey(),
-                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
-        assertArrayEquals(myKey.getPrivKeyBytes(),
-                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
-        assertEquals(myKey.getCreationTimeSeconds(),
-                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
+		myWatchedKey = new ECKey();
+		myWallet = Wallet.fromKeys(PARAMS, myWatchedKey);
+		myKey = new ECKey();
+		myKey.setCreationTimeSeconds(123456789L);
+		myWallet.importKey(myKey);
+		myAddress = myKey.toAddress(PARAMS);
+		myWallet = Wallet.fromKeys(PARAMS, myKey);
+		myWallet.importKey(myKey);
+		mScriptCreationTime = new Date().getTime() / 1000 - 1234;
 
-    }
- 
-   
- 
-    @Test
-    public void testKeys() throws Exception {
-        for (int i = 0 ; i < 20 ; i++) {
-            myKey = new ECKey();
-            myAddress = myKey.toAddress(PARAMS);
-            myWallet =   Wallet.fromKeys(PARAMS, myKey) ;
-      
-            Wallet wallet1 = roundTrip(myWallet);
-            assertArrayEquals(myKey.getPubKey(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
-            assertArrayEquals(myKey.getPrivKeyBytes(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
-        }
-    }
+	}
 
- 
-    //@Test
-    public void testAppearedAtChainHeightDepthAndWorkDone() throws Exception { }
+	@Test
+	public void empty() throws Exception {
+		// Check the base case of a wallet with one key and no transactions.
+		Wallet wallet1 = roundTrip(myWallet);
 
-    private static Wallet roundTrip(Wallet wallet) throws Exception {
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        new WalletProtobufSerializer().writeWallet(wallet, output);
-        ByteArrayInputStream test = new ByteArrayInputStream(output.toByteArray());
-        assertTrue(WalletProtobufSerializer.isWallet(test));
-        ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
-        return new WalletProtobufSerializer().readWallet(input);
-    }
+		assertArrayEquals(myKey.getPubKey(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
+		assertArrayEquals(myKey.getPrivKeyBytes(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
+		assertEquals(myKey.getCreationTimeSeconds(),
+				wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
 
-    @Test
-    public void testRoundTripNormalWallet() throws Exception {
-        Wallet wallet1 = roundTrip(myWallet);
-             
-        assertArrayEquals(myKey.getPubKey(),
-                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
-        assertArrayEquals(myKey.getPrivKeyBytes(),
-                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
-        assertEquals(myKey.getCreationTimeSeconds(),
-                wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
-    }
+	}
 
+	@Test
+	public void testKeys() throws Exception {
+		for (int i = 0; i < 20; i++) {
+			myKey = new ECKey();
+			myAddress = myKey.toAddress(PARAMS);
+			myWallet = Wallet.fromKeys(PARAMS, myKey);
 
- 
+			Wallet wallet1 = roundTrip(myWallet);
+			assertArrayEquals(myKey.getPubKey(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
+			assertArrayEquals(myKey.getPrivKeyBytes(),
+					wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
+		}
+	}
 
- 
-  //NoTag  @Test
-    public void tags() throws Exception {
-        myWallet.setTag("foo", ByteString.copyFromUtf8("bar"));
-        assertEquals("bar", myWallet.getTag("foo").toStringUtf8());
-        myWallet = roundTrip(myWallet);
-        assertEquals("bar", myWallet.getTag("foo").toStringUtf8());
-    }
+	// @Test
+	public void testAppearedAtChainHeightDepthAndWorkDone() throws Exception {
+	}
 
- 
+	private static Wallet roundTrip(Wallet wallet) throws Exception {
+		ByteArrayOutputStream output = new ByteArrayOutputStream();
+		new WalletProtobufSerializer().writeWallet(wallet, output);
+		ByteArrayInputStream test = new ByteArrayInputStream(output.toByteArray());
+		assertTrue(WalletProtobufSerializer.isWallet(test));
+		ByteArrayInputStream input = new ByteArrayInputStream(output.toByteArray());
+		return new WalletProtobufSerializer().readWallet(input);
+	}
 
-    @Test(expected = UnreadableWalletException.FutureVersion.class)
-    public void versions() throws Exception {
-        Protos.Wallet.Builder proto = Protos.Wallet.newBuilder(new WalletProtobufSerializer().walletToProto(myWallet));
-        proto.setVersion(2);
-        new WalletProtobufSerializer().readWallet(PARAMS, null, proto.build());
-    }
+	@Test
+	public void testRoundTripNormalWallet() throws Exception {
+		Wallet wallet1 = roundTrip(myWallet);
+
+		assertArrayEquals(myKey.getPubKey(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPubKey());
+		assertArrayEquals(myKey.getPrivKeyBytes(), wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getPrivKeyBytes());
+		assertEquals(myKey.getCreationTimeSeconds(),
+				wallet1.findKeyFromPubHash(myKey.getPubKeyHash()).getCreationTimeSeconds());
+	}
+
+	// NoTag @Test
+	public void tags() throws Exception {
+		myWallet.setTag("foo", ByteString.copyFromUtf8("bar"));
+		assertEquals("bar", myWallet.getTag("foo").toStringUtf8());
+		myWallet = roundTrip(myWallet);
+		assertEquals("bar", myWallet.getTag("foo").toStringUtf8());
+	}
+
+	@Test
+	public void versions() throws Exception {
+		assertThrows(UnreadableWalletException.FutureVersion.class, () -> {
+			Protos.Wallet.Builder proto = Protos.Wallet
+					.newBuilder(new WalletProtobufSerializer().walletToProto(myWallet));
+			proto.setVersion(2);
+			new WalletProtobufSerializer().readWallet(PARAMS, null, proto.build());
+		});
+
+	}
 }

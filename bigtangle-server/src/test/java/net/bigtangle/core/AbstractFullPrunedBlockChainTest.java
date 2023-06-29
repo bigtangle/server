@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.rules.ExpectedException;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -42,7 +42,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     protected FullBlockGraph blockgraph;
     protected FullBlockStore store;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
 
         BriefLogFormatter.init();
@@ -173,7 +173,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
 
         List<UTXO> outputs = store.getOpenTransactionOutputs(Lists.newArrayList(address));
         assertNotNull(outputs);
-        assertEquals("Wrong Number of Outputs", 1, outputs.size());
+        assertEquals( 1, outputs.size(),"Wrong Number of Outputs");
         // UTXO output = outputs.get(0);
         // assertEquals("The address is not equal", address.toString(),
         // output.getAddress());

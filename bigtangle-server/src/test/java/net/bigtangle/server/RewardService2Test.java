@@ -15,10 +15,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.math.LongMath;
@@ -40,7 +40,7 @@ import net.bigtangle.server.service.CheckpointService;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class RewardService2Test extends AbstractIntegrationTest {
 
@@ -129,7 +129,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		TokensumsMap map = checkpointService.checkToken(store);
 		Map<String, Tokensums> r11 = map.getTokensumsMap();
 		for (Entry<String, Tokensums> a : r11.entrySet()) {
-			assertTrue(" " + a.toString(), a.getValue().check());
+			assertTrue( a.getValue().check()," " + a.toString());
 		}
 		return map.hash();
 	}

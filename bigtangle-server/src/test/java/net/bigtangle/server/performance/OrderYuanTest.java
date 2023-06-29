@@ -12,10 +12,10 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.math.LongMath;
@@ -39,7 +39,7 @@ import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderYuanTest extends AbstractIntegrationTest {
 
@@ -126,7 +126,7 @@ public class OrderYuanTest extends AbstractIntegrationTest {
                 log.debug(a.toString());
                 BigInteger.valueOf(123).divideAndRemainder(BigInteger.valueOf(LongMath.checkedPow(10, 2)));
             }
-            assertTrue(" " + a.toString(), a.getValue().check());
+            assertTrue(a.getValue().check()," " + a.toString());
         }
         return map.hash();
     }

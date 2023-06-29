@@ -5,10 +5,11 @@
 
 package net.bigtangle.core;
 
-import junit.framework.TestCase;
-import net.bigtangle.core.VarInt;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
+
+import junit.framework.TestCase;
 
 public class VarIntTest extends TestCase {
 

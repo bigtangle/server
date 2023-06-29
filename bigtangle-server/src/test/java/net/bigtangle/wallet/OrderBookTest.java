@@ -7,7 +7,7 @@ package net.bigtangle.wallet;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import net.bigtangle.core.Side;
@@ -24,7 +24,7 @@ public class OrderBookTest {
 
     private OrderBook book;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         events = new OrderBookEvents();
         book   = new OrderBook(events);

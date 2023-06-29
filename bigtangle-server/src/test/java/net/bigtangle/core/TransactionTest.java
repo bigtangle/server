@@ -7,13 +7,14 @@ package net.bigtangle.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.math.BigInteger;
 import java.util.List;
 
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import net.bigtangle.core.exception.ScriptException;
@@ -32,230 +33,230 @@ import net.bigtangle.script.ScriptBuilder;
  * as well.
  */
 public class TransactionTest {
-    private static final NetworkParameters PARAMS = MainNetParams.get();
-    private static final Address ADDRESS = new ECKey().toAddress(PARAMS);
+	private static final NetworkParameters PARAMS = MainNetParams.get();
+	private static final Address ADDRESS = new ECKey().toAddress(PARAMS);
 
-    private Transaction tx;
+	private Transaction tx;
 
-    @Before
-    public void setUp() throws Exception {
-        tx = FakeTxBuilder.createFakeTx(PARAMS);
-    }
+	@BeforeEach
+	public void setUp() throws Exception {
+		tx = FakeTxBuilder.createFakeTx(PARAMS);
+	}
 
-  
-    @Test(expected = VerificationException.DuplicatedOutPoint.class)
-    public void duplicateOutPoint() throws Exception {
-        TransactionInput input = tx.getInput(0);
-        input.setScriptBytes(new byte[1]);
-        tx.addInput(input.duplicateDetached());
-        tx.verify();
-    }
+	@Test
+	public void duplicateOutPoint() throws Exception {
+		assertThrows(VerificationException.DuplicatedOutPoint.class, () -> {
+			TransactionInput input = tx.getInput(0);
+			input.setScriptBytes(new byte[1]);
+			tx.addInput(input.duplicateDetached());
+			tx.verify();
+		});
 
- 
- 
-    @Test(expected = VerificationException.UnexpectedCoinbaseInput.class)
-    public void coinbaseInputInNonCoinbaseTX() throws Exception {
-        tx.addInput(Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().data(new byte[10]).build());
-        tx.verify();
-    }
+	}
 
-    @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
-    public void coinbaseScriptSigTooSmall() throws Exception {
-        tx.clearInputs();
-        tx.addInput(Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().build());
-        tx.verify();
-    }
+	@Test
+	public void coinbaseInputInNonCoinbaseTX() throws Exception {
+		assertThrows(VerificationException.UnexpectedCoinbaseInput.class, () -> {
+			tx.addInput(Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0xFFFFFFFFL,
+					new ScriptBuilder().data(new byte[10]).build());
+			tx.verify();
+		});
+	}
 
-    @Test(expected = VerificationException.CoinbaseScriptSizeOutOfRange.class)
-    public void coinbaseScriptSigTooLarge() throws Exception {
-        tx.clearInputs();
-        TransactionInput input = tx.addInput(Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0xFFFFFFFFL,
-                new ScriptBuilder().data(new byte[99]).build());
-        assertEquals(101, input.getScriptBytes().length);
-        tx.verify();
-    }
+	@Test
+	public void coinbaseScriptSigTooSmall() throws Exception {
+		assertThrows(VerificationException.CoinbaseScriptSizeOutOfRange.class, () -> {
+			tx.clearInputs();
+			tx.addInput(Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0xFFFFFFFFL, new ScriptBuilder().build());
+			tx.verify();
+		});
+	}
 
-    @Test
-    public void testOptimalEncodingMessageSize() {
-        Transaction tx = new Transaction(PARAMS);
+	@Test
+	public void coinbaseScriptSigTooLarge() throws Exception {
+		assertThrows(VerificationException.CoinbaseScriptSizeOutOfRange.class, () -> {
+			tx.clearInputs();
+			TransactionInput input = tx.addInput(Sha256Hash.ZERO_HASH, Sha256Hash.ZERO_HASH, 0xFFFFFFFFL,
+					new ScriptBuilder().data(new byte[99]).build());
+			assertEquals(101, input.getScriptBytes().length);
+			tx.verify();
+		});
+	}
 
-        int length = tx.length;
+	@Test
+	public void testOptimalEncodingMessageSize() {
+		Transaction tx = new Transaction(PARAMS);
 
-        // add basic transaction input, check the length
-        tx.addOutput(new TransactionOutput(PARAMS, null, Coin.COIN, ADDRESS));
-        length += getCombinedLength(tx.getOutputs());
+		int length = tx.length;
 
-        // add basic output, check the length
-        length += getCombinedLength(tx.getInputs());
+		// add basic transaction input, check the length
+		tx.addOutput(new TransactionOutput(PARAMS, null, Coin.COIN, ADDRESS));
+		length += getCombinedLength(tx.getOutputs());
 
-        // optimal encoding size should equal the length we just calculated
-        assertEquals(tx.getOptimalEncodingMessageSize(), length);
-    }
+		// add basic output, check the length
+		length += getCombinedLength(tx.getInputs());
 
-    private int getCombinedLength(List<? extends Message> list) {
-        int sumOfAllMsgSizes = 0;
-        for (Message m : list) {
-            sumOfAllMsgSizes += m.getMessageSize() + 1;
-        }
-        return sumOfAllMsgSizes;
-    }
+		// optimal encoding size should equal the length we just calculated
+		assertEquals(tx.getOptimalEncodingMessageSize(), length);
+	}
 
-    
+	private int getCombinedLength(List<? extends Message> list) {
+		int sumOfAllMsgSizes = 0;
+		for (Message m : list) {
+			sumOfAllMsgSizes += m.getMessageSize() + 1;
+		}
+		return sumOfAllMsgSizes;
+	}
 
-    @Test
-    public void testCLTVPaymentChannelTransactionSpending() {
-        BigInteger time = BigInteger.valueOf(20);
+	@Test
+	public void testCLTVPaymentChannelTransactionSpending() {
+		BigInteger time = BigInteger.valueOf(20);
 
-        ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
-        Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
+		ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
+		Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
 
-        Transaction tx = new Transaction(PARAMS);
-        tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
-        tx.getInput(0).setSequenceNumber(0);
-        tx.setLockTime(time.subtract(BigInteger.ONE).longValue());
-        TransactionSignature fromSig = tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
-        TransactionSignature toSig = tx.calculateSignature(0, to, outputScript, Transaction.SigHash.SINGLE, false);
-        TransactionSignature incorrectSig = tx.calculateSignature(0, incorrect, outputScript,
-                Transaction.SigHash.SINGLE, false);
-        Script scriptSig = ScriptBuilder.createCLTVPaymentChannelInput(fromSig, toSig);
-        Script refundSig = ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
-        Script invalidScriptSig1 = ScriptBuilder.createCLTVPaymentChannelInput(fromSig, incorrectSig);
-        Script invalidScriptSig2 = ScriptBuilder.createCLTVPaymentChannelInput(incorrectSig, toSig);
+		Transaction tx = new Transaction(PARAMS);
+		tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
+		tx.getInput(0).setSequenceNumber(0);
+		tx.setLockTime(time.subtract(BigInteger.ONE).longValue());
+		TransactionSignature fromSig = tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
+		TransactionSignature toSig = tx.calculateSignature(0, to, outputScript, Transaction.SigHash.SINGLE, false);
+		TransactionSignature incorrectSig = tx.calculateSignature(0, incorrect, outputScript,
+				Transaction.SigHash.SINGLE, false);
+		Script scriptSig = ScriptBuilder.createCLTVPaymentChannelInput(fromSig, toSig);
+		Script refundSig = ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
+		Script invalidScriptSig1 = ScriptBuilder.createCLTVPaymentChannelInput(fromSig, incorrectSig);
+		Script invalidScriptSig2 = ScriptBuilder.createCLTVPaymentChannelInput(incorrectSig, toSig);
 
-        try {
-            scriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
-        } catch (ScriptException e) {
-            e.printStackTrace();
-            fail("Settle transaction failed to correctly spend the payment channel");
-        }
+		try {
+			scriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
+		} catch (ScriptException e) {
+			e.printStackTrace();
+			fail("Settle transaction failed to correctly spend the payment channel");
+		}
 
-        try {
-            refundSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
-            fail("Refund passed before expiry");
-        } catch (ScriptException e) {
-        }
-        try {
-            invalidScriptSig1.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
-            fail("Invalid sig 1 passed");
-        } catch (ScriptException e) {
-        }
-        try {
-            invalidScriptSig2.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
-            fail("Invalid sig 2 passed");
-        } catch (ScriptException e) {
-        }
-    }
+		try {
+			refundSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
+			fail("Refund passed before expiry");
+		} catch (ScriptException e) {
+		}
+		try {
+			invalidScriptSig1.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
+			fail("Invalid sig 1 passed");
+		} catch (ScriptException e) {
+		}
+		try {
+			invalidScriptSig2.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
+			fail("Invalid sig 2 passed");
+		} catch (ScriptException e) {
+		}
+	}
 
-    @Test
-    public void testCLTVPaymentChannelTransactionRefund() {
-        BigInteger time = BigInteger.valueOf(20);
+	@Test
+	public void testCLTVPaymentChannelTransactionRefund() {
+		BigInteger time = BigInteger.valueOf(20);
 
-        ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
-        Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
+		ECKey from = new ECKey(), to = new ECKey(), incorrect = new ECKey();
+		Script outputScript = ScriptBuilder.createCLTVPaymentChannelOutput(time, from, to);
 
-        Transaction tx = new Transaction(PARAMS);
-        tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
-        tx.getInput(0).setSequenceNumber(0);
-        tx.setLockTime(time.add(BigInteger.ONE).longValue());
-        TransactionSignature fromSig = tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
-        TransactionSignature incorrectSig = tx.calculateSignature(0, incorrect, outputScript,
-                Transaction.SigHash.SINGLE, false);
-        Script scriptSig = ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
-        Script invalidScriptSig = ScriptBuilder.createCLTVPaymentChannelRefund(incorrectSig);
+		Transaction tx = new Transaction(PARAMS);
+		tx.addInput(new TransactionInput(PARAMS, tx, new byte[] {}));
+		tx.getInput(0).setSequenceNumber(0);
+		tx.setLockTime(time.add(BigInteger.ONE).longValue());
+		TransactionSignature fromSig = tx.calculateSignature(0, from, outputScript, Transaction.SigHash.SINGLE, false);
+		TransactionSignature incorrectSig = tx.calculateSignature(0, incorrect, outputScript,
+				Transaction.SigHash.SINGLE, false);
+		Script scriptSig = ScriptBuilder.createCLTVPaymentChannelRefund(fromSig);
+		Script invalidScriptSig = ScriptBuilder.createCLTVPaymentChannelRefund(incorrectSig);
 
-        try {
-            scriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
-        } catch (ScriptException e) {
-            e.printStackTrace();
-            fail("Refund failed to correctly spend the payment channel");
-        }
+		try {
+			scriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
+		} catch (ScriptException e) {
+			e.printStackTrace();
+			fail("Refund failed to correctly spend the payment channel");
+		}
 
-        try {
-            invalidScriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
-            fail("Invalid sig passed");
-        } catch (ScriptException e) {
-        }
-    }
+		try {
+			invalidScriptSig.correctlySpends(tx, 0, outputScript, Script.ALL_VERIFY_FLAGS);
+			fail("Invalid sig passed");
+		} catch (ScriptException e) {
+		}
+	}
 
-    @Test
-    public void testToStringWhenIteratingOverAnInputCatchesAnException() {
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
-        TransactionInput ti = new TransactionInput(PARAMS, tx, new byte[0]) {
-            @Override
-            public Script getScriptSig() throws ScriptException {
-                throw new ScriptException("");
-            }
-        };
+	@Test
+	public void testToStringWhenIteratingOverAnInputCatchesAnException() {
+		Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
+		TransactionInput ti = new TransactionInput(PARAMS, tx, new byte[0]) {
+			@Override
+			public Script getScriptSig() throws ScriptException {
+				throw new ScriptException("");
+			}
+		};
 
-        tx.addInput(ti);
-        assertEquals(tx.toString().contains("[exception: "), true);
-    }
-   
-    @Test
-    public void testMemoUTXO() {
-       
-        tx.setMemo(new MemoInfo("Test:" + tx ));
-        boolean isCoinBase = tx.isCoinBase();
-        for (TransactionOutput out : tx.getOutputs()) {
-            Script script =new Script(new byte[0]);
-            String fromAddress = "";
-            try {
-                if (!isCoinBase) {
-                    fromAddress = tx.getInputs().get(0).getFromAddress().toBase58();
-                }
-            } catch (ScriptException e) {
-                // No address found.
-            }
-            int minsignnumber = 1;
-            if (script.isSentToMultiSig()) {
-                minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
-            }
-            UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
-                     "", null, fromAddress, tx.getMemo(),
-                    Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0,
-                    System.currentTimeMillis() / 1000, null);
-      
-            assertEquals(newOut.getMemo().contains("Test"), true);
-        }
-        
-      
-     
-        
-    }
-    
-    
-    @Test(expected = ScriptException.class)
-    public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
-        ECKey key = new ECKey();
-        Address addr = key.toAddress(PARAMS);
-        Transaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
+		tx.addInput(ti);
+		assertEquals(tx.toString().contains("[exception: "), true);
+	}
 
-        Transaction tx = new Transaction(PARAMS);
-        tx.addOutput(fakeTx.getOutput(0));
+	@Test
+	public void testMemoUTXO() {
 
-        Script script = ScriptBuilder.createOpReturnScript(new byte[0]);
+		tx.setMemo(new MemoInfo("Test:" + tx));
+		boolean isCoinBase = tx.isCoinBase();
+		for (TransactionOutput out : tx.getOutputs()) {
+			Script script = new Script(new byte[0]);
+			String fromAddress = "";
+			try {
+				if (!isCoinBase) {
+					fromAddress = tx.getInputs().get(0).getFromAddress().toBase58();
+				}
+			} catch (ScriptException e) {
+				// No address found.
+			}
+			int minsignnumber = 1;
+			if (script.isSentToMultiSig()) {
+				minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
+			}
+			UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script, "", null,
+					fromAddress, tx.getMemo(), Utils.HEX.encode(out.getValue().getTokenid()), false, false, false,
+					minsignnumber, 0, System.currentTimeMillis() / 1000, null);
 
-        tx.addSignedInput(fakeTx.getOutput(0).getOutPointFor(Sha256Hash.ZERO_HASH), script, key);
-    }
+			assertEquals(newOut.getMemo().contains("Test"), true);
+		}
 
- 
-   
+	}
 
-    @Test
-    public void optInFullRBF() {
-        // a standard transaction as wallets would create
-        Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
-        assertFalse(tx.isOptInFullRBF());
+	@Test
+	public void testAddSignedInputThrowsExceptionWhenScriptIsNotToRawPubKeyAndIsNotToAddress() {
+		assertThrows(ScriptException.class, () -> {
+			ECKey key = new ECKey();
+			Address addr = key.toAddress(PARAMS);
+			Transaction fakeTx = FakeTxBuilder.createFakeTx(PARAMS, Coin.COIN, addr);
 
-        tx.getInputs().get(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
-        assertTrue(tx.isOptInFullRBF());
-    }
+			Transaction tx = new Transaction(PARAMS);
+			tx.addOutput(fakeTx.getOutput(0));
 
-    /**
-     * Ensure that hashForSignature() doesn't modify a transaction's data, which
-     * could wreak multithreading havoc.
-     */
-   // @Test
+			Script script = ScriptBuilder.createOpReturnScript(new byte[0]);
+
+			tx.addSignedInput(fakeTx.getOutput(0).getOutPointFor(Sha256Hash.ZERO_HASH), script, key);
+		});
+
+	}
+
+	@Test
+	public void optInFullRBF() {
+		// a standard transaction as wallets would create
+		Transaction tx = FakeTxBuilder.createFakeTx(PARAMS);
+		assertFalse(tx.isOptInFullRBF());
+
+		tx.getInputs().get(0).setSequenceNumber(TransactionInput.NO_SEQUENCE - 2);
+		assertTrue(tx.isOptInFullRBF());
+	}
+
+	/**
+	 * Ensure that hashForSignature() doesn't modify a transaction's data, which
+	 * could wreak multithreading havoc.
+	 */
+	// @Test
 //    public void testHashForSignatureThreadSafety() {
 //        Block genesis = MainNetParams.get().getGenesisBlock();
 //        Block block1 = BlockForTest.createNextBlock(genesis,new ECKey().toAddress(MainNetParams.get()),
