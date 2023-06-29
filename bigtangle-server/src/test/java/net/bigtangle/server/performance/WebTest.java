@@ -31,8 +31,8 @@ public class WebTest extends LotteryTests {
 		TokenKeyValues tokenKeyValues = new TokenKeyValues();
 		KeyValue kv = new KeyValue();
 		kv.setKey("site");
-		//site contents
-		kv.setValue("java");
+		//site contents zip
+		kv.setValue("zipcontent");
 	 
  
 		tokenKeyValues.addKeyvalue(kv);
