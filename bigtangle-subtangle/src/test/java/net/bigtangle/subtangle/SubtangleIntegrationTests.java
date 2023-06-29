@@ -12,12 +12,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -44,7 +42,7 @@ import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
-@RunWith(SpringRunner.class)
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class SubtangleIntegrationTests extends AbstractIntegrationTest {
 

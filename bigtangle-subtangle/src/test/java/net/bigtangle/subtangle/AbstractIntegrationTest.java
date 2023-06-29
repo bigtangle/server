@@ -20,9 +20,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -32,7 +31,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockitoTestExecutionListener;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.test.context.support.DirtiesContextTestExecutionListener;
 
@@ -94,7 +92,7 @@ import net.bigtangle.utils.UUIDUtil;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.Wallet;
 
-@RunWith(SpringRunner.class)
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {})
 
 @TestExecutionListeners(value = { DependencyInjectionTestExecutionListener.class, MockitoTestExecutionListener.class,
@@ -203,7 +201,7 @@ public abstract class AbstractIntegrationTest {
         }
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         Utils.unsetMockClock();
         store = storeService.getStore();
@@ -214,7 +212,7 @@ public abstract class AbstractIntegrationTest {
 
     }
 
-    @After
+    @AfterEach
     public void close() throws Exception {
         store.close();
     }
