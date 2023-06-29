@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import net.bigtangle.core.exception.AddressFormatException;
 import net.bigtangle.utils.Base58;
 
-public class Base58Test extends TestCase {
+public class Base58Test  {
 	@Test
 	public void testEncode() throws Exception {
 		byte[] testbytes = "Hello World".getBytes();

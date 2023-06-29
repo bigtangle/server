@@ -9,9 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import junit.framework.TestCase;
-
-public class VarIntTest extends TestCase {
+public class VarIntTest {
 
     @Test
     public void testBytes() throws Exception {

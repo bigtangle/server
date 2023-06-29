@@ -76,15 +76,7 @@ public class LotteryRemoteTest extends LotteryTests {
 		assertTrue(endMap.get(winnerAddress.toString()) != null);
 
 		assertTrue(endMap.get(winnerAddress.toString()).equals(winnerAmount.multiply(BigInteger.valueOf(10))));
-
-		// second is empty
-		// Block second = contractExecutionService.createContractExecution(store,
-		// contractKey.getPublicKeyAsHex());
-		// assertTrue(second == null);
-
-		// exception
-		// blockService.saveBlock(resultBlock, store);
-
+ 
 	}
 
 	public void check(List<ECKey> ulist, Map<String, BigInteger> map) throws Exception {
@@ -107,6 +99,14 @@ public class LotteryRemoteTest extends LotteryTests {
 		}
 	}
 
+	@Test
+	public void testlotteryRepeat() throws Exception {
+		usernumber = 10;
+		winnerAmount = new BigInteger(usernumber * 100 + "");
+		contractKey = new ECKey();
+		lotteryDo();
+		lotteryDo();
+	}
 	@Test
 	public void lotteryConflict() throws Exception {
 		// create two blocks for the ContractExecution and only one is taken
