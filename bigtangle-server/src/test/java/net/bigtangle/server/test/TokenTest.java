@@ -390,10 +390,13 @@ public class TokenTest extends AbstractIntegrationTest {
 	@Test
 	public void testPrescription() throws Exception {
 
-		ECKey key = prepareIdentity();
-
 		ECKey issuer = new ECKey();
 		ECKey userkey = new ECKey();
+		ECKey pharmacy = new ECKey();
+		payBigTo(userkey, Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(3)), null);
+		ECKey key = prepareIdentity();
+
+
 		SignedData signedata = signeddata(key);
 		TokenKeyValues kvs = signedata.toTokenKeyValues(key, userkey);
 	
@@ -403,9 +406,7 @@ public class TokenTest extends AbstractIntegrationTest {
 		TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
 		wallet.multiSign(currentToken.getToken().getTokenid(), key, aesKey);
 		
-		payBigTo(userkey, Coin.FEE_DEFAULT.getValue(), null);
-		payBigTo(userkey, Coin.FEE_DEFAULT.getValue(), null);
-		payBigTo(userkey, Coin.FEE_DEFAULT.getValue(), null);
+
 		makeRewardBlock();
 
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -420,15 +421,15 @@ public class TokenTest extends AbstractIntegrationTest {
 		Token token = getTokensResponse.getTokens().get(0);
 		SignedData p = prescription(userkey, token);
 		List<UTXO> ulist = getBalance(false, userkey);
-		assertTrue(ulist.size() == 1);
+		assertTrue(ulist.size() == 2);
 		// pay the token to pharmacy
-		ECKey pharmacy = new ECKey();
+
 		// encrypt data as memo or
 		Wallet userWallet = Wallet.fromKeys(networkParameters, userkey, contextRoot);
 
 		MemoInfo memoInfo = p.encryptToMemo(pharmacy);
 		 
-		List<Block> b = userWallet.pay(null, pharmacy.toAddress(networkParameters).toString(), ulist.get(0).getValue(),
+		List<Block> b = userWallet.pay(null, pharmacy.toAddress(networkParameters).toString(),Coin.SATOSHI,
 				memoInfo);
 		// sendEmpty(10);
 		makeRewardBlock();
