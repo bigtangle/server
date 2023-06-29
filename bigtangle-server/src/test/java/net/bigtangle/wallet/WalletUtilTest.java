@@ -28,7 +28,7 @@ import net.bigtangle.crypto.KeyCrypterScrypt;
 import net.bigtangle.kits.WalletUtil;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.params.TestParams;
-import net.bigtangle.server.AbstractIntegrationTest;
+import net.bigtangle.server.test.AbstractIntegrationTest;
 
 public class WalletUtilTest {
 

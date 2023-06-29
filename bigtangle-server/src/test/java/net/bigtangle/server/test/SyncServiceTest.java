@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.server;
+package net.bigtangle.server.test;
 
 import java.util.ArrayList;
 import java.util.List;

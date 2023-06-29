@@ -22,8 +22,8 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.docker.ResultExecution;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.checkpoint.DockerService;
+import net.bigtangle.server.test.AbstractIntegrationTest;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 

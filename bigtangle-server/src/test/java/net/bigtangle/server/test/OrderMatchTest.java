@@ -1,4 +1,4 @@
-package net.bigtangle.server;
+package net.bigtangle.server.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;

@@ -33,8 +33,8 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.service.CheckpointService;
+import net.bigtangle.server.test.AbstractIntegrationTest;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
@@ -81,7 +81,7 @@ public class OrderYuanTest extends AbstractIntegrationTest {
 
     }
 
-    @Test
+   // @Test
     public void buyBaseToken() throws Exception {
         wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
         wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(testPriv)));

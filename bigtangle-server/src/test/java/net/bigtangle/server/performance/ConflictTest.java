@@ -20,7 +20,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
-import net.bigtangle.server.AbstractIntegrationTest;
+import net.bigtangle.server.test.AbstractIntegrationTest;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @ExtendWith(SpringExtension.class)

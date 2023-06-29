@@ -1,4 +1,4 @@
-package net.bigtangle.server;
+package net.bigtangle.server.test;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;

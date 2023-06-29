@@ -18,8 +18,8 @@ import org.slf4j.LoggerFactory;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Tokensums;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.server.AbstractIntegrationTest;
 import net.bigtangle.server.service.SyncBlockService;
+import net.bigtangle.server.test.AbstractIntegrationTest;
 
 //@Ignore
 public class CompareTest {
