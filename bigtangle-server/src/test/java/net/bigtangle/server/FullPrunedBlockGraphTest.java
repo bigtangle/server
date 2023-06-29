@@ -18,9 +18,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
@@ -45,8 +42,7 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.ServiceBase;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+ 
 public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 	@Test

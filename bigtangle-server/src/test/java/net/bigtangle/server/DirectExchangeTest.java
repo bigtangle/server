@@ -53,7 +53,6 @@ import net.bigtangle.wallet.SendRequest;
 import net.bigtangle.wallet.Wallet;
 
  
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class DirectExchangeTest extends AbstractIntegrationTest {
 
 	private static final Logger log = LoggerFactory.getLogger(DirectExchangeTest.class);

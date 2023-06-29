@@ -7,17 +7,13 @@ import java.math.BigInteger;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.spongycastle.util.encoders.Hex;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.encrypt.ECIESCoder;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+ 
 public class ECKeyEncryptTest extends AbstractIntegrationTest {
 
     private byte[] payload = Hex.decode("1122334455");

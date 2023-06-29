@@ -7,18 +7,14 @@ package net.bigtangle.server;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.MissingNumberCheckService;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+
 public class SyncServiceTest extends RewardService2Test {
 
 	@Autowired

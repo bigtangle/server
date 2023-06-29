@@ -15,10 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.math.LongMath;
@@ -40,8 +37,7 @@ import net.bigtangle.server.service.CheckpointService;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 
-@ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+ 
 public class RewardService2Test extends AbstractIntegrationTest {
 
 	@Autowired
