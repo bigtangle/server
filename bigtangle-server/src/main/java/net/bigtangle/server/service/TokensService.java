@@ -25,6 +25,7 @@ import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetTokensResponse;
@@ -53,9 +54,9 @@ public class TokensService {
         return response;
     }
 
-    public AbstractResponse getMarketTokensList(FullBlockStore store) throws BlockStoreException {
+    public AbstractResponse getWebTokensList(FullBlockStore store) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
-        list.addAll(store.getMarketTokenList());
+        list.addAll(store.getTokenTypeList(TokenType.web.ordinal()));
         return GetTokensResponse.create(list);
     }
 

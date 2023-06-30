@@ -264,7 +264,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
 	public List<Token> getTokensList(Set<String> tokenids) throws BlockStoreException;
 
-	public List<Token> getMarketTokenList() throws BlockStoreException;
+	public List<Token> getTokenTypeList( int type) throws BlockStoreException;
 
 	public List<Token> getTokensList(String name) throws BlockStoreException;
 

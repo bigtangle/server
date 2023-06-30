@@ -197,7 +197,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	// Tables exist SQL.
 	protected final String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM settings WHERE 1 = 2";
 
-	protected final String SELECT_BLOCKS_TO_CONFIRM_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
+	protected final String getTokenTypeList = "SELECT" + SELECT_BLOCKS_TEMPLATE
 			+ " FROM blocks, mcmc  WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = false AND height > ?"
 			+ " AND height <= ? AND mcmc.rating >= " + NetworkParameters.CONFIRMATION_UPPER_THRESHOLD + afterSelect();
 
@@ -304,8 +304,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	protected final String SELECT_CONFIRMED_TOKENS_SQL = SELECT_TOKENS_SQL_TEMPLATE
 			+ " FROM tokens WHERE confirmed = true";
 
-	protected final String SELECT_MARKET_TOKENS_SQL = SELECT_TOKENS_SQL_TEMPLATE
-			+ " FROM tokens WHERE tokentype = 1 and confirmed = true";
+	protected final String SELECT_TOKENS_TYPE_SQL = SELECT_TOKENS_SQL_TEMPLATE
+			+ " FROM tokens WHERE tokentype = ? and confirmed = true";
 
 	protected final String SELECT_TOKENS_ACOUNT_MAP_SQL = "SELECT tokenid, amount  as amount "
 			+ "FROM tokens WHERE confirmed = true ";
@@ -1612,7 +1612,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_TO_CONFIRM_SQL);
+			preparedStatement = getConnection().prepareStatement(getTokenTypeList);
 			preparedStatement.setLong(1, cutoffHeight);
 			preparedStatement.setLong(2, maxHeight);
 			ResultSet resultSet = preparedStatement.executeQuery();
@@ -2182,12 +2182,13 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	}
 
 	@Override
-	public List<Token> getMarketTokenList() throws BlockStoreException {
+	public List<Token> getTokenTypeList( int type) throws BlockStoreException {
 		List<Token> list = new ArrayList<Token>();
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = getConnection().prepareStatement(SELECT_MARKET_TOKENS_SQL);
+			preparedStatement = getConnection().prepareStatement(SELECT_TOKENS_TYPE_SQL);
+			preparedStatement.setInt(1, type);
 			ResultSet resultSet = preparedStatement.executeQuery();
 
 			while (resultSet.next()) {
