@@ -280,8 +280,8 @@ public class ChildKeyDerivationTest {
 		// This encoding is the same key but including its private data:
 		encoded = "xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM";
 		key = DeterministicKey.deserializeB58(encoded, MainNetParams.get());
-		assertEquals("Reserialized parentless private HD key is wrong", key.serializePrivB58(MainNetParams.get()),
-				encoded);
+		assertEquals( key.serializePrivB58(MainNetParams.get()),
+				encoded,"Reserialized parentless private HD key is wrong");
 		assertEquals(key.getDepth(), 3,"Depth of deserialized parentless private HD key is wrong");
 		assertEquals( key.getPath().size(), 1,"Path size of deserialized parentless private HD key is wrong");
 		assertEquals(
