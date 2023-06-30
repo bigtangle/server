@@ -27,6 +27,7 @@
 		<module>bigtangle-server</module>
 		<module>bigtangle-subtangle</module>
 		<module>bigtangle-seeds</module>
+		<module>bigtangle-web</module>
 	</modules>
 	<dependencies>
 		<!-- Logging -->
