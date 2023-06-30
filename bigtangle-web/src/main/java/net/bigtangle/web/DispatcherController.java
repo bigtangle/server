@@ -4,13 +4,9 @@
  *******************************************************************************/
 package net.bigtangle.web;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -29,12 +25,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Stopwatch;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.ErrorResponse;
@@ -46,8 +40,7 @@ import net.bigtangle.utils.Json;
 public class DispatcherController {
 
 	private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
-
-	public static List<ServerInfo> serverinfoList;
+ 
 	public static String PATH = "./logs/serverinfo.json";
 	@Autowired
 	protected SyncBlockService syncBlockService;
@@ -98,60 +91,9 @@ public class DispatcherController {
 
 			switch (reqCmd0000) {
 
-			case register: {
-				String reqStr = new String(bodyByte, "UTF-8");
-				Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
-				ServerInfo serverInfo = new ServerInfo();
-				String url = (String) request.get("url");
-				logger.debug("url==" + url);
-				String servertype = (String) request.get("servertype");
-				boolean flag = false;
-				if (serverinfoList != null) {
-					for (ServerInfo temp : serverinfoList) {
-						if (temp.getUrl().equals(url) && temp.getServertype().equals(servertype)) {
-							flag = true;
-						}
-					}
-				}
-
-				if (!flag) {
-
-					serverInfo.setUrl(url);
-					serverInfo.setServertype(servertype);
-					serverInfo.setStatus("active");
-					if (serverinfoList == null) {
-						serverinfoList = new ArrayList<ServerInfo>();
-					}
-					try {
-						SyncBlockService.getMaxConfirmedReward(serverInfo.getUrl());
-						serverinfoList.add(serverInfo);
-					} catch (Exception e) {
-						logger.error("", e);
-					}
-
-				}
-
-				// this.outPrintJSONString(httpServletResponse,
-				// GetStringResponse.create(urlTobyte(url)), watch);
-
-			}
+			case register: { }
 				break;
-			case serverinfolist: {
-				List<ServerInfo> tempList = new ArrayList<ServerInfo>();
-				if (serverinfoList != null && !serverinfoList.isEmpty()) {
-					for (ServerInfo serverInfo : serverinfoList) {
-						if (serverInfo.getStatus().equals("active")) {
-							tempList.add(serverInfo);
-						}
-					}
-				}
-
-				AbstractResponse response = ServerinfoResponse.create(tempList);
-				this.gzipBinary(httpServletResponse, response);
-
-			}
-				break;
-
+ 
 			default:
 				break;
 			}
@@ -174,17 +116,10 @@ public class DispatcherController {
 
 	@RequestMapping("/")
 	public String index() {
-		return "Bigtangle-seeds";
+		return "Bigtangle-web";
 	}
 
-	public void gzipBinary(HttpServletResponse httpServletResponse, List<ServerInfo> response) throws Exception {
-		GZIPOutputStream servletOutputStream = new GZIPOutputStream(httpServletResponse.getOutputStream());
-
-		servletOutputStream.write(Json.jsonmapper().writeValueAsBytes(response));
-		servletOutputStream.flush();
-		servletOutputStream.close();
-	}
-
+ 
 	private void errorLimit(HttpServletResponse httpServletResponse, Stopwatch watch) throws Exception {
 		AbstractResponse resp = ErrorResponse.create(101);
 		resp.setErrorcode(403);

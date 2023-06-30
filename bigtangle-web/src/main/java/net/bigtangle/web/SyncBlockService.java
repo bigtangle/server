@@ -62,7 +62,7 @@ public class SyncBlockService {
 	 */
 	public static void localFileServerInfoWrite() throws JsonProcessingException, IOException {
 
-		if (DispatcherController.serverinfoList != null) {
+	 
 			String path = DispatcherController.PATH;
 
 			File file = new File(path);
@@ -71,7 +71,7 @@ public class SyncBlockService {
 			}
 			String jsonString = Json.jsonmapper().writeValueAsString(DispatcherController.serverinfoList);
 			writeString2File(jsonString, path);
-		}
+ 
 
 	}
 
