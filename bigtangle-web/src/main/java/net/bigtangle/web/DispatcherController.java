@@ -2,7 +2,7 @@
  *  
  *  Copyright   2018  Inasset GmbH. 
  *******************************************************************************/
-package net.bigtangle.seeds;
+package net.bigtangle.web;
 
 import java.io.IOException;
 import java.io.PrintWriter;

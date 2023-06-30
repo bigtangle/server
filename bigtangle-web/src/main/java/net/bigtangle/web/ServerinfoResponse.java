@@ -1,4 +1,4 @@
-package net.bigtangle.seeds;
+package net.bigtangle.web;
 
 import java.util.List;
 

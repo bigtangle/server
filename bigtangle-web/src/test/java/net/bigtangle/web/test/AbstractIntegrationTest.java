@@ -2,7 +2,7 @@
  *  Copyright   2018  Inasset GmbH. 
  *  
  *******************************************************************************/
-package net.bigtangle.seeds;
+package net.bigtangle.web.test;
 
 
 import org.junit.jupiter.api.extension.ExtendWith;
