@@ -226,9 +226,9 @@ public class MonetaryFormatTest {
 	@Test
 	public void parseInvalidMultipleDecimalMarks() throws Exception {
 		assertThrows(NumberFormatException.class, () -> {
-
+			NO_CODE.parse("1.0.0");
 		});
-		NO_CODE.parse("1.0.0");
+
 	}
 
 	@Test

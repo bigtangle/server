@@ -270,8 +270,8 @@ public class ChildKeyDerivationTest {
 		// https://en.bitcoin.it/wiki/BIP_0032_TestVectors
 		String encoded = "xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5";
 		DeterministicKey key = DeterministicKey.deserializeB58(encoded, MainNetParams.get());
-		assertEquals("Reserialized parentless private HD key is wrong", key.serializePubB58(MainNetParams.get()),
-				encoded);
+		assertEquals( key.serializePubB58(MainNetParams.get()),
+				encoded,"Reserialized parentless private HD key is wrong");
 		assertEquals(key.getDepth(), 3, "Depth of deserialized parentless public HD key is wrong");
 		assertEquals(key.getPath().size(), 1, "Path size of deserialized parentless public HD key is wrong");
 		assertEquals(key.getParentFingerprint(), 0xbef5a2f9,
