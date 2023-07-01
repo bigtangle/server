@@ -42,7 +42,6 @@ import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 import net.bigtangle.wallet.Wallet;
 
- 
 public class PaymentServiceTest extends AbstractIntegrationTest {
 	private static final Logger log = LoggerFactory.getLogger(PaymentServiceTest.class);
 
@@ -66,13 +65,29 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 		List<ECKey> wallet1Keys_part = new ArrayList<ECKey>();
 		wallet1Keys_part.add(new ECKey());
 		wallet1Keys_part.add(new ECKey());
-		multiSigns(new ECKey(), wallet1Keys_part);
+		createMultiSigns( wallet1Keys_part);
 
 	}
 
+	// pay to mutilsigns keys wallet1Keys_part
+	public void createMultiSigns(List<ECKey> wallet1Keys_part) throws Exception {
+		for (ECKey ecKey : wallet1Keys_part)
+			log.debug(ecKey.getPublicKeyAsHex());
+
+		Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_part);
+
+		Coin amount0 = Coin.valueOf(15, NetworkParameters.BIGTANGLE_TOKENID);
+
+		wallet.payToScript(null, amount0, new MemoInfo("multi signs"), scriptPubKey);
+
+		makeRewardBlock();
+
+		checkBalance(amount0, wallet1Keys_part);
+	}
+
 	public void multiSigns(ECKey receiverkey, List<ECKey> wallet1Keys_part) throws Exception {
-		payBigTo(wallet1Keys_part.get(0), Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(2)),null);
-		
+		payBigTo(wallet1Keys_part.get(0), Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(2)), null);
+
 		List<UTXO> ulist = getBalance(false, wallet1Keys_part);
 
 		TransactionOutput multisigOutput = new FreeStandingTransactionOutput(this.networkParameters, ulist.get(0));
@@ -86,8 +101,8 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 		Script scriptPubKey = ScriptBuilder.createMultiSigOutputScript(2, wallet1Keys_part);
 		transaction0.addOutput(amount1, scriptPubKey);
 		// add remainder back
-	
-	//	transaction0.addOutput(outputCoin, ulist.get(0).getAddress());
+
+		// transaction0.addOutput(outputCoin, ulist.get(0).getAddress());
 
 		transaction0.addInput(ulist.get(0).getBlockHash(), multisigOutput);
 
@@ -180,7 +195,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
 		ECKey to = new ECKey();
 		payBigTo(to, Coin.FEE_DEFAULT.getValue(), null);
-		Wallet w= Wallet.fromKeys(networkParameters, to,contextRoot);
+		Wallet w = Wallet.fromKeys(networkParameters, to, contextRoot);
 		Coin aCoin = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
 		testPartsToOne(aCoin, to);
 		checkBalance(aCoin, to);
@@ -188,9 +203,8 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 		testPartsToOne(aCoin, to);
 		testPartsToOne(aCoin, to);
 		List<FreeStandingTransactionOutput> uspent = w.calculateAllSpendCandidates(null, false);
-	//	assertTrue(uspent.size() == 4);
-			w.payPartsToOne(null, to.toAddress(networkParameters).toString(),
-				NetworkParameters.BIGTANGLE_TOKENID, "0,3");
+		// assertTrue(uspent.size() == 4);
+		w.payPartsToOne(null, to.toAddress(networkParameters).toString(), NetworkParameters.BIGTANGLE_TOKENID, "0,3");
 		makeRewardBlock();
 
 		ArrayList<ECKey> a = new ArrayList<ECKey>();
@@ -208,9 +222,6 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
 	}
 
- 
-
-
 	// @Test
 	public void testBurnedAddress() throws Exception {
 
@@ -225,7 +236,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 		makeRewardBlock();
 		// pay from burned address
 		try {
-			Wallet wallet = Wallet.fromKeys(networkParameters, to,contextRoot);
+			Wallet wallet = Wallet.fromKeys(networkParameters, to, contextRoot);
 			wallet.setServerURL(contextRoot);
 			wallet.pay(null, to.toAddress(networkParameters).toString(), aCoin, new MemoInfo(""));
 			fail();

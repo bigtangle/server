@@ -1857,6 +1857,51 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		return multispent;
 	}
 
+	public Block payToScript(KeyParameter aesKey, Coin amount, MemoInfo memo, Script script)
+			throws UTXOProviderException, InsufficientMoneyException, IOException {
+
+		List<FreeStandingTransactionOutput> coinList = calculateAllSpendCandidates(aesKey, false);
+
+		Transaction multispent = new Transaction(params);
+		multispent.setMemo(memo);
+		multispent.addOutput(amount, script);
+		Coin restAmount = amount.negate();
+		ECKey beneficiary = null;
+		if (getFee() && amount.isBIG()) {
+			restAmount = restAmount.add(Coin.FEE_DEFAULT.negate());
+		}
+
+		List<FreeStandingTransactionOutput> coinTokenList = filterTokenid(restAmount.getTokenid(), coinList);
+
+		for (FreeStandingTransactionOutput spendableOutput : coinTokenList) {
+
+			beneficiary = getECKey(aesKey, spendableOutput.getUTXO().getAddress());
+			restAmount = spendableOutput.getValue().add(restAmount);
+			multispent.addInput(spendableOutput.getUTXO().getBlockHash(), spendableOutput);
+			if (!restAmount.isNegative()) {
+				if (restAmount.isPositive()) {
+					multispent.addOutput(restAmount, beneficiary);
+				}
+				break;
+			}
+		}
+		if (beneficiary == null || restAmount.isNegative()) {
+			throw new InsufficientMoneyException(amount.toString() + " outputs size= " + coinTokenList.size());
+		}
+
+		signTransaction(multispent, aesKey);
+
+		Block b = getTip();
+		b.addTransaction(multispent);
+		if (getFee() && !amount.isBIG()) {
+			// add big fee
+			b.addTransaction(feeTransaction(aesKey, coinList));
+		}
+		log.debug(" " + b.toString());
+		solveAndPost(b);
+		return b;
+	}
+
 	private Block getTip() throws IOException, JsonProcessingException {
 		return params.getDefaultSerializer().makeBlock(getTipData());
 	}
@@ -2470,7 +2515,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 				}
 			}
 		}
-		return pay(aesKey, destination, summe.subtract(Coin.FEE_DEFAULT), new MemoInfo(memo));
+		//
+		if (getFee() && NetworkParameters.BIGTANGLE_TOKENID.equals(tokenid)) {
+			summe = summe.subtract(Coin.FEE_DEFAULT);
+		}
+		return pay(aesKey, destination, summe, new MemoInfo(memo));
 	}
 
 	public Block saveUserdata(ECKey userKey, Transaction transaction, boolean encrypt)
@@ -2781,7 +2830,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		throw new NoDataException();
 	}
 
- 
 	public void changePassword(String password, String oldPassword) {
 
 		Protos.ScryptParameters SCRYPT_PARAMETERS = Protos.ScryptParameters.newBuilder().setP(6).setR(8).setN(32768)

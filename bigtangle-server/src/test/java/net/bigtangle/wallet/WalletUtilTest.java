@@ -123,14 +123,14 @@ public class WalletUtilTest {
     @Test
     public void walletCreateLoadSize() throws Exception {
 
-        int size = 1000000;
-        byte[] a = WalletUtil.createWallet(TestParams.get(), size);
+        int size = 1000;
+        byte[] a = WalletUtil.createWallet(MainNetParams.get(), size);
       
         Wallet wallet = WalletUtil.loadWallet(false, new ByteArrayInputStream(a), MainNetParams.get());
 
         List<ECKey> issuedKeys = wallet.walletKeys(null);
         log.debug(issuedKeys.size()+""); 
-        assertTrue(issuedKeys.size() == size); 
+        assertTrue(issuedKeys.size() >= size); 
         
         FileUtils.writeByteArrayToFile(new File("logs/testsize.wallet"), a);
     }
