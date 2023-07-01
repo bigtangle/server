@@ -208,7 +208,8 @@ public abstract class AbstractIntegrationTest {
 		// log.debug("block " + (b == null ? "block is null" : b.toString()));
 		if( addedBlocks!=null)
 		addedBlocks.add(b);
-	 	makeRewardBlock(addedBlocks);
+		mcmc();
+		// 	makeRewardBlock(addedBlocks);
 	}
 
 	protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, BigInteger amount, List<Block> addedBlocks)
@@ -293,7 +294,8 @@ public abstract class AbstractIntegrationTest {
 
 		block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
 		addedBlocks.add(block);
-		makeRewardBlock(addedBlocks);
+		//makeRewardBlock(addedBlocks);
+		mcmc();
 		return block;
 	}
 
@@ -374,7 +376,7 @@ public abstract class AbstractIntegrationTest {
 		payBigTo(beneficiary, Coin.FEE_DEFAULT.getValue(),addedBlocks);
 		Block block = makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount,
 				NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
-		makeRewardBlock(addedBlocks);
+		mcmc();
 		return block;
 	}
 

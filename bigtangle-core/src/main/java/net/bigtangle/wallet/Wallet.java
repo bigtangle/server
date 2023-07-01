@@ -2120,11 +2120,11 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			throw new OrderImpossibleException("buy token is base token ");
 		Integer priceshift = params.getOrderPriceShift(orderBaseToken);
 		// Burn orderBaseToken to buy
-		Coin offerValue = new Coin(
+		Coin toBePaid = new Coin(
 				totalAmount(buyPrice, targetValue, targetToken.getDecimals() + priceshift, allowRemainder),
 				Utils.HEX.decode(orderBaseToken)).negate();
 		if (getFee() && NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderBaseToken)) {
-			offerValue = offerValue.add(Coin.FEE_DEFAULT.negate());
+			toBePaid = toBePaid.add(Coin.FEE_DEFAULT.negate());
 		}
 		Transaction tx = new Transaction(params);
 
@@ -2133,15 +2133,15 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		for (FreeStandingTransactionOutput spendableOutput : candidates) {
 			if (orderBaseToken.equals(spendableOutput.getUTXO().getTokenId())) {
 				beneficiary = getECKey(aesKey, spendableOutput.getUTXO().getAddress());
-				offerValue = spendableOutput.getValue().add(offerValue);
+				toBePaid = spendableOutput.getValue().add(toBePaid);
 				tx.addInput(spendableOutput.getUTXO().getBlockHash(), spendableOutput);
-				if (!offerValue.isNegative()) {
-					tx.addOutput(offerValue, beneficiary);
+				if (!toBePaid.isNegative()) {
+					tx.addOutput(toBePaid, beneficiary);
 					break;
 				}
 			}
 		}
-		if (beneficiary == null || offerValue.isNegative()) {
+		if (beneficiary == null || toBePaid.isNegative()) {
 			throw new InsufficientMoneyException("" + orderBaseToken);
 		}
 

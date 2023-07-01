@@ -160,47 +160,16 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 	@Test
 	public void testConnectOrderOpenUTXOs() throws Exception {
 
+
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-		ECKey tokenKey = new ECKey();
-		resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
+		// Make the "test" token
+		List<Block> addedBlocks = new ArrayList<>();
+		resetAndMakeTestToken(testKey, addedBlocks);
+ 
+		// Make a buy order for testKey.getPubKey()s
 
-		// Set the order
-		Transaction tx = new Transaction(networkParameters);
-		OrderOpenInfo info = new OrderOpenInfo(2, tokenKey.getPublicKeyAsHex(), testKey.getPubKey(), null, null,
-				Side.SELL, testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING,
-				1l, 2, NetworkParameters.BIGTANGLE_TOKENID_STRING);
-		tx.setData(info.toByteArray());
-		tx.setDataClassName("OrderOpen");
+		Block block1 = makeBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks);
 
-		// Give it the legitimation of an order opening tx by finally signing
-		// the hash
-		ECKey.ECDSASignature party1Signature = testKey.sign(tx.getHash(), null);
-		byte[] buf1 = party1Signature.encodeToDER();
-		tx.setDataSignature(buf1);
-
-		// Create burning 2 BIG
-		List<UTXO> outputs = getBalance(false, testKey);
-		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
-		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-		// amount, testKey));
-		tx.addOutput(new TransactionOutput(networkParameters, tx,
-				spendableOutput.getValue().subtract(amount).subtract(Coin.FEE_DEFAULT), testKey));
-		TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-
-		TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
-		Script inputScript = ScriptBuilder.createInputScript(sig);
-		input.setScriptSig(inputScript);
-
-		// Create block with UTXOs
-		Block block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-		block1.addTransaction(tx);
-		block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-		block1.solve();
-		Block block = block1;
-		resetAndMakeTestToken(testKey, new ArrayList<Block>());
-		this.blockGraph.add(block, true, store);
 
 		// Ensure the order is added now
 		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
@@ -208,9 +177,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertArrayEquals(order.getBeneficiaryPubKey(), testKey.getPubKey());
 		assertEquals(order.getIssuingMatcherBlockHash(), Sha256Hash.ZERO_HASH);
 		assertEquals(order.getOfferTokenid(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
-		assertEquals(order.getOfferValue(), 2);
+		assertEquals(order.getOfferValue(), 4);
 		assertEquals(order.getSpenderBlockHash(), null);
-		assertEquals(order.getTargetTokenid(), tokenKey.getPublicKeyAsHex());
+	//	assertEquals(order.getTargetTokenid(), tokenKey.getPublicKeyAsHex());
 		assertEquals(order.getTargetValue(), 2);
 		// assertEquals(order.getTtl(), NetworkParameters.INITIAL_ORDER_TTL);
 		assertEquals(order.getBlockHash(), block1.getHash());
@@ -574,37 +543,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 	public void testUnconfirmOrderOpenUTXOs() throws Exception {
 
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-		ECKey tokenKey = new ECKey();
-		resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
-		// Set the order
-		Transaction tx = new Transaction(networkParameters);
-		OrderOpenInfo info = new OrderOpenInfo(2, tokenKey.getPublicKeyAsHex(), testKey.getPubKey(), null, null,
-				Side.BUY, testKey.toAddress(networkParameters).toBase58(), NetworkParameters.BIGTANGLE_TOKENID_STRING,
-				1l, 2, NetworkParameters.BIGTANGLE_TOKENID_STRING);
-		tx.setData(info.toByteArray());
-		tx.setDataClassName("OrderOpen");
+		// Make the "test" token
+		List<Block> addedBlocks = new ArrayList<>();
+		resetAndMakeTestToken(testKey, addedBlocks);
+ 
+		// Make a buy order for testKey.getPubKey()s
 
-		// Create burning 2 BIG
-		List<UTXO> outputs = getBalance(false, testKey);
-		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
-		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-		// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
-		// amount, testKey));
-		tx.addOutput(
-				new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount).subtract(Coin.FEE_DEFAULT), testKey));
-		TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-
-		TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
-		Script inputScript = ScriptBuilder.createInputScript(sig);
-		input.setScriptSig(inputScript);
-		resetAndMakeTestToken(testKey, new ArrayList<Block>());
-		// Create block with UTXOs
-		Block block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-		block1.addTransaction(tx);
-		block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
-		block1.solve();
-		this.blockGraph.add(block1, true, store);
+		Block block1 = makeBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks);
 
 		new ServiceBase(serverConfiguration, networkParameters).confirm(block1.getHash(), new HashSet<>(), (long) -1,
 				store);

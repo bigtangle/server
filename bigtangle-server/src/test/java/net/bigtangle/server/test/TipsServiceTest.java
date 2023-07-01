@@ -321,7 +321,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
          
         boolean hit1 = false;
         boolean hit2 = false;
-        mcmcServiceUpdate();
+		mcmcService.update(store); 
         for (int i = 0; i < 150; i++) {
             Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());

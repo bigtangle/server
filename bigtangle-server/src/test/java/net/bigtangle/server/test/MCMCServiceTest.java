@@ -178,7 +178,8 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(conflictBlock1.getHash(), store);
         BlockEvaluation blockEvaluation2 = blockService.getBlockEvaluation(conflictBlock2.getHash(), store);
 
-        assertFalse(blockEvaluation.isConfirmed() || blockEvaluation2.isConfirmed());
+        assertFalse(blockEvaluation.isConfirmed() && blockEvaluation2.isConfirmed());
+        assertTrue(blockEvaluation.isConfirmed() || blockEvaluation2.isConfirmed());
 
         makeRewardBlock();
 
