@@ -32,7 +32,7 @@ public class BlockEvaluation implements Serializable {
     // 0: unknown. -1: unsolid. 1: solid
     private long solid;
 
-    // If true, this block is confirmed temporarily or by milestone
+    // If true, this block is confirmed temporarily or by mcmc
     private boolean confirmed;
 
     public BlockEvaluation() {
