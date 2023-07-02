@@ -3,7 +3,7 @@
  *  
  *******************************************************************************/
 
-package net.bigtangle.server.examples;
+package net.bigtangle.server.performance;
 
 import java.io.IOException;
 import java.math.BigInteger;

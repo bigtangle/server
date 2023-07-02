@@ -490,7 +490,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 	public void updateContractResultConfirmed( Sha256Hash  contract, boolean confirm)
 			throws BlockStoreException;
 
-	public ContractResult getOpenLastContractResult(String contractid) throws BlockStoreException;
+	public ContractResult getLastContractResult(String contractid) throws BlockStoreException;
 
 	public Sha256Hash checkContractResultSpent(Sha256Hash contractResultRecords) throws BlockStoreException;
 

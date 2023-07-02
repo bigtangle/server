@@ -263,7 +263,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			+ "  INTO contractresult (blockhash,  contracttokenid, confirmed, spent, spenderblockhash, "
 			+ " contractresult, prevblockhash, inserttime) " + " VALUES (?, ?, ?, ?, ?, ?, ?,?)";
 
-	protected final String SELECT_OPEN_LAST_CONTRACTRESULT_SQL = "SELECT  contractresult "
+	protected final String SELECT_CONTRACTRESULT_LAST__SQL = "SELECT  contractresult "
 			+ " FROM contractresult WHERE contracttokenid=? order by inserttime desc limit 1 ";
 
 	protected final String INSERT_TOKENS_SQL = getInsert()
@@ -4952,11 +4952,11 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	}
 
 	@Override
-	public ContractResult getOpenLastContractResult(String contractid) throws BlockStoreException {
+	public ContractResult getLastContractResult(String contractid) throws BlockStoreException {
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = getConnection().prepareStatement(SELECT_OPEN_LAST_CONTRACTRESULT_SQL);
+			preparedStatement = getConnection().prepareStatement(SELECT_CONTRACTRESULT_LAST__SQL);
 			preparedStatement.setString(1, contractid);
 			ResultSet resultSet = preparedStatement.executeQuery();
 

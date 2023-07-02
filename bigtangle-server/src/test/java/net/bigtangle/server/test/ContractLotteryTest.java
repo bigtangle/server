@@ -1,8 +1,5 @@
-package net.bigtangle.server.performance;
+package net.bigtangle.server.test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigInteger;
@@ -11,35 +8,47 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.KeyValue;
-import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.TokenType;
-import net.bigtangle.core.Transaction;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.core.response.GetBalancesResponse;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.server.service.ServiceBase;
 import net.bigtangle.server.service.ServiceContract;
+import net.bigtangle.utils.Json;
+import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
-public class LotteryRemoteTest extends LotteryTests {
+public class ContractLotteryTest    extends AbstractIntegrationTest {
 
-	protected static final Logger log = LoggerFactory.getLogger(LotteryRemoteTest.class);
+	protected static final Logger log = LoggerFactory.getLogger(ContractLotteryTest.class);
 	ECKey contractKey;
+	@Autowired
+	public NetworkParameters networkParameters;
+	public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
+	public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
+	public int usernumber = Math.abs(new Random().nextInt()) % 88;
+	public BigInteger winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
 
+ 
 	public void lotteryM() throws Exception {
 
 		usernumber = 10;
@@ -286,5 +295,102 @@ public class LotteryRemoteTest extends LotteryTests {
 			blocks.add(w.payContract(null, yuanTokenPub, winnerAmount, null, null, contractKey.getPublicKeyAsHex()));
 		}
 	}
+	public List<ECKey> createUserkey() {
+		List<ECKey> userkeys = new ArrayList<ECKey>();
+		for (int i = 0; i < usernumber; i++) {
+			ECKey key = new ECKey();
+			userkeys.add(key);
+		}
+		return userkeys;
+	}
 
+	public void testTokens() throws JsonProcessingException, Exception {
+
+		String domain = "";
+
+		ECKey fromPrivate = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
+
+		testCreateMultiSigToken(fromPrivate, "人民币", 2, domain, "人民币 CNY",
+				winnerAmount.multiply(BigInteger.valueOf(usernumber * 10000l)));
+		makeRewardBlock();
+	}
+
+	public Address getAddress() {
+		return ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)).toAddress(networkParameters);
+	}
+
+	public void payBigUserKeys(List<ECKey> userkeys) throws Exception {
+
+		List<List<ECKey>> parts = Wallet.chopped(userkeys, 1000);
+
+		for (List<ECKey> list : parts) {
+			HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
+			for (ECKey key : list) {
+				giveMoneyResult.put(key.toAddress(networkParameters).toString(), BigInteger.valueOf(10000));
+			}
+			Block b = wallet.payToList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, "pay to user");
+			// log.debug("block " + (b == null ? "block is null" : b.toString()));
+			makeRewardBlock();
+		}
+
+	}
+
+	// create a token with multi sign
+	protected void testCreateMultiSigToken(ECKey key, String tokename, int decimals, String domainname,
+			String description, BigInteger amount) throws JsonProcessingException, Exception {
+		try {
+			wallet.setServerURL(contextRoot);
+
+			// pay fee to ECKey key
+
+			createToken(key, tokename, decimals, domainname, description, amount, true, null,
+					TokenType.identity.ordinal(), key.getPublicKeyAsHex(), wallet);
+
+			ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
+
+			wallet.multiSign(key.getPublicKeyAsHex(), signkey, null);
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			log.warn("", e);
+		}
+
+	}
+
+	// get balance for the walletKeys
+	protected List<UTXO> getBalance(String address) throws Exception {
+		List<UTXO> listUTXO = new ArrayList<UTXO>();
+		List<String> keyStrHex000 = new ArrayList<String>();
+
+		keyStrHex000.add(Utils.HEX.encode(Address.fromBase58(networkParameters, address).getHash160()));
+		byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+				Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+
+		GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+
+		for (UTXO utxo : getBalancesResponse.getOutputs()) {
+			listUTXO.add(utxo);
+		}
+
+		return listUTXO;
+	}
+
+	public void payUserKeys(List<ECKey> userkeys) throws Exception {
+
+		Stopwatch watch = Stopwatch.createStarted();
+		List<List<ECKey>> parts = Wallet.chopped(userkeys, 1000);
+
+		for (List<ECKey> list : parts) {
+			HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
+			for (ECKey key : list) {
+				giveMoneyResult.put(key.toAddress(networkParameters).toString(), winnerAmount);
+			}
+			Block b = wallet.payToList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), "pay to user");
+			// log.debug("block " + (b == null ? "block is null" : b.toString()));
+			makeRewardBlock();
+		}
+		log.debug("pay user " + usernumber + "  duration minutes " + watch.elapsed(TimeUnit.MINUTES));
+		log.debug("rate  " + usernumber * 1.0 / watch.elapsed(TimeUnit.SECONDS));
+
+	}
 }

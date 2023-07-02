@@ -1,4 +1,4 @@
-package net.bigtangle.server.examples;
+package net.bigtangle.server.performance;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

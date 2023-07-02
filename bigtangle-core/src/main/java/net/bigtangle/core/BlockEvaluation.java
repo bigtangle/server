@@ -7,20 +7,18 @@ package net.bigtangle.core;
 import java.io.Serializable;
 
 /*
- * Evaluation of block, variable in time
+ * Evaluation of a block, variable in time
  */
 public class BlockEvaluation implements Serializable {
 
     private static final long serialVersionUID = 8388463657969339286L;
 
-    // Hash of corresponding block
+    // Hash of the block
     private Sha256Hash blockHash; 
-    // Longest path to genesis block
+    // height to genesis block
     private long height;
 
-    // If true, this block is considered locally confirmed, i.e. approved by
-    // chain
-    // consensus
+    // chain  consensus
     private long milestone;
 
     // Timestamp for entry into milestone as true, reset if flip to false

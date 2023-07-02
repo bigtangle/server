@@ -86,8 +86,8 @@ public class ServiceContract extends ServiceBase {
 	private ContractResult doTakeWinner(Block winnerBlock, FullBlockStore blockStore, List<ContractEventRecord> opens) {
 
 		// Deterministic randomization
-		long randomness = winnerBlock.getPrevBlockHash().toBigInteger()
-				.xor(winnerBlock.getPrevBranchBlockHash().toBigInteger()).longValue();
+		long randomness = winnerBlock.getPrevBlockHash().toBigInteger().longValue();
+			//	.xor(winnerBlock.getPrevBranchBlockHash().toBigInteger());
 		Random se = new Random(randomness);
 		int randomWin = se.nextInt(opens.size());
 		log.debug("randomn win = " + randomWin + " open size =" + opens.size());

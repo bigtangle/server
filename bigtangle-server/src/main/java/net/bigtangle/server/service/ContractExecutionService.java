@@ -170,7 +170,7 @@ public class ContractExecutionService {
 		if (result == null)
 			return null;
 		// calculate prev
-		ContractResult prev = store.getOpenLastContractResult(contractid);
+		ContractResult prev = store.getLastContractResult(contractid);
 		if (prev != null) {
 			result.setPrevblockhash(prev.getBlockHash());
 		} else {

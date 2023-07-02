@@ -5,7 +5,7 @@ You have two options, the preferred option is that you compile yourself. The sec
 
 ### Compiling yourself  
 
-Make sure to have Java 8 installed on your computer.
+Make sure to have Java 17 installed on your computer.
 
 #### To compile & package
 ```

@@ -38,7 +38,7 @@ public class KafkaBridge {
     String kafkaServerFrom = "10.1.70.12:9092,10.1.70.13:9092";
     String kafkaServerTo = "test.kafka.bigtangle.de:9092";
     String topicFrom ="bigtangle";
-    String topicTo ="tokens";
+    String topicTo ="bigtangle";
     public static void main(String[] args) {
         KafkaBridge kafkaBridge = new KafkaBridge();
         // TODO auto discover
