@@ -6,7 +6,10 @@ package net.bigtangle.web;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -16,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,19 +33,30 @@ import com.google.common.base.Stopwatch;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import net.bigtangle.core.Block;
+import net.bigtangle.core.ECKey;
+import net.bigtangle.core.KeyValue;
+import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenKeyValues;
+import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.ErrorResponse;
+import net.bigtangle.params.TestParams;
 import net.bigtangle.utils.Gzip;
 import net.bigtangle.utils.Json;
+import net.bigtangle.wallet.Wallet;
 
 @RestController
 @RequestMapping("/")
 public class DispatcherController {
 
 	private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
- 
-	public static String PATH = "./logs/serverinfo.json";
+
+	public static String PATH = "/var/www/";
 	@Autowired
 	protected SyncBlockService syncBlockService;
 
@@ -91,9 +106,34 @@ public class DispatcherController {
 
 			switch (reqCmd0000) {
 
-			case register: { }
+			case register: {
+				ECKey contractKey = new ECKey();
+				String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
+				NetworkParameters networkParameters = TestParams.get();
+				Wallet wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)),
+						"https://p.bigtangle.org:8088");
+				wallet.setServerURL("https://p.bigtangle.org:8088");
+				String domain = "";
+
+				TokenKeyValues tokenKeyValues = new TokenKeyValues();
+				KeyValue kv = new KeyValue();
+				kv.setKey("site");
+				// site contents zip
+				//byte[] bytes=httprequest.get
+				// String data = Base64.encodeBase64String(c.getFile());
+				kv.setValue("zipcontent");
+
+				tokenKeyValues.addKeyvalue(kv);
+
+				createToken(contractKey, "contractlottery", 0, domain, "contractlottery", BigInteger.valueOf(1), true,
+						tokenKeyValues, TokenType.web.ordinal(), contractKey.getPublicKeyAsHex(), wallet);
+
+				ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
+
+				wallet.multiSign(contractKey.getPublicKeyAsHex(), signkey, null);
+			}
 				break;
- 
+
 			default:
 				break;
 			}
@@ -119,7 +159,20 @@ public class DispatcherController {
 		return "Bigtangle-web";
 	}
 
- 
+	public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,
+			BigInteger amount, boolean increment, TokenKeyValues tokenKeyValues, int tokentype, String tokenid,
+			Wallet w) throws Exception {
+		w.importKey(key);
+		Token token = Token.buildSimpleTokenInfo(true, Sha256Hash.ZERO_HASH, tokenid, tokename, description, 1, 0,
+				amount, !increment, decimals, "");
+		token.setTokenKeyValues(tokenKeyValues);
+		token.setTokentype(tokentype);
+		List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
+		addresses.add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
+		return w.createToken(key, domainname, increment, token, addresses);
+
+	}
+
 	private void errorLimit(HttpServletResponse httpServletResponse, Stopwatch watch) throws Exception {
 		AbstractResponse resp = ErrorResponse.create(101);
 		resp.setErrorcode(403);

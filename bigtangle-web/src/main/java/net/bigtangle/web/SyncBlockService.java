@@ -4,27 +4,26 @@
  *******************************************************************************/
 package net.bigtangle.web;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.StringReader;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import net.bigtangle.core.TXReward;
+import net.bigtangle.core.KeyValue;
+import net.bigtangle.core.Token;
+import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.response.GetTXRewardResponse;
-import net.bigtangle.params.MainNetParams;
+import net.bigtangle.core.response.GetTokensResponse;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -62,117 +61,64 @@ public class SyncBlockService {
 	 */
 	public static void localFileServerInfoWrite() throws JsonProcessingException, IOException {
 
-	 
-			String path = DispatcherController.PATH;
+		String path = DispatcherController.PATH;
 
-			File file = new File(path);
-			if (file.exists()) {
-				file.delete();
+		File file = new File(path);
+		if (file.exists()) {
+			file.delete();
+		}
+		HashMap<String, Object> requestParam = new HashMap<String, Object>();
+		byte[] response = OkHttp3Util.post("https://p.bigtangle.org.8088/" + ReqCmd.searchTokens.name(),
+				Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+		GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
+		List<Token> tokens = getTokensResponse.getTokens();
+		if (tokens != null && !tokens.isEmpty()) {
+			for (Token token : tokens) {
+				TokenKeyValues tokenKeyValues = token.getTokenKeyValues();
+				if (tokenKeyValues.getKeyvalues() != null && !tokenKeyValues.getKeyvalues().isEmpty()) {
+					KeyValue keyValue = tokenKeyValues.getKeyvalues().get(0);
+					byte[] zipFile = Base64.decodeBase64(keyValue.getValue());
+					byte2File(zipFile, path, keyValue.getKey());
+
+				}
 			}
-			String jsonString = Json.jsonmapper().writeValueAsString(DispatcherController.serverinfoList);
-			writeString2File(jsonString, path);
- 
+		}
 
 	}
 
-	public static File writeString2File(String Data, String filePath)
-
-	{
-
-		BufferedReader bufferedReader = null;
-
-		BufferedWriter bufferedWriter = null;
-
-		File distFile = null;
-
+	public static File byte2File(byte[] buf, String filePath, String fileName) {
+		BufferedOutputStream bos = null;
+		FileOutputStream fos = null;
+		File file = null;
 		try {
-
-			distFile = new File(filePath);
-
-			if (!distFile.getParentFile().exists())
-				distFile.getParentFile().mkdirs();
-
-			bufferedReader = new BufferedReader(new StringReader(Data));
-
-			bufferedWriter = new BufferedWriter(new FileWriter(distFile));
-
-			char buf[] = new char[1024]; // 字符缓冲区
-
-			int len;
-
-			while ((len = bufferedReader.read(buf)) != -1)
-
-			{
-
-				bufferedWriter.write(buf, 0, len);
-
+			File dir = new File(filePath);
+			if (!dir.exists() && dir.isDirectory()) {
+				dir.mkdirs();
 			}
-
-			bufferedWriter.flush();
-
-			bufferedReader.close();
-
-			bufferedWriter.close();
-
+			file = new File(filePath + File.separator + fileName);
+			fos = new FileOutputStream(file);
+			bos = new BufferedOutputStream(fos);
+			bos.write(buf);
 		} catch (Exception e) {
 			log.error("", e);
-		}
-
-		return distFile;
-
-	}
-
-	public void syncServerInfo() throws JsonProcessingException, IOException {
-
-		List<String> badserver = new ArrayList<String>();
-		byte[] data = null;
-
-		for (String s : MainNetParams.get().serverSeeds()) {
-
-			HashMap<String, String> requestParam = new HashMap<String, String>();
-
-			data = OkHttp3Util.post(s + ReqCmd.serverinfolist.name(),
-					Json.jsonmapper().writeValueAsString(requestParam).getBytes());
-			ServerinfoResponse response = Json.jsonmapper().readValue(data, ServerinfoResponse.class);
-			checkChain(response);
-
-		}
-
-	}
-
-	public static void checkChain(ServerinfoResponse response) throws JsonProcessingException, IOException {
-		// update the list DispatcherController.serverinfo;
-
-		if (response.getServerInfoList() != null) {
-			for (ServerInfo serverInfo : response.getServerInfoList()) {
+		} finally {
+			if (bos != null) {
 				try {
-					TXReward txReward = getMaxConfirmedReward(serverInfo.getUrl());
-					serverInfo.status = "active";
-				} catch (Exception e) {
-					serverInfo.status = "inactive";
+					bos.close();
+				} catch (IOException e) {
 					log.error("", e);
 				}
-
 			}
-			DispatcherController.serverinfoList = response.getServerInfoList();
-			localFileServerInfoWrite();
+			if (fos != null) {
+				try {
+					fos.close();
+				} catch (IOException e) {
+					log.error("", e);
+				}
+			}
 		}
-	}
-
-	/*
-	 * last chain max
-	 */
-
-	public static TXReward getMaxConfirmedReward(String server) throws JsonProcessingException, IOException {
-
-		HashMap<String, String> requestParam = new HashMap<String, String>();
-
-		byte[] response = OkHttp3Util.postString(server.trim() + "/" + ReqCmd.getChainNumber,
-				Json.jsonmapper().writeValueAsString(requestParam));
-		GetTXRewardResponse aTXRewardResponse = Json.jsonmapper().readValue(response, GetTXRewardResponse.class);
-
-		return aTXRewardResponse.getTxReward();
-
+		return file;
 	}
 
 }

@@ -6,7 +6,5 @@ package net.bigtangle.web;
 
 public enum ReqCmd {
  
-	register, serverinfolist,
-	getChainNumber
-	;
+	register;
 }
