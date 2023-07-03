@@ -1,10 +1,12 @@
 package net.bigtangle.web.test;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +49,9 @@ public class WebTest extends AbstractIntegrationTest {
 		KeyValue kv = new KeyValue();
 		kv.setKey("site");
 		// site contents zip
-		kv.setValue("zipcontent");
+		byte[] zipFile=FileUtils.readFileToByteArray(new File("d:/test.zip"));
+		String zipString=Base64.encodeBase64String(zipFile);
+		kv.setValue(zipString);
 
 		tokenKeyValues.addKeyvalue(kv);
 
