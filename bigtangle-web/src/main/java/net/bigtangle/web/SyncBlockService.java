@@ -79,8 +79,8 @@ public class SyncBlockService {
 				if (tokenKeyValues.getKeyvalues() != null && !tokenKeyValues.getKeyvalues().isEmpty()) {
 					KeyValue keyValue = tokenKeyValues.getKeyvalues().get(0);
 					byte[] zipFile = Base64.decodeBase64(keyValue.getValue());
-					byte2File(zipFile, path, keyValue.getKey());
-
+					byte2File(zipFile, path, keyValue.getKey() + ".zip");
+					new Zip().unZip(path + keyValue.getKey() + ".zip");
 				}
 			}
 		}

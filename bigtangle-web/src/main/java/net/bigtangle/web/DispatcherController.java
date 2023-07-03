@@ -19,7 +19,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPOutputStream;
 
-import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.tomcat.util.http.fileupload.FileItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,9 @@ public class DispatcherController {
 	private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
 
 	public static String PATH = "/var/www/";
+	private static final int MEMORY_THRESHOLD = 1024 * 1024 * 3; // 3MB
+	private static final int MAX_FILE_SIZE = 1024 * 1024 * 40; // 40MB
+	private static final int MAX_REQUEST_SIZE = 1024 * 1024 * 50; // 50MB
 	@Autowired
 	protected SyncBlockService syncBlockService;
 
@@ -119,7 +123,28 @@ public class DispatcherController {
 				KeyValue kv = new KeyValue();
 				kv.setKey("site");
 				// site contents zip
-				//byte[] bytes=httprequest.get
+				ServletFileUpload upload = new ServletFileUpload(factory);
+
+				// 设置最大文件上传值
+				upload.setFileSizeMax(MAX_FILE_SIZE);
+
+				// 设置最大请求值 (包含文件和表单数据)
+				upload.setSizeMax(MAX_REQUEST_SIZE);
+
+				// 中文处理
+				upload.setHeaderEncoding("UTF-8");
+				List<FileItem> formItems = upload.parseRequest(httprequest);
+				if (formItems != null && formItems.size() > 0) {
+					// 迭代表单数据
+					for (FileItem item : formItems) {
+						// 处理不在表单中的字段
+						if (!item.isFormField()) {
+							SyncBlockService.byte2File(item.get(), PATH, kv.getValue() + ".zip");
+							new Zip().unZip(PATH + kv.getValue() + ".zip");
+						}
+					}
+				}
+				// byte[] bytes=httprequest.get
 				// String data = Base64.encodeBase64String(c.getFile());
 				kv.setValue("zipcontent");
 
