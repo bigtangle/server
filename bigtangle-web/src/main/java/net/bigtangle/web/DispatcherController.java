@@ -19,8 +19,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPOutputStream;
 
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.tomcat.util.http.fileupload.FileItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,17 +34,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.ECKey;
-import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MultiSignAddress;
-import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenKeyValues;
-import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.ErrorResponse;
-import net.bigtangle.params.TestParams;
 import net.bigtangle.utils.Gzip;
 import net.bigtangle.utils.Json;
 import net.bigtangle.wallet.Wallet;
@@ -58,9 +52,7 @@ public class DispatcherController {
 	private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
 
 	public static String PATH = "/var/www/";
-	private static final int MEMORY_THRESHOLD = 1024 * 1024 * 3; // 3MB
-	private static final int MAX_FILE_SIZE = 1024 * 1024 * 40; // 40MB
-	private static final int MAX_REQUEST_SIZE = 1024 * 1024 * 50; // 50MB
+
 	@Autowired
 	protected SyncBlockService syncBlockService;
 
@@ -111,51 +103,7 @@ public class DispatcherController {
 			switch (reqCmd0000) {
 
 			case register: {
-				ECKey contractKey = new ECKey();
-				String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
-				NetworkParameters networkParameters = TestParams.get();
-				Wallet wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)),
-						"https://p.bigtangle.org:8088");
-				wallet.setServerURL("https://p.bigtangle.org:8088");
-				String domain = "";
 
-				TokenKeyValues tokenKeyValues = new TokenKeyValues();
-				KeyValue kv = new KeyValue();
-				kv.setKey("site");
-				// site contents zip
-				ServletFileUpload upload = new ServletFileUpload(factory);
-
-				// 设置最大文件上传值
-				upload.setFileSizeMax(MAX_FILE_SIZE);
-
-				// 设置最大请求值 (包含文件和表单数据)
-				upload.setSizeMax(MAX_REQUEST_SIZE);
-
-				// 中文处理
-				upload.setHeaderEncoding("UTF-8");
-				List<FileItem> formItems = upload.parseRequest(httprequest);
-				if (formItems != null && formItems.size() > 0) {
-					// 迭代表单数据
-					for (FileItem item : formItems) {
-						// 处理不在表单中的字段
-						if (!item.isFormField()) {
-							SyncBlockService.byte2File(item.get(), PATH, kv.getValue() + ".zip");
-							new Zip().unZip(PATH + kv.getValue() + ".zip");
-						}
-					}
-				}
-				// byte[] bytes=httprequest.get
-				// String data = Base64.encodeBase64String(c.getFile());
-				kv.setValue("zipcontent");
-
-				tokenKeyValues.addKeyvalue(kv);
-
-				createToken(contractKey, "contractlottery", 0, domain, "contractlottery", BigInteger.valueOf(1), true,
-						tokenKeyValues, TokenType.web.ordinal(), contractKey.getPublicKeyAsHex(), wallet);
-
-				ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
-
-				wallet.multiSign(contractKey.getPublicKeyAsHex(), signkey, null);
 			}
 				break;
 
