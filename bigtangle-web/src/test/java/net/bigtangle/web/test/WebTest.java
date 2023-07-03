@@ -49,8 +49,8 @@ public class WebTest extends AbstractIntegrationTest {
 		KeyValue kv = new KeyValue();
 		kv.setKey("site");
 		// site contents zip
-		byte[] zipFile=FileUtils.readFileToByteArray(new File("d:/test.zip"));
-		String zipString=Base64.encodeBase64String(zipFile);
+		byte[] zipFile = FileUtils.readFileToByteArray(new File("d:/test.zip"));
+		String zipString = Base64.encodeBase64String(zipFile);
 		kv.setValue(zipString);
 
 		tokenKeyValues.addKeyvalue(kv);
@@ -61,11 +61,11 @@ public class WebTest extends AbstractIntegrationTest {
 		ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
 
 		wallet.multiSign(contractKey.getPublicKeyAsHex(), signkey, null);
-		byte[] zipFile = Base64.decodeBase64("zipcontent");
+
 		SyncBlockService.byte2File(zipFile, "/var/www/", "contractlottery" + ".zip");
 		new Zip().unZip("/var/www/" + "contractlottery" + ".zip");
 		StringBuffer stringBuffer = new StringBuffer();
-		
+
 		stringBuffer.append("<VirtualHost *:80>\n");
 		stringBuffer.append("ServerName contractlottery.bigtangle.org\n");
 		stringBuffer.append("DocumentRoot /var/www/contractlottery\n");
@@ -75,7 +75,7 @@ public class WebTest extends AbstractIntegrationTest {
 		stringBuffer.append("RewriteCond %{SERVER_NAME} =contractlottery.bigtangle.org\n");
 		stringBuffer.append("RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]\n");
 		stringBuffer.append("</VirtualHost>\n");
-		
+
 		stringBuffer.append("<VirtualHost *:443>\n");
 		stringBuffer.append("ServerName  contractlottery.bigtangle.org\n");
 		stringBuffer.append("DocumentRoot /var/www/contractlottery\n");
@@ -101,9 +101,8 @@ public class WebTest extends AbstractIntegrationTest {
 		stringBuffer.append("SSLCertificateFile /etc/letsencrypt/live/www.bigtangle.org/fullchain.pem\n");
 		stringBuffer.append("SSLCertificateKeyFile /etc/letsencrypt/live/www.bigtangle.org/privkey.pem\n");
 		stringBuffer.append("</VirtualHost>");
-		SyncBlockService.byte2File(stringBuffer.toString().getBytes(), "/var/www/", "contractlottery.bigtangle.org" + ".conf");
-		
-		
+		SyncBlockService.byte2File(stringBuffer.toString().getBytes(), "/var/www/",
+				"contractlottery.bigtangle.org" + ".conf");
 
 	}
 
