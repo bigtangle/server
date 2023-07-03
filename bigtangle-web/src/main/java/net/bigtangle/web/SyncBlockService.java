@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -79,11 +80,63 @@ public class SyncBlockService {
 				if (tokenKeyValues.getKeyvalues() != null && !tokenKeyValues.getKeyvalues().isEmpty()) {
 					KeyValue keyValue = tokenKeyValues.getKeyvalues().get(0);
 					byte[] zipFile = Base64.decodeBase64(keyValue.getValue());
-					byte2File(zipFile, path, keyValue.getKey() + ".zip");
-					new Zip().unZip(path + keyValue.getKey() + ".zip");
+					byte2File(zipFile, path, token.getTokenname() + ".zip");
+					File unZipDir = new File(path + token.getTokenname());
+					if (unZipDir.exists()) {
+						FileUtils.deleteDirectory(unZipDir);
+					}
+
+					new Zip().unZip(path + token.getTokenname() + ".zip");
+					deployConf(token.getTokenname());
 				}
 			}
 		}
+
+	}
+
+	public static void deployConf(String tokenname) {
+		if (new File("/etc/apache2/sites-enabled/" + tokenname + ".bigtangle.org" + ".conf").exists()) {
+			return;
+		}
+		StringBuffer stringBuffer = new StringBuffer();
+
+		stringBuffer.append("<VirtualHost *:80>\n");
+		stringBuffer.append("ServerName " + tokenname + ".bigtangle.org\n");
+		stringBuffer.append("DocumentRoot /var/www/" + tokenname + "\n");
+		stringBuffer.append("ErrorLog ${APACHE_LOG_DIR}/error.log\n");
+		stringBuffer.append("CustomLog ${APACHE_LOG_DIR}/access.log combined\n");
+		stringBuffer.append("RewriteEngine on\n");
+		stringBuffer.append("RewriteCond %{SERVER_NAME} =" + tokenname + ".bigtangle.org\n");
+		stringBuffer.append("RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]\n");
+		stringBuffer.append("</VirtualHost>\n");
+
+		stringBuffer.append("<VirtualHost *:443>\n");
+		stringBuffer.append("ServerName  " + tokenname + ".bigtangle.org\n");
+		stringBuffer.append("DocumentRoot /var/www/" + tokenname + "\n");
+		stringBuffer.append("ErrorLog ${APACHE_LOG_DIR}/error.log\n");
+		stringBuffer.append("CustomLog ${APACHE_LOG_DIR}/access.log combined\n");
+		stringBuffer.append("SSLProxyEngine on\n");
+		stringBuffer.append("SSLProxyVerify none\n");
+		stringBuffer.append("SSLProxyCheckPeerCN off\n");
+		stringBuffer.append("SSLProxyCheckPeerName off\n");
+		stringBuffer.append("SSLProxyCheckPeerExpire off\n");
+		stringBuffer.append("    SSLEngine on\n");
+		stringBuffer.append("    SSLOptions +StrictRequire\n");
+		stringBuffer.append("SSLProxyVerify none\n");
+		stringBuffer.append("SSLProxyCheckPeerCN off\n");
+		stringBuffer.append(" <Directory />\n");
+		stringBuffer.append("SSLRenegBufferSize 2098200000\n");
+		stringBuffer.append("SSLRequireSSL\n");
+		stringBuffer.append("</Directory>\n");
+		stringBuffer.append(" SSLCipherSuite HIGH:MEDIUM:!aNULL:+SHA1:+MD5:+HIGH:+MEDIUM\n");
+		stringBuffer.append(" SSLSessionCacheTimeout 600\n");
+		stringBuffer.append("SSLProxyEngine on\n");
+		stringBuffer.append("Include /etc/letsencrypt/options-ssl-apache.conf\n");
+		stringBuffer.append("SSLCertificateFile /etc/letsencrypt/live/www.bigtangle.org/fullchain.pem\n");
+		stringBuffer.append("SSLCertificateKeyFile /etc/letsencrypt/live/www.bigtangle.org/privkey.pem\n");
+		stringBuffer.append("</VirtualHost>");
+		byte2File(stringBuffer.toString().getBytes(), "/etc/apache2/sites-enabled/",
+				tokenname + ".bigtangle.org" + ".conf");
 
 	}
 
@@ -97,9 +150,13 @@ public class SyncBlockService {
 				dir.mkdirs();
 			}
 			file = new File(filePath + File.separator + fileName);
+			if (file.exists()) {
+				file.delete();
+			}
 			fos = new FileOutputStream(file);
 			bos = new BufferedOutputStream(fos);
 			bos.write(buf);
+
 		} catch (Exception e) {
 			log.error("", e);
 		} finally {

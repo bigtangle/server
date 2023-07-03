@@ -63,46 +63,13 @@ public class WebTest extends AbstractIntegrationTest {
 		wallet.multiSign(contractKey.getPublicKeyAsHex(), signkey, null);
 
 		SyncBlockService.byte2File(zipFile, "/var/www/", "contractlottery" + ".zip");
+		File unZipDir=new File("/var/www/"+"contractlottery");
+		if (unZipDir.exists()) {
+			 FileUtils.deleteDirectory(unZipDir);
+		}
 		new Zip().unZip("/var/www/" + "contractlottery" + ".zip");
-		StringBuffer stringBuffer = new StringBuffer();
 
-		stringBuffer.append("<VirtualHost *:80>\n");
-		stringBuffer.append("ServerName contractlottery.bigtangle.org\n");
-		stringBuffer.append("DocumentRoot /var/www/contractlottery\n");
-		stringBuffer.append("ErrorLog ${APACHE_LOG_DIR}/error.log\n");
-		stringBuffer.append("CustomLog ${APACHE_LOG_DIR}/access.log combined\n");
-		stringBuffer.append("RewriteEngine on\n");
-		stringBuffer.append("RewriteCond %{SERVER_NAME} =contractlottery.bigtangle.org\n");
-		stringBuffer.append("RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]\n");
-		stringBuffer.append("</VirtualHost>\n");
-
-		stringBuffer.append("<VirtualHost *:443>\n");
-		stringBuffer.append("ServerName  contractlottery.bigtangle.org\n");
-		stringBuffer.append("DocumentRoot /var/www/contractlottery\n");
-		stringBuffer.append("ErrorLog ${APACHE_LOG_DIR}/error.log\n");
-		stringBuffer.append("CustomLog ${APACHE_LOG_DIR}/access.log combined\n");
-		stringBuffer.append("SSLProxyEngine on\n");
-		stringBuffer.append("SSLProxyVerify none\n");
-		stringBuffer.append("SSLProxyCheckPeerCN off\n");
-		stringBuffer.append("SSLProxyCheckPeerName off\n");
-		stringBuffer.append("SSLProxyCheckPeerExpire off\n");
-		stringBuffer.append("    SSLEngine on\n");
-		stringBuffer.append("    SSLOptions +StrictRequire\n");
-		stringBuffer.append("SSLProxyVerify none\n");
-		stringBuffer.append("SSLProxyCheckPeerCN off\n");
-		stringBuffer.append(" <Directory />\n");
-		stringBuffer.append("SSLRenegBufferSize 2098200000\n");
-		stringBuffer.append("SSLRequireSSL\n");
-		stringBuffer.append("</Directory>\n");
-		stringBuffer.append(" SSLCipherSuite HIGH:MEDIUM:!aNULL:+SHA1:+MD5:+HIGH:+MEDIUM\n");
-		stringBuffer.append(" SSLSessionCacheTimeout 600\n");
-		stringBuffer.append("SSLProxyEngine on\n");
-		stringBuffer.append("Include /etc/letsencrypt/options-ssl-apache.conf\n");
-		stringBuffer.append("SSLCertificateFile /etc/letsencrypt/live/www.bigtangle.org/fullchain.pem\n");
-		stringBuffer.append("SSLCertificateKeyFile /etc/letsencrypt/live/www.bigtangle.org/privkey.pem\n");
-		stringBuffer.append("</VirtualHost>");
-		SyncBlockService.byte2File(stringBuffer.toString().getBytes(), "/var/www/",
-				"contractlottery.bigtangle.org" + ".conf");
+		SyncBlockService.deployConf("contractlottery");
 
 	}
 
