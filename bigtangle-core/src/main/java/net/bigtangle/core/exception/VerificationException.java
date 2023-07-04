@@ -266,4 +266,14 @@ public class VerificationException extends RuntimeException {
         }
     }
     
+    public static class NoFeeException extends VerificationException {
+        public NoFeeException(String msg) {
+            super(msg);
+        }
+    }
+    public static class InputOutputMatchException extends VerificationException {
+        public InputOutputMatchException(String msg) {
+            super(msg);
+        }
+    }
 }

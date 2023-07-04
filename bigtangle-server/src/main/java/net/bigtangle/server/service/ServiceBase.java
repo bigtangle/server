@@ -87,6 +87,7 @@ import net.bigtangle.core.exception.VerificationException.CutoffException;
 import net.bigtangle.core.exception.VerificationException.DifficultyConsensusInheritanceException;
 import net.bigtangle.core.exception.VerificationException.GenesisBlockDisallowedException;
 import net.bigtangle.core.exception.VerificationException.IncorrectTransactionCountException;
+import net.bigtangle.core.exception.VerificationException.InputOutputMatchException;
 import net.bigtangle.core.exception.VerificationException.InsufficientSignaturesException;
 import net.bigtangle.core.exception.VerificationException.InvalidDependencyException;
 import net.bigtangle.core.exception.VerificationException.InvalidOrderException;
@@ -1856,7 +1857,12 @@ public class ServiceBase {
 			for (Transaction tx : block.getTransactions()) {
 				sigOps += tx.getSigOpCount();
 			}
-
+			// pro block check fee
+			Boolean checkFee = false;
+			if (block.getBlockType().equals(Block.Type.BLOCKTYPE_REWARD)
+					|| block.getBlockType().equals(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE)) {
+				checkFee = true;
+			}
 			for (final Transaction tx : block.getTransactions()) {
 				boolean isCoinBase = tx.isCoinBase();
 				Map<String, Coin> valueIn = new HashMap<String, Coin>();
@@ -1905,8 +1911,9 @@ public class ServiceBase {
 				if (isCoinBase) {
 					// coinbaseValue = valueOut;
 				} else {
-					if (!checkTxInputOutput(valueIn, valueOut))
-						throw new InvalidTransactionException("Transaction input and output values do not match");
+					if( checkTxInputOutput(valueIn, valueOut, block)) {
+						checkFee=true;
+					}; 
 					// totalFees = totalFees.add(valueIn.subtract(valueOut));
 				}
 
@@ -1919,6 +1926,9 @@ public class ServiceBase {
 					listScriptVerificationResults.add(future);
 				}
 			}
+			if (!checkFee)
+				throw new VerificationException.NoFeeException(Coin.FEE_DEFAULT.toString());
+
 			for (Future<VerificationException> future : listScriptVerificationResults) {
 				VerificationException e;
 				try {
@@ -1999,16 +2009,35 @@ public class ServiceBase {
 		return true;
 	}
 
-	private boolean checkTxInputOutput(Map<String, Coin> valueInput, Map<String, Coin> valueOut) {
+	private boolean checkTxInputOutput(Map<String, Coin> valueInput, Map<String, Coin> valueOut, Block block) {
+		Boolean checkFee = false;
+
 		for (Map.Entry<String, Coin> entry : valueOut.entrySet()) {
 			if (!valueInput.containsKey(entry.getKey())) {
-				return false;
+				throw new InvalidTransactionException("Transaction input and output values do not match");
 			} else {
-				if (valueInput.get(entry.getKey()).compareTo(entry.getValue()) < 0)
-					return false;
+				// add check fee
+				if (entry.getValue().isBIG() && !checkFee) {
+					if (valueInput.get(entry.getKey()).compareTo(entry.getValue().add(Coin.FEE_DEFAULT)) >= 0) {
+						checkFee = true;
+					}
+				}
+				if (valueInput.get(entry.getKey()).compareTo(entry.getValue()) < 0) {
+					throw new InvalidTransactionException("Transaction input and output values do not match");
+
+				}
 			}
 		}
-		return true;
+		// add check fee, no big in valueOut, but valueInput contain fee
+		if (!checkFee) {
+			if (valueOut.get(NetworkParameters.BIGTANGLE_TOKENID_STRING) == null) {
+				if (valueInput.get(NetworkParameters.BIGTANGLE_TOKENID_STRING) != null && valueInput
+						.get(NetworkParameters.BIGTANGLE_TOKENID_STRING).compareTo(Coin.FEE_DEFAULT) >= 0) {
+					checkFee = true;
+				}
+			}
+		}
+		return checkFee;
 	}
 
 	private SolidityState checkFullTypeSpecificSolidity(Block block, BlockWrap storedPrev, BlockWrap storedPrevBranch,
@@ -3959,16 +3988,14 @@ public class ServiceBase {
 		}
 	}
 
-
 	private void unconfirmContractEventDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes,
-			FullBlockStore blockStore) throws BlockStoreException { 
+			FullBlockStore blockStore) throws BlockStoreException {
 		Sha256Hash contractEventSpent = blockStore.getContractEventSpent(block.getHash());
-		if (contractEventSpent!=null) {
-			unconfirmRecursive(contractEventSpent, traversedBlockHashes,
-					blockStore);
+		if (contractEventSpent != null) {
+			unconfirmRecursive(contractEventSpent, traversedBlockHashes, blockStore);
 		}
 	}
-	
+
 	private void unconfirmTokenDependents(Block block, HashSet<Sha256Hash> traversedBlockHashes,
 			FullBlockStore blockStore) throws BlockStoreException {
 
@@ -4042,7 +4069,7 @@ public class ServiceBase {
 		case BLOCKTYPE_USERDATA:
 			break;
 		case BLOCKTYPE_CONTRACT_EVENT:
-			unConfirmContractEvent(block, blockStore); 
+			unConfirmContractEvent(block, blockStore);
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			unConfirmContractExecute(block, blockStore);
@@ -4318,7 +4345,7 @@ public class ServiceBase {
 				Coin burned = countBurnedToken(block, blockStore, reqInfo.getOfferTokenid());
 				reqInfo.setOfferValue(burned.getValue().longValue());
 				reqInfo.setOfferTokenid(burned.getTokenHex());
-			} 
+			}
 			boolean buy = reqInfo.buy();
 			Side side = buy ? Side.BUY : Side.SELL;
 			int decimals = 0;
@@ -4327,7 +4354,7 @@ public class ServiceBase {
 			} else {
 				decimals = blockStore.getTokenID(reqInfo.getOfferTokenid()).get(0).getDecimals();
 			}
-			OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, reqInfo.getOfferValue() ,
+			OrderRecord record = new OrderRecord(block.getHash(), Sha256Hash.ZERO_HASH, reqInfo.getOfferValue(),
 					reqInfo.getOfferTokenid(), false, false, null, reqInfo.getTargetValue(), reqInfo.getTargetTokenid(),
 					reqInfo.getBeneficiaryPubKey(), reqInfo.getValidToTime(), reqInfo.getValidFromTime(), side.name(),
 					reqInfo.getBeneficiaryAddress(), reqInfo.getOrderBaseToken(), reqInfo.getPrice(), decimals);

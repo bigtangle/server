@@ -116,18 +116,19 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	private static String DROP_ORDERS_TABLE = "DROP TABLE IF EXISTS orders";
 
 	private static String DROP_MYSERVERBLOCKS_TABLE = "DROP TABLE IF EXISTS myserverblocks";
-	private static String DROP_EXCHANGE_TABLE = "DROP TABLE exchange";
-	private static String DROP_EXCHANGEMULTI_TABLE = "DROP TABLE exchange_multisign";
-	private static String DROP_ACCESS_PERMISSION_TABLE = "DROP TABLE access_permission";
-	private static String DROP_ACCESS_GRANT_TABLE = "DROP TABLE access_grant";
-	private static String DROP_CONTRACT_EVENT_TABLE = "DROP TABLE contractevent";
+	private static String DROP_EXCHANGE_TABLE = "DROP TABLE  IF EXISTS  exchange";
+	private static String DROP_EXCHANGEMULTI_TABLE = "DROP TABLE  IF EXISTS  exchange_multisign";
+	private static String DROP_ACCESS_PERMISSION_TABLE = "DROP TABLE  IF EXISTS access_permission";
+	private static String DROP_ACCESS_GRANT_TABLE = "DROP TABLE  IF EXISTS access_grant";
+	private static String DROP_CONTRACT_EVENT_TABLE = "DROP TABLE  IF EXISTS contractevent";
 	private static String DROP_CONTRACT_RESULT_TABLE = "DROP TABLE IF EXISTS contractresult";
-	private static String DROP_CHAINBLOCKQUEUE_TABLE = "DROP TABLE chainblockqueue";
-	private static String DROP_MCMC_TABLE = "DROP TABLE mcmc";
-	private static String DROP_LOCKOBJECT_TABLE = "DROP TABLE lockobject";
-	private static String DROP_MATCHING_LAST_TABLE = "DROP TABLE matchinglast";
-	private static String DROP_MATCHINGDAILY_TABLE = "DROP TABLE matchingdaily";
-	private static String DROP_MATCHINGLASTDAY_TABLE = "DROP TABLE matchinglastday";
+	private static String DROP_CHAINBLOCKQUEUE_TABLE = "DROP TABLE  IF EXISTS chainblockqueue";
+	private static String DROP_MCMC_TABLE = "DROP TABLE  IF EXISTS mcmc";
+	private static String DROP_LOCKOBJECT_TABLE = "DROP TABLE  IF EXISTS lockobject";
+	private static String DROP_MATCHING_LAST_TABLE = "DROP TABLE  IF EXISTS matchinglast";
+	private static String DROP_MATCHINGDAILY_TABLE = "DROP TABLE  IF EXISTS matchingdaily";
+	private static String DROP_MATCHINGLASTDAY_TABLE = "DROP TABLE  IF EXISTS matchinglastday";
+	private static String DROP_ACCOUNT_TABLE = "DROP TABLE  IF EXISTS account";
 	// Queries SQL.
 	protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
 	protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
@@ -614,6 +615,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		sqlStatements.add(DROP_MATCHING_LAST_TABLE);
 		sqlStatements.add(DROP_MATCHINGDAILY_TABLE);
 		sqlStatements.add(DROP_MATCHINGLASTDAY_TABLE);
+		sqlStatements.add(DROP_ACCOUNT_TABLE);
 		return sqlStatements;
 	}
 
