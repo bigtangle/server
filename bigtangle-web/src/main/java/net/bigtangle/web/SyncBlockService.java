@@ -52,7 +52,7 @@ public class SyncBlockService {
 
 		log.debug(" Start syncServerInfo  : ");
 		// syncServerInfo();
-		localFileServerInfoWrite();
+		localFileServerInfoWrite("https://p.bigtangle.org.8088/", true);
 		log.debug(" end syncServerInfo: ");
 
 	}
@@ -60,7 +60,7 @@ public class SyncBlockService {
 	/*
 	 * write to local file and read it at start only
 	 */
-	public static void localFileServerInfoWrite() throws JsonProcessingException, IOException {
+	public static void localFileServerInfoWrite(String bigtangleServer, boolean noshell) throws JsonProcessingException, IOException {
 
 		String path = DispatcherController.PATH;
 
@@ -69,7 +69,7 @@ public class SyncBlockService {
 			file.delete();
 		}
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();
-		byte[] response = OkHttp3Util.post("https://p.bigtangle.org.8088/" + ReqCmd.searchTokens.name(),
+		byte[] response = OkHttp3Util.post( bigtangleServer+ ReqCmd.searchTokens.name(),
 				Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
 		GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);

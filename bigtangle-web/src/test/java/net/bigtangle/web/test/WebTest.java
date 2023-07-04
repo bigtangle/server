@@ -10,6 +10,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
@@ -28,6 +29,7 @@ import net.bigtangle.wallet.Wallet;
 import net.bigtangle.web.SyncBlockService;
 import net.bigtangle.web.Zip;
 
+// to run the test, it must start a server = "http://localhost:8088/"
 public class WebTest extends AbstractIntegrationTest {
 
 	protected static final Logger log = LoggerFactory.getLogger(WebTest.class);
@@ -36,7 +38,9 @@ public class WebTest extends AbstractIntegrationTest {
 	public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
 	public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
 	String serverurl = "http://localhost:8088/";
-
+	@Autowired
+	SyncBlockService syncBlockService;
+	 
 	@Test
 	public void testWebTokens() throws JsonProcessingException, Exception {
 		contractKey = new ECKey();
@@ -61,15 +65,8 @@ public class WebTest extends AbstractIntegrationTest {
 		ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
 
 		wallet.multiSign(contractKey.getPublicKeyAsHex(), signkey, null);
-
-		SyncBlockService.byte2File(zipFile, "/var/www/", "contractlottery" + ".zip");
-		File unZipDir=new File("/var/www/"+"contractlottery");
-		if (unZipDir.exists()) {
-			 FileUtils.deleteDirectory(unZipDir);
-		}
-		new Zip().unZip("/var/www/" + "contractlottery" + ".zip");
-
-		SyncBlockService.deployConf("contractlottery");
+		SyncBlockService.localFileServerInfoWrite(serverurl, false);
+		 //assert check .conf exits 
 
 	}
 
