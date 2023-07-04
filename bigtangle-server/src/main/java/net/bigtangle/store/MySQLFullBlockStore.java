@@ -264,7 +264,17 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    signIndex int(11) NOT NULL,\n" 
             + "    signInputData mediumblob,\n"
             + "    PRIMARY KEY (orderid, pubKey) \n) ENGINE=InnoDB";
+    //aggregate of utxo for view only
+    private static final String CREATE_ACCOUNT_TABLE = "CREATE TABLE account (\n" 
+            + "    address varchar(255),\n"
+            + "    tokenid varchar(255),\n" 
+            + "    coinvalue mediumblob NOT NULL,\n" 
+            + "    time bigint,\n" 
+            + "    lastblockhash  mediumblob NOT NULL,\n" 
+            + "    CONSTRAINT account_pk PRIMARY KEY (address, tokenid) \n" 
+            + "   ) ENGINE=InnoDB \n";
 
+    
     private static final String CREATE_USERDATA_TABLE = "CREATE TABLE userdata (\n"
             + "    blockhash binary(32) NOT NULL,\n" 
             + "    dataclassname varchar(255) NOT NULL,\n"
@@ -463,6 +473,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_CHAINBLOCKQUEUE_TABLE);
         sqlStatements.add(CREATE_LOCKOBJECT_TABLE); 
         sqlStatements.add(CREATE_MATCHINGDAILY_TABLE); 
+        sqlStatements.add(CREATE_ACCOUNT_TABLE); 
         return sqlStatements;
     }
 

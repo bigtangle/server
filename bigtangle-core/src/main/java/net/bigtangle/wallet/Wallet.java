@@ -1902,7 +1902,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		return b;
 	}
 
-	private Block getTip() throws IOException, JsonProcessingException {
+	public Block getTip() throws IOException, JsonProcessingException {
 		return params.getDefaultSerializer().makeBlock(getTipData());
 	}
 
