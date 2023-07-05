@@ -78,24 +78,52 @@ public class SyncBlockService {
 				TokenKeyValues tokenKeyValues = token.getTokenKeyValues();
 				if (tokenKeyValues.getKeyvalues() != null && !tokenKeyValues.getKeyvalues().isEmpty()) {
 					KeyValue keyValue = tokenKeyValues.getKeyvalues().get(0);
-					byte[] zipFile = Base64.decodeBase64(keyValue.getValue());
-					byte2File(zipFile, path, token.getTokenFullname() + ".zip");
-					File unZipDir = new File(path + token.getTokenFullname());
-					//check tokenindex change
-					if (unZipDir.exists()) {
-						FileUtils.deleteDirectory(unZipDir);
-					}
-
-					new Zip().unZip(path + token.getTokenFullname() + ".zip");
-					deployConf(confDir, token.getTokenFullname());
-					if (!noshell) {
-						DockerHelper dockerHelper = new DockerHelper();
-						try {
-							dockerHelper.shellExecuteLocal("service apache reload");
-						} catch (Exception e) {
-							log.error("", e);
+					String serverName = token.getTokenname();
+					for (KeyValue kv : tokenKeyValues.getKeyvalues()) {
+						if (kv.getKey().equals("aliasService")) {
+							serverName = kv.getValue();
+						}
+						if (kv.getKey().equals("site")) {
+							keyValue = kv;
 						}
 					}
+					String unzipDirPath = path + "/" + token.getTokenFullname();
+					File unZipDir = new File(unzipDirPath);
+					String versionString = "0";
+					boolean flag = false;
+					if (unZipDir.exists()) {
+						String webVerPath = unzipDirPath + "/version/";
+						File versionDir = new File(webVerPath);
+						if (versionDir.exists() && versionDir.isDirectory()) {
+							versionString = versionDir.list()[0].split("\\.")[0];
+						}
+
+					} else {
+						flag = true;
+					}
+
+					if (flag || (token.getTokenindex() > Long.valueOf(versionString))) {
+						byte[] zipFile = Base64.decodeBase64(keyValue.getValue());
+						byte2File(zipFile, path, token.getTokenFullname() + ".zip");
+
+						FileUtils.deleteDirectory(unZipDir);
+						new Zip().unZip(unzipDirPath + ".zip");
+						byte2File(token.getTokenFullname().getBytes(), unzipDirPath + "/version/",
+								token.getTokenindex() + ".txt");
+						deployConf(confDir, serverName);
+						if (!noshell) {
+							DockerHelper dockerHelper = new DockerHelper();
+							try {
+								dockerHelper.shellExecuteLocal("service apache reload");
+							} catch (Exception e) {
+								log.error("", e);
+							}
+						}
+						File zip = new File(unzipDirPath + ".zip");
+						zip.delete();
+
+					}
+
 				}
 			}
 		}
