@@ -56,7 +56,8 @@ public class WebTest extends AbstractIntegrationTest {
 		KeyValue kv = new KeyValue();
 		kv.setKey("site");
 		// site contents zip
-		File zip = new File("./logs/test.zip");
+
+		File zip = new File("./src/test/resources/test.zip");
 		byte[] zipFile = FileUtils.readFileToByteArray(zip);
 		String zipString = Base64.encodeBase64String(zipFile);
 		kv.setValue(zipString);
