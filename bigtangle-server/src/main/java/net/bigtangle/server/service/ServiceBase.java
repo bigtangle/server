@@ -1362,6 +1362,12 @@ public class ServiceBase {
 	private SolidityState checkFormalTransactionalSolidity(Block block, boolean throwExceptions)
 			throws BlockStoreException {
 		try {
+			//at least one transaction for fee
+			if (block.getTransactions().size()  < 1) {
+				if (throwExceptions)
+					throw new IncorrectTransactionCountException();
+				return SolidityState.getFailState();
+			}
 			long sigOps = 0;
 
 			for (Transaction tx : block.getTransactions()) {
@@ -1559,11 +1565,7 @@ public class ServiceBase {
 	}
 
 	private SolidityState checkFormalOrderOpSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
-		if (block.getTransactions().size() != 1) {
-			if (throwExceptions)
-				throw new IncorrectTransactionCountException();
-			return SolidityState.getFailState();
-		}
+	 
 
 		// No output creation
 		if (!block.getTransactions().get(0).getOutputs().isEmpty()) {

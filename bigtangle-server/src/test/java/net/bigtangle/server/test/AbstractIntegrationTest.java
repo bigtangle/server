@@ -208,7 +208,7 @@ public abstract class AbstractIntegrationTest {
 		// log.debug("block " + (b == null ? "block is null" : b.toString()));
 		if (addedBlocks != null)
 			addedBlocks.add(b);
-		mcmc();
+		mcmcServiceUpdate();
 		// makeRewardBlock(addedBlocks);
 	}
 
