@@ -24,6 +24,7 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetTokensResponse;
+import net.bigtangle.docker.DockerHelper;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
@@ -52,7 +53,7 @@ public class SyncBlockService {
 
 		log.debug(" Start syncServerInfo  : ");
 		// syncServerInfo();
-		localFileServerInfoWrite("https://p.bigtangle.org.8088/", true);
+//		localFileServerInfoWrite("https://p.bigtangle.org:8088/", true);
 		log.debug(" end syncServerInfo: ");
 
 	}
@@ -60,7 +61,8 @@ public class SyncBlockService {
 	/*
 	 * write to local file and read it at start only
 	 */
-	public static void localFileServerInfoWrite(String bigtangleServer, boolean noshell) throws JsonProcessingException, IOException {
+	public static void localFileServerInfoWrite(String bigtangleServer, boolean noshell)
+			throws JsonProcessingException, IOException {
 
 		String path = DispatcherController.PATH;
 
@@ -69,7 +71,7 @@ public class SyncBlockService {
 			file.delete();
 		}
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();
-		byte[] response = OkHttp3Util.post( bigtangleServer+ ReqCmd.searchTokens.name(),
+		byte[] response = OkHttp3Util.post(bigtangleServer + ReqCmd.searchWebTokens.name(),
 				Json.jsonmapper().writeValueAsString(requestParam).getBytes());
 
 		GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response, GetTokensResponse.class);
@@ -88,6 +90,14 @@ public class SyncBlockService {
 
 					new Zip().unZip(path + token.getTokenname() + ".zip");
 					deployConf(token.getTokenname());
+					if (!noshell) {
+						DockerHelper dockerHelper = new DockerHelper();
+						try {
+							dockerHelper.shellExecuteLocal("service apache reload");
+						} catch (Exception e) {
+							log.error("", e);
+						}
+					}
 				}
 			}
 		}

@@ -45,7 +45,7 @@ public class WebTest extends AbstractIntegrationTest {
 	public void testWebTokens() throws JsonProcessingException, Exception {
 		contractKey = new ECKey();
 		NetworkParameters networkParameters = TestParams.get();
-		Wallet wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)), contextRoot);
+		Wallet wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)), serverurl);
 		wallet.setServerURL(serverurl);
 		String domain = "";
 
@@ -53,7 +53,7 @@ public class WebTest extends AbstractIntegrationTest {
 		KeyValue kv = new KeyValue();
 		kv.setKey("site");
 		// site contents zip
-		byte[] zipFile = FileUtils.readFileToByteArray(new File("d:/test.zip"));
+		byte[] zipFile = FileUtils.readFileToByteArray(new File("./logs/test.zip"));
 		String zipString = Base64.encodeBase64String(zipFile);
 		kv.setValue(zipString);
 
@@ -65,7 +65,7 @@ public class WebTest extends AbstractIntegrationTest {
 		ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
 
 		wallet.multiSign(contractKey.getPublicKeyAsHex(), signkey, null);
-		SyncBlockService.localFileServerInfoWrite(serverurl, false);
+		SyncBlockService.localFileServerInfoWrite(serverurl, true);
 		 //assert check .conf exits 
 
 	}
