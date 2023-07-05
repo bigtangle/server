@@ -27,7 +27,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.params.TestParams;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.web.SyncBlockService;
-import net.bigtangle.web.Zip;
 
 // to run the test, it must start a server = "http://localhost:8088/"
 public class WebTest extends AbstractIntegrationTest {
@@ -53,7 +52,8 @@ public class WebTest extends AbstractIntegrationTest {
 		KeyValue kv = new KeyValue();
 		kv.setKey("site");
 		// site contents zip
-		byte[] zipFile = FileUtils.readFileToByteArray(new File("./logs/test.zip"));
+		File zip=new File("./logs/test.zip");
+		byte[] zipFile = FileUtils.readFileToByteArray(zip);
 		String zipString = Base64.encodeBase64String(zipFile);
 		kv.setValue(zipString);
 
@@ -65,7 +65,8 @@ public class WebTest extends AbstractIntegrationTest {
 		ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
 
 		wallet.multiSign(contractKey.getPublicKeyAsHex(), signkey, null);
-		SyncBlockService.localFileServerInfoWrite(serverurl, true);
+		String zipDirString=zip.getParent()+"/";
+		SyncBlockService.localFileServerInfoWrite(zipDirString,zipDirString,serverurl, true);
 		 //assert check .conf exits 
 
 	}

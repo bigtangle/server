@@ -52,6 +52,7 @@ public class DispatcherController {
 	private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
 
 	public static String PATH = "/var/www/";
+	public static String CONFPATH = "/etc/apache2/sites-enabled/";
 
 	@Autowired
 	protected SyncBlockService syncBlockService;

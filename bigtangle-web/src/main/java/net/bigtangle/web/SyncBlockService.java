@@ -53,7 +53,8 @@ public class SyncBlockService {
 
 		log.debug(" Start syncServerInfo  : ");
 		// syncServerInfo();
-//		localFileServerInfoWrite("https://p.bigtangle.org:8088/", true);
+		localFileServerInfoWrite(DispatcherController.PATH, DispatcherController.CONFPATH,
+				"https://p.bigtangle.org:8088/", true);
 		log.debug(" end syncServerInfo: ");
 
 	}
@@ -61,10 +62,10 @@ public class SyncBlockService {
 	/*
 	 * write to local file and read it at start only
 	 */
-	public static void localFileServerInfoWrite(String bigtangleServer, boolean noshell)
+	public static void localFileServerInfoWrite(String zipDir, String confDir, String bigtangleServer, boolean noshell)
 			throws JsonProcessingException, IOException {
 
-		String path = DispatcherController.PATH;
+		String path = zipDir;
 
 		File file = new File(path);
 		if (file.exists()) {
@@ -89,7 +90,7 @@ public class SyncBlockService {
 					}
 
 					new Zip().unZip(path + token.getTokenname() + ".zip");
-					deployConf(token.getTokenname());
+					deployConf(confDir, token.getTokenname());
 					if (!noshell) {
 						DockerHelper dockerHelper = new DockerHelper();
 						try {
@@ -104,8 +105,8 @@ public class SyncBlockService {
 
 	}
 
-	public static void deployConf(String tokenname) {
-		if (new File("/etc/apache2/sites-enabled/" + tokenname + ".bigtangle.org" + ".conf").exists()) {
+	public static void deployConf(String confDir, String tokenname) {
+		if (new File(confDir + tokenname + ".bigtangle.org" + ".conf").exists()) {
 			return;
 		}
 		StringBuffer stringBuffer = new StringBuffer();
@@ -145,8 +146,7 @@ public class SyncBlockService {
 		stringBuffer.append("SSLCertificateFile /etc/letsencrypt/live/www.bigtangle.org/fullchain.pem\n");
 		stringBuffer.append("SSLCertificateKeyFile /etc/letsencrypt/live/www.bigtangle.org/privkey.pem\n");
 		stringBuffer.append("</VirtualHost>");
-		byte2File(stringBuffer.toString().getBytes(), "/etc/apache2/sites-enabled/",
-				tokenname + ".bigtangle.org" + ".conf");
+		byte2File(stringBuffer.toString().getBytes(), confDir, tokenname + ".bigtangle.org" + ".conf");
 
 	}
 
