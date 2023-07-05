@@ -65,7 +65,7 @@ public class WebTest extends AbstractIntegrationTest {
 		tokenKeyValues.addKeyvalue(kv);
 		kv = new KeyValue();
 		kv.setKey("aliasService");
-		kv.setValue("mytest.bigtangle.org");
+		kv.setValue("mytest");
 		createToken(contractKey, "contractlottery", 0, domain, "contractlottery", BigInteger.valueOf(1), true,
 				tokenKeyValues, TokenType.web.ordinal(), contractKey.getPublicKeyAsHex(), wallet);
 
