@@ -52,8 +52,9 @@ public class SyncBlockService {
 	public void startSingleProcess() throws BlockStoreException, JsonProcessingException, IOException {
 
 		log.debug(" Start syncServerInfo  : ");
-		// syncServerInfo();
-		//localFileServerInfoWrite(DispatcherController.PATH, DispatcherController.CONFPATH,"https://p.bigtangle.org:8088/", true);
+
+		localFileServerInfoWrite(DispatcherController.PATH, DispatcherController.CONFPATH,
+				"https://p.bigtangle.org:8088/", true);
 		log.debug(" end syncServerInfo: ");
 
 	}
