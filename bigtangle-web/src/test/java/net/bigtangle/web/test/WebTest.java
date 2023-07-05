@@ -1,5 +1,7 @@
 package net.bigtangle.web.test;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.io.File;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -39,11 +41,13 @@ public class WebTest extends AbstractIntegrationTest {
 	String serverurl = "http://localhost:8088/";
 	@Autowired
 	SyncBlockService syncBlockService;
-	 
+
 	@Test
 	public void testWebTokens() throws JsonProcessingException, Exception {
 		contractKey = new ECKey();
 		NetworkParameters networkParameters = TestParams.get();
+//		payBigTo(contractKey, Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(3)), null);
+
 		Wallet wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)), serverurl);
 		wallet.setServerURL(serverurl);
 		String domain = "";
@@ -52,7 +56,7 @@ public class WebTest extends AbstractIntegrationTest {
 		KeyValue kv = new KeyValue();
 		kv.setKey("site");
 		// site contents zip
-		File zip=new File("./logs/test.zip");
+		File zip = new File("./logs/test.zip");
 		byte[] zipFile = FileUtils.readFileToByteArray(zip);
 		String zipString = Base64.encodeBase64String(zipFile);
 		kv.setValue(zipString);
@@ -65,9 +69,17 @@ public class WebTest extends AbstractIntegrationTest {
 		ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
 
 		wallet.multiSign(contractKey.getPublicKeyAsHex(), signkey, null);
-		String zipDirString=zip.getParent()+"/";
-		SyncBlockService.localFileServerInfoWrite(zipDirString,zipDirString,serverurl, true);
-		 //assert check .conf exits 
+		String zipDirString = zip.getParent() + "/";
+		SyncBlockService.localFileServerInfoWrite(zipDirString, zipDirString, serverurl, true);
+		File unzipDir = new File(zipDirString + "test");
+
+		for (String name : unzipDir.list()) {
+			log.debug(name);
+		}
+		for (File file : unzipDir.listFiles()) {
+			log.debug(file.getName());
+		}
+		assertTrue(unzipDir.exists() && unzipDir.isDirectory() && unzipDir.list().length == 2);
 
 	}
 
