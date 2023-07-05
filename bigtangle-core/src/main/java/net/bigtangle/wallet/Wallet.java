@@ -1492,7 +1492,6 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		}
 		byte[] response = OkHttp3Util.post(getServerURL() + ReqCmd.getOutputs.name(),
 				Json.jsonmapper().writeValueAsString(pubKeyHashs).getBytes("UTF-8"));
-
 		GetOutputsResponse getOutputsResponse = Json.jsonmapper().readValue(response, GetOutputsResponse.class);
 		for (UTXO output : getOutputsResponse.getOutputs()) {
 			if (checkSpendpending(output)) {

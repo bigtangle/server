@@ -651,7 +651,7 @@ public abstract class AbstractIntegrationTest {
 		tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
 		if (spendableOutput.getValue().subtract(amount).getValue().signum() != 0)
 			tx.addOutput(new TransactionOutput(networkParameters, tx,
-					spendableOutput.getValue().subtract(amount).subtract(Coin.FEE_DEFAULT), genesiskey));
+					spendableOutput.getValue().subtract(amount), genesiskey));
 		TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
 		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
@@ -995,6 +995,10 @@ public abstract class AbstractIntegrationTest {
 		return tokenid;
 	}
 
+	public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey
+			 ) throws Exception {
+		return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null);
+	}
 	// for unit tests
 	public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
 			List<Block> addedBlocks) throws Exception {

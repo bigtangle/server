@@ -54,7 +54,7 @@ public class SyncBlockService {
 		log.debug(" Start syncServerInfo  : ");
 
 		localFileServerInfoWrite(DispatcherController.PATH, DispatcherController.CONFPATH,
-				"https://p.bigtangle.org:8088/", true);
+				"https://p.bigtangle.org:8088/", false);
 		log.debug(" end syncServerInfo: ");
 
 	}
@@ -67,10 +67,6 @@ public class SyncBlockService {
 
 		String path = zipDir;
 
-		File file = new File(path);
-		if (file.exists()) {
-			file.delete();
-		}
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();
 		byte[] response = OkHttp3Util.post(bigtangleServer + ReqCmd.searchWebTokens.name(),
 				Json.jsonmapper().writeValueAsString(requestParam).getBytes());
@@ -83,14 +79,15 @@ public class SyncBlockService {
 				if (tokenKeyValues.getKeyvalues() != null && !tokenKeyValues.getKeyvalues().isEmpty()) {
 					KeyValue keyValue = tokenKeyValues.getKeyvalues().get(0);
 					byte[] zipFile = Base64.decodeBase64(keyValue.getValue());
-					byte2File(zipFile, path, token.getTokenname() + ".zip");
-					File unZipDir = new File(path + token.getTokenname());
+					byte2File(zipFile, path, token.getTokenFullname() + ".zip");
+					File unZipDir = new File(path + token.getTokenFullname());
+					//check tokenindex change
 					if (unZipDir.exists()) {
 						FileUtils.deleteDirectory(unZipDir);
 					}
 
-					new Zip().unZip(path + token.getTokenname() + ".zip");
-					deployConf(confDir, token.getTokenname());
+					new Zip().unZip(path + token.getTokenFullname() + ".zip");
+					deployConf(confDir, token.getTokenFullname());
 					if (!noshell) {
 						DockerHelper dockerHelper = new DockerHelper();
 						try {
