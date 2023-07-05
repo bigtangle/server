@@ -77,7 +77,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
 
 		// Verify the tokens changed possession
-		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 101000l);
+		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
 		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
 
 		// Verify token amount invariance
@@ -454,7 +454,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
-
+		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(),null);
 		// Open sell order for test tokens
 		makeAndConfirmSellOrder(testKey, testTokenId, 200, priceshift, yuan.getPublicKeyAsHex(), addedBlocks);
 		checkOrders(1);
@@ -479,7 +479,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		ECKey testKey = new ECKey();
 	 
 		List<Block> addedBlocks = new ArrayList<>();
-		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(), addedBlocks);
+
 		// base token
 		ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
 		int priceshift = 1000000;
@@ -503,7 +503,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		// Verify the tokens changed possession
 		assertHasAvailableToken(testKey, yuan.getPublicKeyAsHex(), 2l);
 		assertHasAvailableToken(yuan, testKey.getPublicKeyAsHex(), priceshift * 1l);
-
 		// Open sell order for test tokens
 		makeAndConfirmSellOrder(testKey, testTokenId, 200, priceshift, yuan.getPublicKeyAsHex(), addedBlocks);
 		checkOrders(1);
@@ -540,7 +539,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
-
+		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(),null);
 		// Open sell order for test tokens, orderbase yuan
 		makeAndConfirmSellOrder(testKey, testTokenId, priceshift, 2, yuan.getPublicKeyAsHex(), addedBlocks);
 		checkOrders(1);
@@ -618,7 +617,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeRewardBlock(addedBlocks);
 
 		// Verify the tokens changed possession
-		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 101000l);
+		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
 		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
 
 		// Verify token amount invariance
@@ -702,7 +701,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeRewardBlock(addedBlocks);
 
 		// Verify the tokens changed possession
-		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 101050l);
+		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100050l);
 		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
 
 		// Verify token amount invariance
@@ -739,7 +738,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeRewardBlock(addedBlocks);
 
 		// Verify the tokens changed possession
-		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 51000l);
+		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 50000l);
 		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 50l);
 
 		// Verify token amount invariance
@@ -815,7 +814,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeRewardBlock(addedBlocks);
 
 		// Verify the tokens changed possession
-		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l+ Coin.FEE_DEFAULT.getValue().longValue());
+		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
 		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
 
 		// Verify token amount invariance
@@ -856,7 +855,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		assertCurrentTokenAmountEquals(origTokenAmounts);
 
 		// Verify the tokens changed possession
-		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 101000l);
+		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
 		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
 
 		// Verify deterministic overall execution
@@ -868,10 +867,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		// ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
 		// Utils.HEX.decode(testPub));
-		ECKey testKey = new ECKey();
-		;
-		List<Block> addedBlocks = new ArrayList<>();
-
+		ECKey testKey = new ECKey(); 
+		List<Block> addedBlocks = new ArrayList<>(); 
 		// Make test token
 		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
@@ -981,8 +978,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
 				Utils.HEX.decode(testPub));
-		ECKey testKey = new ECKey();
-		;
+		ECKey testKey = new ECKey(); 
 		List<Block> addedBlocks = new ArrayList<>();
 		// Make test token
 		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
@@ -1388,6 +1384,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		long tradeAmount = 100l;
 		long price = 1;
+		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(),null);
 		Block block = Wallet.fromKeys(networkParameters, testKey, contextRoot).sellOrder(null, testTokenId, price,
 				tradeAmount, null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, true);
 		addedBlocks.add(block);
@@ -1473,7 +1470,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		ECKey toKey = new ECKey();
 		payTestTokenTo(toKey, testKey, BigInteger.valueOf(tradeAmount * 2));
 		checkBalanceSum(Coin.valueOf(tradeAmount * 2, testKey.getPubKey()), toKey);
-	
+		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(),null);
 		Block block = Wallet.fromKeys(networkParameters, testKey, contextRoot).sellOrder(null, testTokenId, price,
 				tradeAmount, null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, true);
 		addedBlocks.add(block);

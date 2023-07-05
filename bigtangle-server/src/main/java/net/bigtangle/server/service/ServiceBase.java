@@ -4263,9 +4263,18 @@ public class ServiceBase {
 
 			}
 			blockStore.addUnspentTransactionOutput(utxos);
+			//calculate balance
 		}
 	}
 
+	private void calculateAccount( List<UTXO> utxos) {
+		// table account is the last and utxos are changes
+		//collect list of to and from address and tokenid
+		//read data from outputs with address and tokenid
+		//sum of all unspent 
+		// save with update or insert
+		
+	}
 	private String fromAddress(final Transaction tx, boolean isCoinBase) {
 		String fromAddress = "";
 		if (!isCoinBase) {

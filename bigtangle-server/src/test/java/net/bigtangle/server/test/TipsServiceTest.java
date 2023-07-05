@@ -234,7 +234,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             tokenInfo2.setToken(tokens2);
             tokenInfo2.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-            b1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, confBlock, confBlock);
+            b1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, confBlock, confBlock,null);
         }
         {
             TokenInfo tokenInfo2 = new TokenInfo();
@@ -245,7 +245,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             tokenInfo2.setToken(tokens2);
             tokenInfo2.getMultiSignAddresses()
                     .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-            b2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, confBlock, confBlock);
+            b2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, confBlock, confBlock,null);
         }
         
         boolean hit1 = false;
@@ -306,7 +306,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block b1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, confBlock, confBlock);
+        Block b1 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, confBlock, confBlock,null);
         
         TokenInfo tokenInfo3 = new TokenInfo();
         Coin coinbase3 = Coin.valueOf(666, pubKey);
@@ -316,7 +316,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo3.setToken(tokens3);
         tokenInfo3.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens3.getTokenid(), "", outKey.getPublicKeyAsHex()));
-        Block b2 = saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null, confBlock, confBlock);
+        Block b2 = saveTokenUnitTest(tokenInfo3, coinbase3, outKey, null, confBlock, confBlock,null);
 
          
         boolean hit1 = false;
@@ -369,11 +369,11 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block b1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+        Block b1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null);
 
         // Make another conflicting issuance that goes through
         Block genHash = networkParameters.getGenesisBlock();
-        Block b2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash);
+        Block b2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash,null);
 
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
@@ -426,7 +426,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block b1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+        Block b1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null);
 
         // Generate another issuance slightly different
         TokenInfo tokenInfo2 = new TokenInfo();
@@ -439,7 +439,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
         Block genHash = networkParameters.getGenesisBlock() ;
-        Block b2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null,genHash,genHash);
+        Block b2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null,genHash,genHash,null);
 
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());

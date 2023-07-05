@@ -109,7 +109,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 			// This (saveBlock) calls milestoneUpdate currently, that's why we
 			// need other blocks beforehand.
-			Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, ecKey1, null);
+			Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, ecKey1, null,null);
 			firstIssuance = block1.getHash();
 
 			// Should exist now
@@ -266,7 +266,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		tokenInfo.setToken(tokens);
 
 		// This (saveBlock) calls milestoneUpdate currently
-		Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+		Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null);
 		makeRewardBlock();
 
 		// Should be confirmed now
@@ -523,7 +523,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 				.add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
 		// This (saveBlock) calls milestoneUpdate currently
-		Block block11 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+		Block block11 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null);
 		new ServiceBase(serverConfiguration, networkParameters).confirm(block11.getHash(), new HashSet<>(), (long) -1,
 				store);
 

@@ -1934,10 +1934,12 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		HashMap<String, String> requestParam = new HashMap<String, String>();
 		byte[] data = OkHttp3Util.postAndGetBlock(getServerURL() + ReqCmd.getTip,
 				Json.jsonmapper().writeValueAsString(requestParam));
-		Block rollingBlock = params.getDefaultSerializer().makeBlock(data);
-		rollingBlock.addTransaction(multispent);
-
-		return solveAndPost(rollingBlock);
+		Block block = params.getDefaultSerializer().makeBlock(data);
+		block.addTransaction(multispent);
+		if (getFee() && !NetworkParameters.BIGTANGLE_TOKENID.equals(tokenid)) {
+			block.addTransaction(feeTransaction(aesKey, coinList));
+		}
+		return solveAndPost(block);
 	}
 
 	public Transaction payToListTransaction(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult,

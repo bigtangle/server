@@ -214,7 +214,8 @@ public abstract class AbstractIntegrationTest {
 
 	protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, BigInteger amount, List<Block> addedBlocks)
 			throws Exception {
-
+		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(), addedBlocks);
+		makeRewardBlock(addedBlocks);
 		HashMap<String, BigInteger> giveMoneyTestToken = new HashMap<String, BigInteger>();
 
 		giveMoneyTestToken.put(beneficiary.toAddress(networkParameters).toString(), amount);
@@ -228,22 +229,7 @@ public abstract class AbstractIntegrationTest {
 		// Open sell order for test tokens
 	}
 
-	protected void payTestToken(ECKey testKey, BigInteger amount, List<Block> addedBlocks, ECKey toKey)
-			throws Exception {
-
-		HashMap<String, BigInteger> giveMoneyTestToken = new HashMap<String, BigInteger>();
-
-		giveMoneyTestToken.put(toKey.toAddress(networkParameters).toString(), amount);
-		Wallet w = Wallet.fromKeys(networkParameters, testKey, contextRoot);
-
-		Block b = w.payToList(null, giveMoneyTestToken, testKey.getPubKey(), "");
-		// log.debug("block " + (b == null ? "block is null" : b.toString()));
-
-		addedBlocks.add(b);
-		makeRewardBlock(addedBlocks);
-		// Open sell order for test tokens
-	}
-
+ 
 	protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
 			throws JsonProcessingException, Exception, BlockStoreException {
 		Block block = makeTestToken(testKey, BigInteger.valueOf(77777L), addedBlocks, 0);
@@ -279,7 +265,6 @@ public abstract class AbstractIntegrationTest {
 	protected Block makeTestToken(ECKey testKey, BigInteger amount, List<Block> addedBlocks, int decimal)
 			throws JsonProcessingException, Exception, BlockStoreException {
 
-		
 		// Make the "test" token
 		Block block = null;
 		TokenInfo tokenInfo = new TokenInfo();
@@ -293,7 +278,7 @@ public abstract class AbstractIntegrationTest {
 		tokenInfo.getMultiSignAddresses()
 				.add(new MultiSignAddress(tokens.getTokenid(), "", testKey.getPublicKeyAsHex()));
 
-		block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null);
+		block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null, addedBlocks);
 		addedBlocks.add(block);
 		// makeRewardBlock(addedBlocks);
 		mcmc();
@@ -367,14 +352,14 @@ public abstract class AbstractIntegrationTest {
 
 	protected Block makeSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
 			List<Block> addedBlocks) throws Exception {
-		payBigTo(beneficiary, Coin.FEE_DEFAULT.getValue(), addedBlocks);
+
 		return makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
 				addedBlocks);
 	}
 
 	protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
 			List<Block> addedBlocks) throws Exception {
-		payBigTo(beneficiary, Coin.FEE_DEFAULT.getValue(), addedBlocks);
+
 		Block block = makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount,
 				NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
 		mcmc();
@@ -383,8 +368,8 @@ public abstract class AbstractIntegrationTest {
 
 	protected Block makeSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount, String basetoken,
 			List<Block> addedBlocks) throws Exception {
+		payBigTo(beneficiary, Coin.FEE_DEFAULT.getValue(), addedBlocks);
 		Wallet w = Wallet.fromKeys(networkParameters, beneficiary, contextRoot);
-
 		Block block = w.sellOrder(null, tokenId, sellPrice, sellAmount, null, null, basetoken, true);
 		addedBlocks.add(block);
 		return block;
@@ -420,7 +405,7 @@ public abstract class AbstractIntegrationTest {
 
 	protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
 			List<Block> addedBlocks) throws Exception {
-		payBigTo(beneficiary, Coin.FEE_DEFAULT.getValue(), addedBlocks);
+
 		Block block = makeBuyOrder(beneficiary, tokenId, buyPrice, buyAmount,
 				NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
 		makeRewardBlock(addedBlocks);
@@ -1011,22 +996,26 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	// for unit tests
-	public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
-			throws Exception {
+	public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
+			List<Block> addedBlocks) throws Exception {
 
 		tokenInfo.getToken().setTokenname(UUIDUtil.randomUUID());
-		return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null);
+		return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null, addedBlocks);
 	}
 
 	public Block saveTokenUnitTestWithTokenname(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
 			throws Exception {
-		return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null);
+		return saveTokenUnitTestWithTokenname(tokenInfo, basecoin, outKey, aesKey, null);
+	}
+
+	public Block saveTokenUnitTestWithTokenname(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
+			List<Block> addedBlocks) throws Exception {
+		return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null, addedBlocks);
 	}
 
 	public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
-			Block overrideHash1, Block overrideHash2) throws IOException, Exception {
-		payBigTo(outKey, Coin.FEE_DEFAULT.getValue(), new ArrayList<>());
-		makeRewardBlock();
+			Block overrideHash1, Block overrideHash2, List<Block> addedBlocks) throws IOException, Exception {
+		payBigTo(outKey, Coin.FEE_DEFAULT.getValue(), addedBlocks); 
 		Block block = makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, overrideHash1, overrideHash2);
 		OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
 
@@ -1112,13 +1101,13 @@ public abstract class AbstractIntegrationTest {
 		MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
 		transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
-		//add fee
-		Wallet w= Wallet.fromKeys(networkParameters, outKey,contextRoot);
+		// add fee
+		Wallet w = Wallet.fromKeys(networkParameters, outKey, contextRoot);
 		block.addTransaction(w.feeTransaction(aesKey));
 		// save block
 		block = adjustSolve(block);
 		//
-	
+
 		return block;
 	}
 

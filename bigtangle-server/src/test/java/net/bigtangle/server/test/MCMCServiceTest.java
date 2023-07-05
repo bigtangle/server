@@ -265,11 +265,11 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null);
 
         // Make another conflicting issuance that goes through
         // Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
-        Block block2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+        Block block2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true, store);
 
@@ -306,7 +306,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
         makeRewardBlock();
 
-        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null);
 
         // Generate another issuance slightly different
         TokenInfo tokenInfo2 = new TokenInfo();
@@ -319,7 +319,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens2.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
         // Sha256Hash genHash = networkParameters.getGenesisBlock().getHash();
-        Block block2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null);
+        Block block2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null,null);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true, store);
 
@@ -396,10 +396,10 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
         Block confBlock = makeRewardBlock();
 
-        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null);
 
         // Make another conflicting issuance that goes through
-        Block block2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, confBlock, confBlock);
+        Block block2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, confBlock, confBlock,null);
         Block rollingBlock = block2.createNextBlock(block1);
         blockGraph.add(rollingBlock, true, store);
 
@@ -617,7 +617,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
-        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null);
+        Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null);
         makeRewardBlock();
 
         // Should go through
