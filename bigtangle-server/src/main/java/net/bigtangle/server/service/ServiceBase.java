@@ -4280,16 +4280,17 @@ public class ServiceBase {
 				blockStore.updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
 						utxo.getValue().add(addressTokenCoin));
 			}
-			Coin fromAddressTokenCoin = blockStore.queryAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
-			if (addressTokenCoin != null) {
-				blockStore.updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
-						fromAddressTokenCoin.subtract(utxo.getValue()));
+			if (utxo.getFromaddress() != null && !utxo.getFromaddress().trim().isEmpty()) {
+				Coin fromAddressTokenCoin = blockStore.queryAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
+				if (addressTokenCoin != null) {
+					blockStore.updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
+							fromAddressTokenCoin.subtract(utxo.getValue()));
+				}
 			}
+
 		}
 
 	}
-
-	
 
 	private String fromAddress(final Transaction tx, boolean isCoinBase) {
 		String fromAddress = "";
