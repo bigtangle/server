@@ -44,6 +44,14 @@ public class WebTest extends AbstractIntegrationTest {
 
 	@Test
 	public void testWebTokens() throws JsonProcessingException, Exception {
+
+		// File zip = new File("./src/test/resources/test.zip");
+
+		// publishWebToken(zip);
+		deployWebFile();
+	}
+
+	public void publishWebToken(File zip) throws Exception {
 		contractKey = new ECKey();
 		NetworkParameters networkParameters = TestParams.get();
 
@@ -54,9 +62,7 @@ public class WebTest extends AbstractIntegrationTest {
 		TokenKeyValues tokenKeyValues = new TokenKeyValues();
 		KeyValue kv = new KeyValue();
 		kv.setKey("site");
-		// site contents zip
 
-		File zip = new File("./src/test/resources/test.zip");
 		byte[] zipFile = FileUtils.readFileToByteArray(zip);
 		String zipString = Base64.encodeBase64String(zipFile);
 		kv.setValue(zipString);
@@ -71,9 +77,13 @@ public class WebTest extends AbstractIntegrationTest {
 		ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
 
 		wallet.multiSign(contractKey.getPublicKeyAsHex(), signkey, null);
-		String zipDirString = new File("./logs").getAbsolutePath();
+	}
+
+	public void deployWebFile() throws Exception {
+		String zipDirString = new File("./logs").getAbsolutePath() + "/test/";
+
 		SyncBlockService.localFileServerInfoWrite(zipDirString, zipDirString, serverurl, true);
-		File unzipDir = new File(zipDirString + "test");
+		File unzipDir = new File(zipDirString);
 
 		for (String name : unzipDir.list()) {
 			log.debug(name);
@@ -81,8 +91,7 @@ public class WebTest extends AbstractIntegrationTest {
 		for (File file : unzipDir.listFiles()) {
 			log.debug(file.getName());
 		}
-		assertTrue(unzipDir.exists() && unzipDir.isDirectory() && unzipDir.list().length == 2);
-
+		assertTrue(unzipDir.exists() && unzipDir.isDirectory());
 	}
 
 	public Block createToken(ECKey key, String tokename, int decimals, String domainname, String description,

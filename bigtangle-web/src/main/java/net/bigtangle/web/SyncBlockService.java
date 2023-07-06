@@ -53,8 +53,9 @@ public class SyncBlockService {
 
 		log.debug(" Start syncServerInfo  : ");
 
-		localFileServerInfoWrite(DispatcherController.PATH, DispatcherController.CONFPATH,
-				"https://p.bigtangle.org:8088/", false);
+		// localFileServerInfoWrite(DispatcherController.PATH,
+		// DispatcherController.CONFPATH,
+		// "https://p.bigtangle.org:8088/", false);
 		log.debug(" end syncServerInfo: ");
 
 	}
@@ -87,7 +88,7 @@ public class SyncBlockService {
 							keyValue = kv;
 						}
 					}
-					String unzipDirPath = path + "/" + token.getTokenFullname();
+					String unzipDirPath = path + token.getTokenFullname();
 					File unZipDir = new File(unzipDirPath);
 					String versionString = "0";
 					boolean flag = false;
@@ -107,7 +108,7 @@ public class SyncBlockService {
 						byte2File(zipFile, path, token.getTokenFullname() + ".zip");
 
 						FileUtils.deleteDirectory(unZipDir);
-						new Zip().unZip(unzipDirPath + ".zip");
+						Zip.unZipRecursion(unzipDirPath + ".zip", unzipDirPath);
 						byte2File(token.getTokenFullname().getBytes(), unzipDirPath + "/version/",
 								token.getTokenindex() + ".txt");
 						deployConf(confDir, serverName);
@@ -181,7 +182,7 @@ public class SyncBlockService {
 		File file = null;
 		try {
 			File dir = new File(filePath);
-			if (!dir.exists() && dir.isDirectory()) {
+			if (!dir.exists()) {
 				dir.mkdirs();
 			}
 			file = new File(filePath + File.separator + fileName);
