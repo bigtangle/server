@@ -1362,8 +1362,8 @@ public class ServiceBase {
 	private SolidityState checkFormalTransactionalSolidity(Block block, boolean throwExceptions)
 			throws BlockStoreException {
 		try {
-			//at least one transaction for fee
-			if (block.getTransactions().size()  < 1) {
+			// at least one transaction for fee
+			if (block.getTransactions().size() < 1) {
 				if (throwExceptions)
 					throw new IncorrectTransactionCountException();
 				return SolidityState.getFailState();
@@ -1565,7 +1565,6 @@ public class ServiceBase {
 	}
 
 	private SolidityState checkFormalOrderOpSolidity(Block block, boolean throwExceptions) throws BlockStoreException {
-	 
 
 		// No output creation
 		if (!block.getTransactions().get(0).getOutputs().isEmpty()) {
@@ -1913,9 +1912,10 @@ public class ServiceBase {
 				if (isCoinBase) {
 					// coinbaseValue = valueOut;
 				} else {
-					if( checkTxInputOutput(valueIn, valueOut, block)) {
-						checkFee=true;
-					}; 
+					if (checkTxInputOutput(valueIn, valueOut, block)) {
+						checkFee = true;
+					}
+					;
 					// totalFees = totalFees.add(valueIn.subtract(valueOut));
 				}
 
@@ -4265,18 +4265,32 @@ public class ServiceBase {
 
 			}
 			blockStore.addUnspentTransactionOutput(utxos);
-			//calculate balance
+			// calculate balance
+			calculateAccount(utxos, blockStore);
 		}
 	}
 
-	private void calculateAccount( List<UTXO> utxos) {
-		// table account is the last and utxos are changes
-		//collect list of to and from address and tokenid
-		//read data from outputs with address and tokenid
-		//sum of all unspent 
-		// save with update or insert
-		
+	private void calculateAccount(List<UTXO> utxos, FullBlockStore blockStore) throws BlockStoreException {
+		for (UTXO utxo : utxos) {
+
+			Coin addressTokenCoin = blockStore.queryAccountCoin(utxo.getAddress(), utxo.getTokenId());
+			if (addressTokenCoin == null) {
+				blockStore.addAccountCoin(utxo.getAddress(), utxo.getTokenId(), utxo.getValue());
+			} else {
+				blockStore.updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
+						utxo.getValue().add(addressTokenCoin));
+			}
+			Coin fromAddressTokenCoin = blockStore.queryAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
+			if (addressTokenCoin != null) {
+				blockStore.updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
+						fromAddressTokenCoin.subtract(utxo.getValue()));
+			}
+		}
+
 	}
+
+	
+
 	private String fromAddress(final Transaction tx, boolean isCoinBase) {
 		String fromAddress = "";
 		if (!isCoinBase) {

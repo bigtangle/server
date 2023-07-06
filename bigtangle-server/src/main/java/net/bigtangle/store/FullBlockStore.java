@@ -20,6 +20,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockMCMC;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
@@ -264,7 +265,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
 	public List<Token> getTokensList(Set<String> tokenids) throws BlockStoreException;
 
-	public List<Token> getTokenTypeList( int type) throws BlockStoreException;
+	public List<Token> getTokenTypeList(int type) throws BlockStoreException;
 
 	public List<Token> getTokensList(String name) throws BlockStoreException;
 
@@ -478,22 +479,38 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
 	public List<String> getOpenContractid() throws BlockStoreException;
 
-	public Sha256Hash getContractEventSpent( Sha256Hash  contractEvent) throws BlockStoreException;
+	public Sha256Hash getContractEventSpent(Sha256Hash contractEvent) throws BlockStoreException;
 
 	public boolean checkContractEventConfirmed(List<Sha256Hash> contractEventRecords) throws BlockStoreException;
 
-	void insertContractResult( ContractResult  record) throws BlockStoreException;
-	
-	public void updateContractResultSpent( Sha256Hash  contractResult, Sha256Hash spentBlock, boolean spent)
+	void insertContractResult(ContractResult record) throws BlockStoreException;
+
+	public void updateContractResultSpent(Sha256Hash contractResult, Sha256Hash spentBlock, boolean spent)
 			throws BlockStoreException;
 
-	public void updateContractResultConfirmed( Sha256Hash  contract, boolean confirm)
-			throws BlockStoreException;
+	public void updateContractResultConfirmed(Sha256Hash contract, boolean confirm) throws BlockStoreException;
 
 	public ContractResult getLastContractResult(String contractid) throws BlockStoreException;
 
 	public Sha256Hash checkContractResultSpent(Sha256Hash contractResultRecords) throws BlockStoreException;
 
 	public boolean checkContractResultConfirmed(Sha256Hash contractResultRecords) throws BlockStoreException;
+
+	public List<Coin> queryAccountCoinList(String address, String tokenid) throws BlockStoreException;
+	public  Coin  queryAccountCoin(String address, String tokenid) throws BlockStoreException;
+
+	public void addAccountCoin(String address, String tokenid, Coin coin) throws BlockStoreException;
+
+	public void updateAccountCoin(String address, String tokenid, Coin coin) throws BlockStoreException;
+
+	public Map<String, Map<String, Coin>> queryOutputsMap(String address, String tokenid) throws BlockStoreException;
+
+	public Map<String, Map<String, Coin>> queryOutputsMapByFromaddress(String address, String tokenid)
+			throws BlockStoreException;
+
+	public void addAccountCoinBatch(Map<String, Map<String, Coin>> toaddressMap) throws BlockStoreException;
+
+	public void updateAccountCoinBatch(Map<String, Map<String, Coin>> fromaddressMap) throws BlockStoreException;
+	public void deleteAccountCoin(String address, String tokenid) throws BlockStoreException;
 
 }

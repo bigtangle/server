@@ -467,7 +467,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			+ "FROM exchange e WHERE (toSign = false OR fromSign = false) AND " + "(fromAddress = ? OR toAddress = ?) "
 			+ afterSelect();
 
-
 	protected final String BlockPrototype_SELECT_SQL = "   select prevblockhash, prevbranchblockhash, "
 			+ " inserttime from blockprototype   ";
 	protected final String BlockPrototype_INSERT_SQL = getInsert()
@@ -2184,7 +2183,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	}
 
 	@Override
-	public List<Token> getTokenTypeList( int type) throws BlockStoreException {
+	public List<Token> getTokenTypeList(int type) throws BlockStoreException {
 		List<Token> list = new ArrayList<Token>();
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
@@ -4822,15 +4821,14 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			preparedStatement = getConnection()
 					.prepareStatement(" select spenderblockhash  from contractevent " + " WHERE blockhash = ? ");
 
-			 
-				preparedStatement.setBytes(1, contractevent.getBytes());
-				ResultSet resultSet = preparedStatement.executeQuery();
-				if (resultSet.next()) {
-					byte[] spentbytes = resultSet.getBytes(1);
-					if (spentbytes != null)
-						return Sha256Hash.wrap(spentbytes);
-				}
-		 
+			preparedStatement.setBytes(1, contractevent.getBytes());
+			ResultSet resultSet = preparedStatement.executeQuery();
+			if (resultSet.next()) {
+				byte[] spentbytes = resultSet.getBytes(1);
+				if (spentbytes != null)
+					return Sha256Hash.wrap(spentbytes);
+			}
+
 			return null;
 		} catch (SQLException e) {
 			throw new BlockStoreException(e);
@@ -4900,6 +4898,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			}
 		}
 	}
+
 	@Override
 	public List<String> getOpenContractid() throws BlockStoreException {
 		maybeConnect();
@@ -5019,19 +5018,19 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	}
 
 	@Override
-	public void updateContractResultSpent( Sha256Hash contractResult, Sha256Hash spentBlock, boolean spent)
+	public void updateContractResultSpent(Sha256Hash contractResult, Sha256Hash spentBlock, boolean spent)
 			throws BlockStoreException {
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(
 					getUpdate() + " contractresult SET spent = ?, spenderblockhash = ? " + " WHERE blockhash = ? ");
-		 
-				preparedStatement.setBoolean(1, spent);
-				preparedStatement.setBytes(2, spentBlock != null ? spentBlock.getBytes() : null);
-				preparedStatement.setBytes(3, contractResult.getBytes()); 
-				preparedStatement.executeUpdate();
-		 
+
+			preparedStatement.setBoolean(1, spent);
+			preparedStatement.setBytes(2, spentBlock != null ? spentBlock.getBytes() : null);
+			preparedStatement.setBytes(3, contractResult.getBytes());
+			preparedStatement.executeUpdate();
+
 		} catch (SQLException e) {
 			throw new BlockStoreException(e);
 		} finally {
@@ -5107,17 +5106,16 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	}
 
 	@Override
-	public void updateContractResultConfirmed( Sha256Hash  record, boolean confirm)
-			throws BlockStoreException {
+	public void updateContractResultConfirmed(Sha256Hash record, boolean confirm) throws BlockStoreException {
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_CONTRACT_CONFIRMED_SQL);
-		 
-				preparedStatement.setBoolean(1, confirm);
-				preparedStatement.setBytes(2, record.getBytes());
-				preparedStatement.executeUpdate();
- 
+
+			preparedStatement.setBoolean(1, confirm);
+			preparedStatement.setBytes(2, record.getBytes());
+			preparedStatement.executeUpdate();
+
 		} catch (SQLException e) {
 			throw new BlockStoreException(e);
 		} finally {
@@ -6733,6 +6731,344 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 					preparedStatement.close();
 				} catch (SQLException e) {
 					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+
+	public List<Coin> queryAccountCoinList(String address, String tokenid) throws BlockStoreException {
+		PreparedStatement preparedStatement = null;
+		List<Coin> list = new ArrayList<>();
+		try {
+			String sql = " select address, tokenid,coinvalue from account  where 1=1 ";
+
+			if (address != null && !address.trim().isEmpty()) {
+				sql += " and address = ?";
+			}
+			if (tokenid != null && !tokenid.trim().isEmpty()) {
+				sql += " and tokenid = ?";
+			}
+			preparedStatement = getConnection().prepareStatement(sql);
+			int i = 1;
+
+			if (address != null && !address.trim().isEmpty()) {
+				preparedStatement.setString(i++, address);
+			}
+			if (tokenid != null && !tokenid.trim().isEmpty()) {
+				preparedStatement.setString(i++, tokenid);
+			}
+
+			ResultSet resultSet = preparedStatement.executeQuery();
+			if (resultSet.next()) {
+				Coin coin = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), tokenid);
+				list.add(coin);
+			}
+			return list;
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+
+	}
+
+	public Coin queryAccountCoin(String address, String tokenid) throws BlockStoreException {
+		PreparedStatement preparedStatement = null;
+		Coin coin = null;
+		try {
+			String sql = " select address, tokenid,coinvalue from account  where address = ? and tokenid = ?";
+
+			preparedStatement = getConnection().prepareStatement(sql);
+			int i = 1;
+
+			preparedStatement.setString(1, address);
+
+			preparedStatement.setString(2, tokenid);
+
+			ResultSet resultSet = preparedStatement.executeQuery();
+			if (resultSet.next()) {
+				coin = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), tokenid);
+			}
+			return coin;
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+
+	}
+
+	public void addAccountCoin(String address, String tokenid, Coin coin) throws BlockStoreException {
+		maybeConnect();
+		PreparedStatement s = null;
+		try {
+			s = getConnection().prepareStatement("insert into account (address, tokenid,coinvalue) values(?,?,?)");
+			s.setString(1, address);
+			s.setString(2, tokenid);
+			s.setBytes(3, coin.getValue().toByteArray());
+
+			s.executeUpdate();
+			s.close();
+		} catch (SQLException e) {
+			if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+				throw new BlockStoreException(e);
+		} finally {
+			if (s != null) {
+				try {
+					if (s.getConnection() != null)
+						s.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException(e);
+				}
+			}
+		}
+	}
+
+	public void updateAccountCoin(String address, String tokenid, Coin coin) throws BlockStoreException {
+		maybeConnect();
+		PreparedStatement s = null;
+		try {
+			s = getConnection().prepareStatement("update account set coinvalue=? where address=? and tokenid=?");
+			s.setBytes(1, coin.getValue().toByteArray());
+			s.setString(2, address);
+			s.setString(3, tokenid);
+
+			s.executeUpdate();
+			s.close();
+		} catch (SQLException e) {
+			if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+				throw new BlockStoreException(e);
+		} finally {
+			if (s != null) {
+				try {
+					if (s.getConnection() != null)
+						s.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException(e);
+				}
+			}
+		}
+	}
+
+	public Map<String, Map<String, Coin>> queryOutputsMap(String address, String tokenid) throws BlockStoreException {
+		PreparedStatement preparedStatement = null;
+		Map<String, Map<String, Coin>> map = new HashMap<>();
+		try {
+			String sql = " select toaddress, tokenid,coinvalue,fromaddress from outputs  where 1=1 ";
+			if (address != null && !address.trim().isEmpty()) {
+				sql += " and toaddress = ?";
+			}
+			if (tokenid != null && !tokenid.trim().isEmpty()) {
+				sql += " and tokenid = ?";
+			}
+			preparedStatement = getConnection().prepareStatement(sql);
+			int i = 1;
+
+			if (address != null && !address.trim().isEmpty()) {
+				preparedStatement.setString(i++, address);
+			}
+			if (tokenid != null && !tokenid.trim().isEmpty()) {
+				preparedStatement.setString(i++, tokenid);
+			}
+			ResultSet resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+
+				String tempTokenid = resultSet.getString("tokenid");
+				String tempAddress = resultSet.getString("toaddress");
+				if (!map.containsKey(tempAddress)) {
+					Map<String, Coin> tokenMap = new HashMap<>();
+					map.put(tempAddress, tokenMap);
+				}
+				Map<String, Coin> tempMap = map.get(tempAddress);
+				Coin amount = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), tokenid);
+				if (tempMap.containsKey(tempTokenid)) {
+					amount = amount.add(tempMap.get(tempTokenid));
+				}
+				tempMap.put(tempTokenid, amount);
+				map.put(tempAddress, tempMap);
+			}
+			return map;
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+
+	}
+
+	public Map<String, Map<String, Coin>> queryOutputsMapByFromaddress(String address, String tokenid)
+			throws BlockStoreException {
+		PreparedStatement preparedStatement = null;
+		Map<String, Map<String, Coin>> map = new HashMap<>();
+		try {
+			String sql = " select toaddress, tokenid,coinvalue,fromaddress from outputs  where 1=1 ";
+			if (address != null && !address.trim().isEmpty()) {
+				sql += " and fromaddress = ?";
+			}
+			if (tokenid != null && !tokenid.trim().isEmpty()) {
+				sql += " and tokenid = ?";
+			}
+			preparedStatement = getConnection().prepareStatement(sql);
+			int i = 1;
+
+			if (address != null && !address.trim().isEmpty()) {
+				preparedStatement.setString(i++, address);
+			}
+			if (tokenid != null && !tokenid.trim().isEmpty()) {
+				preparedStatement.setString(i++, tokenid);
+			}
+			ResultSet resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+
+				String tempTokenid = resultSet.getString("tokenid");
+				String tempAddress = resultSet.getString("fromaddress");
+				if (!map.containsKey(tempAddress)) {
+					Map<String, Coin> tokenMap = new HashMap<>();
+					map.put(tempAddress, tokenMap);
+				}
+				Map<String, Coin> tempMap = map.get(tempAddress);
+				Coin amount = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), tokenid);
+				if (tempMap.containsKey(tempTokenid)) {
+					amount = amount.add(tempMap.get(tempTokenid));
+				}
+				tempMap.put(tempTokenid, amount);
+				map.put(tempAddress, tempMap);
+
+			}
+			return map;
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+
+	public void addAccountCoinBatch(Map<String, Map<String, Coin>> toAddressMap) throws BlockStoreException {
+		maybeConnect();
+		PreparedStatement s = null;
+		try {
+			s = getConnection().prepareStatement("insert into account (address, tokenid,coinvalue) values(?,?,?)");
+
+			for (String toaddress : toAddressMap.keySet()) {
+				for (String tokenid : toAddressMap.get(toaddress).keySet()) {
+					s.setString(1, toaddress);
+					s.setString(2, tokenid);
+					s.setBytes(3, toAddressMap.get(toaddress).get(tokenid).getValue().toByteArray());
+					s.addBatch();
+
+				}
+
+			}
+
+			s.executeBatch();
+			s.close();
+		} catch (SQLException e) {
+			if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+				throw new BlockStoreException(e);
+		} finally {
+			if (s != null) {
+				try {
+					if (s.getConnection() != null)
+						s.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException(e);
+				}
+			}
+		}
+	}
+
+	public void updateAccountCoinBatch(Map<String, Map<String, Coin>> fromaddressMap) throws BlockStoreException {
+		maybeConnect();
+		PreparedStatement s = null;
+		try {
+			s = getConnection().prepareStatement("update account set coinvalue=? where address=? and tokenid=?");
+
+			for (String fromaddress : fromaddressMap.keySet()) {
+				for (String tokenid : fromaddressMap.get(fromaddress).keySet()) {
+					s.setBytes(1, fromaddressMap.get(fromaddress).get(tokenid).getValue().toByteArray());
+					s.setString(2, fromaddress);
+					s.setString(3, tokenid);
+
+					s.addBatch();
+
+				}
+
+			}
+
+			s.executeBatch();
+			s.close();
+		} catch (SQLException e) {
+			if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+				throw new BlockStoreException(e);
+		} finally {
+			if (s != null) {
+				try {
+					if (s.getConnection() != null)
+						s.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException(e);
+				}
+			}
+		}
+	}
+
+	public void deleteAccountCoin(String address, String tokenid) throws BlockStoreException {
+		maybeConnect();
+		PreparedStatement preparedStatement = null;
+		try {
+			String sql = " delete  from account  where 1=1 ";
+			if (address != null && !address.trim().isEmpty()) {
+				sql += " and  address = ?";
+			}
+			if (tokenid != null && !tokenid.trim().isEmpty()) {
+				sql += " and tokenid = ?";
+			}
+			preparedStatement = getConnection().prepareStatement(sql);
+			int i = 1;
+
+			if (address != null && !address.trim().isEmpty()) {
+				preparedStatement.setString(i++, address);
+			}
+			if (tokenid != null && !tokenid.trim().isEmpty()) {
+				preparedStatement.setString(i++, tokenid);
+			}
+
+			preparedStatement.executeUpdate();
+			preparedStatement.close();
+		} catch (SQLException e) {
+			if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
+				throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					if (preparedStatement.getConnection() != null)
+						preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException(e);
 				}
 			}
 		}
