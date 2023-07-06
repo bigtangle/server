@@ -46,7 +46,6 @@ public class WebTest extends AbstractIntegrationTest {
 	public void testWebTokens() throws JsonProcessingException, Exception {
 		contractKey = new ECKey();
 		NetworkParameters networkParameters = TestParams.get();
-//		payBigTo(contractKey, Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(3)), null);
 
 		Wallet wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)), serverurl);
 		wallet.setServerURL(serverurl);
@@ -72,7 +71,7 @@ public class WebTest extends AbstractIntegrationTest {
 		ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
 
 		wallet.multiSign(contractKey.getPublicKeyAsHex(), signkey, null);
-		String zipDirString = zip.getParent() + "/";
+		String zipDirString = new File("./logs").getAbsolutePath();
 		SyncBlockService.localFileServerInfoWrite(zipDirString, zipDirString, serverurl, true);
 		File unzipDir = new File(zipDirString + "test");
 
