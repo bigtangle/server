@@ -345,9 +345,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		tokenInfo.setToken(tokens);
 		tokenInfo.getMultiSignAddresses()
 				.add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
-		Block depBlock = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, outKey, null);
-
+		
+		Block depBlock = saveTokenUnitTest(tokenInfo, coinbase, outKey,null);
+	 
 		// Generate second eligible issuance
 		TokenInfo tokenInfo2 = new TokenInfo();
 		Token tokens2 = Token.buildSimpleTokenInfo(true, depBlock.getHash(), Utils.HEX.encode(pubKey), "Test", "Test",
@@ -520,6 +520,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		Transaction tx1 = createTestTransaction();
 		Block spenderBlock1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
 				networkParameters.getGenesisBlock(), tx1);
+		mcmc();
 		Block spenderBlock2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
 				networkParameters.getGenesisBlock(), tx1);
 
@@ -575,6 +576,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 			tx1.getInput(0).setScriptSig(new Script(new byte[0]));
 			Block block1 = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
 			block1.addTransaction(tx1);
+			block1.addTransaction(wallet.feeTransaction(null));
 			block1 = adjustSolve(block1);
 			this.blockGraph.add(block1, false, store);
 			fail();
@@ -629,7 +631,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 					outputs.get(0));
 			Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
 			Transaction tx2 = new Transaction(networkParameters);
-			tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount.add(amount)	.subtract(Coin.FEE_DEFAULT), testKey));
+			tx2.addOutput(new TransactionOutput(networkParameters, tx2, amount.add(amount), testKey));
 			tx2.addOutput(new TransactionOutput(networkParameters, tx2, spendableOutput.getValue()	.subtract(Coin.FEE_DEFAULT), testKey));
 			TransactionInput input = tx2.addInput(outputs.get(0).getBlockHash(), spendableOutput);
 			Sha256Hash sighash = tx2.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL,
