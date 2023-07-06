@@ -48,7 +48,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 	public void testUserpay() throws Exception {
 		yuanWallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)),
 				contextRoot);
-		payBigTo(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)), Coin.FEE_DEFAULT.getValue(), null);
+		payBigTo(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)), Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(1000)), null);
 		accountKey = new ECKey();
 		testTokens();
 		log.debug(getBalance(false, yuanWallet.walletKeys()).toString());

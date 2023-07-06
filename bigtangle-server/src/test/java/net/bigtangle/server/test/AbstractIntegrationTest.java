@@ -619,12 +619,13 @@ public abstract class AbstractIntegrationTest {
 
 	protected Block createAndAddNextBlockWithTransaction(Block b1, Block b2, Transaction prevOut)
 			throws VerificationException, BlockStoreException, JsonParseException, JsonMappingException, IOException,
-			UTXOProviderException, InsufficientMoneyException {
+			UTXOProviderException, InsufficientMoneyException, InterruptedException, ExecutionException {
 		Block block1 = b1.createNextBlock(b2);
 		block1.addTransaction(prevOut);
 		block1.addTransaction(wallet.feeTransaction(null));
 		block1 = adjustSolve(block1);
 		this.blockGraph.add(block1, true, store);
+		 mcmcServiceUpdate();
 		return block1;
 	}
 
