@@ -4275,16 +4275,16 @@ public class ServiceBase {
 
 			Coin addressTokenCoin = blockStore.queryAccountCoin(utxo.getAddress(), utxo.getTokenId());
 			if (addressTokenCoin == null) {
-				blockStore.addAccountCoin(utxo.getAddress(), utxo.getTokenId(), utxo.getValue());
+				blockStore.addAccountCoin(utxo.getAddress(), utxo.getTokenId(), utxo.getValue(), utxo.getBlockHash());
 			} else {
 				blockStore.updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
-						utxo.getValue().add(addressTokenCoin));
+						utxo.getValue().add(addressTokenCoin), utxo.getBlockHash());
 			}
 			if (utxo.getFromaddress() != null && !utxo.getFromaddress().trim().isEmpty()) {
 				Coin fromAddressTokenCoin = blockStore.queryAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
 				if (addressTokenCoin != null) {
 					blockStore.updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
-							fromAddressTokenCoin.subtract(utxo.getValue()));
+							fromAddressTokenCoin.subtract(utxo.getValue()), utxo.getBlockHash());
 				}
 			}
 

@@ -499,9 +499,9 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 	public List<Coin> queryAccountCoinList(String address, String tokenid) throws BlockStoreException;
 	public  Coin  queryAccountCoin(String address, String tokenid) throws BlockStoreException;
 
-	public void addAccountCoin(String address, String tokenid, Coin coin) throws BlockStoreException;
+	public void addAccountCoin(String address, String tokenid, Coin coin,Sha256Hash contractResult) throws BlockStoreException;
 
-	public void updateAccountCoin(String address, String tokenid, Coin coin) throws BlockStoreException;
+	public void updateAccountCoin(String address, String tokenid, Coin coin,Sha256Hash contractResult) throws BlockStoreException;
 
 	public Map<String, Map<String, Coin>> queryOutputsMap(String address, String tokenid) throws BlockStoreException;
 

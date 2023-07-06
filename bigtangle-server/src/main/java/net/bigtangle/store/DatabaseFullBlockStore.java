@@ -6810,15 +6810,15 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 	}
 
-	public void addAccountCoin(String address, String tokenid, Coin coin) throws BlockStoreException {
+	public void addAccountCoin(String address, String tokenid, Coin coin, Sha256Hash hash) throws BlockStoreException {
 		maybeConnect();
 		PreparedStatement s = null;
 		try {
-			s = getConnection().prepareStatement("insert into account (address, tokenid,coinvalue) values(?,?,?)");
+			s = getConnection().prepareStatement("insert into account (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
 			s.setString(1, address);
 			s.setString(2, tokenid);
 			s.setBytes(3, coin.getValue().toByteArray());
-
+			s.setBytes(4, hash.getBytes());
 			s.executeUpdate();
 			s.close();
 		} catch (SQLException e) {
@@ -6836,14 +6836,15 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		}
 	}
 
-	public void updateAccountCoin(String address, String tokenid, Coin coin) throws BlockStoreException {
+	public void updateAccountCoin(String address, String tokenid, Coin coin,Sha256Hash hash) throws BlockStoreException {
 		maybeConnect();
 		PreparedStatement s = null;
 		try {
-			s = getConnection().prepareStatement("update account set coinvalue=? where address=? and tokenid=?");
+			s = getConnection().prepareStatement("update account set coinvalue=?,lastblockhash=? where address=? and tokenid=?");
 			s.setBytes(1, coin.getValue().toByteArray());
-			s.setString(2, address);
-			s.setString(3, tokenid);
+			s.setBytes(2, hash.getBytes());
+			s.setString(3, address);
+			s.setString(4, tokenid);
 
 			s.executeUpdate();
 			s.close();
