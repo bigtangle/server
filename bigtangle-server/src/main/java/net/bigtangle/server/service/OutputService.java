@@ -92,8 +92,12 @@ public class OutputService {
 	public AbstractResponse getAccountBalanceInfoFromAccount(Set<byte[]> pubKeyHashs, List<String> tokenidList,
 			FullBlockStore store) throws BlockStoreException {
 
-		List<Coin> tokens = store.queryAccountCoinList(null, null);
+		List<Coin> tokens =new ArrayList<>();
 
+		for (byte[] key : pubKeyHashs) {
+			Address address = new Address(networkParameters, key);
+			tokens.addAll(store.queryAccountCoinList(address.toString(), null));
+		}
 		return GetBalancesResponse.create(tokens, null, null);
 	}
 
