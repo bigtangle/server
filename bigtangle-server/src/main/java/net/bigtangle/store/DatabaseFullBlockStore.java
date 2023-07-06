@@ -6972,13 +6972,14 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		maybeConnect();
 		PreparedStatement s = null;
 		try {
-			s = getConnection().prepareStatement("insert into account (address, tokenid,coinvalue) values(?,?,?)");
+			s = getConnection().prepareStatement("insert into account (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
 
 			for (String toaddress : toAddressMap.keySet()) {
 				for (String tokenid : toAddressMap.get(toaddress).keySet()) {
 					s.setString(1, toaddress);
 					s.setString(2, tokenid);
 					s.setBytes(3, toAddressMap.get(toaddress).get(tokenid).getValue().toByteArray());
+					s.setBytes(4, Sha256Hash.ZERO_HASH.getBytes());
 					s.addBatch();
 
 				}
