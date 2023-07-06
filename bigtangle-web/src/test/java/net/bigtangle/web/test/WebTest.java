@@ -45,9 +45,9 @@ public class WebTest extends AbstractIntegrationTest {
 	@Test
 	public void testWebTokens() throws JsonProcessingException, Exception {
 
-		// File zip = new File("./src/test/resources/test.zip");
+		File zip = new File("./src/test/resources/test.zip");
 
-		// publishWebToken(zip);
+		publishWebToken(zip);
 		deployWebFile();
 	}
 

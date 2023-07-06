@@ -53,9 +53,8 @@ public class SyncBlockService {
 
 		log.debug(" Start syncServerInfo  : ");
 
-		// localFileServerInfoWrite(DispatcherController.PATH,
-		// DispatcherController.CONFPATH,
-		// "https://p.bigtangle.org:8088/", false);
+		localFileServerInfoWrite(DispatcherController.PATH, DispatcherController.CONFPATH,
+				"https://p.bigtangle.org:8088/", false);
 		log.debug(" end syncServerInfo: ");
 
 	}
