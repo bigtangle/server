@@ -48,14 +48,15 @@ public class FromAddressTests extends AbstractIntegrationTest {
 	public void testUserpay() throws Exception {
 		yuanWallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)),
 				contextRoot);
+		//first delete all table 
 		payBigTo(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)), Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(1000)), null);
 		accountKey = new ECKey();
 		testTokens();
-		log.debug(getBalance(false, yuanWallet.walletKeys()).toString());
+		getBalanceAccount(false, yuanWallet.walletKeys()).toString();
 
 		makeRewardBlock();
 		createUserPay(accountKey);
-
+		getBalanceAccount(false, yuanWallet.walletKeys()).toString();
 	}
 
 	private void checkResult(ECKey userkey, String fromaddress, String memo) throws Exception {
