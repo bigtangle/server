@@ -2523,8 +2523,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		return pay(aesKey, destination, summe, new MemoInfo(memo));
 	}
 
-	public Block saveUserdata(ECKey userKey, Transaction transaction, boolean encrypt)
-			throws JsonProcessingException, IOException, InsufficientMoneyException, InvalidCipherTextException {
+	public Block saveUserdata(ECKey userKey, Transaction transaction, boolean encrypt, KeyParameter aesKey)
+			throws JsonProcessingException, IOException, InsufficientMoneyException, InvalidCipherTextException,
+			UTXOProviderException {
 		// transaction.getData() is not encrypted
 		if (encrypt) {
 			byte[] cipher = ECIESCoder.encrypt(userKey.getPubKeyPoint(), transaction.getData());
@@ -2548,6 +2549,9 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		multiSignBies.add(multiSignBy0);
 		transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignBies));
 		block.addTransaction(transaction);
+		if (getFee()) {
+			block.addTransaction(feeTransaction(aesKey));
+		}
 		block.setBlockType(Type.BLOCKTYPE_USERDATA);
 		return solveAndPost(block);
 	}

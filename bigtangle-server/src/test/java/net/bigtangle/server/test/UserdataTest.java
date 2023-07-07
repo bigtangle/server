@@ -49,7 +49,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         // TODO encrypt and decrypt the  UserSettingData
         
         
-       wallet.saveUserdata(outKey, transaction,true);
+       wallet.saveUserdata(outKey, transaction,true,null);
 
         makeRewardBlock();
 
@@ -65,7 +65,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.UserSettingDataInfo.name());
         transaction.setData(contactInfo1.toByteArray());
 
-       wallet.saveUserdata(outKey, transaction,true);
+       wallet.saveUserdata(outKey, transaction,true,null);
         makeRewardBlock();
  
 
@@ -90,7 +90,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.UserSettingDataInfo.name());
         transaction.setData(contactInfo0.toByteArray());      
         
-       wallet.saveUserdata(outKey, transaction,true);
+       wallet.saveUserdata(outKey, transaction,true,null);
 
         makeRewardBlock();
 
@@ -124,7 +124,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.SERVERURL.name());
         transaction.setData(contactInfo0.toByteArray());
         // TODO encrypt and decrypt the contactInfo0
-       wallet.saveUserdata(outKey, transaction,false);
+       wallet.saveUserdata(outKey, transaction,false,null);
 
     }
 
@@ -151,7 +151,7 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.CONTACTINFO.name());
         transaction.setData(contactInfo0.toByteArray());
 
-       wallet.saveUserdata(outKey, transaction,false);
+       wallet.saveUserdata(outKey, transaction,false,null);
         makeRewardBlock();
        byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.searchExchangeTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());

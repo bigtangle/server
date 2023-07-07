@@ -195,7 +195,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		Block block = depBlock.createNextBlock(depBlock);
 		block.addTransaction(wallet.feeTransaction(null));
 		block.solve();
-
+		blockService.addConnected(block.bitcoinSerialize(), true);
 		// Should not be solid
 		assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 0);
 
@@ -471,6 +471,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		try {
 			rollingBlock = rollingBlock.createNextBlock(rollingBlock);
 			rollingBlock.setTime(946684800); // 01/01/2000 @ 12:00am (UTC)
+			rollingBlock.addTransaction(wallet.feeTransaction(null));
 			rollingBlock.solve();
 			blockGraph.add(rollingBlock, false, store);
 			fail();

@@ -6867,7 +6867,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		PreparedStatement preparedStatement = null;
 		Map<String, Map<String, Coin>> map = new HashMap<>();
 		try {
-			String sql = " select toaddress, tokenid,coinvalue,fromaddress from outputs  where 1=1 ";
+			String sql = " select toaddress, tokenid,coinvalue,fromaddress from outputs  where 1=1 and spent =true";
 			if (address != null && !address.trim().isEmpty()) {
 				sql += " and toaddress = ?";
 			}
@@ -6915,59 +6915,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 	}
 
-	public Map<String, Map<String, Coin>> queryOutputsMapByFromaddress(String address, String tokenid)
-			throws BlockStoreException {
-		PreparedStatement preparedStatement = null;
-		Map<String, Map<String, Coin>> map = new HashMap<>();
-		try {
-			String sql = " select toaddress, tokenid,coinvalue,fromaddress from outputs  where 1=1 ";
-			if (address != null && !address.trim().isEmpty()) {
-				sql += " and fromaddress = ?";
-			}
-			if (tokenid != null && !tokenid.trim().isEmpty()) {
-				sql += " and tokenid = ?";
-			}
-			preparedStatement = getConnection().prepareStatement(sql);
-			int i = 1;
-
-			if (address != null && !address.trim().isEmpty()) {
-				preparedStatement.setString(i++, address);
-			}
-			if (tokenid != null && !tokenid.trim().isEmpty()) {
-				preparedStatement.setString(i++, tokenid);
-			}
-			ResultSet resultSet = preparedStatement.executeQuery();
-			while (resultSet.next()) {
-
-				String tempTokenid = resultSet.getString("tokenid");
-				String tempAddress = resultSet.getString("fromaddress");
-				if (!map.containsKey(tempAddress)) {
-					Map<String, Coin> tokenMap = new HashMap<>();
-					map.put(tempAddress, tokenMap);
-				}
-				Map<String, Coin> tempMap = map.get(tempAddress);
-				Coin amount = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), tokenid);
-				if (tempMap.containsKey(tempTokenid)) {
-					amount = amount.add(tempMap.get(tempTokenid));
-				}
-				tempMap.put(tempTokenid, amount);
-				map.put(tempAddress, tempMap);
-
-			}
-			return map;
-		} catch (SQLException e) {
-			throw new BlockStoreException(e);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
+ 
 	public void addAccountCoinBatch(Map<String, Map<String, Coin>> toAddressMap) throws BlockStoreException {
 		maybeConnect();
 		PreparedStatement s = null;

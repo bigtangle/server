@@ -504,10 +504,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 	public void updateAccountCoin(String address, String tokenid, Coin coin,Sha256Hash contractResult) throws BlockStoreException;
 
 	public Map<String, Map<String, Coin>> queryOutputsMap(String address, String tokenid) throws BlockStoreException;
-
-	public Map<String, Map<String, Coin>> queryOutputsMapByFromaddress(String address, String tokenid)
-			throws BlockStoreException;
-
+  
 	public void addAccountCoinBatch(Map<String, Map<String, Coin>> toaddressMap) throws BlockStoreException;
 
 	public void updateAccountCoinBatch(Map<String, Map<String, Coin>> fromaddressMap) throws BlockStoreException;

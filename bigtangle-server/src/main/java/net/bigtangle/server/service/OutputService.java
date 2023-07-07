@@ -73,19 +73,7 @@ public class OutputService {
 	public void fixAccount(FullBlockStore blockStore) throws BlockStoreException {
 		blockStore.deleteAccountCoin(null, null);
 		Map<String, Map<String, Coin>> toAddressMap = blockStore.queryOutputsMap("", "");
-		Map<String, Map<String, Coin>> fromAddressMap = blockStore.queryOutputsMapByFromaddress("", "");
-
-		for (String formaddress : fromAddressMap.keySet()) {
-			if (toAddressMap.containsKey(formaddress)) {
-				for (String tokenid : fromAddressMap.get(formaddress).keySet()) {
-					if (toAddressMap.get(formaddress).containsKey(tokenid)) {
-						Coin tempCoin = toAddressMap.get(formaddress).get(tokenid)
-								.subtract(fromAddressMap.get(formaddress).get(tokenid));
-						toAddressMap.get(formaddress).put(tokenid, tempCoin);
-					}
-				}
-			}
-		}
+  
 		blockStore.addAccountCoinBatch(toAddressMap);
 	}
 

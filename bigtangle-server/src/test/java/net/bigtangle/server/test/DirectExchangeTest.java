@@ -94,6 +94,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 		Block block = networkParameters.getDefaultSerializer().makeBlock(data);
 		block.setBlockType(Block.Type.BLOCKTYPE_CROSSTANGLE);
 		block.addTransaction(transaction);
+		block.addTransaction(wallet.feeTransaction(null));
 		block.solve();
 		OkHttp3Util.post(contextRoot + ReqCmd.saveBlock.name(), block.bitcoinSerialize());
 

@@ -617,7 +617,7 @@ public abstract class AbstractIntegrationTest {
 		return block;
 	}
 
-	protected Block createAndAddNextBlockWithTransaction(Block b1, Block b2, Transaction prevOut)
+	protected Block createAndAddNextBlockWithTransaction(Block b1, Block b2, Transaction prevOut, boolean mcmc)
 			throws VerificationException, BlockStoreException, JsonParseException, JsonMappingException, IOException,
 			UTXOProviderException, InsufficientMoneyException, InterruptedException, ExecutionException {
 		Block block1 = b1.createNextBlock(b2);
@@ -625,10 +625,18 @@ public abstract class AbstractIntegrationTest {
 		block1.addTransaction(wallet.feeTransaction(null));
 		block1 = adjustSolve(block1);
 		this.blockGraph.add(block1, true, store);
+		if(mcmc)
 		 mcmcServiceUpdate();
 		return block1;
 	}
 
+	protected Block createAndAddNextBlockWithTransaction(Block b1, Block b2, Transaction prevOut)
+			throws VerificationException, BlockStoreException, JsonParseException, JsonMappingException, IOException,
+			UTXOProviderException, InsufficientMoneyException, InterruptedException, ExecutionException {
+ 
+		return createAndAddNextBlockWithTransaction(b1, b2, prevOut, true);
+	}
+	
 	public Block adjustSolve(Block block) throws IOException, JsonParseException, JsonMappingException {
 		// save block
 		byte[] resp = OkHttp3Util.post(contextRoot + ReqCmd.adjustHeight.name(), block.bitcoinSerialize());
@@ -1005,7 +1013,7 @@ public abstract class AbstractIntegrationTest {
 			List<Block> addedBlocks) throws Exception {
 
 		tokenInfo.getToken().setTokenname(UUIDUtil.randomUUID());
-		return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null, addedBlocks);
+		return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null, addedBlocks,true);
 	}
 
 	public Block saveTokenUnitTestWithTokenname(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey)
@@ -1015,11 +1023,17 @@ public abstract class AbstractIntegrationTest {
 
 	public Block saveTokenUnitTestWithTokenname(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
 			List<Block> addedBlocks) throws Exception {
-		return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null, addedBlocks);
+		return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null, addedBlocks,true);
+	}
+
+	public Block saveTokenUnitTestWithTokenname(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
+			List<Block> addedBlocks, boolean feepay) throws Exception {
+		return saveTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, null, null, addedBlocks,feepay);
 	}
 
 	public Block saveTokenUnitTest(TokenInfo tokenInfo, Coin basecoin, ECKey outKey, KeyParameter aesKey,
-			Block overrideHash1, Block overrideHash2, List<Block> addedBlocks) throws IOException, Exception {
+			Block overrideHash1, Block overrideHash2, List<Block> addedBlocks, boolean feepay) throws IOException, Exception {
+		if(feepay )
 		payBigTo(outKey, Coin.FEE_DEFAULT.getValue(), addedBlocks); 
 		Block block = makeTokenUnitTest(tokenInfo, basecoin, outKey, aesKey, overrideHash1, overrideHash2);
 		OkHttp3Util.post(contextRoot + ReqCmd.signToken.name(), block.bitcoinSerialize());
