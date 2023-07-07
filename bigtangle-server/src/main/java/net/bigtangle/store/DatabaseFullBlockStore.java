@@ -6760,7 +6760,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 			ResultSet resultSet = preparedStatement.executeQuery();
 			if (resultSet.next()) {
-				Coin coin = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), tokenid);
+				Coin coin = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), resultSet.getString("tokenid"));
 				list.add(coin);
 			}
 			return list;
