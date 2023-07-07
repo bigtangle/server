@@ -73,20 +73,20 @@ public class OutputService {
 	public void fixAccount(FullBlockStore blockStore) throws BlockStoreException {
 		blockStore.deleteAccountCoin(null, null);
 		Map<String, Map<String, Coin>> toAddressMap = blockStore.queryOutputsMap("", "");
-  
+
 		blockStore.addAccountCoinBatch(toAddressMap);
 	}
 
 	public AbstractResponse getAccountBalanceInfoFromAccount(Set<byte[]> pubKeyHashs, List<String> tokenidList,
 			FullBlockStore store) throws BlockStoreException {
 
-		List<Coin> tokens =new ArrayList<>();
+		List<Coin> tokens = new ArrayList<>();
 
 		for (byte[] key : pubKeyHashs) {
 			Address address = new Address(networkParameters, key);
 			tokens.addAll(store.queryAccountCoinList(address.toString(), null));
 		}
-		return GetBalancesResponse.create(tokens, null, null);
+		return GetBalancesResponse.create(tokens, null, getTokenameByCoin(tokens, store));
 	}
 
 	public List<UTXO> filterToken(List<UTXO> outputs) {
@@ -233,6 +233,22 @@ public class OutputService {
 		Set<String> tokenids = new HashSet<String>();
 		for (UTXO d : outxos) {
 			tokenids.add(d.getTokenId());
+
+		}
+		Map<String, Token> re = new HashMap<String, Token>();
+		if (!tokenids.isEmpty()) {
+			List<Token> tokens = store.getTokensList(tokenids);
+			for (Token t : tokens) {
+				re.put(t.getTokenid(), t);
+			}
+		}
+		return re;
+	}
+
+	public Map<String, Token> getTokenameByCoin(List<Coin> coins, FullBlockStore store) throws BlockStoreException {
+		Set<String> tokenids = new HashSet<String>();
+		for (Coin d : coins) {
+			tokenids.add(d.getTokenHex());
 
 		}
 		Map<String, Token> re = new HashMap<String, Token>();
