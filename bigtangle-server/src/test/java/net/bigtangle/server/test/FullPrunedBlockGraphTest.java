@@ -390,7 +390,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		resetAndMakeTestToken(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
 		// Make a buy order for testKey.getPubKey()s
-
+		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(), addedBlocks);
+		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(), addedBlocks);
 		Block block1 = makeBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks);
 
 		// Make a sell order for testKey.getPubKey()s

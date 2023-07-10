@@ -830,7 +830,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 					block.getTransactions().get(0).getMemo(), Utils.HEX.encode(out.getValue().getTokenid()), false,
 					true, false, minsignnumber, 0, block.getTimeSeconds(), null);
 			addUnspentTransactionOutput(newOut);
-
+			List<UTXO> gen= new ArrayList<>();
+			gen.add(newOut);
+			calculateAccount(gen); 
 			if (script.isSentToMultiSig()) {
 
 				for (ECKey ecKey : script.getPubKeys()) {
@@ -1208,6 +1210,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 				memo, tokenid, spent, confirmed, spendPending, minimumsign, spendPendingTime, time, spenderblockhash);
 	}
 
+	
 	@Override
 	public void addUnspentTransactionOutput(List<UTXO> utxos) throws BlockStoreException {
 		maybeConnect();
@@ -1258,6 +1261,32 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		}
 	}
 
+	/*
+	 * UTXO   100 output record -> pay 30 -> update 100, address1  spent, add new 30 address2  and 70 address1  from =address1
+	 * List 
+	 */
+	@Override
+	public void calculateAccount(List<UTXO> utxos ) throws BlockStoreException {
+		for (UTXO utxo : utxos) {
+
+			Coin addressTokenCoin = queryAccountCoin(utxo.getAddress(), utxo.getTokenId());
+			if (addressTokenCoin == null) {
+				addAccountCoin(utxo.getAddress(), utxo.getTokenId(), utxo.getValue(), utxo.getBlockHash());
+			} else {
+				updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
+						utxo.getValue().add(addressTokenCoin), utxo.getBlockHash());
+			}
+			if (utxo.getFromaddress() != null && !utxo.getFromaddress().trim().isEmpty()) {
+				Coin fromAddressTokenCoin = queryAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
+				if (addressTokenCoin != null) {
+					updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
+							fromAddressTokenCoin.subtract(utxo.getValue()), utxo.getBlockHash());
+				}
+			}
+
+		}
+
+	}
 	@Override
 	public void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
 		List<UTXO> a = new ArrayList<UTXO>();

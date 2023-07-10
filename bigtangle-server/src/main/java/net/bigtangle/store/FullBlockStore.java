@@ -509,5 +509,5 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
 	public void updateAccountCoinBatch(Map<String, Map<String, Coin>> fromaddressMap) throws BlockStoreException;
 	public void deleteAccountCoin(String address, String tokenid) throws BlockStoreException;
-
+	public void calculateAccount(List<UTXO> utxos ) throws BlockStoreException;
 }

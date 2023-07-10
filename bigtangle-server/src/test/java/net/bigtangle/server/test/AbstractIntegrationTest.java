@@ -451,6 +451,7 @@ public abstract class AbstractIntegrationTest {
 		// Create block with order
 		Block block = predecessor.createNextBlock(predecessor);
 		block.addTransaction(tx);
+		block.addTransaction(wallet.feeTransaction(null));
 		block.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
 		block = adjustSolve(block);
 
