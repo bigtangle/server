@@ -2845,7 +2845,7 @@ public class ServiceBase {
 			boolean predecessorsSolid) throws BlockStoreException {
 		try {
 			// Check formal correctness of the block
-			SolidityState formalSolidityResult = checkFormalBlockSolidity(block, throwExceptions);
+	 	SolidityState formalSolidityResult = checkFormalBlockSolidity(block, throwExceptions);
 			if (formalSolidityResult.isFailState())
 				return formalSolidityResult;
 

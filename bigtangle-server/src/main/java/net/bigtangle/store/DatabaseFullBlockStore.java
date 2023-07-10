@@ -1268,7 +1268,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	@Override
 	public void calculateAccount(List<UTXO> utxos ) throws BlockStoreException {
 		for (UTXO utxo : utxos) {
-
+			Coin fromAddressTokenCoin = queryAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
 			Coin addressTokenCoin = queryAccountCoin(utxo.getAddress(), utxo.getTokenId());
 			if (addressTokenCoin == null) {
 				addAccountCoin(utxo.getAddress(), utxo.getTokenId(), utxo.getValue(), utxo.getBlockHash());
@@ -1276,8 +1276,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 				updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
 						utxo.getValue().add(addressTokenCoin), utxo.getBlockHash());
 			}
-			if (utxo.getFromaddress() != null && !utxo.getFromaddress().trim().isEmpty()) {
-				Coin fromAddressTokenCoin = queryAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
+			if (utxo.getFromaddress() != null && !utxo.getFromaddress().trim().isEmpty()) { 
 				if (addressTokenCoin != null) {
 					updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
 							fromAddressTokenCoin.subtract(utxo.getValue()), utxo.getBlockHash());
@@ -6814,8 +6813,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			String sql = " select address, tokenid,coinvalue from account  where address = ? and tokenid = ?";
 
 			preparedStatement = getConnection().prepareStatement(sql);
-			int i = 1;
-
+	 
 			preparedStatement.setString(1, address);
 
 			preparedStatement.setString(2, tokenid);
