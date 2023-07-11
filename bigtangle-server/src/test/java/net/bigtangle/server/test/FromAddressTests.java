@@ -29,6 +29,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.response.GetBalancesResponse;
+import net.bigtangle.core.response.OkResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
@@ -52,11 +53,11 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		payBigTo(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)), Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(1000)), null);
 		accountKey = new ECKey();
 		testTokens();
-		getBalanceAccount(false, yuanWallet.walletKeys()).toString();
+		getBalanceAccount(false, yuanWallet.walletKeys());
 
 		makeRewardBlock();
 		createUserPay(accountKey);
-		getBalanceAccount(false, yuanWallet.walletKeys()).toString();
+		getBalanceAccount(false, yuanWallet.walletKeys());
 	}
 
 	private void checkResult(ECKey userkey, String fromaddress, String memo) throws Exception {
@@ -91,6 +92,10 @@ public class FromAddressTests extends AbstractIntegrationTest {
 			// TODO: handle exception
 		}
 		mcmc();
+		List<ECKey> userkeys = new ArrayList<ECKey>();
+		userkeys.add(key);
+		userkeys.add(accountKey);
+		getBalanceAccount(false, userkeys);
 		// checkResult(accountKey, key.toAddress(networkParameters).toBase58());
 	}
 
@@ -110,10 +115,22 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		log.debug("block " + (b == null ? "block is null" : b.toString()));
 		makeRewardBlock();
 
+		getBalanceAccount(false, userkeys);
 		checkResult(key, yuanWallet.walletKeys().get(0).toAddress(networkParameters).toBase58(), memo);
 		return userkeys;
 	}
 
+	@Test
+	public void fixBalanceAmount() throws Exception {
+		List<String> keyStrHex000 = new ArrayList<String>();
+		byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.fixAccountBalance.name(),
+				Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+		OkResponse okResponse = Json.jsonmapper().readValue(response, OkResponse.class);
+		assertTrue(okResponse.getErrorcode()==0);
+
+		
+	}
+	
 	public void testTokens() throws JsonProcessingException, Exception {
 		String domain = "";
 		ECKey fromPrivate = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
