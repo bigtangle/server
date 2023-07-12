@@ -738,7 +738,28 @@ public abstract class AbstractIntegrationTest {
 		}
 		return listCoin;
 	}
+	protected List<UTXO> getBalanceAccountUtxo(boolean withZero, List<ECKey> keys) throws Exception {
+		List<UTXO> listCoin = new ArrayList<UTXO>();
+		List<String> keyStrHex000 = new ArrayList<String>();
 
+		for (ECKey ecKey : keys) {
+			// keyStrHex000.add(ecKey.toAddress(networkParameters).toString());
+			keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+		}
+		byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getAccountBalancesUtxo.name(),
+				Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+
+		GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+
+		// byte[] response = mvcResult.getResponse().getContentAsString();
+		listCoin.addAll(getBalancesResponse.getOutputs());
+		int i=0;
+		for (UTXO coin : listCoin) {
+			log.debug("coin:" + coin.toString());
+			assertTrue(coin.getAddress().equals(keys.get(i++).toAddress(networkParameters).toString()));
+		}
+		return listCoin;
+	}
 	// get balance for the walletKeys
 	protected List<UTXO> getBalance(String address) throws Exception {
 		List<UTXO> listUTXO = new ArrayList<UTXO>();
