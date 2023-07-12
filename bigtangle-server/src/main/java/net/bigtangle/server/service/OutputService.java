@@ -89,6 +89,18 @@ public class OutputService {
 		return GetBalancesResponse.create(tokens, null, getTokenameByCoin(tokens, store));
 	}
 
+	public AbstractResponse getAccountBalanceInfoWithUtxoFromAccount(Set<byte[]> pubKeyHashs, List<String> tokenidList,
+			FullBlockStore store) throws BlockStoreException {
+
+		List<UTXO> tokens = new ArrayList<>();
+
+		for (byte[] key : pubKeyHashs) {
+			Address address = new Address(networkParameters, key);
+			tokens.addAll(store.queryAccountUtxoList(address.toString(), null));
+		}
+		return GetBalancesResponse.create(null, tokens, getTokename(tokens, store));
+	}
+
 	public List<UTXO> filterToken(List<UTXO> outputs) {
 		List<UTXO> re = new ArrayList<UTXO>();
 		for (UTXO u : outputs) {

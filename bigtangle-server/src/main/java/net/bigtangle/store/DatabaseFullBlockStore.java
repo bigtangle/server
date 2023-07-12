@@ -830,9 +830,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 					block.getTransactions().get(0).getMemo(), Utils.HEX.encode(out.getValue().getTokenid()), false,
 					true, false, minsignnumber, 0, block.getTimeSeconds(), null);
 			addUnspentTransactionOutput(newOut);
-			List<UTXO> gen= new ArrayList<>();
+			List<UTXO> gen = new ArrayList<>();
 			gen.add(newOut);
-			calculateAccount(gen); 
+			calculateAccount(gen);
 			if (script.isSentToMultiSig()) {
 
 				for (ECKey ecKey : script.getPubKeys()) {
@@ -1210,7 +1210,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 				memo, tokenid, spent, confirmed, spendPending, minimumsign, spendPendingTime, time, spenderblockhash);
 	}
 
-	
 	@Override
 	public void addUnspentTransactionOutput(List<UTXO> utxos) throws BlockStoreException {
 		maybeConnect();
@@ -1262,21 +1261,21 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	}
 
 	/*
-	 * UTXO   100 output record -> pay 30 -> update 100, address1  spent, add new 30 address2  and 70 address1  from =address1
-	 * List 
+	 * UTXO 100 output record -> pay 30 -> update 100, address1 spent, add new 30
+	 * address2 and 70 address1 from =address1 List
 	 */
 	@Override
-	public void calculateAccount(List<UTXO> utxos ) throws BlockStoreException {
+	public void calculateAccount(List<UTXO> utxos) throws BlockStoreException {
 		for (UTXO utxo : utxos) {
 			Coin fromAddressTokenCoin = queryAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
 			Coin addressTokenCoin = queryAccountCoin(utxo.getAddress(), utxo.getTokenId());
 			if (addressTokenCoin == null) {
 				addAccountCoin(utxo.getAddress(), utxo.getTokenId(), utxo.getValue(), utxo.getBlockHash());
 			} else {
-				updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
-						utxo.getValue().add(addressTokenCoin), utxo.getBlockHash());
+				updateAccountCoin(utxo.getAddress(), utxo.getTokenId(), utxo.getValue().add(addressTokenCoin),
+						utxo.getBlockHash());
 			}
-			if (utxo.getFromaddress() != null && !utxo.getFromaddress().trim().isEmpty()) { 
+			if (utxo.getFromaddress() != null && !utxo.getFromaddress().trim().isEmpty()) {
 				if (addressTokenCoin != null) {
 					updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
 							fromAddressTokenCoin.subtract(utxo.getValue()), utxo.getBlockHash());
@@ -1286,6 +1285,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		}
 
 	}
+
 	@Override
 	public void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
 		List<UTXO> a = new ArrayList<UTXO>();
@@ -6806,6 +6806,51 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 	}
 
+	public List<UTXO> queryAccountUtxoList(String address, String tokenid) throws BlockStoreException {
+		PreparedStatement preparedStatement = null;
+		List<UTXO> list = new ArrayList<>();
+		try {
+			String sql = " select address, tokenid,coinvalue from account  where 1=1 ";
+
+			if (address != null && !address.trim().isEmpty()) {
+				sql += " and address = ?";
+			}
+			if (tokenid != null && !tokenid.trim().isEmpty()) {
+				sql += " and tokenid = ?";
+			}
+			preparedStatement = getConnection().prepareStatement(sql);
+			int i = 1;
+
+			if (address != null && !address.trim().isEmpty()) {
+				preparedStatement.setString(i++, address);
+			}
+			if (tokenid != null && !tokenid.trim().isEmpty()) {
+				preparedStatement.setString(i++, tokenid);
+			}
+
+			ResultSet resultSet = preparedStatement.executeQuery();
+			if (resultSet.next()) {
+				Coin coin = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), resultSet.getString("tokenid"));
+				UTXO utxo = new UTXO();
+				utxo.setValue(coin);
+				utxo.setAddress(resultSet.getString("address"));
+				list.add(utxo);
+			}
+			return list;
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+
+	}
+
 	public Coin queryAccountCoin(String address, String tokenid) throws BlockStoreException {
 		PreparedStatement preparedStatement = null;
 		Coin coin = null;
@@ -6813,7 +6858,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			String sql = " select address, tokenid,coinvalue from account  where address = ? and tokenid = ?";
 
 			preparedStatement = getConnection().prepareStatement(sql);
-	 
+
 			preparedStatement.setString(1, address);
 
 			preparedStatement.setString(2, tokenid);
@@ -6841,7 +6886,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		maybeConnect();
 		PreparedStatement s = null;
 		try {
-			s = getConnection().prepareStatement("insert into account (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
+			s = getConnection()
+					.prepareStatement("insert into account (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
 			s.setString(1, address);
 			s.setString(2, tokenid);
 			s.setBytes(3, coin.getValue().toByteArray());
@@ -6863,11 +6909,13 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		}
 	}
 
-	public void updateAccountCoin(String address, String tokenid, Coin coin,Sha256Hash hash) throws BlockStoreException {
+	public void updateAccountCoin(String address, String tokenid, Coin coin, Sha256Hash hash)
+			throws BlockStoreException {
 		maybeConnect();
 		PreparedStatement s = null;
 		try {
-			s = getConnection().prepareStatement("update account set coinvalue=?,lastblockhash=? where address=? and tokenid=?");
+			s = getConnection()
+					.prepareStatement("update account set coinvalue=?,lastblockhash=? where address=? and tokenid=?");
 			s.setBytes(1, coin.getValue().toByteArray());
 			s.setBytes(2, hash.getBytes());
 			s.setString(3, address);
@@ -6942,12 +6990,12 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 	}
 
- 
 	public void addAccountCoinBatch(Map<String, Map<String, Coin>> toAddressMap) throws BlockStoreException {
 		maybeConnect();
 		PreparedStatement s = null;
 		try {
-			s = getConnection().prepareStatement("insert into account (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
+			s = getConnection()
+					.prepareStatement("insert into account (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
 
 			for (String toaddress : toAddressMap.keySet()) {
 				for (String tokenid : toAddressMap.get(toaddress).keySet()) {

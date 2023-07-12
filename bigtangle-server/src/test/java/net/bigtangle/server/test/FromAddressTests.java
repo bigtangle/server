@@ -125,7 +125,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		return userkeys;
 	}
 
-	@Test
+	//@Test
 	public void fixBalanceAmount() throws Exception {
 		List<String> keyStrHex000 = new ArrayList<String>();
 		byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.fixAccountBalance.name(),

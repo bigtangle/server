@@ -497,17 +497,24 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 	public boolean checkContractResultConfirmed(Sha256Hash contractResultRecords) throws BlockStoreException;
 
 	public List<Coin> queryAccountCoinList(String address, String tokenid) throws BlockStoreException;
-	public  Coin  queryAccountCoin(String address, String tokenid) throws BlockStoreException;
 
-	public void addAccountCoin(String address, String tokenid, Coin coin,Sha256Hash contractResult) throws BlockStoreException;
+	public List<UTXO> queryAccountUtxoList(String address, String tokenid) throws BlockStoreException;
 
-	public void updateAccountCoin(String address, String tokenid, Coin coin,Sha256Hash contractResult) throws BlockStoreException;
+	public Coin queryAccountCoin(String address, String tokenid) throws BlockStoreException;
+
+	public void addAccountCoin(String address, String tokenid, Coin coin, Sha256Hash contractResult)
+			throws BlockStoreException;
+
+	public void updateAccountCoin(String address, String tokenid, Coin coin, Sha256Hash contractResult)
+			throws BlockStoreException;
 
 	public Map<String, Map<String, Coin>> queryOutputsMap(String address, String tokenid) throws BlockStoreException;
-  
+
 	public void addAccountCoinBatch(Map<String, Map<String, Coin>> toaddressMap) throws BlockStoreException;
 
 	public void updateAccountCoinBatch(Map<String, Map<String, Coin>> fromaddressMap) throws BlockStoreException;
+
 	public void deleteAccountCoin(String address, String tokenid) throws BlockStoreException;
-	public void calculateAccount(List<UTXO> utxos ) throws BlockStoreException;
+
+	public void calculateAccount(List<UTXO> utxos) throws BlockStoreException;
 }
