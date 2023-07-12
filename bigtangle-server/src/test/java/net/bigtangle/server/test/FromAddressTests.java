@@ -59,7 +59,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 				Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(1000)), null);
 		log.debug("====start check admin wallet====");
 		getBalanceAccount(false, wallet.walletKeys());
-
+		log.debug("====start check yuanWallet wallet====");
 		List<Coin> list = getBalanceAccount(false, yuanWallet.walletKeys());
 		for (Coin coin : list) {
 			if (coin.isBIG()) {
@@ -72,7 +72,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		testTokens();
 		log.debug("====start check admin wallet====");
 		getBalanceAccount(false, wallet.walletKeys());
-
+		log.debug("====start check yuanWallet wallet====");
 		list = getBalanceAccount(false, yuanWallet.walletKeys());
 		for (Coin coin : list) {
 			if (coin.isBIG()) {
@@ -170,6 +170,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		makeRewardBlock();
 		log.debug("====start check admin wallet====");
 		getBalanceAccount(false, wallet.walletKeys());
+		log.debug("====start check yuanWallet wallet====");
 		List<Coin> list = getBalanceAccount(false, yuanWallet.walletKeys());
 		for (Coin coin : list) {
 			if (!coin.isBIG()) {
