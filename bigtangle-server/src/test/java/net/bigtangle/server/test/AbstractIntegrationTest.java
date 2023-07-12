@@ -622,7 +622,7 @@ public abstract class AbstractIntegrationTest {
 			UTXOProviderException, InsufficientMoneyException, InterruptedException, ExecutionException {
 		Block block1 = b1.createNextBlock(b2);
 		block1.addTransaction(prevOut);
-		block1.addTransaction(wallet.feeTransaction(null));
+		// block1.addTransaction(wallet.feeTransaction(null));
 		block1 = adjustSolve(block1);
 		this.blockGraph.add(block1, true, store);
 		if (mcmc)
@@ -654,14 +654,14 @@ public abstract class AbstractIntegrationTest {
 		ECKey genesiskey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
 				Utils.HEX.decode(testPub));
 		List<UTXO> outputs = getBalance(false, genesiskey);
-		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
+		UTXO output = getLargeUTXO(outputs);
+		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, output);
 		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
 		Transaction tx = new Transaction(networkParameters);
 		tx.addOutput(new TransactionOutput(networkParameters, tx, amount, genesiskey));
-		if (spendableOutput.getValue().subtract(amount).getValue().signum() != 0)
-			tx.addOutput(new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount),
-					genesiskey));
-		TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
+		tx.addOutput(new TransactionOutput(networkParameters, tx,
+				spendableOutput.getValue().subtract(amount).subtract(Coin.FEE_DEFAULT), genesiskey));
+		TransactionInput input = tx.addInput(output.getBlockHash(), spendableOutput);
 		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
 		TransactionSignature tsrecsig = new TransactionSignature(genesiskey.sign(sighash), Transaction.SigHash.ALL,
@@ -669,6 +669,16 @@ public abstract class AbstractIntegrationTest {
 		Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
 		input.setScriptSig(inputScript);
 		return tx;
+	}
+
+	protected UTXO getLargeUTXO(List<UTXO> outputs) {
+		UTXO a = outputs.get(0);
+		for (UTXO b : outputs) {
+			if (b.getValue().isGreaterThan(a.getValue())) {
+				a = b;
+			}
+		}
+		return a;
 	}
 
 	protected List<UTXO> getBalance() throws Exception {
@@ -738,6 +748,7 @@ public abstract class AbstractIntegrationTest {
 		}
 		return listCoin;
 	}
+
 	protected List<UTXO> getBalanceAccountUtxo(boolean withZero, List<ECKey> keys) throws Exception {
 		List<UTXO> listCoin = new ArrayList<UTXO>();
 		List<String> keyStrHex000 = new ArrayList<String>();
@@ -753,13 +764,14 @@ public abstract class AbstractIntegrationTest {
 
 		// byte[] response = mvcResult.getResponse().getContentAsString();
 		listCoin.addAll(getBalancesResponse.getOutputs());
-		int i=0;
+		int i = 0;
 		for (UTXO coin : listCoin) {
 			log.debug("coin:" + coin.toString());
 			assertTrue(coin.getAddress().equals(keys.get(i++).toAddress(networkParameters).toString()));
 		}
 		return listCoin;
 	}
+
 	// get balance for the walletKeys
 	protected List<UTXO> getBalance(String address) throws Exception {
 		List<UTXO> listUTXO = new ArrayList<UTXO>();

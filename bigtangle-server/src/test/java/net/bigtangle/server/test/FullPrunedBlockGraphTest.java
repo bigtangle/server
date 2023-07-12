@@ -42,7 +42,6 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.ServiceBase;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
- 
 public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 	@Test
@@ -109,7 +108,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 			// This (saveBlock) calls milestoneUpdate currently, that's why we
 			// need other blocks beforehand.
-			Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, ecKey1, null,null);
+			Block block1 = saveTokenUnitTestWithTokenname(tokenInfo, coinbase, ecKey1, null, null);
 			firstIssuance = block1.getHash();
 
 			// Should exist now
@@ -160,16 +159,14 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 	@Test
 	public void testConnectOrderOpenUTXOs() throws Exception {
 
-
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		// Make the "test" token
 		List<Block> addedBlocks = new ArrayList<>();
 		resetAndMakeTestToken(testKey, addedBlocks);
- 
+
 		// Make a buy order for testKey.getPubKey()s
 
 		Block block1 = makeBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks);
-
 
 		// Ensure the order is added now
 		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
@@ -179,7 +176,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertEquals(order.getOfferTokenid(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
 		assertEquals(order.getOfferValue(), 4);
 		assertEquals(order.getSpenderBlockHash(), null);
-	//	assertEquals(order.getTargetTokenid(), tokenKey.getPublicKeyAsHex());
+		// assertEquals(order.getTargetTokenid(), tokenKey.getPublicKeyAsHex());
 		assertEquals(order.getTargetValue(), 2);
 		// assertEquals(order.getTtl(), NetworkParameters.INITIAL_ORDER_TTL);
 		assertEquals(order.getBlockHash(), block1.getHash());
@@ -244,7 +241,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertEquals(store.getRewardSpender(networkParameters.getGenesisBlock().getHash()), rewardBlock1.getHash());
 
 		// Check the virtual txs too
-		Transaction virtualTX =  new ServiceBase(serverConfiguration, networkParameters).generateVirtualMiningRewardTX(rewardBlock1, store);
+		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters)
+				.generateVirtualMiningRewardTX(rewardBlock1, store);
 		final UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock1.getHash()), store);
 		assertTrue(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
@@ -266,7 +264,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		tokenInfo.setToken(tokens);
 
 		// This (saveBlock) calls milestoneUpdate currently
-		Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null);
+		Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null);
 		makeRewardBlock();
 
 		// Should be confirmed now
@@ -418,7 +416,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertTrue(order2.isSpent());
 
 		// Ensure virtual UTXOs are now confirmed
-		Transaction tx = new ServiceBase(serverConfiguration, networkParameters).generateOrderMatching(rewardBlock1, store).getOutputTx();
+		Transaction tx = new ServiceBase(serverConfiguration, networkParameters)
+				.generateOrderMatching(rewardBlock1, store).getOutputTx();
 		final UTXO utxo1 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(rewardBlock1.getHash()), store);
 		assertTrue(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
@@ -500,7 +499,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertNull(store.getRewardSpender(networkParameters.getGenesisBlock().getHash()));
 
 		// Check the virtual txs too
-		Transaction virtualTX =  new ServiceBase(serverConfiguration, networkParameters).generateVirtualMiningRewardTX(rewardBlock11, store);
+		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters)
+				.generateVirtualMiningRewardTX(rewardBlock11, store);
 		final UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock11.getHash()), store);
 		assertFalse(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
@@ -524,7 +524,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 				.add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
 
 		// This (saveBlock) calls milestoneUpdate currently
-		Block block11 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null);
+		Block block11 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null);
 		new ServiceBase(serverConfiguration, networkParameters).confirm(block11.getHash(), new HashSet<>(), (long) -1,
 				store);
 
@@ -547,7 +547,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		// Make the "test" token
 		List<Block> addedBlocks = new ArrayList<>();
 		resetAndMakeTestToken(testKey, addedBlocks);
- 
+
 		// Make a buy order for testKey.getPubKey()s
 
 		Block block1 = makeBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks);
@@ -604,7 +604,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertFalse(order3.isSpent());
 
 		// Ensure virtual UTXOs are now confirmed
-		Transaction tx = new ServiceBase(serverConfiguration, networkParameters).generateOrderMatching(rewardBlock1, store).getOutputTx();
+		Transaction tx = new ServiceBase(serverConfiguration, networkParameters)
+				.generateOrderMatching(rewardBlock1, store).getOutputTx();
 		final UTXO utxo1 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(rewardBlock1.getHash()), store);
 		assertFalse(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
@@ -616,13 +617,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		// Create blocks with UTXOs
 		Transaction tx1 = createTestTransaction();
 		Block block1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
-				networkParameters.getGenesisBlock(), tx1,false);
+				networkParameters.getGenesisBlock(), tx1, false);
 		new ServiceBase(serverConfiguration, networkParameters).confirm(block1.getHash(), new HashSet<>(), (long) -1,
 				store);
 		Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(),
 				networkParameters.getGenesisBlock());
 		Transaction tx2 = createTestTransaction();
-		Block block2 = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx2,false);
+		Block block2 = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx2, false);
 		new ServiceBase(serverConfiguration, networkParameters).confirm(block2.getHash(), new HashSet<>(), (long) -1,
 				store);
 
@@ -710,11 +711,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertNull(store.getRewardSpender(rewardBlock11.getHash()));
 
 		// Check the virtual txs too
-		Transaction virtualTX =  new ServiceBase(serverConfiguration, networkParameters).generateVirtualMiningRewardTX(rewardBlock11, store);
+		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters)
+				.generateVirtualMiningRewardTX(rewardBlock11, store);
 		UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock11.getHash()), store);
 		assertFalse(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
-		virtualTX =  new ServiceBase(serverConfiguration, networkParameters).generateVirtualMiningRewardTX(rewardBlock2, store);
+		virtualTX = new ServiceBase(serverConfiguration, networkParameters).generateVirtualMiningRewardTX(rewardBlock2,
+				store);
 		utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock2.getHash()), store);
 		assertFalse(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
@@ -751,8 +754,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
 		Transaction tx = new Transaction(networkParameters);
 		tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
-		tx.addOutput(
-				new TransactionOutput(networkParameters, tx, spendableOutput.getValue().subtract(amount), testKey));
+		tx.addOutput(new TransactionOutput(networkParameters, tx,
+				spendableOutput.getValue().subtract(amount).subtract(Coin.FEE_DEFAULT), testKey));
 		TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
 		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
 
@@ -792,7 +795,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertFalse(utxo2.isSpent());
 
 		// Check the virtual txs too
-		Transaction virtualTX =  new ServiceBase(serverConfiguration, networkParameters).generateVirtualMiningRewardTX(rewardBlock, store);
+		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters)
+				.generateVirtualMiningRewardTX(rewardBlock, store);
 		UTXO utxo3 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock.getHash()), store);
 		assertFalse(utxo3.isConfirmed());
 		assertFalse(utxo3.isSpent());

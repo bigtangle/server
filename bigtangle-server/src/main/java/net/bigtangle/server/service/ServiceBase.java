@@ -87,7 +87,6 @@ import net.bigtangle.core.exception.VerificationException.CutoffException;
 import net.bigtangle.core.exception.VerificationException.DifficultyConsensusInheritanceException;
 import net.bigtangle.core.exception.VerificationException.GenesisBlockDisallowedException;
 import net.bigtangle.core.exception.VerificationException.IncorrectTransactionCountException;
-import net.bigtangle.core.exception.VerificationException.InputOutputMatchException;
 import net.bigtangle.core.exception.VerificationException.InsufficientSignaturesException;
 import net.bigtangle.core.exception.VerificationException.InvalidDependencyException;
 import net.bigtangle.core.exception.VerificationException.InvalidOrderException;
@@ -1821,11 +1820,24 @@ public class ServiceBase {
 		}
 	}
 
+	private boolean checkUnique(List<TransactionOutPoint> allInputTx, TransactionOutPoint t) {
+		for (TransactionOutPoint out : allInputTx) {
+			if (t.getTxHash().equals(out.getTxHash()) && t.getBlockHash().equals(out.getBlockHash())
+					&& t.getIndex() == out.getIndex()) {
+				return true;
+			}
+		}
+		return false;
+
+	}
+
 	private SolidityState checkFullTransactionalSolidity(Block block, long height, boolean throwExceptions,
 			FullBlockStore store) throws BlockStoreException {
 		List<Transaction> transactions = block.getTransactions();
 
-		// All used transaction outputs must exist
+		// All used transaction outputs as input must exist and unique
+		// check CoinBase only for reward block and contract verify
+		List<TransactionOutPoint> allInputTx = new ArrayList<>();
 		for (final Transaction tx : transactions) {
 			if (!tx.isCoinBase()) {
 				for (int index = 0; index < tx.getInputs().size(); index++) {
@@ -1836,6 +1848,11 @@ public class ServiceBase {
 						// Missing previous transaction output
 						return SolidityState.from(in.getOutpoint(), true);
 					}
+					if (checkUnique(allInputTx, in.getOutpoint())) {
+						throw new InvalidTransactionException(
+								"input outputpoint is not unique " + in.getOutpoint().toString());
+					}
+					allInputTx.add(in.getOutpoint());
 				}
 				if (checkBurnedFromAddress(tx, block.getLastMiningRewardBlock())) {
 					throw new InvalidTransactionException("Burned Address");
@@ -1915,8 +1932,6 @@ public class ServiceBase {
 					if (checkTxInputOutput(valueIn, valueOut, block)) {
 						checkFee = true;
 					}
-					;
-					// totalFees = totalFees.add(valueIn.subtract(valueOut));
 				}
 
 				if (!isCoinBase) {
@@ -2845,7 +2860,7 @@ public class ServiceBase {
 			boolean predecessorsSolid) throws BlockStoreException {
 		try {
 			// Check formal correctness of the block
-	 	SolidityState formalSolidityResult = checkFormalBlockSolidity(block, throwExceptions);
+			SolidityState formalSolidityResult = checkFormalBlockSolidity(block, throwExceptions);
 			if (formalSolidityResult.isFailState())
 				return formalSolidityResult;
 
@@ -4266,10 +4281,9 @@ public class ServiceBase {
 			}
 			blockStore.addUnspentTransactionOutput(utxos);
 			// calculate balance
-			blockStore.calculateAccount(utxos );
+			blockStore.calculateAccount(utxos);
 		}
 	}
- 
 
 	private String fromAddress(final Transaction tx, boolean isCoinBase) {
 		String fromAddress = "";
