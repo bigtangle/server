@@ -1276,7 +1276,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 						utxo.getBlockHash());
 			}
 			if (utxo.getFromaddress() != null && !utxo.getFromaddress().trim().isEmpty()) {
-				if (addressTokenCoin != null) {
+				if (fromAddressTokenCoin != null) {
 					updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
 							fromAddressTokenCoin.subtract(utxo.getValue()), utxo.getBlockHash());
 				}
