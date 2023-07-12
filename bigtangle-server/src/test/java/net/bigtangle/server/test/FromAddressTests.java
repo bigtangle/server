@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -50,15 +51,51 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		yuanWallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)),
 				contextRoot);
 		// first delete all table
+		log.debug("====start check admin wallet====");
+		getBalanceAccount(false, wallet.walletKeys());
+
+		log.debug("====start payBigTo====");
 		payBigTo(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)),
 				Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(1000)), null);
+		log.debug("====start check admin wallet====");
+		getBalanceAccount(false, wallet.walletKeys());
+
+		List<Coin> list = getBalanceAccount(false, yuanWallet.walletKeys());
+		for (Coin coin : list) {
+			if (coin.isBIG()) {
+				assertTrue(Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(1000)).equals(coin.getValue()));
+			}
+
+		}
 		accountKey = new ECKey();
+		log.debug("====start testTokens====");
 		testTokens();
-		getBalanceAccount(false, yuanWallet.walletKeys());
+		log.debug("====start check admin wallet====");
+		getBalanceAccount(false, wallet.walletKeys());
+
+		list = getBalanceAccount(false, yuanWallet.walletKeys());
+		for (Coin coin : list) {
+			if (coin.isBIG()) {
+				assertTrue(Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(1000))
+						.subtract(Coin.FEE_DEFAULT.getValue()).equals(coin.getValue()));
+			} else if (coin.getTokenHex().equals(yuanTokenPub)) {
+				assertTrue(BigInteger.valueOf(10000000l).equals(coin.getValue()));
+			}
+		}
 
 		makeRewardBlock();
+		log.debug("====start createUserPay====");
 		createUserPay(accountKey);
-		getBalanceAccount(false, yuanWallet.walletKeys());
+		list = getBalanceAccount(false, yuanWallet.walletKeys());
+
+		List<ECKey> userkeys = new ArrayList<ECKey>();
+		userkeys.add(accountKey);
+		list = getBalanceAccount(false, userkeys);
+		for (Coin coin : list) {
+			if (coin.getTokenHex().equals(yuanTokenPub)) {
+				assertTrue(coin.getValue().equals(BigInteger.valueOf(200l)));
+			}
+		}
 	}
 
 	private void checkResult(ECKey userkey, String fromaddress, String memo) throws Exception {
@@ -92,11 +129,27 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		} catch (InsufficientMoneyException e) {
 			// TODO: handle exception
 		}
-		mcmc();
+		makeRewardBlock();
+		log.debug("====start buyTicket====");
 		List<ECKey> userkeys = new ArrayList<ECKey>();
 		userkeys.add(key);
+		List<Coin> coins = getBalanceAccount(false, userkeys);
+		for (Coin coin : coins) {
+
+			assertTrue(coin.isZero());
+
+		}
+
+		userkeys = new ArrayList<ECKey>();
 		userkeys.add(accountKey);
-		getBalanceAccount(false, userkeys);
+		for (Coin coin : coins) {
+
+			assertTrue(coin.getValue().equals(BigInteger.valueOf(100l)));
+
+		}
+		log.debug("====start check admin wallet====");
+		getBalanceAccount(false, wallet.walletKeys());
+
 		// checkResult(accountKey, key.toAddress(networkParameters).toBase58());
 	}
 
@@ -115,17 +168,26 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		Block b = yuanWallet.payToList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), memo);
 		log.debug("block " + (b == null ? "block is null" : b.toString()));
 		makeRewardBlock();
-
+		log.debug("====start check admin wallet====");
+		getBalanceAccount(false, wallet.walletKeys());
+		List<Coin> list = getBalanceAccount(false, yuanWallet.walletKeys());
+		for (Coin coin : list) {
+			if (!coin.isBIG()) {
+				assertTrue(coin.getValue().equals(BigInteger.valueOf(10000000l).subtract(BigInteger.valueOf(200l))));
+			}
+		}
 		List<Coin> coins = getBalanceAccount(false, userkeys);
 		for (Coin coin : coins) {
-			assertTrue(coin.getTokenHex().equals(yuanTokenPub));
-			assertTrue(coin.getValue().equals(BigInteger.valueOf(100)));
+			if (!coin.isBIG()) {
+				assertTrue(coin.getValue().equals(BigInteger.valueOf(100l)));
+			}
+
 		}
 		checkResult(key, yuanWallet.walletKeys().get(0).toAddress(networkParameters).toBase58(), memo);
 		return userkeys;
 	}
 
-	//@Test
+	// @Test
 	public void fixBalanceAmount() throws Exception {
 		List<String> keyStrHex000 = new ArrayList<String>();
 		byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.fixAccountBalance.name(),
