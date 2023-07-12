@@ -49,8 +49,9 @@ public class FromAddressTests extends AbstractIntegrationTest {
 	public void testUserpay() throws Exception {
 		yuanWallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)),
 				contextRoot);
-		//first delete all table 
-		payBigTo(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)), Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(1000)), null);
+		// first delete all table
+		payBigTo(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)),
+				Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(1000)), null);
 		accountKey = new ECKey();
 		testTokens();
 		getBalanceAccount(false, yuanWallet.walletKeys());
@@ -115,7 +116,11 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		log.debug("block " + (b == null ? "block is null" : b.toString()));
 		makeRewardBlock();
 
-		getBalanceAccount(false, userkeys);
+		List<Coin> coins = getBalanceAccount(false, userkeys);
+		for (Coin coin : coins) {
+			assertTrue(coin.getTokenHex().equals(yuanTokenPub));
+			assertTrue(coin.getValue().equals(BigInteger.valueOf(100)));
+		}
 		checkResult(key, yuanWallet.walletKeys().get(0).toAddress(networkParameters).toBase58(), memo);
 		return userkeys;
 	}
@@ -126,11 +131,10 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.fixAccountBalance.name(),
 				Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
 		OkResponse okResponse = Json.jsonmapper().readValue(response, OkResponse.class);
-		assertTrue(okResponse.getErrorcode()==0);
+		assertTrue(okResponse.getErrorcode() == 0);
 
-		
 	}
-	
+
 	public void testTokens() throws JsonProcessingException, Exception {
 		String domain = "";
 		ECKey fromPrivate = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
