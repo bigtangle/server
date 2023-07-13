@@ -1267,9 +1267,15 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	@Override
 	public void calculateAccount(List<UTXO> utxos) throws BlockStoreException {
 		// collect all different address and tokenid as list and calculate the account
-		Map<String, Map<String, Coin>> toAddressMap =  queryOutputsMap("", "");
+		for (UTXO utxo : utxos) {
+			deleteAccountCoin(utxo.getAddress(), utxo.getTokenId());
+			Map<String, Map<String, Coin>> toAddressMap = queryOutputsMap(utxo.getAddress(), utxo.getTokenId());
+			addAccountCoinBatch(toAddressMap);
+			deleteAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
+			toAddressMap = queryOutputsMap(utxo.getFromaddress(), utxo.getTokenId());
+			addAccountCoinBatch(toAddressMap);
+		}
 
-		 addAccountCoinBatch(toAddressMap);
 	}
 
 	@Override
