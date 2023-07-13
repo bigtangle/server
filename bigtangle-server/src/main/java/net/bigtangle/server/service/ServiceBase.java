@@ -1291,7 +1291,7 @@ public class ServiceBase {
 				return SolidityState.getFailState();
 			} else {
 				logger.warn("predecessor.getBlockEvaluation().getSolid() =  "
-						+ predecessor.getBlockEvaluation().getSolid());
+						+ predecessor.getBlockEvaluation().getSolid() + " "+ block.toString()) ;
 				continue;
 				// throw new RuntimeException("not implemented");
 			}
