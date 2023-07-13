@@ -197,7 +197,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		return userkeys;
 	}
 
-	// @Test
+	  @Test
 	public void fixBalanceAmount() throws Exception {
 		List<String> keyStrHex000 = new ArrayList<String>();
 		byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.fixAccountBalance.name(),
@@ -205,6 +205,16 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		OkResponse okResponse = Json.jsonmapper().readValue(response, OkResponse.class);
 		assertTrue(okResponse.getErrorcode() == 0);
 
+		List<Coin> adminlist = getBalanceAccount(false, wallet.walletKeys());
+		for (Coin coin : adminlist) {
+			if (coin.isBIG()) {
+				assertTrue(NetworkParameters.BigtangleCoinTotal 
+						 .equals(coin.getValue()));
+			}
+
+		}
+		
+		
 	}
 
 	public void testTokens() throws JsonProcessingException, Exception {

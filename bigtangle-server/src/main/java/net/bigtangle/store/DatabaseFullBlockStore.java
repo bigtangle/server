@@ -1267,24 +1267,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	@Override
 	public void calculateAccount(List<UTXO> utxos) throws BlockStoreException {
 		// collect all different address and tokenid as list and calculate the account
-		for (UTXO utxo : utxos) {
-			Coin fromAddressTokenCoin = queryAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
-			Coin addressTokenCoin = queryAccountCoin(utxo.getAddress(), utxo.getTokenId());
-			if (addressTokenCoin == null) {
-				addAccountCoin(utxo.getAddress(), utxo.getTokenId(), utxo.getValue(), utxo.getBlockHash());
-			} else {
-				updateAccountCoin(utxo.getAddress(), utxo.getTokenId(), utxo.getValue().add(addressTokenCoin),
-						utxo.getBlockHash());
-			}
-			if (utxo.getFromaddress() != null && !utxo.getFromaddress().trim().isEmpty()) {
-				if (fromAddressTokenCoin != null) {
-					updateAccountCoin(utxo.getFromaddress(), utxo.getTokenId(),
-							fromAddressTokenCoin.subtract(utxo.getValue()), utxo.getBlockHash());
-				}
-			}
+		Map<String, Map<String, Coin>> toAddressMap =  queryOutputsMap("", "");
 
-		}
-
+		 addAccountCoinBatch(toAddressMap);
 	}
 
 	@Override
@@ -6943,7 +6928,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		PreparedStatement preparedStatement = null;
 		Map<String, Map<String, Coin>> map = new HashMap<>();
 		try {
-			String sql = " select toaddress, tokenid,coinvalue,fromaddress from outputs  where 1=1 and spent =true";
+			String sql = " select toaddress, tokenid,coinvalue,fromaddress from outputs  where spent = false";
 			if (address != null && !address.trim().isEmpty()) {
 				sql += " and toaddress = ?";
 			}
