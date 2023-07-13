@@ -67,6 +67,15 @@ public class FromAddressTests extends AbstractIntegrationTest {
 			}
 
 		}
+		List<Coin> adminlist = getBalanceAccount(false, wallet.walletKeys());
+		for (Coin coin : adminlist) {
+			if (coin.isBIG()) {
+				assertTrue(NetworkParameters.BigtangleCoinTotal.subtract( 
+						Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(999))).equals(coin.getValue()));
+			}
+
+		}
+		
 		accountKey = new ECKey();
 		log.debug("====start testTokens====");
 		testTokens();

@@ -15,6 +15,7 @@ export SERVICE_MINING=true
 export DB_PASSWORD=test1234
 export SERVERPORT=8089
 export SERVERPORT SERVICE_MINING_RATE=136000
+export JAVA_OPTS=-Ddebug -Xmx5028m -Dfile.encoding=UTF-8
  
 docker rm -f $DBHOST 
 rm -fr /data/vm/$DBHOST/*
@@ -26,7 +27,7 @@ docker run -d  -t --net=bigtangle-bridged-network     \
 
 docker rm -f $SERVERHOST 
 docker  run -d -t --net=bigtangle-bridged-network   --link $DBHOST \
--p $SERVERPORT:8088 --name  $SERVERHOST \
+-p $SERVERPORT:8088 --name  $SERVERHOST  -e JAVA_OPTS=$JAVA_OPTS \
 -e DB_PASSWORD=$DB_PASSWORD -e SERVER_PORT=8088  -e DB_NAME=info \
 -e DB_HOSTNAME=$DBHOST  -e SERVICE_MCMC_RATE=1000 \
 -e SERVER_MINERADDRESS=$SERVER_MINERADDRESS -e SERVERMODE= \

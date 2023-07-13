@@ -101,6 +101,8 @@ inserttime,  block, solid, confirmed FROM blocks
   SELECT blocks.hash, rating, depth, cumulativeweight,   height, milestone, milestonelastupdate, 
 inserttime,  block, solid, confirmed  FROM blocks order by inserttime desc limit 50
 
+select * from account   ;
+
 HELPER
 select * from tokenserial   ;
 

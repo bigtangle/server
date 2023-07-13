@@ -1943,7 +1943,7 @@ public class ServiceBase {
 					listScriptVerificationResults.add(future);
 				}
 			}
-			if (!checkFee)
+			if (!checkFee && block.getLastMiningRewardBlock() > 1283681)
 				throw new VerificationException.NoFeeException(Coin.FEE_DEFAULT.toString());
 
 			for (Future<VerificationException> future : listScriptVerificationResults) {
@@ -2258,7 +2258,7 @@ public class ServiceBase {
 					// Cannot happen due to solidity checks before
 					throw new RuntimeException("Block attempts to spend a not yet existent output!");
 				}
-				if (tokenid.equals(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
+				if (Utils.HEX.encode(prevOut.getValue().getTokenid()).equals(tokenid)) {
 					if (burnedCoins == null)
 						burnedCoins = Coin.valueOf(0, Utils.HEX.encode(prevOut.getValue().getTokenid()));
 
@@ -2274,7 +2274,7 @@ public class ServiceBase {
 				TransactionOutput out = tx.getOutputs().get(index);
 
 				try {
-					if (tokenid.equals(Utils.HEX.encode(out.getValue().getTokenid()))) {
+					if (Utils.HEX.encode(out.getValue().getTokenid()).equals(tokenid)) {
 						burnedCoins = burnedCoins.subtract(out.getValue());
 					}
 				} catch (IllegalArgumentException e) {

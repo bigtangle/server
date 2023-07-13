@@ -1266,6 +1266,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	 */
 	@Override
 	public void calculateAccount(List<UTXO> utxos) throws BlockStoreException {
+		// collect all different address and tokenid as list and calculate the account
 		for (UTXO utxo : utxos) {
 			Coin fromAddressTokenCoin = queryAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
 			Coin addressTokenCoin = queryAccountCoin(utxo.getAddress(), utxo.getTokenId());
@@ -1277,7 +1278,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			}
 			if (utxo.getFromaddress() != null && !utxo.getFromaddress().trim().isEmpty()) {
 				if (fromAddressTokenCoin != null) {
-					updateAccountCoin(utxo.getAddress(), utxo.getTokenId(),
+					updateAccountCoin(utxo.getFromaddress(), utxo.getTokenId(),
 							fromAddressTokenCoin.subtract(utxo.getValue()), utxo.getBlockHash());
 				}
 			}
