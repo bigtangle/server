@@ -38,7 +38,7 @@ public class WebTest extends AbstractIntegrationTest {
 
 	public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
 	public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
-	String serverurl = "http://localhost:8088/";
+	String serverurl = "https://bigtangle.de:18088/";
 	@Autowired
 	SyncBlockService syncBlockService;
 
@@ -47,7 +47,7 @@ public class WebTest extends AbstractIntegrationTest {
 
 		File zip = new File("./src/test/resources/test.zip");
 
-		publishWebToken(zip);
+	//	publishWebToken(zip);
 		deployWebFile();
 	}
 

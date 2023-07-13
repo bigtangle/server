@@ -48,6 +48,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 
 	@Test
 	public void testUserpay() throws Exception {
+		
 		yuanWallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)),
 				contextRoot);
 		// first delete all table
