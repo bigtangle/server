@@ -8,6 +8,7 @@ package net.bigtangle.store;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -101,7 +102,7 @@ public class FullBlockGraph {
 		if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
 			a = addChain(block, allowUnsolid, true, store);
 		} else {
-			a = addNonChain(block, allowUnsolid, store);
+			a = addNonChain(block, allowUnsolid, store, true);
 		}
 		return a;
 	}
@@ -273,6 +274,11 @@ public class FullBlockGraph {
 
 	public boolean addNonChain(Block block, boolean allowUnsolid, FullBlockStore blockStore)
 			throws BlockStoreException {
+		return addNonChain(block, allowUnsolid, blockStore, false);
+	}
+
+	public boolean addNonChain(Block block, boolean allowUnsolid, FullBlockStore blockStore,
+			boolean allowMissingPredecessor) throws BlockStoreException {
 
 		// Check the block is partially formally valid and fulfills PoW
 
@@ -290,7 +296,8 @@ public class FullBlockGraph {
 		if (!allowUnsolid) {
 			switch (solidityState.getState()) {
 			case MissingPredecessor:
-				throw new UnsolidException();
+				if (!allowMissingPredecessor)
+					throw new UnsolidException();
 			case MissingCalculation:
 			case Success:
 				break;
@@ -312,6 +319,13 @@ public class FullBlockGraph {
 		}
 
 		return true;
+	}
+
+	public Set<Sha256Hash> checkMissing(Block block, FullBlockStore blockStore) throws BlockStoreException {
+
+		// missing predecessors
+		return new ServiceBase(serverConfiguration, networkParameters).getMissingPredecessors(block, blockStore);
+
 	}
 
 	private void connectRewardBlock(final Block block, SolidityState solidityState, FullBlockStore store)
@@ -469,7 +483,7 @@ public class FullBlockGraph {
 		}
 
 	}
- 
+
 	public void updateConfirmed() throws BlockStoreException {
 		String LOCKID = "chain";
 		int LockTime = 1000000;

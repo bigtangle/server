@@ -122,7 +122,6 @@ import net.bigtangle.server.config.BurnedAddress;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
-import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.server.data.OrderMatchingResult;
@@ -132,7 +131,6 @@ import net.bigtangle.server.utils.OrderBook;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.ContextPropagatingThreadFactory;
 import net.bigtangle.utils.DomainValidator;
-import net.bigtangle.utils.Gzip;
 import net.bigtangle.utils.Json;
 
 public class ServiceBase {
@@ -1268,6 +1266,19 @@ public class ServiceBase {
 		return SolidityState.getSuccessState();
 	}
 
+	public  Set<Sha256Hash> getMissingPredecessors(Block block, FullBlockStore store)
+			throws BlockStoreException {
+		 Set<Sha256Hash> missingPredecessorBlockHashes= new HashSet<>();
+		final Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
+		for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
+			  BlockWrap pred = store.getBlockWrap(predecessorReq);
+			if (pred == null)
+				missingPredecessorBlockHashes.add(predecessorReq);
+		 
+		}
+		return missingPredecessorBlockHashes;
+	}
+
 	public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions, FullBlockStore store)
 			throws BlockStoreException {
 		return getMinPredecessorSolidity(block, throwExceptions, store, true);
@@ -1291,7 +1302,7 @@ public class ServiceBase {
 				return SolidityState.getFailState();
 			} else {
 				logger.warn("predecessor.getBlockEvaluation().getSolid() =  "
-						+ predecessor.getBlockEvaluation().getSolid() + " "+ block.toString()) ;
+						+ predecessor.getBlockEvaluation().getSolid() + " " + block.toString());
 				continue;
 				// throw new RuntimeException("not implemented");
 			}
@@ -3413,52 +3424,6 @@ public class ServiceBase {
 		return Utils.encodeCompactBits(newTarget);
 	}
 
-	public boolean addChain(Block block, boolean allowUnsolid, boolean tryConnecting, FullBlockStore store)
-			throws BlockStoreException {
-
-		// Check the block is partially formally valid and fulfills PoW
-		block.verifyHeader();
-		block.verifyTransactions();
-		// no more check add data
-		saveChainBlockQueue(block, store, false);
-
-		return true;
-	}
-
-	private void saveChainBlockQueue(Block block, FullBlockStore store, boolean orphan) throws BlockStoreException {
-		// save the block
-		try {
-			store.beginDatabaseBatchWrite();
-			ChainBlockQueue chainBlockQueue = new ChainBlockQueue(block.getHash().getBytes(),
-					Gzip.compress(block.unsafeBitcoinSerialize()), block.getLastMiningRewardBlock(), orphan,
-					block.getTimeSeconds());
-			store.insertChainBlockQueue(chainBlockQueue);
-			store.commitDatabaseBatchWrite();
-		} catch (Exception e) {
-			store.abortDatabaseBatchWrite();
-			throw e;
-		} finally {
-			store.defaultDatabaseBatchWrite();
-
-		}
-	}
-
-	/**
-	 * Inserts the specified block into the DB
-	 * 
-	 * @param block         the block
-	 * @param solidityState
-	 * @param height        the block's height
-	 * @throws BlockStoreException
-	 * @throws VerificationException
-	 */
-	public void connect(final Block block, SolidityState solidityState, FullBlockStore store)
-			throws BlockStoreException, VerificationException {
-
-		store.put(block);
-		solidifyBlock(block, solidityState, false, store);
-	}
-
 	/**
 	 * Get the {@link Script} from the script bytes or return Script of empty byte
 	 * array.
@@ -3607,7 +3572,7 @@ public class ServiceBase {
 		for (final Transaction tx : block.getBlock().getTransactions()) {
 			confirmTransaction(block.getBlock(), tx, blockStore);
 		}
-
+		calculateAccount(block.getBlock(),  block.getBlock().getTransactions(), blockStore);
 		// type-specific updates
 		switch (block.getBlock().getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
@@ -3859,6 +3824,33 @@ public class ServiceBase {
 		}
 	}
 
+	
+	private void  calculateAccount(Block block, List<Transaction> transactions, FullBlockStore blockStore)
+			throws BlockStoreException {
+		for (final Transaction tx : transactions) {
+			boolean isCoinBase = tx.isCoinBase();
+			List<UTXO> utxos = new ArrayList<UTXO>();
+			for (TransactionOutput out : tx.getOutputs()) {
+				Script script = getScript(out.getScriptBytes());
+				String fromAddress = fromAddress(tx, isCoinBase);
+				int minsignnumber = 1;
+				if (script.isSentToMultiSig()) {
+					minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
+				}
+				UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
+						getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
+						Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0,
+						block.getTimeSeconds(), null);
+
+				if (!newOut.isZero()) {
+					utxos.add(newOut); 
+				} 
+			}
+	 
+			// calculate balance
+			blockStore.calculateAccount(utxos);
+		}
+	}
 	private void confirmVirtualCoinbaseTransaction(BlockWrap block, FullBlockStore blockStore)
 			throws BlockStoreException {
 		// Set own outputs confirmed
@@ -4063,7 +4055,7 @@ public class ServiceBase {
 		for (Transaction tx : block.getTransactions()) {
 			unconfirmTransaction(tx, block, blockStore);
 		}
-
+		calculateAccount(block, block.getTransactions(), blockStore);
 		// Then unconfirm type-specific stuff
 		switch (block.getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
@@ -4185,7 +4177,9 @@ public class ServiceBase {
 
 	public void solidifyBlock(Block block, SolidityState solidityState, boolean setMilestoneSuccess,
 			FullBlockStore blockStore) throws BlockStoreException {
-
+		if (block.getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
+			// logger.debug(block.toString());
+		}
 		switch (solidityState.getState()) {
 		case MissingCalculation:
 			blockStore.updateBlockEvaluationSolid(block.getHash(), 1);

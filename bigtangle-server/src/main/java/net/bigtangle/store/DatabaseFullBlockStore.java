@@ -1267,17 +1267,26 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	@Override
 	public void calculateAccount(List<UTXO> utxos) throws BlockStoreException {
 		// collect all different address and tokenid as list and calculate the account
+	 
 		for (UTXO utxo : utxos) {
 			deleteAccountCoin(utxo.getAddress(), utxo.getTokenId());
 			Map<String, Map<String, Coin>> toAddressMap = queryOutputsMap(utxo.getAddress(), utxo.getTokenId());
 			addAccountCoinBatch(toAddressMap);
 			deleteAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
-			toAddressMap = queryOutputsMap(utxo.getFromaddress(), utxo.getTokenId());
-			addAccountCoinBatch(toAddressMap);
+			Map<String, Map<String, Coin>>	fromAddressMap = queryOutputsMap(utxo.getFromaddress(), utxo.getTokenId());
+		 	addAccountCoinBatch(fromAddressMap);
 		}
 
 	}
-
+	public boolean findDiffUtxo(UTXO utxo , List<UTXO> diff) throws BlockStoreException {
+		for (UTXO u : diff) {
+			if(u.getAddress().equals(utxo.getAddress()  )
+					&&  u.getTokenId().equals(utxo.getTokenId())) {
+				return true;
+			}
+		}
+		return false;
+	}
 	@Override
 	public void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
 		List<UTXO> a = new ArrayList<UTXO>();

@@ -72,7 +72,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		for (Coin coin : adminlist) {
 			if (coin.isBIG()) {
 				assertTrue(NetworkParameters.BigtangleCoinTotal.subtract( 
-						Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(999))).equals(coin.getValue()));
+						Coin.FEE_DEFAULT.getValue().multiply(BigInteger.valueOf(1001))).equals(coin.getValue()));
 			}
 
 		}
