@@ -1371,12 +1371,7 @@ public class ServiceBase {
 	private SolidityState checkFormalTransactionalSolidity(Block block, boolean throwExceptions)
 			throws BlockStoreException {
 		try {
-			// at least one transaction for fee
-			if (block.getTransactions().size() < 1) {
-				if (throwExceptions)
-					throw new IncorrectTransactionCountException();
-				return SolidityState.getFailState();
-			}
+	 
 			long sigOps = 0;
 
 			for (Transaction tx : block.getTransactions()) {
@@ -1841,8 +1836,22 @@ public class ServiceBase {
 
 	}
 
+	private void checCoinbaseTransactionalSolidity(Block block, FullBlockStore store) throws BlockStoreException {
+		// only reward block and contract can be set coinbase and check by caculation
+		for (final Transaction tx : block.getTransactions()) {
+			if (tx.isCoinBase() && (block.getBlockType() == Type.BLOCKTYPE_REWARD
+					|| block.getBlockType() == Type.BLOCKTYPE_CONTRACT_EXECUTE)) {
+				throw new InvalidTransactionException("coinbase is not allowed ");
+			}
+		}
+
+	}
+
 	private SolidityState checkFullTransactionalSolidity(Block block, long height, boolean throwExceptions,
 			FullBlockStore store) throws BlockStoreException {
+
+		checCoinbaseTransactionalSolidity(block, store);
+
 		List<Transaction> transactions = block.getTransactions();
 
 		// All used transaction outputs as input must exist and unique
@@ -3617,7 +3626,7 @@ public class ServiceBase {
 		for (final Transaction tx : block.getBlock().getTransactions()) {
 			confirmTransaction(block.getBlock(), tx, blockStore);
 		}
-		calculateAccount(block.getBlock(), block.getBlock().getTransactions(), blockStore);
+		calculateAccount(block.getBlock(),   blockStore);
 		// type-specific updates
 		switch (block.getBlock().getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
@@ -3869,9 +3878,9 @@ public class ServiceBase {
 		}
 	}
 
-	private void calculateAccount(Block block, List<Transaction> transactions, FullBlockStore blockStore)
+	public void calculateAccount(Block block, FullBlockStore blockStore)
 			throws BlockStoreException {
-		for (final Transaction tx : transactions) {
+		for (final Transaction tx : block.getTransactions()) {
 			boolean isCoinBase = tx.isCoinBase();
 			List<UTXO> utxos = new ArrayList<UTXO>();
 			for (TransactionOutput out : tx.getOutputs()) {
@@ -4100,7 +4109,7 @@ public class ServiceBase {
 		for (Transaction tx : block.getTransactions()) {
 			unconfirmTransaction(tx, block, blockStore);
 		}
-		calculateAccount(block, block.getTransactions(), blockStore);
+		calculateAccount(block,  blockStore);
 		// Then unconfirm type-specific stuff
 		switch (block.getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
@@ -4320,7 +4329,7 @@ public class ServiceBase {
 			}
 			blockStore.addUnspentTransactionOutput(utxos);
 			// calculate balance
-			blockStore.calculateAccount(utxos);
+			//TODO blockStore.calculateAccount(utxos);
 		}
 	}
 

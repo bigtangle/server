@@ -83,9 +83,8 @@ public class FullBlockGraph {
 		} else {
 			added = addNonChain(block, allowUnsolid, store);
 		}
-
-		// TODO move this function to wallet,
-		// update spend of origin UTXO to avoid create of double spent
+		// update spend of origin UTXO to avoid create of double spent and account
+		// balance
 		if (added) {
 			updateTransactionOutputSpendPending(block);
 		}
@@ -96,15 +95,14 @@ public class FullBlockGraph {
 	/*
 	 * speedup of sync without updateTransactionOutputSpendPending.
 	 */
-	public void addFromSync(Block block, boolean allowUnsolid, FullBlockStore store)
-			throws BlockStoreException {
+	public void addFromSync(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
 		boolean a;
 		if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-			  saveChainConnected(block, store);
+			saveChainConnected(block, store);
 		} else {
-			  addNonChain(block, allowUnsolid, store, false);
+			addNonChain(block, allowUnsolid, store, false);
 		}
-	 
+
 	}
 
 	public boolean add(Block block, boolean allowUnsolid, boolean updatechain, FullBlockStore store)
@@ -286,9 +284,10 @@ public class FullBlockGraph {
 
 	public boolean addNonChain(Block block, boolean allowUnsolid, FullBlockStore blockStore,
 			boolean allowMissingPredecessor) throws BlockStoreException {
-	/*	if (block.getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
-		 	log.debug(block.toString());
-		} */
+		/*
+		 * if (block.getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
+		 * log.debug(block.toString()); }
+		 */
 		// Check the block is partially formally valid and fulfills PoW
 
 		block.verifyHeader();
@@ -395,7 +394,7 @@ public class FullBlockGraph {
 				FullBlockStore blockStore = storeService.getStore();
 				try {
 					updateTransactionOutputSpendPending(block, blockStore);
-
+					new ServiceBase(serverConfiguration, networkParameters).calculateAccount(block, blockStore);
 					// Initialize MCMC
 					if (blockStore.getMCMC(block.getHash()) == null) {
 						ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
