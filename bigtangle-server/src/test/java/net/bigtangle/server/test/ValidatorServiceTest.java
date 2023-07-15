@@ -280,7 +280,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		// After adding the missing dependency, should be solid
 		new ServiceBase(serverConfiguration, networkParameters).solidifyWaiting(block, store);
 
-		//TODO assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
+		// TODO
+		// assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid()
+		// == 2);
 		assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
 	}
 
@@ -1762,7 +1764,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		// Coinbase with signatures
 		block.addCoinbaseTransaction(outKey.getPubKey(), coinbase, tokenInfo, null);
 		Transaction transaction = block.getTransactions().get(0);
-		
+
 		Sha256Hash sighash1 = transaction.getHash();
 		ECKey.ECDSASignature party1Signature = outKey.sign(sighash1, null);
 		byte[] buf1 = party1Signature.encodeToDER();
@@ -1922,21 +1924,21 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		try {
 			blockGraph.add(block3, false, store);
-		//	 fail();
+			// fail();
 		} catch (VerificationException e) {
-		
+
 		}
 		try {
 			blockGraph.add(block4, false, store);
-			//TODO fail();
+			// TODO fail();
 		} catch (VerificationException e) {
-	 
+
 		}
 		try {
 			blockGraph.add(block5, false, store);
-		//TODO	fail();
+			// TODO fail();
 		} catch (VerificationException e) {
-		
+
 		}
 		try {
 			blockGraph.add(block6, false, store);
@@ -1955,7 +1957,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		}
 		try {
 			blockGraph.add(block9, false, store);
-		//TODO	 fail();
+			// TODO fail();
 		} catch (VerificationException e) {
 		}
 		try {
@@ -2613,14 +2615,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 			block1.setBlockType(Type.BLOCKTYPE_ORDER_OPEN);
 			block1.solve();
 
-			resetAndMakeTestToken(testKey, new ArrayList<Block>());
 			// Should go through
 			blockGraph.add(block1, false, store);
-
+			mcmc();
 		}
 		Block block2 = null;
 		{
-		Transaction fee = wallet.feeTransaction(null);
+			Transaction fee = wallet.feeTransaction(null);
 			// Make an order op
 			Transaction tx = new Transaction(networkParameters);
 			OrderCancelInfo info = new OrderCancelInfo(block1.getHash());
@@ -2636,7 +2637,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 			block2 = block1.createNextBlock(block1);
 			block2.addTransaction(tx);
 			block2.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
-			block2.solve();
 			block2.addTransaction(fee);
 			block2.solve();
 		}

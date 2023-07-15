@@ -247,7 +247,7 @@ public abstract class NetworkParameters {
     /**
      * A Java package style string acting as unique ID for these parameters
      */
-    public String getId() {
+	public String getId() {
         return id;
     }
 

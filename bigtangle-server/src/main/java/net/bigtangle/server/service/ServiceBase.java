@@ -1266,15 +1266,14 @@ public class ServiceBase {
 		return SolidityState.getSuccessState();
 	}
 
-	public  Set<Sha256Hash> getMissingPredecessors(Block block, FullBlockStore store)
-			throws BlockStoreException {
-		 Set<Sha256Hash> missingPredecessorBlockHashes= new HashSet<>();
+	public Set<Sha256Hash> getMissingPredecessors(Block block, FullBlockStore store) throws BlockStoreException {
+		Set<Sha256Hash> missingPredecessorBlockHashes = new HashSet<>();
 		final Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
 		for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
-			  BlockWrap pred = store.getBlockWrap(predecessorReq);
+			BlockWrap pred = store.getBlockWrap(predecessorReq);
 			if (pred == null)
 				missingPredecessorBlockHashes.add(predecessorReq);
-		 
+
 		}
 		return missingPredecessorBlockHashes;
 	}
@@ -1954,7 +1953,7 @@ public class ServiceBase {
 					listScriptVerificationResults.add(future);
 				}
 			}
-			if (!checkFee && block.getLastMiningRewardBlock() > 1283681)
+			if (!checkFee && enableFee(block))
 				throw new VerificationException.NoFeeException(Coin.FEE_DEFAULT.toString());
 
 			for (Future<VerificationException> future : listScriptVerificationResults) {
@@ -1988,6 +1987,12 @@ public class ServiceBase {
 		}
 
 		return SolidityState.getSuccessState();
+	}
+
+	private boolean enableFee(Block block) {
+		return (block.getLastMiningRewardBlock() > 1283681
+				&& networkParameters.getId().equals(NetworkParameters.ID_MAINNET))
+				|| networkParameters.getId().equals(NetworkParameters.ID_UNITTESTNET);
 	}
 
 	private Boolean checkBurnedFromAddress(final Transaction tx, Long chain) {
@@ -2173,12 +2178,17 @@ public class ServiceBase {
 		}
 
 		// Check that the tx inputs only burn one type of tokens, only for offerTokenid
-		Coin burnedCoins = countBurnedToken(block, store, orderInfo.getOfferTokenid());
+		Coin burnedCoins = null;
+		if (orderInfo.getVersion() > 1) {
+			burnedCoins = countBurnedToken(block, store, orderInfo.getOfferTokenid());
+		} else {
+			burnedCoins = countBurnedToken(block, store);
+		}
 
 		if (burnedCoins == null || burnedCoins.getValue().longValue() == 0) {
 			if (throwExceptions)
-				throw new InvalidOrderException("No tokens were offered.");
-			return SolidityState.getFailState();
+				// throw new InvalidOrderException("No tokens were offered.");
+				return SolidityState.getFailState();
 		}
 
 		if (burnedCoins.getValue().longValue() > Long.MAX_VALUE) {
@@ -2193,7 +2203,7 @@ public class ServiceBase {
 		}
 
 		// Check that the tx inputs only burn must be the offerValue
-		if (burnedCoins.isBIG()) {
+		if (burnedCoins.isBIG() && enableFee(block)) {
 			// fee
 			if (!burnedCoins.subtract(Coin.FEE_DEFAULT)
 					.equals(new Coin(orderInfo.getOfferValue(), Utils.HEX.decode(orderInfo.getOfferTokenid())))) {
@@ -2247,6 +2257,41 @@ public class ServiceBase {
 				&& orderInfo.getTargetTokenid().equals(orderInfo.getOrderBaseToken())
 				|| !burnedCoins.getTokenHex().equals(orderInfo.getOrderBaseToken())
 						&& !orderInfo.getTargetTokenid().equals(orderInfo.getOrderBaseToken());
+	}
+
+	public Coin countBurnedToken(Block block, FullBlockStore store) throws BlockStoreException {
+		Coin burnedCoins = null;
+		for (final Transaction tx : block.getTransactions()) {
+			for (int index = 0; index < tx.getInputs().size(); index++) {
+				TransactionInput in = tx.getInputs().get(index);
+				UTXO prevOut = store.getTransactionOutput(in.getOutpoint().getBlockHash(), in.getOutpoint().getTxHash(),
+						in.getOutpoint().getIndex());
+				if (prevOut == null) {
+					// Cannot happen due to solidity checks before
+					throw new RuntimeException("Block attempts to spend a not yet existent output!");
+				}
+
+				if (burnedCoins == null)
+					burnedCoins = Coin.valueOf(0, Utils.HEX.encode(prevOut.getValue().getTokenid()));
+
+				try {
+					burnedCoins = burnedCoins.add(prevOut.getValue());
+				} catch (IllegalArgumentException e) {
+					throw new InvalidOrderException(e.getMessage());
+				}
+			}
+
+			for (int index = 0; index < tx.getOutputs().size(); index++) {
+				TransactionOutput out = tx.getOutputs().get(index);
+
+				try {
+					burnedCoins = burnedCoins.subtract(out.getValue());
+				} catch (IllegalArgumentException e) {
+					throw new InvalidOrderException(e.getMessage());
+				}
+			}
+		}
+		return burnedCoins;
 	}
 
 	/**
@@ -3572,7 +3617,7 @@ public class ServiceBase {
 		for (final Transaction tx : block.getBlock().getTransactions()) {
 			confirmTransaction(block.getBlock(), tx, blockStore);
 		}
-		calculateAccount(block.getBlock(),  block.getBlock().getTransactions(), blockStore);
+		calculateAccount(block.getBlock(), block.getBlock().getTransactions(), blockStore);
 		// type-specific updates
 		switch (block.getBlock().getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
@@ -3824,8 +3869,7 @@ public class ServiceBase {
 		}
 	}
 
-	
-	private void  calculateAccount(Block block, List<Transaction> transactions, FullBlockStore blockStore)
+	private void calculateAccount(Block block, List<Transaction> transactions, FullBlockStore blockStore)
 			throws BlockStoreException {
 		for (final Transaction tx : transactions) {
 			boolean isCoinBase = tx.isCoinBase();
@@ -3843,14 +3887,15 @@ public class ServiceBase {
 						block.getTimeSeconds(), null);
 
 				if (!newOut.isZero()) {
-					utxos.add(newOut); 
-				} 
+					utxos.add(newOut);
+				}
 			}
-	 
+
 			// calculate balance
 			blockStore.calculateAccount(utxos);
 		}
 	}
+
 	private void confirmVirtualCoinbaseTransaction(BlockWrap block, FullBlockStore blockStore)
 			throws BlockStoreException {
 		// Set own outputs confirmed
@@ -4355,7 +4400,7 @@ public class ServiceBase {
 			OrderOpenInfo reqInfo = new OrderOpenInfo().parse(block.getTransactions().get(0).getData());
 			// calculate the offervalue for version == 1
 			if (reqInfo.getVersion() == 1) {
-				Coin burned = countBurnedToken(block, blockStore, reqInfo.getOfferTokenid());
+				Coin burned = countBurnedToken(block, blockStore);
 				reqInfo.setOfferValue(burned.getValue().longValue());
 				reqInfo.setOfferTokenid(burned.getTokenHex());
 			}

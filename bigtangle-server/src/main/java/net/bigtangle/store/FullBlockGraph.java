@@ -96,15 +96,15 @@ public class FullBlockGraph {
 	/*
 	 * speedup of sync without updateTransactionOutputSpendPending.
 	 */
-	public boolean addNoSpendPending(Block block, boolean allowUnsolid, FullBlockStore store)
+	public void addFromSync(Block block, boolean allowUnsolid, FullBlockStore store)
 			throws BlockStoreException {
 		boolean a;
 		if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-			a = addChain(block, allowUnsolid, true, store);
+			  saveChainConnected(block, store);
 		} else {
-			a = addNonChain(block, allowUnsolid, store, true);
+			  addNonChain(block, allowUnsolid, store, false);
 		}
-		return a;
+	 
 	}
 
 	public boolean add(Block block, boolean allowUnsolid, boolean updatechain, FullBlockStore store)
@@ -221,12 +221,19 @@ public class FullBlockGraph {
 
 	private void saveChainConnected(ChainBlockQueue chainBlockQueue, FullBlockStore store)
 			throws VerificationException, BlockStoreException {
-
 		try {
-			store.beginDatabaseBatchWrite();
-
 			// It can be down lock for update of this on database
 			Block block = networkParameters.getDefaultSerializer().makeBlock(chainBlockQueue.getBlock());
+			saveChainConnected(block, store);
+		} finally {
+			deleteChainQueue(chainBlockQueue, store);
+		}
+	}
+
+	private void saveChainConnected(Block block, FullBlockStore store)
+			throws VerificationException, BlockStoreException {
+		try {
+			store.beginDatabaseBatchWrite();
 
 			// Check the block is partially formally valid and fulfills PoW
 			block.verifyHeader();
@@ -261,7 +268,7 @@ public class FullBlockGraph {
 			store.abortDatabaseBatchWrite();
 			throw e;
 		} finally {
-			deleteChainQueue(chainBlockQueue, store);
+
 			store.defaultDatabaseBatchWrite();
 		}
 	}
@@ -279,7 +286,9 @@ public class FullBlockGraph {
 
 	public boolean addNonChain(Block block, boolean allowUnsolid, FullBlockStore blockStore,
 			boolean allowMissingPredecessor) throws BlockStoreException {
-
+	/*	if (block.getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
+		 	log.debug(block.toString());
+		} */
 		// Check the block is partially formally valid and fulfills PoW
 
 		block.verifyHeader();

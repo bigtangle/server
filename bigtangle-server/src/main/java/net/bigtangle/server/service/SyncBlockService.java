@@ -231,7 +231,7 @@ public class SyncBlockService {
 							Json.jsonmapper().writeValueAsString(requestParam));
 					Block block = networkParameters.getDefaultSerializer().makeBlock(data);
 					log.info("   requestBlock {} ", block.toString());
-					blockgraph.addNoSpendPending(block, true, store);
+					blockgraph.addFromSync(block, true, store);
 					break;
 				} catch (Exception e) {
 					log.debug(hash + s, e);
@@ -293,7 +293,7 @@ public class SyncBlockService {
 				for (Sha256Hash hash : missing) {
 					requestBlock(hash, store);
 				}
-				blockgraph.addNoSpendPending(block, true, store);
+				blockgraph.addFromSync(block, true, store);
 			}
 		}
 
