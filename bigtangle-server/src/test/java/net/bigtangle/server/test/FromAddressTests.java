@@ -133,7 +133,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
 		w.setServerURL(contextRoot);
 		try {
-
+			log.debug("====ready buyTicket====");
 			w.pay(null, accountKey.toAddress(networkParameters).toString(),
 					Coin.valueOf(100, Utils.HEX.decode(yuanTokenPub)), new MemoInfo(" buy ticket"));
 		} catch (InsufficientMoneyException e) {
@@ -143,6 +143,11 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		log.debug("====start buyTicket====");
 		List<ECKey> userkeys = new ArrayList<ECKey>();
 		userkeys.add(key);
+		log.debug("====chaeck utxo");
+		 List<UTXO>  utxos=getBalance(false, key);
+		 for (UTXO utxo : utxos) {
+			log.debug("user uxxo=="+utxo.toString());
+		}
 		List<Coin> coins = getBalanceAccount(false, userkeys);
 		for (Coin coin : coins) {
 
