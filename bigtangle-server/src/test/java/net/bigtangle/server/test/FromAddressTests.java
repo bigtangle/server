@@ -131,22 +131,22 @@ public class FromAddressTests extends AbstractIntegrationTest {
 	 */
 	public void buyTicket(ECKey key, ECKey accountKey) throws Exception {
 		Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
-		w.setServerURL(contextRoot);
-		try {
-			log.debug("====ready buyTicket====");
-			w.pay(null, accountKey.toAddress(networkParameters).toString(),
-					Coin.valueOf(100, Utils.HEX.decode(yuanTokenPub)), new MemoInfo(" buy ticket"));
-		} catch (InsufficientMoneyException e) {
-			// TODO: handle exception
-		}
+
+		log.debug("====ready buyTicket====");
+		List<Block> bs = w.pay(null, accountKey.toAddress(networkParameters).toString(),
+				Coin.valueOf(100, Utils.HEX.decode(yuanTokenPub)), new MemoInfo(" buy ticket"));
 		makeRewardBlock();
+		for (Block b : bs) {
+			blockGraph.updateAccount(b);
+		}
+		
 		log.debug("====start buyTicket====");
 		List<ECKey> userkeys = new ArrayList<ECKey>();
 		userkeys.add(key);
 		log.debug("====chaeck utxo");
-		 List<UTXO>  utxos=getBalance(false, key);
-		 for (UTXO utxo : utxos) {
-			log.debug("user uxxo=="+utxo.toString());
+		List<UTXO> utxos = getBalance(false, key);
+		for (UTXO utxo : utxos) {
+			log.debug("user uxxo==" + utxo.toString());
 		}
 		List<Coin> coins = getBalanceAccount(false, userkeys);
 		for (Coin coin : coins) {
@@ -183,7 +183,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		Block b = yuanWallet.payToList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), memo);
 		log.debug("block " + (b == null ? "block is null" : b.toString()));
 		makeRewardBlock();
-
+		blockGraph.updateAccount(b);
 		log.debug("====start check yuanWallet wallet====");
 		List<Coin> list = getBalanceAccount(false, yuanWallet.walletKeys());
 		for (Coin coin : list) {
@@ -199,7 +199,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 
 		}
 //		checkResult(key, yuanWallet.walletKeys().get(0).toAddress(networkParameters).toBase58(), memo);
-		//fee=1000
+		// fee=1000
 		payBigTo(key, Coin.FEE_DEFAULT.getValue(), null);
 		makeRewardBlock();
 		log.debug("====start check admin wallet====");
@@ -212,7 +212,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 						.equals(coin.getValue()));
 			}
 		}
-		//fee=1000
+		// fee=1000
 		payBigTo(key2, Coin.FEE_DEFAULT.getValue(), null);
 		makeRewardBlock();
 		log.debug("====start check admin wallet====");

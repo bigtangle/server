@@ -148,11 +148,11 @@ delete from vm_deposit where amount <= 0
 select userid ,useraccount, amount,  d.status, pubkey from vm_deposit d
              join Account a on d.userid=a.id
              join wechatinvite w on a.email=w.wechatId and w.pubkey is not null;
-select count(*) from outputs where confirmed=1 and spent=0 and  tokenid = "bc";
+select count(*) from outputs where confirmed=1 and spent=false and  tokenid = "bc";
 select count(*) from outputs where confirmed=1 and spent=0 and  tokenid = "bc" group by toaddress;
 select count(*) from outputs where confirmed=1 and spent=0 and tokenid = "03bed6e75294e48556d8bb2a53caf6f940b70df95760ee4c9772681bbf90df85ba";
 
-
+select count(*) from orders  where confirmed=1 and spent=false 
  SELECT blockhash, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 
  txreward.difficulty, txreward.chainlength FROM txreward where chainlength=446310;
  

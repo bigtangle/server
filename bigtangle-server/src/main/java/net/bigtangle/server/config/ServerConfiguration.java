@@ -27,7 +27,7 @@ public class ServerConfiguration {
     private String serverurl;
     private String serverversion;
     private String clientversion;
-    private Boolean permissioned;
+    private Boolean permissioned =false;
     private String permissionadmin;
     
     private Boolean myserverblockOnly = false;

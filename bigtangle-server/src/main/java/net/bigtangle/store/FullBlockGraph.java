@@ -98,6 +98,9 @@ public class FullBlockGraph {
 	public void addFromSync(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
 		boolean a;
 		if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
+			if(block.getLastMiningRewardBlock()==197706) {
+				log.debug(block.toString());
+			}
 			saveChainConnected(block, store);
 		} else {
 			addNonChain(block, allowUnsolid, store, false);
@@ -251,10 +254,8 @@ public class FullBlockGraph {
 			if (solidityState.isFailState()) {
 				log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
 				return;
-			}
-			// Inherit solidity from predecessors if they are not solid
-			solidityState = serviceBase.getMinPredecessorSolidity(block, false, store, false);
-
+			} 
+			
 			// Sanity check
 			if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
 				log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
@@ -389,24 +390,10 @@ public class FullBlockGraph {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		final Future<String> handler = executor.submit(new Callable() {
 			@Override
-			public String call() throws Exception {
-
-				FullBlockStore blockStore = storeService.getStore();
-				try {
-					updateTransactionOutputSpendPending(block, blockStore);
-					new ServiceBase(serverConfiguration, networkParameters).calculateAccount(block, blockStore);
-					// Initialize MCMC
-					if (blockStore.getMCMC(block.getHash()) == null) {
-						ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
-						depthAndWeight.add(new DepthAndWeight(block.getHash(), 1, 0));
-						blockStore.updateBlockEvaluationWeightAndDepth(depthAndWeight);
-					}
-				} finally {
-					if (blockStore != null)
-						blockStore.close();
-				}
+			public String call() throws Exception { 
+				updateAccount(block);
 				return "";
-			}
+			} 
 		});
 		try {
 			handler.get(2000l, TimeUnit.MILLISECONDS);
@@ -421,7 +408,22 @@ public class FullBlockGraph {
 		}
 
 	}
-
+	public void updateAccount(Block block) throws BlockStoreException {
+		FullBlockStore blockStore = storeService.getStore();
+		try {
+			updateTransactionOutputSpendPending(block, blockStore);
+			new ServiceBase(serverConfiguration, networkParameters).calculateAccount(block, blockStore);
+			// Initialize MCMC
+			if (blockStore.getMCMC(block.getHash()) == null) {
+				ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
+				depthAndWeight.add(new DepthAndWeight(block.getHash(), 1, 0));
+				blockStore.updateBlockEvaluationWeightAndDepth(depthAndWeight);
+			}
+		} finally {
+			if (blockStore != null)
+				blockStore.close();
+		}
+	}
 	private void updateTransactionOutputSpendPending(Block block, FullBlockStore blockStore)
 			throws BlockStoreException {
 		for (final Transaction tx : block.getTransactions()) {
@@ -453,7 +455,7 @@ public class FullBlockGraph {
 
 			try {
 				blockStore.beginDatabaseBatchWrite();
-				serviceBase.unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
+				serviceBase.unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore,true);
 				blockStore.commitDatabaseBatchWrite();
 			} catch (Exception e) {
 				blockStore.abortDatabaseBatchWrite();
@@ -480,7 +482,7 @@ public class FullBlockGraph {
 			try {
 				blockStore.beginDatabaseBatchWrite();
 				new ServiceBase(serverConfiguration, networkParameters)
-						.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
+						.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore,true);
 				blockStore.commitDatabaseBatchWrite();
 			} catch (Exception e) {
 				blockStore.abortDatabaseBatchWrite();

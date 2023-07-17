@@ -438,11 +438,11 @@ public class SyncBlockService {
 			List<TXReward> mylist = new ArrayList<TXReward>();
 
 			List<TXReward> allConfirmedReward = store.getAllConfirmedReward();
-			MissingNumberCheckService missingNumberCheckService = new MissingNumberCheckService();
-			if (!missingNumberCheckService.check(allConfirmedReward)) {
-				log.debug("  my chain missing sequence  ");
-
-			}
+//			MissingNumberCheckService missingNumberCheckService = new MissingNumberCheckService();
+//			if (!missingNumberCheckService.check(allConfirmedReward)) {
+//				log.debug("  my chain missing sequence  ");
+//
+//			}
 			for (TXReward t : allConfirmedReward) {
 				if (t.getChainLength() <= my.getChainLength()) {
 					mylist.add(t);
