@@ -96,12 +96,14 @@ public class FullBlockGraph {
 	 * speedup of sync without updateTransactionOutputSpendPending.
 	 */
 	public void addFromSync(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
-	
+		boolean a;
 		if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
- 
+			if(block.getLastMiningRewardBlock()==197706) {
+				log.debug(block.toString());
+			}
 			saveChainConnected(block, store);
 		} else {
-			addNonChain(block, allowUnsolid, store, true);
+			addNonChain(block, allowUnsolid, store, false);
 		}
 
 	}
@@ -252,8 +254,8 @@ public class FullBlockGraph {
 			if (solidityState.isFailState()) {
 				log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
 				return;
-			}
-
+			} 
+			
 			// Sanity check
 			if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
 				log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
@@ -278,16 +280,15 @@ public class FullBlockGraph {
 
 	public boolean addNonChain(Block block, boolean allowUnsolid, FullBlockStore blockStore)
 			throws BlockStoreException {
-		return addNonChain(block, allowUnsolid, blockStore, true);
+		return addNonChain(block, allowUnsolid, blockStore, false);
 	}
 
 	public boolean addNonChain(Block block, boolean allowUnsolid, FullBlockStore blockStore,
 			boolean allowMissingPredecessor) throws BlockStoreException {
-
-		if (block.getHeight() == 6) {
-		  	log.debug(block.toString());
-		}
-
+		/*
+		 * if (block.getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
+		 * log.debug(block.toString()); }
+		 */
 		// Check the block is partially formally valid and fulfills PoW
 
 		block.verifyHeader();
@@ -313,6 +314,7 @@ public class FullBlockGraph {
 				throw new GenericInvalidityException();
 			}
 		}
+
 		// Accept the block
 		try {
 			blockStore.beginDatabaseBatchWrite();
@@ -388,10 +390,10 @@ public class FullBlockGraph {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		final Future<String> handler = executor.submit(new Callable() {
 			@Override
-			public String call() throws Exception {
+			public String call() throws Exception { 
 				updateAccount(block);
 				return "";
-			}
+			} 
 		});
 		try {
 			handler.get(2000l, TimeUnit.MILLISECONDS);
@@ -406,7 +408,6 @@ public class FullBlockGraph {
 		}
 
 	}
-
 	public void updateAccount(Block block) throws BlockStoreException {
 		FullBlockStore blockStore = storeService.getStore();
 		try {
@@ -423,7 +424,6 @@ public class FullBlockGraph {
 				blockStore.close();
 		}
 	}
-
 	private void updateTransactionOutputSpendPending(Block block, FullBlockStore blockStore)
 			throws BlockStoreException {
 		for (final Transaction tx : block.getTransactions()) {
@@ -455,7 +455,7 @@ public class FullBlockGraph {
 
 			try {
 				blockStore.beginDatabaseBatchWrite();
-				serviceBase.unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore, true);
+				serviceBase.unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore,true);
 				blockStore.commitDatabaseBatchWrite();
 			} catch (Exception e) {
 				blockStore.abortDatabaseBatchWrite();
@@ -481,8 +481,8 @@ public class FullBlockGraph {
 		for (BlockWrap block : blocksToAdd) {
 			try {
 				blockStore.beginDatabaseBatchWrite();
-				new ServiceBase(serverConfiguration, networkParameters).confirm(
-						block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore, true);
+				new ServiceBase(serverConfiguration, networkParameters)
+						.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore,true);
 				blockStore.commitDatabaseBatchWrite();
 			} catch (Exception e) {
 				blockStore.abortDatabaseBatchWrite();
