@@ -83,7 +83,6 @@ import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.ContractExecutionService;
 import net.bigtangle.server.service.MCMCService;
 import net.bigtangle.server.service.RewardService;
-import net.bigtangle.server.service.ServiceBase;
 import net.bigtangle.server.service.StoreService;
 import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.TipsService;
@@ -729,7 +728,7 @@ public abstract class AbstractIntegrationTest {
 		return listUTXO;
 	}
 
-	protected List<Coin> getBalanceAccount(boolean withZero, List<ECKey> keys) throws Exception { 
+	protected List<Coin> getBalanceAccount(boolean withZero, List<ECKey> keys) throws Exception {
 		List<Coin> listCoin = new ArrayList<Coin>();
 		List<String> keyStrHex000 = new ArrayList<String>();
 

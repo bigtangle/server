@@ -445,11 +445,10 @@ public class ServiceBase {
 		return store.getTransactionOutput(out.getBlockHash(), out.getTxHash(), out.getIndex());
 	}
 
-	public long calcHeightRequiredBlocks(Block block, List<BlockWrap> allRequirements, FullBlockStore store)
-			throws BlockStoreException {
-
+	public long calcHeightRequiredBlocks(Block block, FullBlockStore store) throws BlockStoreException {
+		List<BlockWrap> requires = getAllRequirements(block, store);
 		long height = 0;
-		for (BlockWrap b : allRequirements) {
+		for (BlockWrap b : requires) {
 			height = Math.max(height, b.getBlock().getHeight());
 		}
 		return height + 1;
@@ -1249,10 +1248,9 @@ public class ServiceBase {
 		});
 	}
 
-	private SolidityState checkPredecessorsExistAndOk(Block block, Set<Sha256Hash> allPredecessorBlockHashes,
-			List<BlockWrap> allPredecessors, boolean throwExceptions, FullBlockStore store) throws BlockStoreException {
-		// final Set<Sha256Hash> allPredecessorBlockHashes =
-		// getAllRequiredBlockHashes(block, false);
+	private SolidityState checkPredecessorsExistAndOk(Block block, boolean throwExceptions, FullBlockStore store)
+			throws BlockStoreException {
+		final Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
 		for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
 			final BlockWrap pred = store.getBlockWrap(predecessorReq);
 			if (pred == null)
@@ -1264,7 +1262,6 @@ public class ServiceBase {
 					throw new VerificationException("Height of used blocks must be lower than height of this block.");
 				return SolidityState.getFailState();
 			}
-			allPredecessors.add(pred);
 		}
 		return SolidityState.getSuccessState();
 	}
@@ -1281,8 +1278,14 @@ public class ServiceBase {
 		return missingPredecessorBlockHashes;
 	}
 
-	public SolidityState checkAllPredecessorSolidity(Block block, List<BlockWrap> allPredecessors,
-			boolean throwExceptions, FullBlockStore store, boolean predecessorsSolid) throws BlockStoreException {
+	public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions, FullBlockStore store)
+			throws BlockStoreException {
+		return getMinPredecessorSolidity(block, throwExceptions, store, true);
+	}
+
+	public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions, FullBlockStore store,
+			boolean predecessorsSolid) throws BlockStoreException {
+		final List<BlockWrap> allPredecessors = getAllRequirements(block, store);
 		SolidityState missingCalculation = null;
 		SolidityState missingDependency = null;
 		for (BlockWrap predecessor : allPredecessors) {
@@ -1368,7 +1371,7 @@ public class ServiceBase {
 	private SolidityState checkFormalTransactionalSolidity(Block block, boolean throwExceptions)
 			throws BlockStoreException {
 		try {
-
+	 
 			long sigOps = 0;
 
 			for (Transaction tx : block.getTransactions()) {
@@ -1735,7 +1738,7 @@ public class ServiceBase {
 
 			if (block.getHash() == Sha256Hash.ZERO_HASH) {
 				if (throwExceptions)
-					throw new VerificationException("block.getHash() zero is not allowed");
+					throw new VerificationException("Lucky zeros not allowed");
 				return SolidityState.getFailState();
 			}
 			// Check predecessor blocks exist
@@ -1748,6 +1751,13 @@ public class ServiceBase {
 			if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
 				if (throwExceptions)
 					throw new GenesisBlockDisallowedException();
+				return SolidityState.getFailState();
+			}
+
+			// Check height, all required max +1
+			if (block.getHeight() != calcHeightRequiredBlocks(block, store)) {
+				if (throwExceptions)
+					throw new VerificationException("Wrong height");
 				return SolidityState.getFailState();
 			}
 
@@ -2920,26 +2930,14 @@ public class ServiceBase {
 				return formalSolidityResult;
 
 			// Predecessors must exist and be ok
-			Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
-			List<BlockWrap> allPredecessors = new ArrayList<>();
-
-			SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, allPredecessorBlockHashes,
-					allPredecessors, throwExceptions, store);
+			SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions, store);
 			if (!predecessorsExist.isSuccessState()) {
 				return predecessorsExist;
 			}
 
-			// Check height, all required max +1
-
-			if (block.getHeight() != calcHeightRequiredBlocks(block, allPredecessors, store)) {
-				if (throwExceptions)
-					throw new VerificationException("Wrong height");
-				return SolidityState.getFailState();
-			}
-
 			// Inherit solidity from predecessors if they are not solid
-			SolidityState minPredecessorSolidity = checkAllPredecessorSolidity(block, allPredecessors, throwExceptions,
-					store, predecessorsSolid);
+			SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block, throwExceptions, store,
+					predecessorsSolid);
 
 			// For consensus blocks, it works as follows:
 			// If solid == 1 or solid == 2, we also check for PoW now
@@ -3540,11 +3538,6 @@ public class ServiceBase {
 	 */
 	public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber,
 			FullBlockStore blockStore) throws BlockStoreException {
-		confirm(blockHash, traversedBlockHashes, milestoneNumber, blockStore, false);
-	}
-
-	public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber,
-			FullBlockStore blockStore, Boolean accountBalance) throws BlockStoreException {
 		// If already confirmed, return
 		if (traversedBlockHashes.contains(blockHash))
 			return;
@@ -3563,7 +3556,7 @@ public class ServiceBase {
 		blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), milestoneNumber);
 
 		// Confirm the block
-		confirmBlock(blockWrap, blockStore, accountBalance);
+		confirmBlock(blockWrap, blockStore);
 
 		// Keep track of confirmed blocks
 		traversedBlockHashes.add(blockHash);
@@ -3627,15 +3620,13 @@ public class ServiceBase {
 		return Optional.ofNullable(matchingResult);
 	}
 
-	private void confirmBlock(BlockWrap block, FullBlockStore blockStore, Boolean accountBalance)
-			throws BlockStoreException {
+	private void confirmBlock(BlockWrap block, FullBlockStore blockStore) throws BlockStoreException {
 
 		// Update block's transactions in db
 		for (final Transaction tx : block.getBlock().getTransactions()) {
 			confirmTransaction(block.getBlock(), tx, blockStore);
 		}
-		if (accountBalance)
-			calculateAccount(block.getBlock(), blockStore);
+		calculateAccount(block.getBlock(),   blockStore);
 		// type-specific updates
 		switch (block.getBlock().getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
@@ -3887,26 +3878,31 @@ public class ServiceBase {
 		}
 	}
 
-	public void calculateAccount(Block block, FullBlockStore blockStore) throws BlockStoreException {
-		List<UTXO> utxos = new ArrayList<UTXO>();
+	public void calculateAccount(Block block, FullBlockStore blockStore)
+			throws BlockStoreException {
 		for (final Transaction tx : block.getTransactions()) {
 			boolean isCoinBase = tx.isCoinBase();
+			List<UTXO> utxos = new ArrayList<UTXO>();
 			for (TransactionOutput out : tx.getOutputs()) {
 				Script script = getScript(out.getScriptBytes());
 				String fromAddress = fromAddress(tx, isCoinBase);
 				int minsignnumber = 1;
-
+				if (script.isSentToMultiSig()) {
+					minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
+				}
 				UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
 						getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
 						Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0,
 						block.getTimeSeconds(), null);
-				utxos.add(newOut);
 
+				if (!newOut.isZero()) {
+					utxos.add(newOut);
+				}
 			}
 
+			// calculate balance
+			blockStore.calculateAccount(utxos);
 		}
-		// calculate balance
-		blockStore.calculateAccount(utxos);
 	}
 
 	private void confirmVirtualCoinbaseTransaction(BlockWrap block, FullBlockStore blockStore)
@@ -3917,11 +3913,6 @@ public class ServiceBase {
 
 	public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, FullBlockStore blockStore)
 			throws BlockStoreException {
-		unconfirm(blockHash, traversedBlockHashes, blockStore, false);
-	}
-
-	public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, FullBlockStore blockStore,
-			Boolean accountBalance) throws BlockStoreException {
 		// If already unconfirmed, return
 		if (traversedBlockHashes.contains(blockHash))
 			return;
@@ -3935,7 +3926,7 @@ public class ServiceBase {
 			return;
 
 		// Then unconfirm the block outputs
-		unconfirmBlockOutputs(block, blockStore, accountBalance);
+		unconfirmBlockOutputs(block, blockStore);
 
 		// Set unconfirmed
 		blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), false);
@@ -3963,7 +3954,7 @@ public class ServiceBase {
 		unconfirmDependents(block, traversedBlockHashes, blockStore);
 
 		// Then unconfirm the block itself
-		unconfirmBlockOutputs(block, blockStore, false);
+		unconfirmBlockOutputs(block, blockStore);
 
 		// Set unconfirmed
 		blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), false);
@@ -4113,14 +4104,12 @@ public class ServiceBase {
 	 * @throws BlockStoreException if the block store had an underlying error or
 	 *                             block does not exist in the block store at all.
 	 */
-	private void unconfirmBlockOutputs(Block block, FullBlockStore blockStore, Boolean accountBalance)
-			throws BlockStoreException {
+	private void unconfirmBlockOutputs(Block block, FullBlockStore blockStore) throws BlockStoreException {
 		// Unconfirm all transactions of the block
 		for (Transaction tx : block.getTransactions()) {
 			unconfirmTransaction(tx, block, blockStore);
 		}
-		if (accountBalance)
-			calculateAccount(block, blockStore);
+		calculateAccount(block,  blockStore);
 		// Then unconfirm type-specific stuff
 		switch (block.getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
@@ -4340,7 +4329,7 @@ public class ServiceBase {
 			}
 			blockStore.addUnspentTransactionOutput(utxos);
 			// calculate balance
-			// TODO blockStore.calculateAccount(utxos);
+			//TODO blockStore.calculateAccount(utxos);
 		}
 	}
 
