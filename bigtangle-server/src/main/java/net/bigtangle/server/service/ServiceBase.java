@@ -1371,7 +1371,7 @@ public class ServiceBase {
 	private SolidityState checkFormalTransactionalSolidity(Block block, boolean throwExceptions)
 			throws BlockStoreException {
 		try {
-	 
+
 			long sigOps = 0;
 
 			for (Transaction tx : block.getTransactions()) {
@@ -3538,6 +3538,11 @@ public class ServiceBase {
 	 */
 	public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber,
 			FullBlockStore blockStore) throws BlockStoreException {
+		confirm(blockHash, traversedBlockHashes, milestoneNumber, blockStore, false);
+	}
+
+	public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber,
+			FullBlockStore blockStore, Boolean accountBalance) throws BlockStoreException {
 		// If already confirmed, return
 		if (traversedBlockHashes.contains(blockHash))
 			return;
@@ -3556,7 +3561,7 @@ public class ServiceBase {
 		blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), milestoneNumber);
 
 		// Confirm the block
-		confirmBlock(blockWrap, blockStore);
+		confirmBlock(blockWrap, blockStore, accountBalance);
 
 		// Keep track of confirmed blocks
 		traversedBlockHashes.add(blockHash);
@@ -3620,13 +3625,16 @@ public class ServiceBase {
 		return Optional.ofNullable(matchingResult);
 	}
 
-	private void confirmBlock(BlockWrap block, FullBlockStore blockStore) throws BlockStoreException {
+	private void confirmBlock(BlockWrap block, FullBlockStore blockStore, Boolean accountBalance)
+			throws BlockStoreException {
 
 		// Update block's transactions in db
 		for (final Transaction tx : block.getBlock().getTransactions()) {
 			confirmTransaction(block.getBlock(), tx, blockStore);
 		}
-		calculateAccount(block.getBlock(),   blockStore);
+		if (accountBalance)
+			calculateAccount(block.getBlock(), blockStore);
+
 		// type-specific updates
 		switch (block.getBlock().getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
@@ -3878,31 +3886,26 @@ public class ServiceBase {
 		}
 	}
 
-	public void calculateAccount(Block block, FullBlockStore blockStore)
-			throws BlockStoreException {
+	public void calculateAccount(Block block, FullBlockStore blockStore) throws BlockStoreException {
+		List<UTXO> utxos = new ArrayList<UTXO>();
 		for (final Transaction tx : block.getTransactions()) {
 			boolean isCoinBase = tx.isCoinBase();
-			List<UTXO> utxos = new ArrayList<UTXO>();
 			for (TransactionOutput out : tx.getOutputs()) {
 				Script script = getScript(out.getScriptBytes());
 				String fromAddress = fromAddress(tx, isCoinBase);
 				int minsignnumber = 1;
-				if (script.isSentToMultiSig()) {
-					minsignnumber = script.getNumberOfSignaturesRequiredToSpend();
-				}
+
 				UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
 						getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
 						Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0,
 						block.getTimeSeconds(), null);
+				utxos.add(newOut);
 
-				if (!newOut.isZero()) {
-					utxos.add(newOut);
-				}
 			}
 
-			// calculate balance
-			blockStore.calculateAccount(utxos);
 		}
+		// calculate balance
+		blockStore.calculateAccount(utxos);
 	}
 
 	private void confirmVirtualCoinbaseTransaction(BlockWrap block, FullBlockStore blockStore)
@@ -3913,6 +3916,11 @@ public class ServiceBase {
 
 	public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, FullBlockStore blockStore)
 			throws BlockStoreException {
+		unconfirm(blockHash, traversedBlockHashes, blockStore, false); 
+	}
+
+	public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, FullBlockStore blockStore,
+			Boolean accountBalance) throws BlockStoreException {
 		// If already unconfirmed, return
 		if (traversedBlockHashes.contains(blockHash))
 			return;
@@ -3926,7 +3934,7 @@ public class ServiceBase {
 			return;
 
 		// Then unconfirm the block outputs
-		unconfirmBlockOutputs(block, blockStore);
+		unconfirmBlockOutputs(block, blockStore, accountBalance);
 
 		// Set unconfirmed
 		blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), false);
@@ -3954,7 +3962,7 @@ public class ServiceBase {
 		unconfirmDependents(block, traversedBlockHashes, blockStore);
 
 		// Then unconfirm the block itself
-		unconfirmBlockOutputs(block, blockStore);
+		unconfirmBlockOutputs(block, blockStore, true);
 
 		// Set unconfirmed
 		blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), false);
@@ -4104,12 +4112,14 @@ public class ServiceBase {
 	 * @throws BlockStoreException if the block store had an underlying error or
 	 *                             block does not exist in the block store at all.
 	 */
-	private void unconfirmBlockOutputs(Block block, FullBlockStore blockStore) throws BlockStoreException {
+	private void unconfirmBlockOutputs(Block block, FullBlockStore blockStore, Boolean accountBalance)
+			throws BlockStoreException {
 		// Unconfirm all transactions of the block
 		for (Transaction tx : block.getTransactions()) {
 			unconfirmTransaction(tx, block, blockStore);
 		}
-		calculateAccount(block,  blockStore);
+		if (accountBalance)
+			calculateAccount(block, blockStore);
 		// Then unconfirm type-specific stuff
 		switch (block.getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
@@ -4329,7 +4339,7 @@ public class ServiceBase {
 			}
 			blockStore.addUnspentTransactionOutput(utxos);
 			// calculate balance
-			//TODO blockStore.calculateAccount(utxos);
+			// TODO blockStore.calculateAccount(utxos);
 		}
 	}
 

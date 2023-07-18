@@ -131,13 +131,12 @@ public class FromAddressTests extends AbstractIntegrationTest {
 	 */
 	public void buyTicket(ECKey key, ECKey accountKey) throws Exception {
 		Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
-		w.setServerURL(contextRoot);
-		try {
-			log.debug("====ready buyTicket====");
-			w.pay(null, accountKey.toAddress(networkParameters).toString(),
-					Coin.valueOf(100, Utils.HEX.decode(yuanTokenPub)), new MemoInfo(" buy ticket"));
-		} catch (InsufficientMoneyException e) {
-			// TODO: handle exception
+		log.debug("====ready buyTicket====");
+		List<Block> bs = w.pay(null, accountKey.toAddress(networkParameters).toString(),
+				Coin.valueOf(100, Utils.HEX.decode(yuanTokenPub)), new MemoInfo(" buy ticket"));
+		makeRewardBlock();
+		for (Block b : bs) {
+			blockGraph.updateTransactionOutputSpendPendingDo(b);
 		}
 		makeRewardBlock();
 		log.debug("====start buyTicket====");
@@ -183,7 +182,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		Block b = yuanWallet.payToList(null, giveMoneyResult, Utils.HEX.decode(yuanTokenPub), memo);
 		log.debug("block " + (b == null ? "block is null" : b.toString()));
 		makeRewardBlock();
-
+		blockGraph.updateTransactionOutputSpendPendingDo(b);
 		log.debug("====start check yuanWallet wallet====");
 		List<Coin> list = getBalanceAccount(false, yuanWallet.walletKeys());
 		for (Coin coin : list) {

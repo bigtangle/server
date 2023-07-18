@@ -389,24 +389,9 @@ public class FullBlockGraph {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		final Future<String> handler = executor.submit(new Callable() {
 			@Override
-			public String call() throws Exception {
-
-				FullBlockStore blockStore = storeService.getStore();
-				try {
-					updateTransactionOutputSpendPending(block, blockStore);
-					new ServiceBase(serverConfiguration, networkParameters).calculateAccount(block, blockStore);
-					// Initialize MCMC
-					if (blockStore.getMCMC(block.getHash()) == null) {
-						ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
-						depthAndWeight.add(new DepthAndWeight(block.getHash(), 1, 0));
-						blockStore.updateBlockEvaluationWeightAndDepth(depthAndWeight);
-					}
-				} finally {
-					if (blockStore != null)
-						blockStore.close();
-				}
-				return "";
-			}
+			public String call() throws Exception { 
+				return updateTransactionOutputSpendPendingDo(block);
+			} 
 		});
 		try {
 			handler.get(2000l, TimeUnit.MILLISECONDS);
@@ -422,6 +407,23 @@ public class FullBlockGraph {
 
 	}
 
+	public String updateTransactionOutputSpendPendingDo(Block block) throws BlockStoreException {
+		FullBlockStore blockStore = storeService.getStore();
+		try {
+			updateTransactionOutputSpendPending(block, blockStore);
+			new ServiceBase(serverConfiguration, networkParameters).calculateAccount(block, blockStore);
+			// Initialize MCMC
+			if (blockStore.getMCMC(block.getHash()) == null) {
+				ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
+				depthAndWeight.add(new DepthAndWeight(block.getHash(), 1, 0));
+				blockStore.updateBlockEvaluationWeightAndDepth(depthAndWeight);
+			}
+		} finally {
+			if (blockStore != null)
+				blockStore.close();
+		}
+		return "";
+	}
 	private void updateTransactionOutputSpendPending(Block block, FullBlockStore blockStore)
 			throws BlockStoreException {
 		for (final Transaction tx : block.getTransactions()) {
@@ -453,7 +455,7 @@ public class FullBlockGraph {
 
 			try {
 				blockStore.beginDatabaseBatchWrite();
-				serviceBase.unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
+				serviceBase.unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore,true);
 				blockStore.commitDatabaseBatchWrite();
 			} catch (Exception e) {
 				blockStore.abortDatabaseBatchWrite();
@@ -480,7 +482,7 @@ public class FullBlockGraph {
 			try {
 				blockStore.beginDatabaseBatchWrite();
 				new ServiceBase(serverConfiguration, networkParameters)
-						.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
+						.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore, true);
 				blockStore.commitDatabaseBatchWrite();
 			} catch (Exception e) {
 				blockStore.abortDatabaseBatchWrite();
