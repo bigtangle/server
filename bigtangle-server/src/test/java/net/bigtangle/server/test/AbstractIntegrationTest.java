@@ -155,12 +155,31 @@ public abstract class AbstractIntegrationTest {
 	protected static ObjectMapper objectMapper = new ObjectMapper();
 	public FullBlockStore store;
 
-	protected Block addFixedBlocks(int num, Block startBlock, List<Block> blocksAddedAll) throws BlockStoreException {
+	protected Block addFixedBlocks(int num, Block startBlock, List<Block> blocksAddedAll, Transaction feeTransaction)
+			throws BlockStoreException, UTXOProviderException, InsufficientMoneyException, IOException,
+			InterruptedException, ExecutionException {
 		// add more blocks follow this startBlock
 		Block rollingBlock1 = startBlock;
 		for (int i = 0; i < num; i++) {
 			rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+			rollingBlock1.addTransaction(feeTransaction);
+			rollingBlock1.solve();
 			blockGraph.add(rollingBlock1, true, store);
+			blocksAddedAll.add(rollingBlock1);
+		}
+		return rollingBlock1;
+	}
+
+	protected Block addFixedBlocks(int num, Block startBlock, List<Block> blocksAddedAll) throws BlockStoreException,
+			UTXOProviderException, InsufficientMoneyException, IOException, InterruptedException, ExecutionException {
+// add more blocks follow this startBlock
+		Block rollingBlock1 = startBlock;
+		for (int i = 0; i < num; i++) {
+			rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+			rollingBlock1.addTransaction(wallet.feeTransaction(null));
+			rollingBlock1.solve();
+			blockGraph.add(rollingBlock1, true, store);
+			mcmc();
 			blocksAddedAll.add(rollingBlock1);
 		}
 		return rollingBlock1;

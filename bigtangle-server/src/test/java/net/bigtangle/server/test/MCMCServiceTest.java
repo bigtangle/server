@@ -42,7 +42,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
         List<Block> blocksAddedAll = new ArrayList<Block>();
         Block rollingBlock1 = addFixedBlocks(NetworkParameters.FORWARD_BLOCK_HORIZON + 10,
-                networkParameters.getGenesisBlock(), blocksAddedAll);
+                networkParameters.getGenesisBlock(), blocksAddedAll, wallet.feeTransaction(null));
 
         // MCMC should not update this far out
         makeRewardBlock();
@@ -104,14 +104,10 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
     public void testConflictReward() throws Exception {
 
         // Generate blocks until passing first reward interval
-        Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-        blockGraph.add(rollingBlock, true, store);
+    	   List<Block> blocksAddedAll = new ArrayList<Block>();
+           Block rollingBlock1 = addFixedBlocks(  10,
+                   networkParameters.getGenesisBlock(), blocksAddedAll );
 
-        Block rollingBlock1 = rollingBlock;
-        for (int i = 0; i < 1 + 1 + 1; i++) {
-            rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-            blockGraph.add(rollingBlock1, true, store);
-        }
 
         // Generate eligible mining reward blocks
         Block b1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(),

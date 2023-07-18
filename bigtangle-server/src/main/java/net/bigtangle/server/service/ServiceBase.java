@@ -445,17 +445,22 @@ public class ServiceBase {
 		return store.getTransactionOutput(out.getBlockHash(), out.getTxHash(), out.getIndex());
 	}
 
-	public long calcHeightRequiredBlocks(Block block, FullBlockStore store) throws BlockStoreException {
-		List<BlockWrap> requires = getAllRequirements(block, store);
+	public long calcHeightRequiredBlocks(Block block, List<BlockWrap> allPredecessors, FullBlockStore store)
+			throws BlockStoreException {
+		// List<BlockWrap> requires = getAllRequirements(block, store);
 		long height = 0;
-		for (BlockWrap b : requires) {
+		for (BlockWrap b : allPredecessors) {
 			height = Math.max(height, b.getBlock().getHeight());
 		}
 		return height + 1;
 	}
 
 	public List<BlockWrap> getAllRequirements(Block block, FullBlockStore store) throws BlockStoreException {
-		Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
+		return getAllRequirements(block, getAllRequiredBlockHashes(block, false), store);
+	}
+
+	public List<BlockWrap> getAllRequirements(Block block, Set<Sha256Hash> allPredecessorBlockHashes,
+			FullBlockStore store) throws BlockStoreException { 
 		List<BlockWrap> result = new ArrayList<>();
 		for (Sha256Hash pred : allPredecessorBlockHashes)
 			result.add(store.getBlockWrap(pred));
@@ -1248,9 +1253,9 @@ public class ServiceBase {
 		});
 	}
 
-	private SolidityState checkPredecessorsExistAndOk(Block block, boolean throwExceptions, FullBlockStore store)
-			throws BlockStoreException {
-		final Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
+	private SolidityState checkPredecessorsExistAndOk(Block block, boolean throwExceptions,
+			Set<Sha256Hash> allPredecessorBlockHashes, FullBlockStore store) throws BlockStoreException {
+		//
 		for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
 			final BlockWrap pred = store.getBlockWrap(predecessorReq);
 			if (pred == null)
@@ -1278,14 +1283,21 @@ public class ServiceBase {
 		return missingPredecessorBlockHashes;
 	}
 
-	public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions, FullBlockStore store)
-			throws BlockStoreException {
-		return getMinPredecessorSolidity(block, throwExceptions, store, true);
+	public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions,
+			 FullBlockStore store) throws BlockStoreException {
+		return getMinPredecessorSolidity(block, throwExceptions,  getAllRequirements(block, store), store, true);
 	}
 
-	public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions, FullBlockStore store,
-			boolean predecessorsSolid) throws BlockStoreException {
-		final List<BlockWrap> allPredecessors = getAllRequirements(block, store);
+	
+	public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions,
+			List<BlockWrap> allPredecessors, FullBlockStore store) throws BlockStoreException {
+		return getMinPredecessorSolidity(block, throwExceptions, allPredecessors, store, true);
+	}
+
+	public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions,
+			List<BlockWrap> allPredecessors, FullBlockStore store, boolean predecessorsSolid)
+			throws BlockStoreException {
+		// final List<BlockWrap> allPredecessors = getAllRequirements(block, store);
 		SolidityState missingCalculation = null;
 		SolidityState missingDependency = null;
 		for (BlockWrap predecessor : allPredecessors) {
@@ -1731,7 +1743,8 @@ public class ServiceBase {
 	 * invalid. Otherwise, appropriate solidity states are returned to imply missing
 	 * dependencies.
 	 */
-	private SolidityState checkFullBlockSolidity(Block block, boolean throwExceptions, FullBlockStore store) {
+	private SolidityState checkFullBlockSolidity(Block block, boolean throwExceptions, List<BlockWrap> allPredecessors,
+			FullBlockStore store) {
 		try {
 			BlockWrap storedPrev = store.getBlockWrap(block.getPrevBlockHash());
 			BlockWrap storedPrevBranch = store.getBlockWrap(block.getPrevBranchBlockHash());
@@ -1755,7 +1768,7 @@ public class ServiceBase {
 			}
 
 			// Check height, all required max +1
-			if (block.getHeight() != calcHeightRequiredBlocks(block, store)) {
+			if (block.getHeight() != calcHeightRequiredBlocks(block, allPredecessors, store)) {
 				if (throwExceptions)
 					throw new VerificationException("Wrong height");
 				return SolidityState.getFailState();
@@ -2928,16 +2941,17 @@ public class ServiceBase {
 			SolidityState formalSolidityResult = checkFormalBlockSolidity(block, throwExceptions);
 			if (formalSolidityResult.isFailState())
 				return formalSolidityResult;
-
+			final Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
 			// Predecessors must exist and be ok
-			SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions, store);
+			SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions,
+					allPredecessorBlockHashes, store);
 			if (!predecessorsExist.isSuccessState()) {
 				return predecessorsExist;
 			}
-
+			List<BlockWrap> allRequirements = getAllRequirements(block, allPredecessorBlockHashes, store);
 			// Inherit solidity from predecessors if they are not solid
-			SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block, throwExceptions, store,
-					predecessorsSolid);
+			SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block, throwExceptions, allRequirements,
+					store, predecessorsSolid);
 
 			// For consensus blocks, it works as follows:
 			// If solid == 1 or solid == 2, we also check for PoW now
@@ -2961,12 +2975,14 @@ public class ServiceBase {
 			case Success:
 				break;
 			}
+
+			// Otherwise, the solidity of the block itself is checked
+			return checkFullBlockSolidity(block, throwExceptions, allRequirements, store);
+
 		} catch (IllegalArgumentException e) {
 			throw new VerificationException(e);
 		}
 
-		// Otherwise, the solidity of the block itself is checked
-		return checkFullBlockSolidity(block, throwExceptions, store);
 	}
 
 	public GetTXRewardResponse getMaxConfirmedReward(Map<String, Object> request, FullBlockStore store)
@@ -3916,7 +3932,7 @@ public class ServiceBase {
 
 	public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, FullBlockStore blockStore)
 			throws BlockStoreException {
-		unconfirm(blockHash, traversedBlockHashes, blockStore, false); 
+		unconfirm(blockHash, traversedBlockHashes, blockStore, false);
 	}
 
 	public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, FullBlockStore blockStore,

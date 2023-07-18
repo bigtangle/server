@@ -23,6 +23,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Transaction;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.exception.UTXOProviderException;
@@ -174,8 +175,8 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 		blocksAddedAll.add(rewardBlock2);
 		// add more reward to reward2
 		// rewardBlock3 takes only referenced blocks not in reward2
-		//mcmcServiceUpdate();
-		//addBlocks(1, blocksAddedAll);
+		// mcmcServiceUpdate();
+		// addBlocks(1, blocksAddedAll);
 		Block rewardBlock3 = makeRewardBlock(rewardBlock2.getHash());
 
 		blocksAddedAll.add(rewardBlock3);
@@ -306,9 +307,10 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 		for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF + 5; i++) {
 			rewardBlock2 = makeRewardBlock(rewardBlock2.getHash());
 		}
-
 		// create a long block graph
-		Block rollingBlock2 = addFixedBlocks(200, networkParameters.getGenesisBlock(), blocksAddedAll);
+		Block rollingBlock2 = addFixedBlocks(200, networkParameters.getGenesisBlock(), blocksAddedAll,
+				wallet.feeTransaction(null));
+
 		// rewardBlock3 takes the long block graph behind cutoff
 		try {
 			rewardService.createReward(rewardBlock2.getHash(), rollingBlock2.getHash(), rollingBlock2.getHash(), store);
