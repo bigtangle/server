@@ -515,18 +515,16 @@ public class ServiceBase {
 		predecessors.add(block.getPrevBranchBlockHash());
 
 		// All used transaction outputs
-
-		final List<Transaction> transactions = block.getTransactions();
-
-		for (final Transaction tx : transactions) {
-			if (!tx.isCoinBase()) {
-				for (int index = 0; index < tx.getInputs().size(); index++) {
-					TransactionInput in = tx.getInputs().get(index);
-					// due to virtual txs from order/reward
-					predecessors.add(in.getOutpoint().getBlockHash());
+		if (includeTransaction) {
+			for (final Transaction tx : block.getTransactions()) {
+				if (!tx.isCoinBase()) {
+					for (int index = 0; index < tx.getInputs().size(); index++) {
+						TransactionInput in = tx.getInputs().get(index);
+						// due to virtual txs from order/reward
+						predecessors.add(in.getOutpoint().getBlockHash());
+					}
 				}
 			}
-
 		}
 		switch (block.getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
@@ -538,11 +536,11 @@ public class ServiceBase {
 		case BLOCKTYPE_INITIAL:
 			break;
 		case BLOCKTYPE_REWARD:
-			RewardInfo rewardInfo = new RewardInfo().parseChecked(transactions.get(0).getData());
+			RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
 			predecessors.add(rewardInfo.getPrevRewardHash());
 			break;
 		case BLOCKTYPE_TOKEN_CREATION:
-			TokenInfo currentToken = new TokenInfo().parseChecked(transactions.get(0).getData());
+			TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
 			predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()));
 			if (currentToken.getToken().getPrevblockhash() != null)
 				predecessors.add(currentToken.getToken().getPrevblockhash());
@@ -1250,23 +1248,28 @@ public class ServiceBase {
 	}
 
 	private SolidityState checkPredecessorsExistAndOk(Block block, Set<Sha256Hash> allPredecessorBlockHashes,
-			List<BlockWrap> allPredecessors, boolean throwExceptions, FullBlockStore store) throws BlockStoreException {
-		// final Set<Sha256Hash> allPredecessorBlockHashes =
-		// getAllRequiredBlockHashes(block, false);
+			List<BlockWrap> allPredecessors, boolean throwExceptions, boolean predecessorsSolid, FullBlockStore store)
+			throws BlockStoreException {
+		SolidityState re = SolidityState.getSuccessState();
 		for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
 			final BlockWrap pred = store.getBlockWrap(predecessorReq);
-			if (pred == null)
-				return SolidityState.from(predecessorReq, true);
-			if (pred.getBlock().getBlockType().requiresCalculation() && pred.getBlockEvaluation().getSolid() != 2)
-				return SolidityState.fromMissingCalculation(predecessorReq);
-			if (pred.getBlock().getHeight() >= block.getHeight()) {
-				if (throwExceptions)
-					throw new VerificationException("Height of used blocks must be lower than height of this block.");
-				return SolidityState.getFailState();
+			if (pred == null && predecessorsSolid)
+				re = SolidityState.from(predecessorReq, true);
+			if (pred != null && predecessorsSolid) {
+				if (pred.getBlock().getBlockType().requiresCalculation() && pred.getBlockEvaluation().getSolid() != 2)
+					re = SolidityState.fromMissingCalculation(predecessorReq);
+				if (pred.getBlock().getHeight() >= block.getHeight()) {
+					if (throwExceptions)
+						throw new VerificationException(
+								"Height of used blocks must be lower than height of this block.");
+					return SolidityState.getFailState();
+				}
 			}
-			allPredecessors.add(pred);
+			if (pred != null)
+				allPredecessors.add(pred);
+
 		}
-		return SolidityState.getSuccessState();
+		return re;
 	}
 
 	public Set<Sha256Hash> getMissingPredecessors(Block block, FullBlockStore store) throws BlockStoreException {
@@ -2924,44 +2927,45 @@ public class ServiceBase {
 			List<BlockWrap> allPredecessors = new ArrayList<>();
 
 			SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, allPredecessorBlockHashes,
-					allPredecessors, throwExceptions, store);
-			if (!predecessorsExist.isSuccessState()) {
+					allPredecessors, throwExceptions, predecessorsSolid, store);
+			if (!predecessorsExist.isSuccessState() && predecessorsSolid) {
 				return predecessorsExist;
 			}
 
 			// Check height, all required max +1
+			if (predecessorsSolid) {
+				if (block.getHeight() != calcHeightRequiredBlocks(block, allPredecessors, store)) {
+					if (throwExceptions)
+						throw new VerificationException("Wrong height");
+					return SolidityState.getFailState();
+				}
 
-			if (block.getHeight() != calcHeightRequiredBlocks(block, allPredecessors, store)) {
-				if (throwExceptions)
-					throw new VerificationException("Wrong height");
-				return SolidityState.getFailState();
-			}
+				// Inherit solidity from predecessors if they are not solid
+				SolidityState minPredecessorSolidity = checkAllPredecessorSolidity(block, allPredecessors,
+						throwExceptions, store, predecessorsSolid);
 
-			// Inherit solidity from predecessors if they are not solid
-			SolidityState minPredecessorSolidity = checkAllPredecessorSolidity(block, allPredecessors, throwExceptions,
-					store, predecessorsSolid);
-
-			// For consensus blocks, it works as follows:
-			// If solid == 1 or solid == 2, we also check for PoW now
-			// since it is possible to do so
-			if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-				if (minPredecessorSolidity.getState() == State.MissingCalculation
-						|| minPredecessorSolidity.getState() == State.Success) {
-					SolidityState state = checkRewardBlockPow(block, throwExceptions);
-					if (!state.isSuccessState()) {
-						return state;
+				// For consensus blocks, it works as follows:
+				// If solid == 1 or solid == 2, we also check for PoW now
+				// since it is possible to do so
+				if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
+					if (minPredecessorSolidity.getState() == State.MissingCalculation
+							|| minPredecessorSolidity.getState() == State.Success) {
+						SolidityState state = checkRewardBlockPow(block, throwExceptions);
+						if (!state.isSuccessState()) {
+							return state;
+						}
 					}
 				}
-			}
 
-			// Inherit solidity from predecessors if they are not solid
-			switch (minPredecessorSolidity.getState()) {
-			case MissingCalculation:
-			case Invalid:
-			case MissingPredecessor:
-				return minPredecessorSolidity;
-			case Success:
-				break;
+				// Inherit solidity from predecessors if they are not solid
+				switch (minPredecessorSolidity.getState()) {
+				case MissingCalculation:
+				case Invalid:
+				case MissingPredecessor:
+					return minPredecessorSolidity;
+				case Success:
+					break;
+				}
 			}
 		} catch (IllegalArgumentException e) {
 			throw new VerificationException(e);
@@ -4242,8 +4246,8 @@ public class ServiceBase {
 
 	public void solidifyBlock(Block block, SolidityState solidityState, boolean setMilestoneSuccess,
 			FullBlockStore blockStore) throws BlockStoreException {
-		if (block.getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
-			// logger.debug(block.toString());
+		if (!solidityState.isSuccessState()) {
+			  logger.debug(block.toString());
 		}
 		switch (solidityState.getState()) {
 		case MissingCalculation:
