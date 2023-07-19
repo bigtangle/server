@@ -4900,6 +4900,10 @@ public class ServiceBase {
 			if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
 				final Sha256Hash blockHash = b.getBlock().getHash();
 				OrderRecord order = blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH);
+				//order is null, write it to 
+				if( order==null) {
+					solidifyBlock(block, SolidityState.getSuccessState(), false, blockStore);
+				}
 				newOrders.put(blockHash, OrderRecord.cloneOrderRecord(order));
 				spentOrders.add(order);
 
