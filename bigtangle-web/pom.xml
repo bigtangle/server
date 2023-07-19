@@ -84,7 +84,7 @@
 						<configuration>
 							<classifier>exec</classifier>
 
-							<mainClass>net.bigtangle.seeds.ServerStart</mainClass>
+							<mainClass>net.bigtangle.web.ServerStart</mainClass>
 
 						</configuration>
 					</execution>

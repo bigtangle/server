@@ -402,16 +402,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate blocks until passing first reward interval and second reward
 		// interval
-		Block rollingBlock = networkParameters.getGenesisBlock();
-		for (int i = 0; i < 1 + 1 + 1; i++) {
-			Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
-
-			// The difficulty should be equal to the previous difficulty
-			assertEquals(rollingBlock.getLastMiningRewardBlock(), rollingBlockNew.getLastMiningRewardBlock());
-
-			rollingBlock = rollingBlockNew;
-			blockGraph.add(rollingBlock, true, store);
-		}
+		   List<Block> blocksAddedAll = new ArrayList<Block>();
+           Block rollingBlock = addFixedBlocks(  3,
+                   networkParameters.getGenesisBlock(), blocksAddedAll );
 
 		// Generate eligible mining reward block
 		Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
