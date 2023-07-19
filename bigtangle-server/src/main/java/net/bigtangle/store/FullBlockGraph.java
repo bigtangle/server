@@ -96,9 +96,9 @@ public class FullBlockGraph {
 	 * speedup of sync without updateTransactionOutputSpendPending.
 	 */
 	public void addFromSync(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
-		boolean a;
+
 		if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-			saveChainConnected(block, store);
+			addChain(block, allowUnsolid, true, store);
 		} else {
 			addNonChain(block, allowUnsolid, store, false);
 		}
@@ -253,7 +253,7 @@ public class FullBlockGraph {
 				return;
 			}
 			// Inherit solidity from predecessors if they are not solid
-			solidityState = serviceBase.getMinPredecessorSolidity(block, false, store );
+			solidityState = serviceBase.getMinPredecessorSolidity(block, false, store);
 
 			// Sanity check
 			if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
@@ -389,9 +389,9 @@ public class FullBlockGraph {
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		final Future<String> handler = executor.submit(new Callable() {
 			@Override
-			public String call() throws Exception { 
+			public String call() throws Exception {
 				return updateTransactionOutputSpendPendingDo(block);
-			} 
+			}
 		});
 		try {
 			handler.get(2000l, TimeUnit.MILLISECONDS);
@@ -424,6 +424,7 @@ public class FullBlockGraph {
 		}
 		return "";
 	}
+
 	private void updateTransactionOutputSpendPending(Block block, FullBlockStore blockStore)
 			throws BlockStoreException {
 		for (final Transaction tx : block.getTransactions()) {
@@ -455,7 +456,7 @@ public class FullBlockGraph {
 
 			try {
 				blockStore.beginDatabaseBatchWrite();
-				serviceBase.unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore,true);
+				serviceBase.unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore, true);
 				blockStore.commitDatabaseBatchWrite();
 			} catch (Exception e) {
 				blockStore.abortDatabaseBatchWrite();
@@ -481,8 +482,8 @@ public class FullBlockGraph {
 		for (BlockWrap block : blocksToAdd) {
 			try {
 				blockStore.beginDatabaseBatchWrite();
-				new ServiceBase(serverConfiguration, networkParameters)
-						.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore, true);
+				new ServiceBase(serverConfiguration, networkParameters).confirm(
+						block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore, true);
 				blockStore.commitDatabaseBatchWrite();
 			} catch (Exception e) {
 				blockStore.abortDatabaseBatchWrite();

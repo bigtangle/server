@@ -15,6 +15,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -43,18 +44,18 @@ import net.bigtangle.utils.OkHttp3Util;
 @Service
 public class SyncBlockService {
 
-	// @Autowired
-	// protected NetworkParameters networkParameters;
+	  @Autowired
+	  protected WebConfiguration webConfiguration;
 
 	private static final Logger log = LoggerFactory.getLogger(SyncBlockService.class);
 
 	// default start sync of chain and non chain data
 	public void startSingleProcess() throws BlockStoreException, JsonProcessingException, IOException {
 
-		log.debug(" Start syncServerInfo  : ");
+		log.debug(" Start syncServerInfo  : " + webConfiguration.getBigtangle());
 
 		localFileServerInfoWrite(DispatcherController.PATH, DispatcherController.CONFPATH,
-				"https://p.bigtangle.org:8088/", false);
+				webConfiguration.getBigtangle(), false);
 		log.debug(" end syncServerInfo: ");
 
 	}

@@ -294,11 +294,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate blocks until passing first reward interval and second reward
 		// interval
-		Block rollingBlock = networkParameters.getGenesisBlock();
-		for (int i = 0; i < 1 + 1 + 1; i++) {
-			rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-			blocks1.add(rollingBlock);
-		}
+		   List<Block> blocksAddedAll = new ArrayList<Block>();
+           Block rollingBlock = addFixedBlocks(  3,
+                   networkParameters.getGenesisBlock(), blocksAddedAll );
 		for (Block b : blocks1) {
 			blockGraph.add(b, true, store);
 		}

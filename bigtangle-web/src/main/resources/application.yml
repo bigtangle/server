@@ -6,6 +6,8 @@ server:
     key-store-password: ${KEYSTOREPW:changeit}
     keyStoreType: ${KEYSTORETYPE:PKCS12}
 
+bigtangleweb:
+  bigtangle: ${BIGTANGLEURL:https://p.bigtangle.org:18088/}
 management:
   metrics:
     export:

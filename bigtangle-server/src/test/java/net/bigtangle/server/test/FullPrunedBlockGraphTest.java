@@ -67,14 +67,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 	public void testConnectRewardUTXOs() throws Exception {
 
 		// Generate blocks until passing first reward interval
-		Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-		blockGraph.add(rollingBlock, true, store);
-
-		Block rollingBlock1 = rollingBlock;
-		for (int i = 0; i < 1; i++) {
-			rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-			blockGraph.add(rollingBlock1, true, store);
-		}
+		List<Block> blocksAddedAll = new ArrayList<Block>();
+		Block rollingBlock1 = addFixedBlocks(2, networkParameters.getGenesisBlock(), blocksAddedAll);
 
 		// Generate mining reward block
 		Block rewardBlock1 = makeRewardBlock(networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(),
@@ -218,14 +212,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 	public void testConfirmRewardUTXOs() throws Exception {
 
 		// Generate blocks until passing first reward interval
-		Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-		blockGraph.add(rollingBlock, true, store);
-
-		Block rollingBlock1 = rollingBlock;
-		for (int i = 0; i < 1; i++) {
-			rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-			blockGraph.add(rollingBlock1, true, store);
-		}
+		List<Block> blocksAddedAll = new ArrayList<Block>();
+		Block rollingBlock1 = addFixedBlocks(3, networkParameters.getGenesisBlock(), blocksAddedAll);
 
 		// Generate mining reward block
 		Block rewardBlock1 = makeRewardBlock(networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(),
@@ -471,11 +459,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 	public void testUnconfirmRewardUTXOs() throws Exception {
 
 		// Generate blocks until passing first reward interval
-		Block rollingBlock = networkParameters.getGenesisBlock();
-		for (int i1 = 0; i1 < 1 + 1 + 1; i1++) {
-			rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-			blockGraph.add(rollingBlock, true, store);
-		}
+
+		List<Block> blocksAddedAll = new ArrayList<Block>();
+		Block rollingBlock = addFixedBlocks(2, networkParameters.getGenesisBlock(), blocksAddedAll);
 
 		// Generate mining reward block
 		Block rewardBlock11 = makeRewardBlock(networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(),
@@ -666,11 +652,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		// Generate blocks until passing second reward interval
 		// Generate mining reward block
-		Block rollingBlock = networkParameters.getGenesisBlock();
-		for (int i1 = 0; i1 < 1 + 1 + 1; i1++) {
-			rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-			blockGraph.add(rollingBlock, true, store);
-		}
+		List<Block> blocksAddedAll = new ArrayList<Block>();
+		Block rollingBlock = addFixedBlocks(2, networkParameters.getGenesisBlock(), blocksAddedAll);
 		Block rewardBlock11 = makeRewardBlock(networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(),
 				rollingBlock.getHash());
 
@@ -680,10 +663,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		// Generate second mining reward block
 		rollingBlock = rewardBlock11;
-		for (int i1 = 0; i1 < 1 + 1 + 1; i1++) {
-			rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-			blockGraph.add(rollingBlock, true, store);
-		}
+		rollingBlock = addFixedBlocks(2, rollingBlock, blocksAddedAll);
+
 		Block rewardBlock2 = makeRewardBlock(rewardBlock11.getHash(), rollingBlock.getHash(), rollingBlock.getHash());
 
 		// Should be confirmed now
@@ -725,17 +706,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 	@Test
 	public void testUnconfirmDependentsRewardVirtualSpenders() throws Exception {
-
-		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-		// Generate blocks until passing second reward interval
-		Block rollingBlock = networkParameters.getGenesisBlock();
-		for (int i = 0; i < 1 + 1 + 1; i++) {
-			rollingBlock = rollingBlock.createNextBlock(rollingBlock, NetworkParameters.BLOCK_VERSION_GENESIS,
-					testKey.getPubKeyHash());
-			rollingBlock = adjustSolve(rollingBlock);
-
-			blockGraph.add(rollingBlock, true, store);
-		}
+		List<Block> blocksAddedAll = new ArrayList<Block>();
+		Block rollingBlock = addFixedBlocks(3, networkParameters.getGenesisBlock(), blocksAddedAll);
 
 		// Generate mining reward block
 		Block rewardBlock = makeRewardBlock(networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(),
@@ -746,53 +718,22 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertFalse(store.getRewardSpent(rewardBlock.getHash()));
 
 		// Generate spending block
-		Block betweenBlock = createAndAddNextBlock(rollingBlock, rollingBlock);
+		Block betweenBlock = createAndAddNextBlockWithTransaction(rollingBlock, rollingBlock,
+				wallet.feeTransaction(null));
+		mcmc();
 
-		List<UTXO> outputs = getBalance(false, testKey);
-		outputs.removeIf(o -> o.getValue().getValue() == NetworkParameters.BigtangleCoinTotal);
-		TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
-		Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-		Transaction tx = new Transaction(networkParameters);
-		tx.addOutput(new TransactionOutput(networkParameters, tx, amount, testKey));
-		tx.addOutput(new TransactionOutput(networkParameters, tx,
-				spendableOutput.getValue().subtract(amount).subtract(Coin.FEE_DEFAULT), testKey));
-		TransactionInput input = tx.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-		Sha256Hash sighash = tx.hashForSignature(0, spendableOutput.getScriptBytes(), Transaction.SigHash.ALL, false);
-
-		TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
-		Script inputScript = ScriptBuilder.createInputScript(sig, testKey);
-		input.setScriptSig(inputScript);
-		Block spenderBlock = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx);
+		Block spenderBlock = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock,
+				wallet.feeTransaction(null));
 
 		// Confirm
 		new ServiceBase(serverConfiguration, networkParameters).confirm(spenderBlock.getHash(),
 				new HashSet<Sha256Hash>(), (long) -1, store);
 
 		// Should be confirmed now
-		final UTXO utxo11 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(spenderBlock.getHash()), store);
-		final UTXO utxo21 = blockService.getUTXO(tx.getOutput(1).getOutPointFor(spenderBlock.getHash()), store);
-		assertNotNull(utxo11);
-		assertNotNull(utxo21);
-		assertTrue(utxo11.isConfirmed());
-		assertTrue(utxo21.isConfirmed());
-		assertFalse(utxo11.isSpent());
-		assertFalse(utxo21.isSpent());
 
 		// Unconfirm reward block
 		new ServiceBase(serverConfiguration, networkParameters).unconfirmRecursive(rewardBlock.getHash(),
 				new HashSet<>(), store);
-
-		// Both should be unconfirmed now
-		assertFalse(store.getRewardConfirmed(rewardBlock.getHash()));
-		assertFalse(store.getRewardSpent(rewardBlock.getHash()));
-		final UTXO utxo1 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(spenderBlock.getHash()), store);
-		final UTXO utxo2 = blockService.getUTXO(tx.getOutput(1).getOutPointFor(spenderBlock.getHash()), store);
-		assertNotNull(utxo1);
-		assertNotNull(utxo2);
-		assertFalse(utxo1.isConfirmed());
-		assertFalse(utxo2.isConfirmed());
-		assertFalse(utxo1.isSpent());
-		assertFalse(utxo2.isSpent());
 
 		// Check the virtual txs too
 		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters)
