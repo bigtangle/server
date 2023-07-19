@@ -481,22 +481,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         // Generate two conflicting blocks
  
         ECKey testKey =  ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-        payBigTo(testKey,   Coin.FEE_DEFAULT.getValue(),null);
-        payBigTo(testKey,   Coin.FEE_DEFAULT.getValue(),null);
-        payBigTo(testKey,   Coin.FEE_DEFAULT.getValue(),null);
-        List<UTXO> outputs = getBalance(false, testKey);
-        TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, outputs.get(0));
-        Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
-        Transaction doublespendTX = new Transaction(networkParameters);
-        doublespendTX.addOutput(new TransactionOutput(networkParameters, doublespendTX, amount,  new ECKey()));
-        TransactionInput input = doublespendTX.addInput(outputs.get(0).getBlockHash(), spendableOutput);
-        Sha256Hash sighash = doublespendTX.hashForSignature(0, spendableOutput.getScriptBytes(),
-                Transaction.SigHash.ALL, false);
-
-        TransactionSignature sig = new TransactionSignature(testKey.sign(sighash), Transaction.SigHash.ALL, false);
-        Script inputScript = ScriptBuilder.createInputScript(sig);
-        input.setScriptSig(inputScript);
-
+    	Transaction doublespendTX = createTestTransaction(); 
         // Create blocks with conflict
         Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                 networkParameters.getGenesisBlock(), doublespendTX,false);
@@ -504,12 +489,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
                 networkParameters.getGenesisBlock(), doublespendTX,false);
 
         blockGraph.add(b1, true,store);
+         
         blockGraph.add(b2, true,store);
-
-        for (int i = 0; i < 5; i++) {
-            createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
-        }
-        mcmcServiceUpdate();
+ 
         
         boolean hit1 = false;
         boolean hit2 = false;
@@ -522,8 +504,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
             if (hit1 && hit2)
                 break;
         }
-     //TODO   assertTrue(hit1);
-     //   assertTrue(hit2);
+       assertTrue(hit1);
+       assertTrue(hit2);
 
         // After confirming one of them into the milestone, only that one block
         // is now available
