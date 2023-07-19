@@ -1,4 +1,3 @@
-  $(date '+%Y-%m-%d')
 export BIGTANGLEURL=https://p.bigtangle.org:18088/
 export BIGTANGLEVERSION=2023-07-19 
 

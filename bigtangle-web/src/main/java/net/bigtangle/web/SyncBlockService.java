@@ -88,7 +88,7 @@ public class SyncBlockService {
 							keyValue = kv;
 						}
 					}
-					String unzipDirPath = path + token.getTokenFullname();
+					String unzipDirPath = path + serverName;
 					File unZipDir = new File(unzipDirPath);
 					String versionString = "0";
 					boolean flag = false;
