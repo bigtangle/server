@@ -4903,6 +4903,7 @@ public class ServiceBase {
 				//order is null, write it to 
 				if( order==null) {
 					solidifyBlock(block, SolidityState.getSuccessState(), false, blockStore);
+					order = blockStore.getOrder(blockHash, Sha256Hash.ZERO_HASH);
 				}
 				newOrders.put(blockHash, OrderRecord.cloneOrderRecord(order));
 				spentOrders.add(order);
