@@ -115,7 +115,7 @@ public class SyncBlockService {
 						if (!noshell) {
 							DockerHelper dockerHelper = new DockerHelper();
 							try {
-								dockerHelper.shellExecuteLocal("service apache reload");
+								dockerHelper.shellExecuteLocal("service apache2 reload");
 							} catch (Exception e) {
 								log.error("", e);
 							}
@@ -169,8 +169,8 @@ public class SyncBlockService {
 		stringBuffer.append(" SSLSessionCacheTimeout 600\n");
 		stringBuffer.append("SSLProxyEngine on\n");
 		stringBuffer.append("Include /etc/letsencrypt/options-ssl-apache.conf\n");
-		stringBuffer.append("SSLCertificateFile /etc/letsencrypt/live/www.bigtangle.org/fullchain.pem\n");
-		stringBuffer.append("SSLCertificateKeyFile /etc/letsencrypt/live/www.bigtangle.org/privkey.pem\n");
+		stringBuffer.append("SSLCertificateFile /etc/apache2/localhost.crt \n");
+		stringBuffer.append("SSLCertificateKeyFile /etc/apache2/localhost.key \n");
 		stringBuffer.append("</VirtualHost>");
 		byte2File(stringBuffer.toString().getBytes(), confDir, tokenname + ".bigtangle.org" + ".conf");
 

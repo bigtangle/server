@@ -47,7 +47,7 @@ public class WebTest extends AbstractIntegrationTest {
 
 		File zip = new File("./src/test/resources/test.zip");
 
-	//	publishWebToken(zip);
+		publishWebToken(zip);
 		deployWebFile();
 	}
 
