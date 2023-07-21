@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +13,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.PermissionDomainname;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
+import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetDomainTokenResponse;
@@ -101,7 +101,7 @@ public class TokenDomainnameService {
     public AbstractResponse queryDomainnameBlockHash(String domainname,FullBlockStore store) throws BlockStoreException {
         AbstractResponse response;
 
-        if (StringUtils.isBlank(domainname)) {
+        if (Utils.isBlank(domainname)) {
 
             response = GetDomainTokenResponse.createGetDomainBlockHashResponse(Token.genesisToken(networkParameters));
         } else {

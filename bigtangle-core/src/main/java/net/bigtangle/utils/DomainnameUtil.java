@@ -3,12 +3,12 @@
  *******************************************************************************/
 package net.bigtangle.utils;
 
-import org.apache.commons.lang3.StringUtils;
+import net.bigtangle.core.Utils;
 
 public class DomainnameUtil {
 
     public static String matchParentDomainname(String domainname) {
-        if (StringUtils.isBlank(domainname)) {
+        if (Utils.isBlank(domainname)) {
             return "";
         }
         if (domainname.indexOf(".") < 0) {

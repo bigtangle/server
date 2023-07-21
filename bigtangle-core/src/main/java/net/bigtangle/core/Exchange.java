@@ -8,8 +8,6 @@ import java.beans.Transient;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 import net.bigtangle.utils.UUIDUtil;
 
 public class Exchange implements java.io.Serializable {
@@ -121,7 +119,7 @@ public class Exchange implements java.io.Serializable {
     }
 
     public void setDataHex(String dataHex) {
-        if (StringUtils.isBlank(dataHex)) {
+        if (Utils.isBlank(dataHex)) {
             this.data = null;
         } else {
             this.data = Utils.HEX.decode(dataHex);

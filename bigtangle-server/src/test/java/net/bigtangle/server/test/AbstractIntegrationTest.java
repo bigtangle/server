@@ -1139,7 +1139,7 @@ public abstract class AbstractIntegrationTest {
 				.getPrevTokenMultiSignAddressList(tokenInfo.getToken());
 		if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
 				&& !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
-			if (StringUtils.isBlank(tokenInfo.getToken().getDomainName())) {
+			if (Utils.isBlank(tokenInfo.getToken().getDomainName())) {
 				tokenInfo.getToken().setDomainName(permissionedAddressesResponse.getDomainName());
 			}
 			for (MultiSignAddress multiSignAddress : permissionedAddressesResponse.getMultiSignAddresses()) {

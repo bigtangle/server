@@ -45,7 +45,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.InvalidCipherTextException;
@@ -1599,8 +1598,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			MemoInfo memoInfo) throws Exception {
 		final Token token = tokenInfo.getToken();
 
-		if (StringUtils.isBlank(token.getDomainNameBlockHash())
-				&& StringUtils.isBlank(tokenInfo.getToken().getDomainName())) {
+		if (Utils.isBlank(token.getDomainNameBlockHash())
+				&& Utils.isBlank(tokenInfo.getToken().getDomainName())) {
 			final String domainname = token.getDomainName();
 			GetDomainTokenResponse getDomainBlockHashResponse = this.getDomainNameBlockHash(domainname);
 			Token domainNameBlockHash = getDomainBlockHashResponse.getdomainNameToken();
@@ -1608,8 +1607,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			token.setDomainName(domainNameBlockHash.getTokenname());
 		}
 
-		if (StringUtils.isBlank(token.getDomainNameBlockHash())
-				&& !StringUtils.isBlank(tokenInfo.getToken().getDomainName())) {
+		if (Utils.isBlank(token.getDomainNameBlockHash())
+				&& !Utils.isBlank(tokenInfo.getToken().getDomainName())) {
 			Token domain = getDomainNameBlockHash(tokenInfo.getToken().getDomainName()).getdomainNameToken();
 			token.setDomainNameBlockHash(domain.getBlockHashHex());
 
@@ -1619,7 +1618,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		PermissionedAddressesResponse permissionedAddressesResponse = this.getPrevTokenMultiSignAddressList(token);
 		if (permissionedAddressesResponse != null && permissionedAddressesResponse.getMultiSignAddresses() != null
 				&& !permissionedAddressesResponse.getMultiSignAddresses().isEmpty()) {
-			if (StringUtils.isBlank(token.getDomainName())) {
+			if (Utils.isBlank(token.getDomainName())) {
 				token.setDomainName(permissionedAddressesResponse.getDomainName());
 			}
 
