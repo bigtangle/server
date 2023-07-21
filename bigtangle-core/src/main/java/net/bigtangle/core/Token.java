@@ -246,12 +246,23 @@ public class Token extends SpentBlock implements java.io.Serializable {
             if (getTokentype() == TokenType.domainname.ordinal()) {
                 return tokenname;
             } else {
+                return tokenname + "@" + domainName;
+           
+            }
+        }
+    }
+    public String getTokenFullDomainname() {
+        if (domainName == null || "null".equals(domainName) || "".equals(domainName))
+            return tokenname;
+        else {
+            if (getTokentype() == TokenType.domainname.ordinal()) {
+                return tokenname;
+            } else {
                 return tokenname + "." + domainName;
            
             }
         }
     }
-   
     
     public String getTokennameDisplay() {
         return getTokenFullname();
