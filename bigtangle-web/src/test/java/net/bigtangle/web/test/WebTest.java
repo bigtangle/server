@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
@@ -26,7 +27,11 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenKeyValues;
 import net.bigtangle.core.TokenType;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.response.GetTokensResponse;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.params.TestParams;
+import net.bigtangle.utils.Json;
+import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 import net.bigtangle.web.SyncBlockService;
 
@@ -38,7 +43,7 @@ public class WebTest extends AbstractIntegrationTest {
 
 	public static String testPub = "02721b5eb0282e4bc86aab3380e2bba31d935cba386741c15447973432c61bc975";
 	public static String testPriv = "ec1d240521f7f254c52aea69fca3f28d754d1b89f310f42b0fb094d16814317f";
-	String serverurl = "https://bigtangle.de:18088/";
+	String serverurl = "http://localhost:8088/";
 	@Autowired
 	SyncBlockService syncBlockService;
 
@@ -48,6 +53,7 @@ public class WebTest extends AbstractIntegrationTest {
 		File zip = new File("./src/test/resources/test.zip");
 
 		publishWebToken(zip);
+		Thread.sleep(60000);
 		deployWebFile();
 	}
 
@@ -58,8 +64,51 @@ public class WebTest extends AbstractIntegrationTest {
 		Wallet wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)), serverurl);
 		wallet.setServerURL(serverurl);
 		//add publish test domain 
-		String domain = "bigtangle.org";
+		ECKey preKey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
+		{
+			ECKey key = new ECKey();
+			String tokenid = key.getPublicKeyAsHex();
+			wallet.publishDomainName(key, tokenid, "com", null, "");
 
+			List<ECKey> keys = new ArrayList<ECKey>();
+			keys.add(preKey);
+			for (int i = 0; i < keys.size(); i++) {
+				wallet.multiSign(tokenid, keys.get(i), null);
+			}
+
+			//makeRewardBlock();
+
+			assertTrue(getToken(tokenid).getTokenname().equals("com"));
+		}
+		String domain = "bigtangle.org";
+		{
+			ECKey keyShop = new ECKey();
+			String tokenid = keyShop.getPublicKeyAsHex();
+			wallet.publishDomainName(keyShop, tokenid, "org", null, "");
+
+			List<ECKey> keys = new ArrayList<ECKey>();
+			keys.add(preKey);
+			for (int i = 0; i < keys.size(); i++) {
+				wallet.multiSign(tokenid, keys.get(i), null);
+
+			}
+
+			//makeRewardBlock();
+			assertTrue(getToken(tokenid).getTokenname().equals("org"));
+
+			ECKey key = new ECKey();
+			tokenid = key.getPublicKeyAsHex();
+			wallet.publishDomainName(key, tokenid, domain, null, "");
+			keys = new ArrayList<ECKey>();
+			keys.add(keyShop);
+			for (int i = 0; i < keys.size(); i++) {
+				wallet.multiSign(tokenid, keys.get(i), null);
+
+			}
+
+			//makeRewardBlock();
+			assertTrue(getToken(tokenid).getTokenname().equals(domain));
+		}
 		TokenKeyValues tokenKeyValues = new TokenKeyValues();
 		KeyValue kv = new KeyValue();
 		kv.setKey("site");
@@ -106,6 +155,20 @@ public class WebTest extends AbstractIntegrationTest {
 		List<MultiSignAddress> addresses = new ArrayList<MultiSignAddress>();
 		addresses.add(new MultiSignAddress(tokenid, "", key.getPublicKeyAsHex()));
 		return w.createToken(key, domainname, increment, token, addresses);
+
+	}
+	public Token getToken(String idcom) throws Exception {
+		// String idcom=
+		// "02ffa8c71c0dd200c82fb07323147b4aca5c3ac7b93c6bf53730a42008b72bffa3";
+		// idcom: "0365cc54778405323781041a791a1048d3742234fe07e6cce041419d8038ab26ed";
+		// String tokenid =
+		// "03d109174d7b8aaab67d4090e58cde8a69906f85a292d26333f04ac81d99371798";
+		HashMap<String, Object> requestParam = new HashMap<String, Object>();
+		requestParam.put("tokenid", idcom);
+		byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+				Json.jsonmapper().writeValueAsString(requestParam));
+
+		return Json.jsonmapper().readValue(resp, GetTokensResponse.class).getTokens().get(0);
 
 	}
 
