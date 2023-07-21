@@ -57,7 +57,8 @@ public class WebTest extends AbstractIntegrationTest {
 
 		Wallet wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)), serverurl);
 		wallet.setServerURL(serverurl);
-		String domain = "";
+		//add publish test domain 
+		String domain = "bigtangle.org";
 
 		TokenKeyValues tokenKeyValues = new TokenKeyValues();
 		KeyValue kv = new KeyValue();
@@ -70,8 +71,8 @@ public class WebTest extends AbstractIntegrationTest {
 		tokenKeyValues.addKeyvalue(kv);
 		kv = new KeyValue();
 		kv.setKey("aliasService");
-		kv.setValue("mytest");
-		createToken(contractKey, "contractlottery", 0, domain, "contractlottery", BigInteger.valueOf(1), true,
+		kv.setValue("mytest.example.com"); //mytest.example.com +  testcontract.bigtangle.org
+		createToken(contractKey, "testcontract", 0, domain, "testcontract", BigInteger.valueOf(1), true,
 				tokenKeyValues, TokenType.web.ordinal(), contractKey.getPublicKeyAsHex(), wallet);
 
 		ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
