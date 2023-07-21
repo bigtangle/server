@@ -2438,9 +2438,10 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 			List<UTXO> outputs = getBalance(false, testKey).stream()
 					.filter(out -> Utils.HEX.encode(out.getValue().getTokenid())
 							.equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
-					.collect(Collectors.toList());
+					.collect(Collectors.toList()); 
+			UTXO output = getLargeUTXO(outputs);
 			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-					outputs.get(0));
+					output);
 			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
 			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
 			// amount, testKey));

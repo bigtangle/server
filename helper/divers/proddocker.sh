@@ -54,16 +54,17 @@ mysql -u root -ptest1234 < /root/bigtangle-mysql.sql
 
 mkdir /var/lib/mysql/backup
 
-mysqldump -u root -ptest1234 --databases info | gzip -c > /var/lib/mysql/backup/$(date +"%Y-%b-%d")_info-backup.sql.gz
+mysqldump -u root -ptest1234 --databases info | gzip -c > /var/lib/mysql/$(date +"%Y-%b-%d")_info-backup.sql.gz
 
 
  rsync -avz -e "ssh -i /data/git/sshkeys/cui/id_rsa  "  \
-  root@bigtangle.de:/data/vm/bigtangle-mysql/var/lib/mysql/backup/2022-Oct-30-15-18_info-backup.sql.gz \
+  root@bigtangle.de:/data/vm/bigtangle-mysql/var/lib/mysql/$(date +"%Y-%b-%d")_info-backup.sql.gz \
   .
   
   gzip -d  $(date +"%Y-%b-%d")_info-backup.sql.gz
   docker cp $(date +"%Y-%b-%d")_info-backup.sql bigtangle-mysql:/root
+ sudo mv $(date +"%Y-%b-%d")_info-backup.sql  /data/vm/bigtangle-mysql/var/lib/mysql/
   docker exec -it bigtangle-mysql bash
-   mysql -u root -ptest1234 < /var/lib/mysql/2021-Dec-05_info-backup.sql.gz
+   mysql -u root -ptest1234 < /var/lib/mysql/$(date +"%Y-%b-%d")_info-backup.sql
 
  

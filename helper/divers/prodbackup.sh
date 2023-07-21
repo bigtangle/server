@@ -59,8 +59,8 @@ docker exec  bigtangle-backup /bin/sh -c " tail -f /var/log/supervisor/serversta
  mkdir -p /data/vm/bigtangle-backup-mysql/var/lib
  
  sudo rsync -avz -e "ssh -i /data/git/sshkeys/cui/id_rsa  "  \
-  root@bigtangle.de:/data/vm/bigtangle-backup-mysql/var/lib/mysql  \
-  /data/vm/bigtangle-backup-mysql/var/lib/
+  root@bigtangle.de:/data/vm/test-sync-mysql/var/lib/mysql/2023-Jul-20_info-backup.sql.gz .  \
+  
   
   docker rm -f $DBHOST 
   docker run -d  -t    -p 3306:3306   \
