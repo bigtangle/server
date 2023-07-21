@@ -76,13 +76,15 @@ public class SyncBlockService {
 		List<Token> tokens = getTokensResponse.getTokens();
 		if (tokens != null && !tokens.isEmpty()) {
 			for (Token token : tokens) {
+				String tokenfullname=token.getTokenFullname();
 				TokenKeyValues tokenKeyValues = token.getTokenKeyValues();
 				if (tokenKeyValues.getKeyvalues() != null && !tokenKeyValues.getKeyvalues().isEmpty()) {
 					KeyValue keyValue = tokenKeyValues.getKeyvalues().get(0);
-					String serverName = token.getTokenname();
+					String serverName =tokenfullname;
+					String alias="";
 					for (KeyValue kv : tokenKeyValues.getKeyvalues()) {
 						if (kv.getKey().equals("aliasService")) {
-							serverName = kv.getValue();
+							alias = kv.getValue();
 						}
 						if (kv.getKey().equals("site")) {
 							keyValue = kv;
@@ -111,7 +113,7 @@ public class SyncBlockService {
 						Zip.unZipRecursion(unzipDirPath + ".zip", unzipDirPath);
 						byte2File(token.getTokenFullname().getBytes(), unzipDirPath + "/version/",
 								token.getTokenindex() + ".txt");
-						deployConf(confDir, serverName, serverName);
+						deployConf(confDir, serverName, tokenfullname,alias);
 						if (!noshell) {
 							DockerHelper dockerHelper = new DockerHelper();
 							try {
@@ -138,7 +140,7 @@ public class SyncBlockService {
 	 *     
 	 *     two conf:  alias.conf +   .conf
 	 */
-	public static void deployConf(String confDir,String serverName,  String tokenfullname) {
+	public static void deployConf(String confDir,String serverName,  String tokenfullname,String alias) {
 		if (new File(confDir + tokenfullname + ".conf").exists()) {
 			return;
 		}
@@ -146,11 +148,14 @@ public class SyncBlockService {
 
 		stringBuffer.append("<VirtualHost *:80>\n");
 		stringBuffer.append("ServerName " + serverName +"\n");
+		if (alias!=null&&!alias.trim().isEmpty()) {
+			stringBuffer.append("ServerAlias " + alias +"\n");
+		}
 		stringBuffer.append("DocumentRoot /var/www/" + tokenfullname + "\n");
 		stringBuffer.append("ErrorLog ${APACHE_LOG_DIR}/error.log\n");
 		stringBuffer.append("CustomLog ${APACHE_LOG_DIR}/access.log combined\n");
 		stringBuffer.append("RewriteEngine on\n");
-		stringBuffer.append("RewriteCond %{SERVER_NAME} =" + tokenfullname + ".bigtangle.org\n");
+		stringBuffer.append("RewriteCond %{SERVER_NAME} =" + serverName + "\n");
 		stringBuffer.append("RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]\n");
 		stringBuffer.append("</VirtualHost>\n");
 
@@ -179,7 +184,7 @@ public class SyncBlockService {
 		stringBuffer.append("SSLCertificateFile /etc/apache2/localhost.crt \n");
 		stringBuffer.append("SSLCertificateKeyFile /etc/apache2/localhost.key \n");
 		stringBuffer.append("</VirtualHost>");
-		byte2File(stringBuffer.toString().getBytes(), confDir, tokenfullname + ".bigtangle.org" + ".conf");
+		byte2File(stringBuffer.toString().getBytes(), confDir, serverName + ".conf");
 
 	}
 
