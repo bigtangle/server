@@ -42,7 +42,7 @@ JOIN blocks on blocks.hash=txreward.blockhash WHERE milestone=339
 
 delete from txreward where chainlength=197088
 
-select * from blocks where hash = 0x00000051482483264203836bdefe89344929cbf3f03d8c7b12a9e202e8b9c887;
+select * from blocks where hash = 0x000039b6b149700642826b603800cbbbbe73a8b9af24980b3fb9154c2a0119e8;
 
  SELECT blockhash, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 
  txreward.difficulty, txreward.chainlength FROM txreward 
@@ -52,7 +52,7 @@ JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1  and
 select  missingdependency, height from unsolidblocks where directlymissing=1
 select * from blocks where hash =373;
 
-select * from blocks join outputs on blocks.hash=outputs.blockhash where blocks.hash=0x00000075491105d21a1654d8f4566dd819c111b100818c07b66a3ae8a8b4de76 ;
+select * from blocks join outputs on blocks.hash=outputs.blockhash where blocks.hash= 0x000039b6b149700642826b603800cbbbbe73a8b9af24980b3fb9154c2a0119e8;
 select * from blocks where hash=0x00000075491105d21a1654d8f4566dd819c111b100818c07b66a3ae8a8b4de76 ;
 select * from blocks where blocktype=12 ;
 select * from blocks where confirmed=1 ;

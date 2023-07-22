@@ -100,7 +100,7 @@ public class FullBlockGraph {
 		if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
 			addChain(block, allowUnsolid, true, store);
 		} else {
-			addNonChain(block, allowUnsolid, store, false);
+			addNonChain(block, allowUnsolid, store,true );
 		}
 
 	}
@@ -298,6 +298,9 @@ public class FullBlockGraph {
 				!allowUnsolid, blockStore, false);
 		if (solidityState.isFailState()) {
 			log.debug(solidityState.toString());
+		}
+		if(allowMissingPredecessor&& solidityState.getState().equals(SolidityState.State.MissingPredecessor)) {
+			solidityState=SolidityState.getSuccessState();
 		}
 		// If explicitly wanted (e.g. new block from local clients), this
 		// block must strictly be solid now.
