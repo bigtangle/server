@@ -100,7 +100,9 @@ public class FullBlockGraph {
 		if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
 			addChain(block, allowUnsolid, true, store);
 		} else {
-			addNonChain(block, allowUnsolid, store,true );
+
+			addNonChain(block, allowUnsolid, store, true);
+
 		}
 
 	}
@@ -249,11 +251,11 @@ public class FullBlockGraph {
 			}
 
 			if (solidityState.isFailState()) {
-		 		log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
+				log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
 				return;
 			}
 			// Inherit solidity from predecessors if they are not solid
-			//solidityState = serviceBase.getMinPredecessorSolidity(block, false, store);
+			// solidityState = serviceBase.getMinPredecessorSolidity(block, false, store);
 
 			// Sanity check
 			if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {
@@ -298,9 +300,6 @@ public class FullBlockGraph {
 				!allowUnsolid, blockStore, false);
 		if (solidityState.isFailState()) {
 			log.debug(solidityState.toString());
-		}
-		if(allowMissingPredecessor&& solidityState.getState().equals(SolidityState.State.MissingPredecessor)) {
-			solidityState=SolidityState.getSuccessState();
 		}
 		// If explicitly wanted (e.g. new block from local clients), this
 		// block must strictly be solid now.
