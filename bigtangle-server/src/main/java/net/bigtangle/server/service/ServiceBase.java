@@ -431,6 +431,10 @@ public class ServiceBase {
 
 	public boolean getUTXOSpent(TransactionOutPoint txout, FullBlockStore store) throws BlockStoreException {
 		UTXO a = store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
+		if(a==null) {
+			solidifyWaiting( store .get(txout.getBlockHash()), store);
+			a = store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
+ 		}
 		 return a.isSpent();
  
 	}
@@ -3353,10 +3357,10 @@ public class ServiceBase {
 
 	public boolean solidifyWaiting(Block block, FullBlockStore store) throws BlockStoreException {
 
-		SolidityState solidityState = checkSolidity(block, false, store);
+		SolidityState solidityState = checkSolidity(block, false, store, false);
 		// allow here unsolid block, as sync may do only the referenced blocks
 		if (SolidityState.State.MissingPredecessor.equals(solidityState.getState())) {
-			solidifyBlock(block, SolidityState.getSuccessState(), false, store);
+		solidifyBlock(block, SolidityState.getSuccessState(), false, store);
 		} else {
 			solidifyBlock(block, solidityState, false, store);
 		}
