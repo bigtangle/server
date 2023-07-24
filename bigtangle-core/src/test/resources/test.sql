@@ -42,7 +42,7 @@ JOIN blocks on blocks.hash=txreward.blockhash WHERE milestone=339
 
 delete from txreward where chainlength=197088
 
-select * from blocks where hash = 0x000039b6b149700642826b603800cbbbbe73a8b9af24980b3fb9154c2a0119e8;
+select * from blocks where hash = 0x0000000c1c45469ab3bcea91afbf582027800e7280c2dd90e05b5249296ed7f28;
 
  SELECT blockhash, txreward.confirmed, txreward.spent, txreward.spenderblockhash, txreward.prevblockhash, 
  txreward.difficulty, txreward.chainlength FROM txreward 

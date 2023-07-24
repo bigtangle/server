@@ -22,7 +22,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +47,6 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.response.AbstractResponse;
-import net.bigtangle.core.response.CheckpointResponse;
 import net.bigtangle.core.response.ErrorResponse;
 import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.core.response.GetStringResponse;
@@ -61,8 +59,6 @@ import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.AccessGrantService;
 import net.bigtangle.server.service.AccessPermissionedService;
 import net.bigtangle.server.service.BlockService;
-import net.bigtangle.server.service.CheckpointService;
-import net.bigtangle.server.service.ExchangeService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.OrderdataService;
@@ -117,8 +113,7 @@ public class DispatcherController {
 	private AccessPermissionedService accessPermissionedService;
 	@Autowired
 	private AccessGrantService accessGrantService;
-	@Autowired
-	private CheckpointService checkpointService;
+ 
 
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -631,11 +626,7 @@ public class DispatcherController {
 			}
 				break;
 
-			case getCheckPoint: {
-				AbstractResponse response = CheckpointResponse.create(checkpointService.checkToken(store));
-				this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
-			}
-				break;
+ 
 			default:
 				break;
 			}

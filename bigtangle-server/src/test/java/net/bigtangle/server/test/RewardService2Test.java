@@ -33,7 +33,7 @@ import net.bigtangle.core.exception.InsufficientMoneyException;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.server.service.CheckpointService;
+import net.bigtangle.server.checkpoint.CheckpointService;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 

@@ -32,6 +32,13 @@ db:
   username: ${DB_USERNAME:root}
   password: ${DB_PASSWORD:test1234}
 
+spark:
+  appname: ${DBTYPE:bigtangle}
+  home: ${DB_HOSTNAME:localhost}
+  masteruri: ${DB_PORT:local}
+  apppath: ${DB_NAME:/data/deltalake}
+
+
 
 service:
   schedule:

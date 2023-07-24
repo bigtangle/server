@@ -34,15 +34,9 @@ public class CompareCheckpoint {
 	protected static final Logger log = LoggerFactory.getLogger(CompareCheckpoint.class);
 	@Autowired
 	protected SyncBlockService syncBlockService;
-	Checkpoint checkpointService;
+	CheckpointService checkpointService;
 
-	public void diffThread() throws Exception {
-
-		syncBlockService = new SyncBlockService();
-		checkpointService = new Checkpoint();
-		testComapre("bc");
-		testComapre("03bed6e75294e48556d8bb2a53caf6f940b70df95760ee4c9772681bbf90df85ba");
-	}
+ 
 
 	public void diffThread2() throws Exception {
 		// System.setProperty("https.proxyHost",
@@ -50,7 +44,7 @@ public class CompareCheckpoint {
 		// System.setProperty("https.proxyPort", "3128");
 
 		syncBlockService = new SyncBlockService();
-		checkpointService = new Checkpoint();
+		checkpointService = new CheckpointService();
 
 		while (true) {
 			try {
@@ -71,8 +65,8 @@ public class CompareCheckpoint {
 		List<TXReward> txreward2 = syncBlockService.getAllConfirmedReward(TESTSERVER2);
 		Map<String, Map<String, Tokensums>> result = new HashMap<String, Map<String, Tokensums>>();
 
-		checkpointService.checkToken(TESTSERVER1, result);
-		checkpointService.checkToken(TESTSERVER2, result);
+	//	checkpointService.checkToken(TESTSERVER1, result);
+	//	checkpointService.checkToken(TESTSERVER2, result);
 		log.debug("\n " + TESTSERVER2 + "txreward  " + txreward2.size() + "\n "
 				+ txreward2.get(txreward2.size() - 1).getBlockHash() + "\n " + TESTSERVER1 + "   txreward  "
 				+ txreward.size() + "\n " + txreward.get(txreward.size() - 1).getBlockHash());
@@ -116,14 +110,7 @@ public class CompareCheckpoint {
 			}
 		}
 	}
-
-	public void testComapre(String tokenid) throws Exception {
-
-		List<UTXO> t2 = checkpointService.getOutputs(TESTSERVER2, tokenid);
-		List<UTXO> t1 = checkpointService.getOutputs(TESTSERVER1, tokenid);
-		compareUTXO(t1, t2);
-	}
-
+ 
 	private void compareUTXO(List<UTXO> t1, List<UTXO> t2) {
 
 		log.debug("\n " + TESTSERVER1 + " utxo size : " + t1.size() + "\n " + TESTSERVER2 + ": " + t2.size());

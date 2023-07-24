@@ -101,7 +101,7 @@
 			<groupId>org.apache.spark</groupId>
 			<artifactId>spark-sql_2.13</artifactId>
 			<version>${org.apache.spark.version}</version>
- 
+
 		</dependency>
 		<dependency>
 			<groupId>io.delta</groupId>
@@ -134,7 +134,19 @@
 
 				</executions>
 			</plugin>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>17</source>
+					<target>17</target>
+					<compilerArgs>
+						<!-- Few examples ... only pick the ones needed -->
+						<arg>--add-exports</arg>
+						<arg>jdk.unsupported/sun.nio.ch=ALL-UNNAMED</arg>
 
+					</compilerArgs>
+				</configuration>
+			</plugin>
 
 			<plugin>
 				<groupId>pl.project13.maven</groupId>

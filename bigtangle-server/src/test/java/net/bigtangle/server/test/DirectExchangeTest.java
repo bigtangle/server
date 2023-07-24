@@ -20,7 +20,6 @@ import java.util.Random;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -57,7 +56,7 @@ public class DirectExchangeTest extends AbstractIntegrationTest {
 
 	private static final Logger log = LoggerFactory.getLogger(DirectExchangeTest.class);
 
-	@org.junit.jupiter.api.Test
+	@Test
 	public void testBatchBlock() throws Exception {
 		byte[] data = OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.getTip.name(),
 				Json.jsonmapper().writeValueAsString(new HashMap<String, String>()));

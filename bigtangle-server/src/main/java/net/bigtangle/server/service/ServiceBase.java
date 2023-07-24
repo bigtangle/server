@@ -1303,9 +1303,9 @@ public class ServiceBase {
 		for (BlockWrap predecessor : allPredecessors) {
 			if (predecessor.getBlockEvaluation().getSolid() == 2) {
 				continue;
-			} else if (predecessor.getBlockEvaluation().getSolid() == 1) {
+			} else if (predecessor.getBlockEvaluation().getSolid() == 1 && predecessorsSolid) {
 				missingCalculation = SolidityState.fromMissingCalculation(predecessor.getBlockHash());
-			} else if (predecessor.getBlockEvaluation().getSolid() == 0) {
+			} else if (predecessor.getBlockEvaluation().getSolid() == 0 && predecessorsSolid) {
 				missingDependency = SolidityState.from(predecessor.getBlockHash(), false);
 			} else if (predecessor.getBlockEvaluation().getSolid() == -1 && predecessorsSolid) {
 				if (throwExceptions)
@@ -2947,7 +2947,7 @@ public class ServiceBase {
 			SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions,
 					allRequirements, store);
 			if (!predecessorsExist.isSuccessState()) {
-				return predecessorsExist;
+	 			return predecessorsExist;
 			}
 		
 			// Inherit solidity from predecessors if they are not solid
@@ -3074,7 +3074,7 @@ public class ServiceBase {
 		checkGeneratedReward(newMilestoneBlock, store);
 
 		// Sanity check: No reward blocks are approved
-		checkContainsNoRewardBlocks(newMilestoneBlock, store);
+ 	checkContainsNoRewardBlocks(newMilestoneBlock, store);
 
 		// Check: At this point, predecessors must be solid
 		solidityState = checkSolidity(newMilestoneBlock, false, store, false);

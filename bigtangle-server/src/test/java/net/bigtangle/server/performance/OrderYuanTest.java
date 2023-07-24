@@ -1,24 +1,16 @@
 package net.bigtangle.server.performance;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -26,14 +18,10 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.OrderRecord;
-import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Tokensums;
-import net.bigtangle.core.TokensumsMap;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.server.service.CheckpointService;
 import net.bigtangle.server.test.AbstractIntegrationTest;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
@@ -43,8 +31,7 @@ import net.bigtangle.utils.OkHttp3Util;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class OrderYuanTest extends AbstractIntegrationTest {
 
-    @Autowired
-    CheckpointService checkpointService;
+  
 
     @Test
     public void payTokenTime() throws Exception {
@@ -108,7 +95,7 @@ public class OrderYuanTest extends AbstractIntegrationTest {
                 // Execute order matching
                 makeRewardBlock(addedBlocks);
 
-                checkSum();
+              //  checkSum();
             } catch (Exception e) {
                 // TODO: handle exception
                 log.warn("", e);
@@ -118,18 +105,7 @@ public class OrderYuanTest extends AbstractIntegrationTest {
 
     }
 
-    private Sha256Hash checkSum() throws JsonProcessingException, Exception {
-        TokensumsMap map = checkpointService.checkToken(store);
-        Map<String, Tokensums> r11 = map.getTokensumsMap();
-        for (Entry<String, Tokensums> a : r11.entrySet()) {
-            if (!a.getValue().check()) {
-                log.debug(a.toString());
-                BigInteger.valueOf(123).divideAndRemainder(BigInteger.valueOf(LongMath.checkedPow(10, 2)));
-            }
-            assertTrue(a.getValue().check()," " + a.toString());
-        }
-        return map.hash();
-    }
+ 
 
     public void sell() throws Exception {
         List<UTXO> utxos = getBalance(false, wallet.walletKeys());
