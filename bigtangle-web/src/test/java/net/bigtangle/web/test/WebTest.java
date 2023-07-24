@@ -165,7 +165,7 @@ public class WebTest extends AbstractIntegrationTest {
 		// "03d109174d7b8aaab67d4090e58cde8a69906f85a292d26333f04ac81d99371798";
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();
 		requestParam.put("tokenid", idcom);
-		byte[] resp = OkHttp3Util.postString(contextRoot + ReqCmd.getTokenById.name(),
+		byte[] resp = OkHttp3Util.postString(serverurl + ReqCmd.getTokenById.name(),
 				Json.jsonmapper().writeValueAsString(requestParam));
 
 		return Json.jsonmapper().readValue(resp, GetTokensResponse.class).getTokens().get(0);
