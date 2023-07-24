@@ -768,7 +768,7 @@ public class DispatcherController {
 		ECKey ecKey = ECKey.fromPublicOnly(pub);
 
 		final String address = ecKey.toAddress(networkParameters).toBase58();
-		if (StringUtils.isNotBlank(serverConfiguration.getPermissionadmin())
+		if (!Utils.isBlank(serverConfiguration.getPermissionadmin())
 				&& serverConfiguration.getPermissionadmin().equals(address)) {
 			return true;
 		}

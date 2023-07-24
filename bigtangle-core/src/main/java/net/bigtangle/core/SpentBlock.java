@@ -7,8 +7,6 @@ package net.bigtangle.core;
 
 import java.util.Objects;
 
-import org.apache.commons.lang3.StringUtils;
-
 /*
   * Block output dynamic evaluation data
   */
@@ -29,7 +27,7 @@ public class SpentBlock extends DataClass {
         
     }
     public void setBlockHashHex(String blockHashHex) {
-        if (StringUtils.isNotBlank(blockHashHex))
+        if (!Utils.isBlank(blockHashHex))
             this.blockHash = Sha256Hash.wrap(blockHashHex);
     }
     public String getBlockHashHex() {

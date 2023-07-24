@@ -430,7 +430,13 @@ public class ServiceBase {
 	}
 
 	public boolean getUTXOSpent(TransactionOutPoint txout, FullBlockStore store) throws BlockStoreException {
-		return store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex()).isSpent();
+		UTXO a = store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
+		if(a==null) {
+			solidifyWaiting( store .get(txout.getBlockHash()), store);
+			a = store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
+ 		}
+		 return a.isSpent();
+ 
 	}
 
 	public boolean getUTXOConfirmed(TransactionOutPoint txout, FullBlockStore store) throws BlockStoreException {
@@ -3336,8 +3342,9 @@ public class ServiceBase {
 
 		// Only check the Hash of OrderMatchingResult
 		if (!currRewardInfo.getOrdermatchingResult().equals(ordermatchresult.getOrderMatchingResultHash())) {
-	//	if(currRewardInfo.getChainlength()!=197096)
-	//		throw new VerificationException("OrderMatchingResult transactions output is wrong.");
+			// if(currRewardInfo.getChainlength()!=197096)
+			// throw new VerificationException("OrderMatchingResult transactions output is
+			// wrong.");
 		}
 
 		Transaction miningTx = generateVirtualMiningRewardTX(newMilestoneBlock, store);
@@ -3350,8 +3357,13 @@ public class ServiceBase {
 
 	public boolean solidifyWaiting(Block block, FullBlockStore store) throws BlockStoreException {
 
-		SolidityState solidityState = checkSolidity(block, false, store);
-		solidifyBlock(block, solidityState, false, store);
+		SolidityState solidityState = checkSolidity(block, false, store, false);
+		// allow here unsolid block, as sync may do only the referenced blocks
+		if (SolidityState.State.MissingPredecessor.equals(solidityState.getState())) {
+		solidifyBlock(block, SolidityState.getSuccessState(), false, store);
+		} else {
+			solidifyBlock(block, solidityState, false, store);
+		}
 		return true;
 	}
 

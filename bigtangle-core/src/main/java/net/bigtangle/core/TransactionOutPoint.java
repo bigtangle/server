@@ -29,8 +29,6 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import com.google.common.base.Objects;
 
 import net.bigtangle.core.exception.ProtocolException;
@@ -252,7 +250,7 @@ public class TransactionOutPoint extends ChildMessage {
      */
     @Override
     public Sha256Hash getHash() {
-        return Sha256Hash.of(ArrayUtils.addAll(blockHash.getBytes(), txHash.getBytes()));
+        return Sha256Hash.of(Utils.addAll(blockHash.getBytes(), txHash.getBytes()));
     }
 
     public Sha256Hash getTxHash() {

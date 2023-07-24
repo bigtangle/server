@@ -29,8 +29,6 @@ import java.util.Arrays;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 
@@ -328,7 +326,7 @@ public class TransactionInput extends ChildMessage {
      */
     public void verify(TransactionOutput output) throws VerificationException {
         if (output.parent != null) {
-            if (!getOutpoint().getHash().equals(Sha256Hash.of(ArrayUtils.addAll(
+            if (!getOutpoint().getHash().equals(Sha256Hash.of( Utils.addAll(
                     output.getParentTransaction().getParentBlock().getHash().getBytes(), output.getParentTransaction().getHash().getBytes()))))
                 throw new VerificationException("This input does not refer to the tx containing the output.");
             if (getOutpoint().getIndex() != output.getIndex())

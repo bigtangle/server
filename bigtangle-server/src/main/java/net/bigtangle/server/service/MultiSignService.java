@@ -57,7 +57,7 @@ public class MultiSignService {
     
     public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address, FullBlockStore store )
             throws BlockStoreException {
-        if (StringUtils.isBlank(tokenid)) {
+        if (Utils.isBlank(tokenid)) {
             List<MultiSign> multiSigns =store.getMultiSignListByAddress(address);
             return MultiSignResponse.createMultiSignResponse(multiSigns);
         } else {

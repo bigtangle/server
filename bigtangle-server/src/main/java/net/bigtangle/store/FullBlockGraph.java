@@ -100,7 +100,9 @@ public class FullBlockGraph {
 		if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
 			addChain(block, allowUnsolid, true, store);
 		} else {
-			addNonChain(block, allowUnsolid, store, false);
+
+			addNonChain(block, allowUnsolid, store, true);
+
 		}
 
 	}
@@ -249,11 +251,11 @@ public class FullBlockGraph {
 			}
 
 			if (solidityState.isFailState()) {
-		 		log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
+				log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
 				return;
 			}
 			// Inherit solidity from predecessors if they are not solid
-			//solidityState = serviceBase.getMinPredecessorSolidity(block, false, store);
+			// solidityState = serviceBase.getMinPredecessorSolidity(block, false, store);
 
 			// Sanity check
 			if (solidityState.isFailState() || solidityState.getState() == State.MissingPredecessor) {

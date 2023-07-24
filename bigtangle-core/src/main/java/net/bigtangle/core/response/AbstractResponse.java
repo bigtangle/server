@@ -5,11 +5,6 @@
 
 package net.bigtangle.core.response;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
 public abstract class AbstractResponse  {
  
 
@@ -20,11 +15,7 @@ public abstract class AbstractResponse  {
     private Long duration;
     
  
-    @Override
-    public String toString() {
-        return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
-    }
-
+  
     public String getMessage() {
         return message;
     }
@@ -33,16 +24,7 @@ public abstract class AbstractResponse  {
         this.message = message;
     }
 
-    @Override
-    public int hashCode() {
-        return HashCodeBuilder.reflectionHashCode(this, false);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return EqualsBuilder.reflectionEquals(this, obj, false);
-    }
-
+ 
     public Integer getErrorcode() {
         return errorcode;
     }

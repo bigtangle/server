@@ -76,8 +76,8 @@ public class ExchangeService {
         byte[] data = Utils.HEX.decode(dataHex);
          store.updateExchangeSign(orderid, signtype, data);
         exchange = store.getExchangeInfoByOrderid(orderid);
-        if (exchange.getToSign() == 1 && exchange.getFromSign() == 1 && StringUtils.isNotBlank(exchange.getToOrderId())
-                && StringUtils.isNotBlank(exchange.getFromOrderId())) {
+        if (exchange.getToSign() == 1 && exchange.getFromSign() == 1 && !Utils.isBlank(exchange.getToOrderId())
+                && !Utils.isBlank(exchange.getFromOrderId())) {
         }
         return AbstractResponse.createEmptyResponse();
     }
@@ -92,8 +92,8 @@ public class ExchangeService {
         byte[] data = Utils.HEX.decode(dataHex);
          store.updateExchangeSign(orderid, signtype, data);
         exchange =  store.getExchangeInfoByOrderid(orderid);
-        if (exchange.getToSign() == 1 && exchange.getFromSign() == 1 && StringUtils.isNotBlank(exchange.getToOrderId())
-                && StringUtils.isNotBlank(exchange.getFromOrderId())) {
+        if (exchange.getToSign() == 1 && exchange.getFromSign() == 1 && !Utils.isBlank(exchange.getToOrderId())
+                && !Utils.isBlank(exchange.getFromOrderId())) {
         }
         return AbstractResponse.createEmptyResponse();
     }

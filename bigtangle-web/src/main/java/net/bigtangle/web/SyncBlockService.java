@@ -76,7 +76,7 @@ public class SyncBlockService {
 		List<Token> tokens = getTokensResponse.getTokens();
 		if (tokens != null && !tokens.isEmpty()) {
 			for (Token token : tokens) {
-				String tokenfullname=token.getTokenFullname();
+				String tokenfullname=token.getTokenFullDomainname();
 				TokenKeyValues tokenKeyValues = token.getTokenKeyValues();
 				if (tokenKeyValues.getKeyvalues() != null && !tokenKeyValues.getKeyvalues().isEmpty()) {
 					KeyValue keyValue = tokenKeyValues.getKeyvalues().get(0);
@@ -107,11 +107,11 @@ public class SyncBlockService {
 
 					if (flag || (token.getTokenindex() > Long.valueOf(versionString))) {
 						byte[] zipFile = Base64.decodeBase64(keyValue.getValue());
-						byte2File(zipFile, path, token.getTokenFullname() + ".zip");
+						byte2File(zipFile, path, token.getTokenFullDomainname() + ".zip");
 
 						FileUtils.deleteDirectory(unZipDir);
 						Zip.unZipRecursion(unzipDirPath + ".zip", unzipDirPath);
-						byte2File(token.getTokenFullname().getBytes(), unzipDirPath + "/version/",
+						byte2File(token.getTokenFullDomainname().getBytes(), unzipDirPath + "/version/",
 								token.getTokenindex() + ".txt");
 						deployConf(confDir, serverName, tokenfullname,alias);
 						if (!noshell) {
