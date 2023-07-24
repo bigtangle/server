@@ -15,10 +15,9 @@ export SERVICE_MINING=true
 export DB_PASSWORD=test1234
 export SERVERPORT=8089
 export SERVERPORT SERVICE_MINING_RATE=136000
-export JAVA_OPTS=-Ddebug -Xmx5028m -Dfile.encoding=UTF-8
+export JAVA_OPTS=-Ddebug  -Xmx5028m --add-exports java.base/sun.nio.ch=ALL-UNNAMED -Dfile.encoding=UTF-8
  
 docker rm -f $DBHOST 
-rm -fr /data/vm/$DBHOST/*
 docker run -d  -t --net=bigtangle-bridged-network     \
 -v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql   \
 -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \

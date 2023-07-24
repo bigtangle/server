@@ -1260,14 +1260,14 @@ public class ServiceBase {
 	}
 
 	private SolidityState checkPredecessorsExistAndOk(Block block, boolean throwExceptions,
-			Set<Sha256Hash> allPredecessorBlockHashes, FullBlockStore store) throws BlockStoreException {
+			 List<BlockWrap> allRequirements, FullBlockStore store) throws BlockStoreException {
 		//
-		for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
-			final BlockWrap pred = store.getBlockWrap(predecessorReq);
+		for (BlockWrap pred : allRequirements) {
+		//	final BlockWrap pred = store.getBlockWrap(predecessorReq);
 			if (pred == null)
-				return SolidityState.from(predecessorReq, true);
+				return SolidityState.from(Sha256Hash.ZERO_HASH, true);
 			if (pred.getBlock().getBlockType().requiresCalculation() && pred.getBlockEvaluation().getSolid() != 2)
-				return SolidityState.fromMissingCalculation(predecessorReq);
+				return SolidityState.fromMissingCalculation(pred.getBlockHash());
 			if (pred.getBlock().getHeight() >= block.getHeight()) {
 				if (throwExceptions)
 					throw new VerificationException("Height of used blocks must be lower than height of this block.");
@@ -2942,13 +2942,14 @@ public class ServiceBase {
 			if (formalSolidityResult.isFailState())
 				return formalSolidityResult;
 			final Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
+			List<BlockWrap> allRequirements = getAllRequirements(block, allPredecessorBlockHashes, store);		
 			// Predecessors must exist and be ok
 			SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions,
-					allPredecessorBlockHashes, store);
+					allRequirements, store);
 			if (!predecessorsExist.isSuccessState()) {
 				return predecessorsExist;
 			}
-			List<BlockWrap> allRequirements = getAllRequirements(block, allPredecessorBlockHashes, store);
+		
 			// Inherit solidity from predecessors if they are not solid
 			SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block, throwExceptions, allRequirements,
 					store, predecessorsSolid);
