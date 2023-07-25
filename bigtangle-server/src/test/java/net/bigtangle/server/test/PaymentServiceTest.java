@@ -138,7 +138,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
 		Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
 		Address address = new ECKey().toAddress(networkParameters);
-		wallet.pay(null, address.toString(), amount, new MemoInfo(""));
+		wallet.pay(null, address.toString(), amount,  "" );
 		// sendEmpty(5);
 		makeRewardBlock();
 
@@ -152,7 +152,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
 		Coin amount = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
 		Address address = new ECKey().toAddress(networkParameters);
-		List<Block> rollingBlock = wallet.pay(null, address.toString(), amount, new MemoInfo(""));
+		List<Block> rollingBlock = wallet.pay(null, address.toString(), amount,   "" );
 		// sendEmpty(5);
 		makeRewardBlock();
 
@@ -216,7 +216,7 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 
 	public void testPartsToOne(Coin amount, ECKey to) throws Exception {
 
-		wallet.pay(null, to.toAddress(networkParameters).toString(), amount, new MemoInfo(""));
+		wallet.pay(null, to.toAddress(networkParameters).toString(), amount, "");
 
 		makeRewardBlock();
 
@@ -231,14 +231,14 @@ public class PaymentServiceTest extends AbstractIntegrationTest {
 		Coin aCoin = Coin.valueOf(1, NetworkParameters.BIGTANGLE_TOKENID);
 
 		List<Block> rollingBlock = wallet.pay(null, to.toAddress(networkParameters).toString(), aCoin,
-				new MemoInfo(""));
+				"");
 
 		makeRewardBlock();
 		// pay from burned address
 		try {
 			Wallet wallet = Wallet.fromKeys(networkParameters, to, contextRoot);
 			wallet.setServerURL(contextRoot);
-			wallet.pay(null, to.toAddress(networkParameters).toString(), aCoin, new MemoInfo(""));
+			wallet.pay(null, to.toAddress(networkParameters).toString(), aCoin, "");
 			fail();
 		} catch (RuntimeException e) {
 			assertTrue(e.getMessage().contains("Burned"));

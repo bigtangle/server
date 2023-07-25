@@ -133,7 +133,7 @@ public class FromAddressTests extends AbstractIntegrationTest {
 		Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
 		log.debug("====ready buyTicket====");
 		List<Block> bs = w.pay(null, accountKey.toAddress(networkParameters).toString(),
-				Coin.valueOf(100, Utils.HEX.decode(yuanTokenPub)), new MemoInfo(" buy ticket"));
+				Coin.valueOf(100, Utils.HEX.decode(yuanTokenPub)), " buy ticket" );
 		makeRewardBlock();
 		for (Block b : bs) {
 			blockGraph.updateTransactionOutputSpendPendingDo(b);

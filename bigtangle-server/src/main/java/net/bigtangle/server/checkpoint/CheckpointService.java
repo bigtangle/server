@@ -63,7 +63,7 @@ public class CheckpointService {
 
 		blocks.createOrReplaceTempView("blocks");
 
-		String SELECT_SQL = "SELECT  hash, rating, depth, cumulativeweight, height, milestone,"
+		String SELECT_SQL = "SELECT  hash, height, milestone,"
 				+ " milestonelastupdate, milestonedepth, inserttime,"
 				+ "   prevblockhash ,  prevbranchblockhash ,  block FROM blocks ";
 
