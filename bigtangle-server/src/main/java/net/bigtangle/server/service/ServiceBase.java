@@ -1312,8 +1312,8 @@ public class ServiceBase {
 					throw new VerificationException("The used blocks are invalid. getSolid() == -1");
 				return SolidityState.getFailState();
 			} else {
-				logger.warn("predecessor.getBlockEvaluation().getSolid() =  "
-						+ predecessor.getBlockEvaluation().getSolid() + " " + block.toString());
+			//TODO check	logger.warn("predecessor.getBlockEvaluation().getSolid() =  "
+			//			+ predecessor.getBlockEvaluation().getSolid() + " " + block.toString());
 				continue;
 				// throw new RuntimeException("not implemented");
 			}
