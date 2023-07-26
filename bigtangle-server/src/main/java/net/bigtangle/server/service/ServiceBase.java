@@ -431,12 +431,12 @@ public class ServiceBase {
 
 	public boolean getUTXOSpent(TransactionOutPoint txout, FullBlockStore store) throws BlockStoreException {
 		UTXO a = store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
-		if(a==null) {
-			solidifyWaiting( store .get(txout.getBlockHash()), store);
+		if (a == null) {
+			solidifyWaiting(store.get(txout.getBlockHash()), store);
 			a = store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
- 		}
-		 return a.isSpent();
- 
+		}
+		return a.isSpent();
+
 	}
 
 	public boolean getUTXOConfirmed(TransactionOutPoint txout, FullBlockStore store) throws BlockStoreException {
@@ -1260,10 +1260,10 @@ public class ServiceBase {
 	}
 
 	private SolidityState checkPredecessorsExistAndOk(Block block, boolean throwExceptions,
-			 List<BlockWrap> allRequirements, FullBlockStore store) throws BlockStoreException {
+			List<BlockWrap> allRequirements, FullBlockStore store) throws BlockStoreException {
 		//
 		for (BlockWrap pred : allRequirements) {
-		//	final BlockWrap pred = store.getBlockWrap(predecessorReq);
+			// final BlockWrap pred = store.getBlockWrap(predecessorReq);
 			if (pred == null)
 				return SolidityState.from(Sha256Hash.ZERO_HASH, true);
 			if (pred.getBlock().getBlockType().requiresCalculation() && pred.getBlockEvaluation().getSolid() != 2)
@@ -1880,11 +1880,13 @@ public class ServiceBase {
 						// Missing previous transaction output
 						return SolidityState.from(in.getOutpoint(), true);
 					}
-					if (checkUnique(allInputTx, in.getOutpoint())) {
-						throw new InvalidTransactionException(
-								"input outputpoint is not unique " + in.getOutpoint().toString());
+					if (enableFee(block)) {
+						if (checkUnique(allInputTx, in.getOutpoint())) {
+							throw new InvalidTransactionException(
+									"input outputpoint is not unique " + in.getOutpoint().toString());
+						}
+						allInputTx.add(in.getOutpoint());
 					}
-					allInputTx.add(in.getOutpoint());
 				}
 				if (checkBurnedFromAddress(tx, block.getLastMiningRewardBlock())) {
 					throw new InvalidTransactionException("Burned Address");
@@ -2942,14 +2944,14 @@ public class ServiceBase {
 			if (formalSolidityResult.isFailState())
 				return formalSolidityResult;
 			final Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
-			List<BlockWrap> allRequirements = getAllRequirements(block, allPredecessorBlockHashes, store);		
+			List<BlockWrap> allRequirements = getAllRequirements(block, allPredecessorBlockHashes, store);
 			// Predecessors must exist and be ok
-			SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions,
-					allRequirements, store);
+			SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions, allRequirements,
+					store);
 			if (!predecessorsExist.isSuccessState()) {
-	 			return predecessorsExist;
+				return predecessorsExist;
 			}
-		
+
 			// Inherit solidity from predecessors if they are not solid
 			SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block, throwExceptions, allRequirements,
 					store, predecessorsSolid);
@@ -3074,7 +3076,7 @@ public class ServiceBase {
 		checkGeneratedReward(newMilestoneBlock, store);
 
 		// Sanity check: No reward blocks are approved
- 	checkContainsNoRewardBlocks(newMilestoneBlock, store);
+		checkContainsNoRewardBlocks(newMilestoneBlock, store);
 
 		// Check: At this point, predecessors must be solid
 		solidityState = checkSolidity(newMilestoneBlock, false, store, false);
@@ -3361,7 +3363,7 @@ public class ServiceBase {
 		SolidityState solidityState = checkSolidity(block, false, store, false);
 		// allow here unsolid block, as sync may do only the referenced blocks
 		if (SolidityState.State.MissingPredecessor.equals(solidityState.getState())) {
-		solidifyBlock(block, SolidityState.getSuccessState(), false, store);
+			solidifyBlock(block, SolidityState.getSuccessState(), false, store);
 		} else {
 			solidifyBlock(block, solidityState, false, store);
 		}
