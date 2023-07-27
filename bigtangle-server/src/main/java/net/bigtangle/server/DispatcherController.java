@@ -245,6 +245,13 @@ public class DispatcherController {
 				this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
 			}
 				break;
+			case searchContractTokens: {
+				String reqStr = new String(bodyByte, "UTF-8");
+				Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);
+				AbstractResponse response = tokensService.getContractTokensList(store);
+				this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
+			}
+				break;
 			case searchExchangeTokens: {
 				String reqStr = new String(bodyByte, "UTF-8");
 				Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

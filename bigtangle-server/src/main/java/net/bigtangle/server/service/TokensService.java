@@ -59,6 +59,11 @@ public class TokensService {
         list.addAll(store.getTokenTypeList(TokenType.web.ordinal()));
         return GetTokensResponse.create(list);
     }
+    public AbstractResponse getContractTokensList(FullBlockStore store) throws BlockStoreException {
+        List<Token> list = new ArrayList<Token>();
+        list.addAll(store.getTokenTypeList(TokenType.contract.ordinal()));
+        return GetTokensResponse.create(list);
+    }
 
     public GetTokensResponse searchTokens(String name, FullBlockStore store) throws BlockStoreException {
         List<Token> list = new ArrayList<Token>();
