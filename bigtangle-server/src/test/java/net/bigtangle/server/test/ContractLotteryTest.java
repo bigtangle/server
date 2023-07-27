@@ -45,6 +45,11 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 	public NetworkParameters networkParameters;
 	public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
 	public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
+	
+	public static String lotteryTokenPub = "039aee4f0291991dd71ea0dd3c0e91ef680e769eca0326f1e36b74107aec4ac1f4";
+	public static String lotteryTokenPriv = "6cecae9a820844dac41521ddad4f1b5068fdcac59ce28a6dd1ed01a12f782362";
+
+	
 	public int usernumber = Math.abs(new Random().nextInt()) % 88;
 	public BigInteger winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
 
@@ -53,7 +58,7 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 
 		usernumber = 10;
 		winnerAmount = new BigInteger(usernumber * 100 + "");
-		contractKey = new ECKey();
+		contractKey = ECKey.fromPrivate(Utils.HEX.decode(lotteryTokenPriv));
 		lotteryDo();
 
 	}
@@ -276,7 +281,7 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 		kv.setValue(yuanTokenPub);
 		tokenKeyValues.addKeyvalue(kv);
 
-		createToken(contractKey, "contractlottery", 0, domain, "contractlottery", BigInteger.valueOf(1), true,
+		createToken(contractKey, "contractlottery", 0, domain, "contractlottery", BigInteger.valueOf(1), false,
 				tokenKeyValues, TokenType.contract.ordinal(), contractKey.getPublicKeyAsHex(), wallet);
 
 		ECKey signkey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
