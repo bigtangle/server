@@ -842,7 +842,7 @@ public class Utils {
 		String amount = findContractValue( contract.getTokenKeyValues(), "amount");
 		String tokenid = findContractValue( contract.getTokenKeyValues(), "token"); 
 		// Check that the tx has correct data
-
+		
 	}
 
 	public String findContractValue(TokenKeyValues t, String key) {
