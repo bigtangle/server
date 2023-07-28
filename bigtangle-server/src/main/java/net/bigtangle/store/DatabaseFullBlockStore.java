@@ -128,7 +128,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	private static String DROP_MATCHING_LAST_TABLE = "DROP TABLE  IF EXISTS matchinglast";
 	private static String DROP_MATCHINGDAILY_TABLE = "DROP TABLE  IF EXISTS matchingdaily";
 	private static String DROP_MATCHINGLASTDAY_TABLE = "DROP TABLE  IF EXISTS matchinglastday";
-	private static String DROP_ACCOUNT_TABLE = "DROP TABLE  IF EXISTS account";
+	private static String DROP_ACCOUNT_TABLE = "DROP TABLE  IF EXISTS accountBalance";
 	// Queries SQL.
 	protected final String SELECT_SETTINGS_SQL = "SELECT settingvalue FROM settings WHERE name = ?";
 	protected final String INSERT_SETTINGS_SQL = getInsert() + "  INTO settings(name, settingvalue) VALUES(?, ?)";
@@ -6769,7 +6769,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		PreparedStatement preparedStatement = null;
 		List<Coin> list = new ArrayList<>();
 		try {
-			String sql = " select address, tokenid,coinvalue from account  where 1=1 ";
+			String sql = " select address, tokenid,coinvalue from accountBalance  where 1=1 ";
 
 			if (address != null && !address.trim().isEmpty()) {
 				sql += " and address = ?";
@@ -6811,7 +6811,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		PreparedStatement preparedStatement = null;
 		List<UTXO> list = new ArrayList<>();
 		try {
-			String sql = " select address, tokenid,coinvalue from account  where 1=1 ";
+			String sql = " select address, tokenid,coinvalue from accountBalance  where 1=1 ";
 
 			if (address != null && !address.trim().isEmpty()) {
 				sql += " and address = ?";
@@ -6856,7 +6856,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		PreparedStatement preparedStatement = null;
 		Coin coin = null;
 		try {
-			String sql = " select address, tokenid,coinvalue from account  where address = ? and tokenid = ?";
+			String sql = " select address, tokenid,coinvalue from accountBalance  where address = ? and tokenid = ?";
 
 			preparedStatement = getConnection().prepareStatement(sql);
 
@@ -6888,7 +6888,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		PreparedStatement s = null;
 		try {
 			s = getConnection()
-					.prepareStatement("insert into account (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
+					.prepareStatement("insert into accountBalance (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
 			s.setString(1, address);
 			s.setString(2, tokenid);
 			s.setBytes(3, coin.getValue().toByteArray());
@@ -6916,7 +6916,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		PreparedStatement s = null;
 		try {
 			s = getConnection()
-					.prepareStatement("update account set coinvalue=?,lastblockhash=? where address=? and tokenid=?");
+					.prepareStatement("update accountBalance set coinvalue=?,lastblockhash=? where address=? and tokenid=?");
 			s.setBytes(1, coin.getValue().toByteArray());
 			s.setBytes(2, hash.getBytes());
 			s.setString(3, address);
@@ -6996,7 +6996,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		PreparedStatement s = null;
 		try {
 			s = getConnection()
-					.prepareStatement("insert into account (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
+					.prepareStatement("insert into accountBalance (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
 
 			for (String toaddress : toAddressMap.keySet()) {
 				for (String tokenid : toAddressMap.get(toaddress).keySet()) {
@@ -7031,7 +7031,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		maybeConnect();
 		PreparedStatement s = null;
 		try {
-			s = getConnection().prepareStatement("update account set coinvalue=? where address=? and tokenid=?");
+			s = getConnection().prepareStatement("update accountBalance set coinvalue=? where address=? and tokenid=?");
 
 			for (String fromaddress : fromaddressMap.keySet()) {
 				for (String tokenid : fromaddressMap.get(fromaddress).keySet()) {
@@ -7066,7 +7066,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
-			String sql = " delete  from account  where 1=1 ";
+			String sql = " delete  from accountBalance  where 1=1 ";
 			if (address != null && !address.trim().isEmpty()) {
 				sql += " and  address = ?";
 			}

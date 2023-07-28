@@ -265,7 +265,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    signInputData mediumblob,\n"
             + "    PRIMARY KEY (orderid, pubKey) \n) ENGINE=InnoDB";
     //aggregate of utxo for view only
-    private static final String CREATE_ACCOUNT_TABLE = "CREATE TABLE account (\n" 
+    private static final String CREATE_ACCOUNT_TABLE = "CREATE TABLE accountBalance (\n" 
             + "    address varchar(255),\n"
             + "    tokenid varchar(255),\n" 
             + "    coinvalue mediumblob NOT NULL,\n" 
