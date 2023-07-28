@@ -22,18 +22,13 @@ public class ContractEventRecord extends SpentBlock {
     // owner public address of the order for query
     private String beneficiaryAddress;
 
-    // order will be traded until this time
-    private Long validToTime;
-    // order will be traded after this time
-    private Long validFromTime;
-
-
+ 
     public ContractEventRecord() {
     }
 
     public ContractEventRecord(Sha256Hash initialBlockHash, 
             String contractTokenid, boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, BigInteger targetValue,
-            String targetTokenid,   Long validToTime, Long validFromTime, 
+            String targetTokenid,   
             String beneficiaryAddress) {
         super();
         this.setBlockHash(initialBlockHash); 
@@ -42,10 +37,7 @@ public class ContractEventRecord extends SpentBlock {
         this.setSpenderBlockHash(spenderBlockHash);
         this.targetValue = targetValue;
         this.targetTokenid = targetTokenid;
- 
-        this.validToTime = validToTime;
-
-        this.validFromTime = validFromTime;
+  
    
         this.beneficiaryAddress = beneficiaryAddress;
         this.contractTokenid=contractTokenid;
@@ -54,20 +46,10 @@ public class ContractEventRecord extends SpentBlock {
     public static ContractEventRecord cloneOrderRecord(ContractEventRecord old) {
         return new ContractEventRecord(old.getBlockHash(),    old.contractTokenid,
                 old.isConfirmed(), old.isSpent(), old.getSpenderBlockHash(), old.targetValue, old.targetTokenid,
-                  old.validToTime, old.validFromTime, old.beneficiaryAddress);
+                   old.beneficiaryAddress);
     }
 
     
-
-    public boolean isTimeouted(long blockTime) {
-        return blockTime > validToTime;
-    }
-
-    public boolean isValidYet(long blockTime) {
-        return blockTime >= validFromTime;
-    }
-
- 
  
 
     public BigInteger getTargetValue() {
@@ -87,27 +69,11 @@ public class ContractEventRecord extends SpentBlock {
     }
 
  
-
-    public Long getValidToTime() {
-        return validToTime;
-    }
-
-    public void setValidToTime(Long validToTime) {
-        this.validToTime = validToTime;
-    }
-
+ 
     public static long getSerialversionuid() {
         return serialVersionUID;
     }
-
-    public Long getValidFromTime() {
-        return validFromTime;
-    }
-
-    public void setValidFromTime(Long validFromTime) {
-        this.validFromTime = validFromTime;
-    }
-
+ 
    
 
     public String getBeneficiaryAddress() {
@@ -130,30 +96,16 @@ public class ContractEventRecord extends SpentBlock {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(beneficiaryAddress, contractTokenid, targetTokenid, targetValue, validFromTime,
-				validToTime);
+		return Objects.hash(beneficiaryAddress, contractTokenid, targetTokenid, targetValue );
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		ContractEventRecord other = (ContractEventRecord) obj;
-		return Objects.equals(beneficiaryAddress, other.beneficiaryAddress)
-				&& Objects.equals(contractTokenid, other.contractTokenid)
-				&& Objects.equals(targetTokenid, other.targetTokenid) && Objects.equals(targetValue, other.targetValue)
-				&& Objects.equals(validFromTime, other.validFromTime) && Objects.equals(validToTime, other.validToTime);
-	}
+	 
 
 	@Override
 	public String toString() {
 		return "ContractEventRecord [blockhash=" + getBlockHashHex() + ", contractTokenid=" + contractTokenid
 				+ ", targetValue=" + targetValue + ", targetTokenid=" + targetTokenid + ", beneficiaryAddress="
-				+ beneficiaryAddress + ", validToTime=" + validToTime + ", validFromTime=" + validFromTime + "]";
+				+ beneficiaryAddress   + "]";
 	}
 	 
  

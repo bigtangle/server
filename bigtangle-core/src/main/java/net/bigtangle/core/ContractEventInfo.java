@@ -19,13 +19,6 @@ public class ContractEventInfo extends DataClass implements java.io.Serializable
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private static final long FROMTIME = System.currentTimeMillis() / 1000 - 5;
-
-	// valid until this date, maximum is set in Network parameter
-	private Long validToTime;
-	// valid from this date, maximum is set in Network parameter
-	private Long validFromTime;
-	// owner public address of the order for query
 	private String beneficiaryAddress;
 
 	private BigInteger offerValue;
@@ -42,16 +35,7 @@ public class ContractEventInfo extends DataClass implements java.io.Serializable
 			String beneficiaryAddress, Long validToTimeMilli, Long validFromTimeMilli, String offerSystem) {
 		super();
 		this.contractTokenid = contractTokenid;
-		if (validFromTimeMilli == null) {
-			this.validFromTime = FROMTIME;
-		} else {
-			this.validFromTime = validFromTimeMilli / 1000;
-		}
-		if (validToTimeMilli == null) {
-			this.validToTime = validFromTime + NetworkParameters.ORDER_TIMEOUT_MAX;
-		} else {
-			this.validToTime = Math.min(validToTimeMilli / 1000, validFromTime + NetworkParameters.ORDER_TIMEOUT_MAX);
-		}
+
 		this.beneficiaryAddress = beneficiaryAddress;
 
 		this.offerValue = offerValue;
@@ -64,9 +48,6 @@ public class ContractEventInfo extends DataClass implements java.io.Serializable
 			DataOutputStream dos = new DataOutputStream(baos);
 
 			dos.write(super.toByteArray());
-
-			dos.writeLong(validToTime);
-			dos.writeLong(validFromTime);
 
 			Utils.writeNBytesString(dos, beneficiaryAddress);
 
@@ -85,8 +66,6 @@ public class ContractEventInfo extends DataClass implements java.io.Serializable
 	public ContractEventInfo parseDIS(DataInputStream dis) throws IOException {
 		super.parseDIS(dis);
 
-		validToTime = dis.readLong();
-		validFromTime = dis.readLong();
 		beneficiaryAddress = Utils.readNBytesString(dis);
 		offerTokenid = Utils.readNBytesString(dis);
 		contractTokenid = Utils.readNBytesString(dis);
@@ -112,22 +91,6 @@ public class ContractEventInfo extends DataClass implements java.io.Serializable
 		} catch (IOException e) {
 			throw new RuntimeException();
 		}
-	}
-
-	public Long getValidToTime() {
-		return validToTime;
-	}
-
-	public void setValidToTime(Long validToTime) {
-		this.validToTime = validToTime;
-	}
-
-	public Long getValidFromTime() {
-		return validFromTime;
-	}
-
-	public void setValidFromTime(Long validFromTime) {
-		this.validFromTime = validFromTime;
 	}
 
 	public String getBeneficiaryAddress() {
@@ -172,9 +135,10 @@ public class ContractEventInfo extends DataClass implements java.io.Serializable
 
 	@Override
 	public String toString() {
-		return "ContractEventInfo [validToTime=" + validToTime + ", validFromTime=" + validFromTime
-				+ ", beneficiaryAddress=" + beneficiaryAddress + ", offerValue=" + offerValue + ", offerTokenid="
-				+ offerTokenid + ", contractTokenid=" + contractTokenid + ", offerSystem=" + offerSystem + "]";
+		return "ContractEventInfo [beneficiaryAddress=" + beneficiaryAddress + ", offerValue=" + offerValue
+				+ ", offerTokenid=" + offerTokenid + ", contractTokenid=" + contractTokenid + ", offerSystem="
+				+ offerSystem + "]";
 	}
 
+ 
 }

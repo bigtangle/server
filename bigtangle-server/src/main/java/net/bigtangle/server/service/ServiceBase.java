@@ -1312,8 +1312,8 @@ public class ServiceBase {
 					throw new VerificationException("The used blocks are invalid. getSolid() == -1");
 				return SolidityState.getFailState();
 			} else {
-			//TODO check	logger.warn("predecessor.getBlockEvaluation().getSolid() =  "
-			//			+ predecessor.getBlockEvaluation().getSolid() + " " + block.toString());
+				// TODO check logger.warn("predecessor.getBlockEvaluation().getSolid() = "
+				// + predecessor.getBlockEvaluation().getSolid() + " " + block.toString());
 				continue;
 				// throw new RuntimeException("not implemented");
 			}
@@ -1567,13 +1567,6 @@ public class ServiceBase {
 		if (contractEventInfo.getContractTokenid() == null) {
 			if (throwExceptions)
 				throw new InvalidTransactionDataException("Invalid contract tokenid");
-			return SolidityState.getFailState();
-		}
-
-		if (contractEventInfo.getValidToTime() > Math.addExact(contractEventInfo.getValidFromTime(),
-				NetworkParameters.ORDER_TIMEOUT_MAX)) {
-			if (throwExceptions)
-				throw new InvalidOrderException("The given contract timeout is too long.");
 			return SolidityState.getFailState();
 		}
 
@@ -4508,8 +4501,7 @@ public class ServiceBase {
 			ContractEventInfo reqInfo = new ContractEventInfo().parse(block.getTransactions().get(0).getData());
 
 			ContractEventRecord record = new ContractEventRecord(block.getHash(), reqInfo.getContractTokenid(), false,
-					false, null, reqInfo.getOfferValue(), reqInfo.getOfferTokenid(), reqInfo.getValidToTime(),
-					reqInfo.getValidFromTime(), reqInfo.getBeneficiaryAddress());
+					false, null, reqInfo.getOfferValue(), reqInfo.getOfferTokenid(), reqInfo.getBeneficiaryAddress());
 			List<ContractEventRecord> events = new ArrayList<ContractEventRecord>();
 			events.add(record);
 			blockStore.insertContractEvent(events);

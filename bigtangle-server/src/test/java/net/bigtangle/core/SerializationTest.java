@@ -90,9 +90,7 @@ public class SerializationTest {
 
 		assertArrayEquals(info1.toByteArray(), info2.toByteArray());
 		assertEquals(info1.getBeneficiaryAddress(), info2.getBeneficiaryAddress());
-		 
-		assertEquals(info1.getValidFromTime(), info2.getValidFromTime());
-		assertEquals(info1.getValidToTime(), info2.getValidToTime());
+	 
 		assertEquals(info1.getOfferValue(), info2.getOfferValue());
 		assertEquals(info1.getOfferTokenid(), info2.getOfferTokenid());
 		assertEquals(info1.getOfferSystem(), info2.getOfferSystem());

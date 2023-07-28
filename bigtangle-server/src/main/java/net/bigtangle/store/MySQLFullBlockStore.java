@@ -358,9 +358,6 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
                 // public address  will receive the targettokens
                 // on completion or returned   tokens on cancels 
             + "    beneficiaryaddress varchar(255) NOT NULL,\n" 
-               //  valid until this time
-            + "    validToTime bigint,\n" 
-            + "    validFromTime bigint,\n" 
             // true if a order block of this order is confirmed
             + "    confirmed boolean NOT NULL,\n" 
             // true if used by a confirmed  block (either

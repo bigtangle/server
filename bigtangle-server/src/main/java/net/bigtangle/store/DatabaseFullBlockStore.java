@@ -245,10 +245,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 	protected final String INSERT_CONTRACT_EVENT_SQL = getInsert()
 			+ "  INTO contractevent (blockhash,  contracttokenid, confirmed, spent, spenderblockhash, "
-			+ "targetcoinvalue, targettokenid,  validToTime, validFromTime,  beneficiaryaddress) "
+			+ "targetcoinvalue, targettokenid,    beneficiaryaddress) "
 			+ " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
 	protected final String CONTRACT_TEMPLATE = " blockhash,  contracttokenid, confirmed, spent, spenderblockhash,  "
-			+ "targetcoinvalue, targettokenid,  validToTime, validFromTime,  beneficiaryaddress";
+			+ "targetcoinvalue, targettokenid,    beneficiaryaddress";
 
 	protected final String UPDATE_CONTRACT_SPENT_SQL = getUpdate()
 			+ " contractevent SET spent = ?, spenderblockhash = ? " + " WHERE blockhash = ?";
@@ -4789,8 +4789,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 				preparedStatement.setBytes(6, record.getTargetValue().toByteArray());
 				preparedStatement.setString(7, record.getTargetTokenid());
 
-				preparedStatement.setLong(8, record.getValidToTime());
-				preparedStatement.setLong(9, record.getValidFromTime());
+	 
 
 				preparedStatement.setString(10, record.getBeneficiaryAddress());
 				preparedStatement.addBatch();
@@ -5370,8 +5369,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 				resultSet.getBoolean("spent"),
 				resultSet.getBytes("spenderblockhash") == null ? null
 						: Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")),
-				new BigInteger(resultSet.getBytes("targetcoinvalue")), resultSet.getString("targetTokenid"),
-				resultSet.getLong("validToTime"), resultSet.getLong("validFromTime"),
+				new BigInteger(resultSet.getBytes("targetcoinvalue")), resultSet.getString("targetTokenid"), 
 				resultSet.getString("beneficiaryaddress"));
 
 	}
