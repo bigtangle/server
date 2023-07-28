@@ -1573,7 +1573,7 @@ public class ServiceBase {
 		if (contractEventInfo.getValidToTime() > Math.addExact(contractEventInfo.getValidFromTime(),
 				NetworkParameters.ORDER_TIMEOUT_MAX)) {
 			if (throwExceptions)
-				throw new InvalidOrderException("The given order's timeout is too long.");
+				throw new InvalidOrderException("The given contract timeout is too long.");
 			return SolidityState.getFailState();
 		}
 
