@@ -1467,11 +1467,7 @@ public class ServiceBase {
 				return opSolidityState;
 			}
 			break;
-		case BLOCKTYPE_CONTRACT_EVENT:
-			SolidityState check = checkFormalContractEventSolidity(block, throwExceptions);
-			if (!(check.getState() == State.Success)) {
-				return check;
-			}
+		case BLOCKTYPE_CONTRACT_EVENT: 
 			break;
 		default:
 			throw new RuntimeException("No Implementation");
@@ -1537,7 +1533,7 @@ public class ServiceBase {
 		return SolidityState.getSuccessState();
 	}
 
-	private SolidityState checkFormalContractEventSolidity(Block block, boolean throwExceptions)
+	private SolidityState checkFormalContractEventSolidity(Block block, boolean throwExceptions,FullBlockStore store)
 			throws BlockStoreException {
 		List<Transaction> transactions = block.getTransactions();
 
@@ -1570,6 +1566,9 @@ public class ServiceBase {
 			return SolidityState.getFailState();
 		}
 
+		new Utils().checkContractBase(contractEventInfo,
+				store.getTokenID(contractEventInfo.getContractTokenid()).get(0));
+		
 		return SolidityState.getSuccessState();
 	}
 
@@ -2137,7 +2136,7 @@ public class ServiceBase {
 			}
 			break;
 		case BLOCKTYPE_CONTRACT_EVENT:
-			SolidityState check = checkFullContractEventSolidity(block, height, throwExceptions);
+			SolidityState check = checkFullContractEventSolidity(block, height, throwExceptions,store);
 			if (!(check.getState() == State.Success)) {
 				return check;
 			}
@@ -2149,9 +2148,9 @@ public class ServiceBase {
 		return SolidityState.getSuccessState();
 	}
 
-	private SolidityState checkFullContractEventSolidity(Block block, long height, boolean throwExceptions)
+	private SolidityState checkFullContractEventSolidity(Block block, long height, boolean throwExceptions,FullBlockStore store)
 			throws BlockStoreException {
-		return checkFormalContractEventSolidity(block, throwExceptions);
+		return checkFormalContractEventSolidity(block, throwExceptions,store);
 	}
 
 	private SolidityState checkFullOrderOpenSolidity(Block block, long height, boolean throwExceptions,

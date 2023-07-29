@@ -58,6 +58,7 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.UnsignedLongs;
 
 import net.bigtangle.core.exception.AddressFormatException;
+import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.utils.Base58;
 
 /**
@@ -840,8 +841,18 @@ public class Utils {
 
 	public void checkContractBase(ContractEventInfo contractEventInfo, Token contract) {
 		String amount = findContractValue( contract.getTokenKeyValues(), "amount");
+		if( amount!=null) {
+			//only module base amount is allowed 
+			if( !contractEventInfo.getOfferValue().mod( new BigInteger(amount) ).equals(BigInteger.ZERO)){
+				throw new VerificationException("only module base amount is allowed "+ contractEventInfo.getOfferValue()
+						+" % "+  amount);
+			}
+		}
 		String tokenid = findContractValue( contract.getTokenKeyValues(), "token"); 
-		// Check that the tx has correct data
+		if( tokenid!=null && ! tokenid.equals(contractEventInfo.getOfferTokenid())) {
+			throw new VerificationException("ContractEventInfo tokenidis not correct  ");
+			
+		}
 		
 	}
 

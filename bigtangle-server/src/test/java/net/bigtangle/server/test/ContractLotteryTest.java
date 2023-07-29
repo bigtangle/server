@@ -52,7 +52,7 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 	
 	public int usernumber = Math.abs(new Random().nextInt()) % 88;
 	public BigInteger winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
-
+	List<ECKey> ulist;
  
 	public void lotteryM() throws Exception {
 
@@ -67,7 +67,7 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 		wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
 		testTokens();
 		testContractTokens();
-		List<ECKey> ulist = createUserkey();
+		 ulist = createUserkey();
 		payUserKeys(ulist);
 		payBigUserKeys(ulist);
 		Map<String, BigInteger> startMap = new HashMap<>();
@@ -119,7 +119,29 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 		winnerAmount = new BigInteger(usernumber * 100 + "");
 		contractKey = new ECKey();
 		lotteryDo();
-		lotteryDo();
+		payUserKeys(ulist);
+		payBigUserKeys(ulist);
+		Map<String, BigInteger> startMap = new HashMap<>();
+		check(ulist, startMap);
+		// createUserPay(accountKey, ulist);
+		payContract(ulist, new ArrayList<>());
+		makeRewardBlock();
+		Block resultBlock = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
+		assertTrue(resultBlock != null);
+		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(resultBlock,
+				store, contractKey.getPublicKeyAsHex());
+		Address winnerAddress = result.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
+		blockService.saveBlock(resultBlock, store);
+
+		makeRewardBlock();
+		// check one of user get the winnerAmount
+		Map<String, BigInteger> endMap = new HashMap<>();
+		check(ulist, endMap);
+
+		assertTrue(endMap.get(winnerAddress.toString()) != null);
+
+		assertTrue(endMap.get(winnerAddress.toString()).equals(winnerAmount.multiply(BigInteger.valueOf(10))));
+ 
 	}
 	@Test
 	public void lotteryConflict() throws Exception {
@@ -196,7 +218,7 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 		Address winnerAddress = result.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
 		blockService.saveBlock(resultBlock, store);
 		// check one of user get the winnerAmount
-		HashMap endMap = new HashMap<>();
+		Map<String, BigInteger> endMap = new HashMap<>();
 		check(ulist, endMap);
 		assertTrue(endMap.get(winnerAddress.toString()).equals(winnerAmount.multiply(BigInteger.valueOf(10))));
 		// unconfirm enven and will lead to unconfirm result

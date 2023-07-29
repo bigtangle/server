@@ -246,7 +246,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	protected final String INSERT_CONTRACT_EVENT_SQL = getInsert()
 			+ "  INTO contractevent (blockhash,  contracttokenid, confirmed, spent, spenderblockhash, "
 			+ "targetcoinvalue, targettokenid,    beneficiaryaddress) "
-			+ " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
+			+ " VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 	protected final String CONTRACT_TEMPLATE = " blockhash,  contracttokenid, confirmed, spent, spenderblockhash,  "
 			+ "targetcoinvalue, targettokenid,    beneficiaryaddress";
 
@@ -4787,11 +4787,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 				preparedStatement.setBytes(5,
 						record.getSpenderBlockHash() != null ? record.getSpenderBlockHash().getBytes() : null);
 				preparedStatement.setBytes(6, record.getTargetValue().toByteArray());
-				preparedStatement.setString(7, record.getTargetTokenid());
+				preparedStatement.setString(7, record.getTargetTokenid()); 
 
-	 
-
-				preparedStatement.setString(10, record.getBeneficiaryAddress());
+				preparedStatement.setString(8, record.getBeneficiaryAddress());
 				preparedStatement.addBatch();
 			}
 			preparedStatement.executeBatch();
