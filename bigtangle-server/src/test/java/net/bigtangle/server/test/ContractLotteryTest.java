@@ -37,7 +37,7 @@ import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
-public class ContractLotteryTest    extends AbstractIntegrationTest {
+public class ContractLotteryTest extends AbstractIntegrationTest {
 
 	protected static final Logger log = LoggerFactory.getLogger(ContractLotteryTest.class);
 	ECKey contractKey;
@@ -45,15 +45,14 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 	public NetworkParameters networkParameters;
 	public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
 	public static String yuanTokenPriv = "8db6bd17fa4a827619e165bfd4b0f551705ef2d549a799e7f07115e5c3abad55";
-	
+
 	public static String lotteryTokenPub = "039aee4f0291991dd71ea0dd3c0e91ef680e769eca0326f1e36b74107aec4ac1f4";
 	public static String lotteryTokenPriv = "6cecae9a820844dac41521ddad4f1b5068fdcac59ce28a6dd1ed01a12f782362";
 
-	
 	public int usernumber = Math.abs(new Random().nextInt()) % 88;
 	public BigInteger winnerAmount = new BigInteger(Math.abs(new Random().nextInt()) % 9999 + "");
 	List<ECKey> ulist;
- 
+
 	public void lotteryM() throws Exception {
 
 		usernumber = 10;
@@ -67,7 +66,7 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 		wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
 		testTokens();
 		testContractTokens();
-		 ulist = createUserkey();
+		ulist = createUserkey();
 		payUserKeys(ulist);
 		payBigUserKeys(ulist);
 		Map<String, BigInteger> startMap = new HashMap<>();
@@ -90,7 +89,7 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 		assertTrue(endMap.get(winnerAddress.toString()) != null);
 
 		assertTrue(endMap.get(winnerAddress.toString()).equals(winnerAmount.multiply(BigInteger.valueOf(10))));
- 
+
 	}
 
 	public void check(List<ECKey> ulist, Map<String, BigInteger> map) throws Exception {
@@ -141,8 +140,9 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 		assertTrue(endMap.get(winnerAddress.toString()) != null);
 
 		assertTrue(endMap.get(winnerAddress.toString()).equals(winnerAmount.multiply(BigInteger.valueOf(10))));
- 
+
 	}
+
 	@Test
 	public void lotteryConflict() throws Exception {
 		// create two blocks for the ContractExecution and only one is taken
@@ -216,7 +216,7 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 
 		mcmc();
 		Address winnerAddress = result.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
-		blockService.saveBlock(resultBlock, store);
+
 		// check one of user get the winnerAmount
 		Map<String, BigInteger> endMap = new HashMap<>();
 		check(ulist, endMap);
@@ -227,7 +227,7 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 				store);
 		endMap = new HashMap<>();
 		check(ulist, endMap);
-		assertTrue(endMap.get(winnerAddress.toString())==null);
+		assertTrue(endMap.get(winnerAddress.toString()) == null);
 
 	}
 
@@ -246,7 +246,7 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 		Map<String, BigInteger> startMap = new HashMap<>();
 		check(ulist, startMap);
 		// createUserPay(accountKey, ulist);
-		payContract(ulist,new ArrayList<>());
+		payContract(ulist, new ArrayList<>());
 		makeRewardBlock();
 		Block resultBlock = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
 		assertTrue(resultBlock != null);
@@ -322,6 +322,7 @@ public class ContractLotteryTest    extends AbstractIntegrationTest {
 			blocks.add(w.payContract(null, yuanTokenPub, winnerAmount, null, null, contractKey.getPublicKeyAsHex()));
 		}
 	}
+
 	public List<ECKey> createUserkey() {
 		List<ECKey> userkeys = new ArrayList<ECKey>();
 		for (int i = 0; i < usernumber; i++) {

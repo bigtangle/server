@@ -227,7 +227,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			+ "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, "
 			+ "beneficiarypubkey, validToTime, validFromTime, side , beneficiaryaddress, orderbasetoken, price, tokendecimals ";
 	protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT " + ORDER_TEMPLATE
-			+ " FROM orders WHERE collectinghash = ?";
+			+ " FROM orders WHERE collectinghash = ? and spent=false";
 
 	protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM orders WHERE blockhash = ? AND collectinghash = ?";
 	protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM orders WHERE blockhash = ? AND collectinghash = ?";
@@ -245,8 +245,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 	protected final String INSERT_CONTRACT_EVENT_SQL = getInsert()
 			+ "  INTO contractevent (blockhash,  contracttokenid, confirmed, spent, spenderblockhash, "
-			+ "targetcoinvalue, targettokenid,    beneficiaryaddress) "
-			+ " VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+			+ "targetcoinvalue, targettokenid,    beneficiaryaddress) " + " VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 	protected final String CONTRACT_TEMPLATE = " blockhash,  contracttokenid, confirmed, spent, spenderblockhash,  "
 			+ "targetcoinvalue, targettokenid,    beneficiaryaddress";
 
@@ -1267,26 +1266,27 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	@Override
 	public void calculateAccount(List<UTXO> utxos) throws BlockStoreException {
 		// collect all different address and tokenid as list and calculate the account
-	 
+
 		for (UTXO utxo : utxos) {
 			deleteAccountCoin(utxo.getAddress(), utxo.getTokenId());
 			Map<String, Map<String, Coin>> toAddressMap = queryOutputsMap(utxo.getAddress(), utxo.getTokenId());
 			addAccountCoinBatch(toAddressMap);
 			deleteAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
-			Map<String, Map<String, Coin>>	fromAddressMap = queryOutputsMap(utxo.getFromaddress(), utxo.getTokenId());
-		 	addAccountCoinBatch(fromAddressMap);
+			Map<String, Map<String, Coin>> fromAddressMap = queryOutputsMap(utxo.getFromaddress(), utxo.getTokenId());
+			addAccountCoinBatch(fromAddressMap);
 		}
 
 	}
-	public boolean findDiffUtxo(UTXO utxo , List<UTXO> diff) throws BlockStoreException {
+
+	public boolean findDiffUtxo(UTXO utxo, List<UTXO> diff) throws BlockStoreException {
 		for (UTXO u : diff) {
-			if(u.getAddress().equals(utxo.getAddress()  )
-					&&  u.getTokenId().equals(utxo.getTokenId())) {
+			if (u.getAddress().equals(utxo.getAddress()) && u.getTokenId().equals(utxo.getTokenId())) {
 				return true;
 			}
 		}
 		return false;
 	}
+
 	@Override
 	public void addUnspentTransactionOutput(UTXO out) throws BlockStoreException {
 		List<UTXO> a = new ArrayList<UTXO>();
@@ -4742,6 +4742,34 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	}
 
 	@Override
+	public void updateOrderSpent(Set<Sha256Hash> orderRecords, Sha256Hash blockhash, Boolean spent)
+			throws BlockStoreException {
+		maybeConnect();
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_SPENT_SQL);
+			for (Sha256Hash o : orderRecords) {
+				preparedStatement.setBoolean(1, spent);
+				preparedStatement.setBytes(2, blockhash != null ? blockhash.getBytes() : null);
+				preparedStatement.setBytes(3, o.getBytes());
+				preparedStatement.setBytes(4, Sha256Hash.ZERO_HASH.getBytes());
+				preparedStatement.addBatch();
+			}
+			preparedStatement.executeBatch();
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+
+	@Override
 	public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException {
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
@@ -4787,7 +4815,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 				preparedStatement.setBytes(5,
 						record.getSpenderBlockHash() != null ? record.getSpenderBlockHash().getBytes() : null);
 				preparedStatement.setBytes(6, record.getTargetValue().toByteArray());
-				preparedStatement.setString(7, record.getTargetTokenid()); 
+				preparedStatement.setString(7, record.getTargetTokenid());
 
 				preparedStatement.setString(8, record.getBeneficiaryAddress());
 				preparedStatement.addBatch();
@@ -4810,7 +4838,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	}
 
 	@Override
-	public void updateContractEventSpent(List<Sha256Hash> contractEventRecords, Sha256Hash spentBlock, boolean spent)
+	public void updateContractEventSpent(Set<Sha256Hash> contractEventRecords, Sha256Hash spentBlock, boolean spent)
 			throws BlockStoreException {
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
@@ -5367,7 +5395,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 				resultSet.getBoolean("spent"),
 				resultSet.getBytes("spenderblockhash") == null ? null
 						: Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")),
-				new BigInteger(resultSet.getBytes("targetcoinvalue")), resultSet.getString("targetTokenid"), 
+				new BigInteger(resultSet.getBytes("targetcoinvalue")), resultSet.getString("targetTokenid"),
 				resultSet.getString("beneficiaryaddress"));
 
 	}
@@ -6883,8 +6911,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		maybeConnect();
 		PreparedStatement s = null;
 		try {
-			s = getConnection()
-					.prepareStatement("insert into accountBalance (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
+			s = getConnection().prepareStatement(
+					"insert into accountBalance (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
 			s.setString(1, address);
 			s.setString(2, tokenid);
 			s.setBytes(3, coin.getValue().toByteArray());
@@ -6911,8 +6939,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		maybeConnect();
 		PreparedStatement s = null;
 		try {
-			s = getConnection()
-					.prepareStatement("update accountBalance set coinvalue=?,lastblockhash=? where address=? and tokenid=?");
+			s = getConnection().prepareStatement(
+					"update accountBalance set coinvalue=?,lastblockhash=? where address=? and tokenid=?");
 			s.setBytes(1, coin.getValue().toByteArray());
 			s.setBytes(2, hash.getBytes());
 			s.setString(3, address);
@@ -6991,8 +7019,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		maybeConnect();
 		PreparedStatement s = null;
 		try {
-			s = getConnection()
-					.prepareStatement("insert into accountBalance (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
+			s = getConnection().prepareStatement(
+					"insert into accountBalance (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
 
 			for (String toaddress : toAddressMap.keySet()) {
 				for (String tokenid : toAddressMap.get(toaddress).keySet()) {

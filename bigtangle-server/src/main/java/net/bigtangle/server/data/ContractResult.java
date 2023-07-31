@@ -5,8 +5,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.SpentBlock;
@@ -14,9 +14,10 @@ import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 
 public class ContractResult extends SpentBlock {
+	public static String ordermatch="ordermatch";
 	String contracttokenid;
 	Sha256Hash outputTxHash;
-	List<Sha256Hash> spentContractEventRecord = new ArrayList<>();
+	Set<Sha256Hash> spentContractEventRecord = new  HashSet<>();
 	Sha256Hash prevblockhash;
 
 	// not persistent not part of toArray for check
@@ -26,7 +27,7 @@ public class ContractResult extends SpentBlock {
 
 	}
 
-	public ContractResult(Sha256Hash blockhash, String contractid, List<Sha256Hash> toBeSpent, Sha256Hash outputTxHash,
+	public ContractResult(Sha256Hash blockhash, String contractid, Set<Sha256Hash> toBeSpent, Sha256Hash outputTxHash,
 			Transaction outputTx, Sha256Hash prevblockhash, long inserttime) {
 		this.setBlockHash(blockhash);
 		this.contracttokenid = contractid;
@@ -66,7 +67,7 @@ public class ContractResult extends SpentBlock {
 		outputTxHash = Sha256Hash.wrap(Utils.readNBytes(dis));
 		prevblockhash = Sha256Hash.wrap(Utils.readNBytes(dis));
 		setBlockHash(Sha256Hash.wrap(Utils.readNBytes(dis)));
-		spentContractEventRecord = new ArrayList<>();
+		spentContractEventRecord = new HashSet<>();
 		int size = dis.readInt();
 		for (int i = 0; i < size; i++) {
 			spentContractEventRecord.add(Sha256Hash.wrap(Utils.readNBytes(dis)));
@@ -84,11 +85,13 @@ public class ContractResult extends SpentBlock {
 		return this;
 	}
 
-	public List<Sha256Hash> getSpentContractEventRecord() {
+ 
+
+	public Set<Sha256Hash> getSpentContractEventRecord() {
 		return spentContractEventRecord;
 	}
 
-	public void setSpentContractEventRecord(List<Sha256Hash> spentContractEventRecord) {
+	public void setSpentContractEventRecord(Set<Sha256Hash> spentContractEventRecord) {
 		this.spentContractEventRecord = spentContractEventRecord;
 	}
 

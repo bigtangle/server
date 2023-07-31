@@ -140,5 +140,12 @@ public class ConflictPoint {
     public   ContractResult getConnectedContracExecute() {
         return connectedContracExecute;
     }
+
+	@Override
+	public String toString() {
+		return "ConflictPoint [type=" + type + ", connectedOutpoint=" + connectedOutpoint + ", connectedReward="
+				+ connectedReward + ", connectedToken=" + connectedToken + ", connectedDomainToken="
+				+ connectedDomainToken + ", connectedContracExecute=" + connectedContracExecute + "]";
+	}
      
 }

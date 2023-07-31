@@ -18,44 +18,6 @@ public class Token extends SpentBlock implements java.io.Serializable {
     public static final int TOKEN_MAX_LANGUAGE_LENGTH = 2;
     public static final int TOKEN_MAX_CLASSIFICATION_LENGTH = 100;
 
-    public static Token genesisToken(NetworkParameters params) {
-        Token genesisToken = Token.buildSimpleTokenInfo(true, null, NetworkParameters.BIGTANGLE_TOKENID_STRING,
-                NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0, NetworkParameters.BigtangleCoinTotal,
-                true, NetworkParameters.BIGTANGLE_DECIMAL, "");
-        genesisToken.setBlockHash(params.getGenesisBlock().getHash());
-        genesisToken.setTokentype(TokenType.currency.ordinal());
-        return genesisToken;
-
-    }
-
-    public static Token buildSimpleTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid,
-            String tokenname, String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop,
-            int decimals, String predecessingDomainBlockHash) {
-
-        return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
-                amount, tokenstop, null, false, null, null, TokenType.token.ordinal(), decimals, null,
-                predecessingDomainBlockHash);
-    }
-
-    public static Token buildDomainnameTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid,
-            String tokenname, String description, int signnumber, long tokenindex, boolean tokenstop, String domainname,
-            String predecessingDomainBlockHash) {
-
-        Token token = buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber,
-                tokenindex, new BigInteger("1"), tokenstop, null, false, null, null, TokenType.domainname.ordinal(), 0,
-                domainname, predecessingDomainBlockHash);
-
-        return token;
-    }
-
-    public Token(String tokenid, String tokenname) {
-        this.tokenid = tokenid;
-        this.tokenname = tokenname;
-    }
-
-    public Token() {
-    }
-
     private String tokenid;
     // the index for token in serial
     private long tokenindex;
@@ -295,7 +257,45 @@ public class Token extends SpentBlock implements java.io.Serializable {
         return tokens;
     }
 
- 
+
+    public static Token genesisToken(NetworkParameters params) {
+        Token genesisToken = Token.buildSimpleTokenInfo(true, null, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+                NetworkParameters.BIGTANGLE_TOKENNAME, "BigTangle Currency", 1, 0, NetworkParameters.BigtangleCoinTotal,
+                true, NetworkParameters.BIGTANGLE_DECIMAL, "");
+        genesisToken.setBlockHash(params.getGenesisBlock().getHash());
+        genesisToken.setTokentype(TokenType.currency.ordinal());
+        return genesisToken;
+
+    }
+
+    public static Token buildSimpleTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid,
+            String tokenname, String description, int signnumber, long tokenindex, BigInteger amount, boolean tokenstop,
+            int decimals, String predecessingDomainBlockHash) {
+
+        return buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber, tokenindex,
+                amount, tokenstop, null, false, null, null, TokenType.token.ordinal(), decimals, null,
+                predecessingDomainBlockHash);
+    }
+
+    public static Token buildDomainnameTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid,
+            String tokenname, String description, int signnumber, long tokenindex, boolean tokenstop, String domainname,
+            String predecessingDomainBlockHash) {
+
+        Token token = buildSimpleTokenInfo(confirmed, prevblockhash, tokenid, tokenname, description, signnumber,
+                tokenindex, new BigInteger("1"), tokenstop, null, false, null, null, TokenType.domainname.ordinal(), 0,
+                domainname, predecessingDomainBlockHash);
+
+        return token;
+    }
+
+    public Token(String tokenid, String tokenname) {
+        this.tokenid = tokenid;
+        this.tokenname = tokenname;
+    }
+
+    public Token() {
+    }
+
 
     public static Token buildSubtangleTokenInfo(boolean confirmed, Sha256Hash prevblockhash, String tokenid,
             String tokenname, String description, String domainname) {

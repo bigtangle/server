@@ -193,7 +193,8 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 	public void updateOrderConfirmed(Collection<OrderRecord> orderRecords, boolean confirm) throws BlockStoreException;
 
 	public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException;
-
+	public void updateOrderSpent(Set<Sha256Hash> orderRecords, Sha256Hash blockhash, Boolean spent) throws BlockStoreException;
+	
 	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
 			throws BlockStoreException;
 
@@ -469,7 +470,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
 	void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException;
 
-	public void updateContractEventSpent(List<Sha256Hash> contractEventRecords, Sha256Hash spentBlock, boolean spent)
+	public void updateContractEventSpent(Set<Sha256Hash> contractEventRecords, Sha256Hash spentBlock, boolean spent)
 			throws BlockStoreException;
 
 	public void updateContractEventConfirmed(Collection<Sha256Hash> contracts, boolean confirm)

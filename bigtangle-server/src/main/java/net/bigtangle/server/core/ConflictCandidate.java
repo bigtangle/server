@@ -69,4 +69,10 @@ public class ConflictCandidate {
     public int hashCode() {
         return Objects.hashCode(block, conflictPoint);
     }
+
+	@Override
+	public String toString() {
+		return "ConflictCandidate [block=" + block + ", conflictPoint=" + conflictPoint + "]";
+	}
+    
 }

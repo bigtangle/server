@@ -486,10 +486,15 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	protected Block makeRewardBlock(List<Block> addedBlocks) throws Exception {
+		Block b= contractExecutionService.createOrder(store);
+		if (b != null) {
+			addedBlocks.add(b);
+		}
 		Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
 		Block block = makeRewardBlock(predecessor);
 		if (addedBlocks != null)
 			addedBlocks.add(block);
+
 		return block;
 	}
 
@@ -498,7 +503,9 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	protected Block makeRewardBlock(Sha256Hash predecessor) throws Exception {
+	 
 		Block block = makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(), predecessor, predecessor);
+	
 		return block;
 	}
 

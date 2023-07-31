@@ -1467,7 +1467,7 @@ public class ServiceBase {
 				return opSolidityState;
 			}
 			break;
-		case BLOCKTYPE_CONTRACT_EVENT: 
+		case BLOCKTYPE_CONTRACT_EVENT:
 			break;
 		default:
 			throw new RuntimeException("No Implementation");
@@ -1533,7 +1533,7 @@ public class ServiceBase {
 		return SolidityState.getSuccessState();
 	}
 
-	private SolidityState checkFormalContractEventSolidity(Block block, boolean throwExceptions,FullBlockStore store)
+	private SolidityState checkFormalContractEventSolidity(Block block, boolean throwExceptions, FullBlockStore store)
 			throws BlockStoreException {
 		List<Transaction> transactions = block.getTransactions();
 
@@ -1568,7 +1568,7 @@ public class ServiceBase {
 
 		new Utils().checkContractBase(contractEventInfo,
 				store.getTokenID(contractEventInfo.getContractTokenid()).get(0));
-		
+
 		return SolidityState.getSuccessState();
 	}
 
@@ -2136,7 +2136,7 @@ public class ServiceBase {
 			}
 			break;
 		case BLOCKTYPE_CONTRACT_EVENT:
-			SolidityState check = checkFullContractEventSolidity(block, height, throwExceptions,store);
+			SolidityState check = checkFullContractEventSolidity(block, height, throwExceptions, store);
 			if (!(check.getState() == State.Success)) {
 				return check;
 			}
@@ -2148,9 +2148,9 @@ public class ServiceBase {
 		return SolidityState.getSuccessState();
 	}
 
-	private SolidityState checkFullContractEventSolidity(Block block, long height, boolean throwExceptions,FullBlockStore store)
-			throws BlockStoreException {
-		return checkFormalContractEventSolidity(block, throwExceptions,store);
+	private SolidityState checkFullContractEventSolidity(Block block, long height, boolean throwExceptions,
+			FullBlockStore store) throws BlockStoreException {
+		return checkFormalContractEventSolidity(block, throwExceptions, store);
 	}
 
 	private SolidityState checkFullOrderOpenSolidity(Block block, long height, boolean throwExceptions,
@@ -3102,12 +3102,8 @@ public class ServiceBase {
 		boolean anyCandidateConflicts = allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates())
 				.flatMap(i -> i.stream()).collect(Collectors.groupingBy(i -> i.getConflictPoint())).values().stream()
 				.anyMatch(l -> l.size() > 1);
-		// List<List<ConflictCandidate>> candidateConflicts =
-		// allApprovedNewBlocks.stream()
-		// .map(b -> b.toConflictCandidates()).flatMap(i -> i.stream())
-		// .collect(Collectors.groupingBy(i ->
-		// i.getConflictPoint())).values().stream().filter(l -> l.size() > 1)
-		// .collect(Collectors.toList());
+		if(anyCandidateConflicts )
+		  showConflict(allApprovedNewBlocks);
 
 		// Did we fail? Then we stop now and rerun consensus
 		// logic on the new longest chain.
@@ -3124,6 +3120,20 @@ public class ServiceBase {
 		for (BlockWrap approvedBlock : allApprovedNewBlocks)
 			confirm(approvedBlock.getBlockEvaluation().getBlockHash(), traversedConfirms, milestoneNumber, store);
 
+	}
+
+	private void showConflict(HashSet<BlockWrap> allApprovedNewBlocks) {
+		List<List<ConflictCandidate>> candidateConflicts =
+		  allApprovedNewBlocks.stream()
+		  .map(b -> b.toConflictCandidates()).flatMap(i -> i.stream())
+		  .collect(Collectors.groupingBy(i ->
+		 i.getConflictPoint())).values().stream().filter(l -> l.size() > 1)
+		  .collect(Collectors.toList());
+		for(List<ConflictCandidate> l: candidateConflicts) {
+			for(ConflictCandidate c: l) {
+				logger.debug(" conflict list: " + c.toString());
+			}
+		}
 	}
 
 	public void solidifyBlocks(RewardInfo currRewardInfo, FullBlockStore store) throws BlockStoreException {
@@ -3332,16 +3342,16 @@ public class ServiceBase {
 		if (currRewardInfo.getDifficultyTargetReward() != result.getDifficulty()) {
 			throw new VerificationException("Incorrect difficulty target");
 		}
+		if (enableFee(newMilestoneBlock)) {
+			OrderMatchingResult ordermatchresult = generateOrderMatching(newMilestoneBlock, store);
 
-		OrderMatchingResult ordermatchresult = generateOrderMatching(newMilestoneBlock, store);
-
-		// Only check the Hash of OrderMatchingResult
-		if (!currRewardInfo.getOrdermatchingResult().equals(ordermatchresult.getOrderMatchingResultHash())) {
-			// if(currRewardInfo.getChainlength()!=197096)
-			// throw new VerificationException("OrderMatchingResult transactions output is
-			// wrong.");
+			// Only check the Hash of OrderMatchingResult
+			if (!currRewardInfo.getOrdermatchingResult().equals(ordermatchresult.getOrderMatchingResultHash())) {
+				// if(currRewardInfo.getChainlength()!=197096)
+				// throw new VerificationException("OrderMatchingResult transactions output is
+				// wrong.");
+			}
 		}
-
 		Transaction miningTx = generateVirtualMiningRewardTX(newMilestoneBlock, store);
 
 		// Only check the Hash of OrderMatchingResult
@@ -3614,11 +3624,12 @@ public class ServiceBase {
 
 			// Get list of consumed orders, virtual order matching tx and newly
 			// generated remaining order book
-			matchingResult = generateOrderMatching(block, blockStore);
-			tx = matchingResult.getOutputTx();
-
-			insertVirtualUTXOs(block, tx, blockStore);
-			insertVirtualOrderRecords(block, matchingResult.getRemainingOrders(), blockStore);
+			if (enableFee(block)) {
+				matchingResult = generateOrderMatching(block, blockStore);
+				tx = matchingResult.getOutputTx();
+				insertVirtualUTXOs(block, tx, blockStore);
+				insertVirtualOrderRecords(block, matchingResult.getRemainingOrders(), blockStore);
+			}
 			break;
 		case BLOCKTYPE_TOKEN_CREATION:
 			break;
@@ -3723,26 +3734,29 @@ public class ServiceBase {
 		// generated remaining order book
 		// TODO don't calculate again, it should already have been calculated
 		// before
-		OrderMatchingResult actualCalculationResult = generateOrderMatching(block.getBlock(), blockStore);
+		if (enableFee(block.getBlock())) {
+			OrderMatchingResult actualCalculationResult = generateOrderMatching(block.getBlock(), blockStore);
 
-		// All consumed order records are now spent by this block
+			// All consumed order records are now spent by this block
 
-		for (OrderRecord o : actualCalculationResult.getSpentOrders()) {
-			o.setSpent(true);
-			o.setSpenderBlockHash(block.getBlock().getHash());
+			for (OrderRecord o : actualCalculationResult.getSpentOrders()) {
+				o.setSpent(true);
+				o.setSpenderBlockHash(block.getBlock().getHash());
+			}
+
+			blockStore.updateOrderSpent(actualCalculationResult.getSpentOrders());
+
+			// Set virtual outputs confirmed
+			confirmVirtualCoinbaseTransaction(block, blockStore);
+
+			// Set new orders confirmed
+
+			blockStore.updateOrderConfirmed(actualCalculationResult.getRemainingOrders(), true);
+
+			// Update the matching history in db
+			addMatchingEvents(actualCalculationResult, actualCalculationResult.getOutputTx().getHashAsString(),
+					block.getBlock().getTimeSeconds(), blockStore);
 		}
-		blockStore.updateOrderSpent(actualCalculationResult.getSpentOrders());
-
-		// Set virtual outputs confirmed
-		confirmVirtualCoinbaseTransaction(block, blockStore);
-
-		// Set new orders confirmed
-
-		blockStore.updateOrderConfirmed(actualCalculationResult.getRemainingOrders(), true);
-
-		// Update the matching history in db
-		addMatchingEvents(actualCalculationResult, actualCalculationResult.getOutputTx().getHashAsString(),
-				block.getBlock().getTimeSeconds(), blockStore);
 	}
 
 	public void addMatchingEvents(OrderMatchingResult orderMatchingResult, String transactionHash, long matchBlockTime,
@@ -3780,15 +3794,17 @@ public class ServiceBase {
 					blockStore, result.getContracttokenid());
 			if (check != null && result.getOutputTxHash().equals(check.getOutputTxHash())
 					&& result.getSpentContractEventRecord().equals(check.getSpentContractEventRecord())) {
-				blockStore.updateContractEventSpent(check.getSpentContractEventRecord(), block.getHash(), true);
+				if (ContractResult.ordermatch.equals(check.getContracttokenid())) {
+					blockStore.updateOrderSpent(check.getSpentContractEventRecord(), block.getHash(), true);
+				} else {
+					blockStore.updateContractEventSpent(check.getSpentContractEventRecord(), block.getHash(), true);
+				}
+
 				blockStore.updateContractResultConfirmed(result.getBlockHash(), true);
 				blockStore.updateContractResultSpent(result.getPrevblockhash(), result.getBlockHash(), true);
 				confirmTransaction(block, check.getOutputTx(), blockStore);
 				// Set virtual outputs confirmed
-			} else {
-				throw new InvalidTransactionException(result.toString());
-			}
-
+			} 
 			// blockStore.updateContractEvent( );
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -3800,7 +3816,11 @@ public class ServiceBase {
 		try {
 			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
 			blockStore.updateContractResultSpent(result.getBlockHash(), null, false);
-			blockStore.updateContractEventSpent(result.getSpentContractEventRecord(), null, false);
+			if (ContractResult.ordermatch.equals(result.getContracttokenid())) {
+				blockStore.updateOrderSpent(result.getSpentContractEventRecord(), block.getHash(), false);
+			} else {
+				blockStore.updateContractEventSpent(result.getSpentContractEventRecord(), null, false);
+			}
 			blockStore.updateContractResultConfirmed(result.getBlockHash(), false);
 			blockStore.updateTransactionOutputConfirmed(block.getHash(), result.getOutputTxHash(), 0, false);
 
@@ -4053,16 +4073,19 @@ public class ServiceBase {
 			FullBlockStore blockStore) throws BlockStoreException {
 		// Get list of consumed orders, virtual order matching tx and newly
 		// generated remaining order book
-		OrderMatchingResult matchingResult = generateOrderMatching(block, blockStore);
+		if (enableFee(block)) {
+			OrderMatchingResult matchingResult = generateOrderMatching(block, blockStore);
 
-		// Disconnect all virtual transaction output dependents
-		Transaction tx = matchingResult.getOutputTx();
-		for (TransactionOutput txout : tx.getOutputs()) {
-			UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
-			if (utxo != null && utxo.isSpent()) {
-				unconfirmRecursive(blockStore
-						.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex()).getBlockHash(),
-						traversedBlockHashes, blockStore);
+			// Disconnect all virtual transaction output dependents
+			Transaction tx = matchingResult.getOutputTx();
+			for (TransactionOutput txout : tx.getOutputs()) {
+				UTXO utxo = blockStore.getTransactionOutput(block.getHash(), tx.getHash(), txout.getIndex());
+				if (utxo != null && utxo.isSpent()) {
+					unconfirmRecursive(
+							blockStore.getTransactionOutputSpender(block.getHash(), tx.getHash(), txout.getIndex())
+									.getBlockHash(),
+							traversedBlockHashes, blockStore);
+				}
 			}
 		}
 	}
@@ -4179,23 +4202,25 @@ public class ServiceBase {
 	private void unconfirmOrderMatching(Block block, FullBlockStore blockStore) throws BlockStoreException {
 		// Get list of consumed orders, virtual order matching tx and newly
 		// generated remaining order book
-		OrderMatchingResult matchingResult = generateOrderMatching(block, blockStore);
+		if (enableFee(block)) {
+			OrderMatchingResult matchingResult = generateOrderMatching(block, blockStore);
 
-		// All consumed order records are now unspent by this block
-		Set<OrderRecord> updateOrder = new HashSet<OrderRecord>(matchingResult.getSpentOrders());
-		for (OrderRecord o : updateOrder) {
-			o.setSpent(false);
-			o.setSpenderBlockHash(null);
+			// All consumed order records are now unspent by this block
+			Set<OrderRecord> updateOrder = new HashSet<OrderRecord>(matchingResult.getSpentOrders());
+			for (OrderRecord o : updateOrder) {
+				o.setSpent(false);
+				o.setSpenderBlockHash(null);
+			}
+			blockStore.updateOrderSpent(updateOrder);
+
+			// Set virtual outputs unconfirmed
+			unconfirmVirtualCoinbaseTransaction(block, blockStore);
+
+			blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
+
+			// Update the matching history in db
+			removeMatchingEvents(matchingResult.getOutputTx(), blockStore);
 		}
-		blockStore.updateOrderSpent(updateOrder);
-
-		// Set virtual outputs unconfirmed
-		unconfirmVirtualCoinbaseTransaction(block, blockStore);
-
-		blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
-
-		// Update the matching history in db
-		removeMatchingEvents(matchingResult.getOutputTx(), blockStore);
 	}
 
 	public void removeMatchingEvents(Transaction outputTx, FullBlockStore store) throws BlockStoreException {
@@ -4681,6 +4706,94 @@ public class ServiceBase {
 		Transaction tx = createOrderPayoutTransaction(block, payouts);
 		// logger.debug(tx.toString());
 		return new OrderMatchingResult(toBeSpentOrders, tx, remainingOrders.values(), tokenId2Events);
+	}
+
+	public ContractResult orderMatching(Block block, FullBlockStore blockStore) throws BlockStoreException {
+		TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts = new TreeMap<>();
+
+		// Get previous order matching block
+
+		// Deterministic randomization
+		byte[] randomness = Utils.xor(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes());
+
+		// Collect all orders approved by this block in the interval
+		List<OrderCancelInfo> cancels = new ArrayList<>();
+		Map<Sha256Hash, OrderRecord> sortedNewOrders = new TreeMap<>(
+				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
+		HashMap<Sha256Hash, OrderRecord> remainingOrders = blockStore
+				.getOrderMatchingIssuedOrders(Sha256Hash.ZERO_HASH);
+		Set<OrderRecord> toBeSpentOrders = new HashSet<>();
+		Set<OrderRecord> cancelledOrders = new HashSet<>();
+		for (OrderRecord r : remainingOrders.values()) {
+			toBeSpentOrders.add(OrderRecord.cloneOrderRecord(r));
+		}
+		// collectOrdersWithCancel(block, collectedBlocks, cancels, sortedNewOrders,
+		// toBeSpentOrders, blockStore);
+		// sort order for execute in deterministic randomness
+		Map<Sha256Hash, OrderRecord> sortedOldOrders = new TreeMap<>(
+				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
+		sortedOldOrders.putAll(remainingOrders);
+		remainingOrders.putAll(sortedNewOrders);
+
+		// Issue timeout cancels, set issuing order blockhash
+		setIssuingBlockHash(block, remainingOrders);
+		timeoutOrdersToCancelled(block, remainingOrders, cancelledOrders);
+		cancelOrderstoCancelled(cancels, remainingOrders, cancelledOrders);
+
+		// Remove the now cancelled orders from rest of orders
+		for (OrderRecord c : cancelledOrders) {
+			remainingOrders.remove(c.getBlockHash());
+			sortedOldOrders.remove(c.getBlockHash());
+			sortedNewOrders.remove(c.getBlockHash());
+		}
+
+		// Add to proceeds all cancelled orders going back to the beneficiary
+		payoutCancelledOrders(payouts, cancelledOrders);
+
+		// From all orders and ops, begin order matching algorithm by filling
+		// order books
+		int orderId = 0;
+		ArrayList<OrderRecord> orderId2Order = new ArrayList<>();
+		TreeMap<TradePair, OrderBook> orderBooks = new TreeMap<TradePair, OrderBook>();
+
+		// Add old orders first without not valid yet
+		for (OrderRecord o : sortedOldOrders.values()) {
+			if (o.isValidYet(block.getTimeSeconds()))
+				insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
+		}
+
+		// Now orders not valid before but valid now
+		for (OrderRecord o : sortedOldOrders.values()) {
+			if (o.isValidYet(block.getTimeSeconds()))
+				insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
+		}
+
+		// Now new orders that are valid yet
+		for (OrderRecord o : sortedNewOrders.values()) {
+			if (o.isValidYet(block.getTimeSeconds()))
+				insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
+		}
+
+		// Collect and process all matching events
+		Map<TradePair, List<Event>> tokenId2Events = new HashMap<>();
+		for (Entry<TradePair, OrderBook> orderBook : orderBooks.entrySet()) {
+			processOrderBook(payouts, remainingOrders, orderId2Order, tokenId2Events, orderBook);
+		}
+
+		for (OrderRecord o : remainingOrders.values()) {
+			o.setDefault();
+		}
+
+		// Make deterministic tx with proceeds
+		Transaction tx = createOrderPayoutTransaction(block, payouts);
+		// collect used orders
+		Set<Sha256Hash> spentContractEventRecord = new HashSet<>();
+		for (OrderRecord o : toBeSpentOrders) {
+			spentContractEventRecord.add(o.getBlockHash());
+		}
+
+		return new ContractResult(block.getHash(), "ordermatch", spentContractEventRecord, tx.getHash(), tx, null,
+				block.getTimeSeconds());
 	}
 
 	public Transaction createOrderPayoutTransaction(Block block,

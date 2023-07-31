@@ -115,6 +115,17 @@ public class ContractExecutionService {
 				blockService.saveBlock(contractExecution, store);
 			}
 		}
+
+	}
+
+	public Block createOrder(FullBlockStore store) throws Exception {
+		Block contractExecution = createContractExecution(store, ContractResult.ordermatch);
+		if (contractExecution != null) {
+	//		log.debug(" createOrder block is created: " + contractExecution);
+			blockService.saveBlock(contractExecution, store);
+			return contractExecution;
+		}
+		return null;
 	}
 
 	/**
@@ -167,7 +178,7 @@ public class ContractExecutionService {
 		block.addTransaction(tx);
 		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
 				store, contractid);
-		if (result == null)
+		if (result == null || result.getSpentContractEventRecord().isEmpty())
 			return null;
 		// calculate prev
 		ContractResult prev = store.getLastContractResult(contractid);
