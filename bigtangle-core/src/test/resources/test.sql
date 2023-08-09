@@ -1,6 +1,7 @@
 select * from blocks  where milestone <0 order by height desc ;
 select * from orders   ;
 select * from contractevent   ;
+select * from contractresult   ;
 select count( *) from blocks   ;
 select count( *) from blocks  WHERE milestone>9;
 select count( *) from unsolidblocks   where inserttime < 1515432033 ;
@@ -73,7 +74,7 @@ select * from txreward join orders on txreward.blockhash=orders.collectinghash o
 
 select * from blocks where blocktype> 9 and milestone =  37 ;
 OUTPUTS
-select * from outputs where tokenid !='bc' ;
+select * from outputs where tokenid !='bc' and coinbase=true;
 select * from tokens   ;
 select * from orders  where orderbasetoken !='bc' limit 1 ;
 

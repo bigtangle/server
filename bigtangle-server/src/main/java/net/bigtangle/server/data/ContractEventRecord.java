@@ -13,46 +13,41 @@ import net.bigtangle.core.SpentBlock;
 
 public class ContractEventRecord extends SpentBlock {
 
-    private static final long serialVersionUID = -2331665478149550684L;
+	private static final long serialVersionUID = -2331665478149550684L;
 
-  
-    private String contractTokenid;
-    private BigInteger targetValue;
-    private String targetTokenid;
-    // owner public address of the order for query
-    private String beneficiaryAddress;
+	private Sha256Hash collectinghash;
+	private String contractTokenid;
+	private BigInteger targetValue;
+	private String targetTokenid;
+	// owner public address of the order for query
+	private String beneficiaryAddress;
 
- 
-    public ContractEventRecord() {
-    }
+	public ContractEventRecord() {
+	}
 
-    public ContractEventRecord(Sha256Hash initialBlockHash, 
-            String contractTokenid, boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, BigInteger targetValue,
-            String targetTokenid,   
-            String beneficiaryAddress) {
-        super();
-        this.setBlockHash(initialBlockHash); 
-        this.setConfirmed(confirmed);
-        this.setSpent(spent);
-        this.setSpenderBlockHash(spenderBlockHash);
-        this.targetValue = targetValue;
-        this.targetTokenid = targetTokenid;
-  
-   
-        this.beneficiaryAddress = beneficiaryAddress;
-        this.contractTokenid=contractTokenid;
-    }
+	public ContractEventRecord(Sha256Hash initialBlockHash, Sha256Hash collectinghash, String contractTokenid,
+			boolean confirmed, boolean spent, Sha256Hash spenderBlockHash, BigInteger targetValue, String targetTokenid,
+			String beneficiaryAddress) {
+		super();
+		this.setBlockHash(initialBlockHash);
+		this.collectinghash = collectinghash;
+		this.setConfirmed(confirmed);
+		this.setSpent(spent);
+		this.setSpenderBlockHash(spenderBlockHash);
+		this.targetValue = targetValue;
+		this.targetTokenid = targetTokenid;
 
-    public static ContractEventRecord cloneOrderRecord(ContractEventRecord old) {
-        return new ContractEventRecord(old.getBlockHash(),    old.contractTokenid,
-                old.isConfirmed(), old.isSpent(), old.getSpenderBlockHash(), old.targetValue, old.targetTokenid,
-                   old.beneficiaryAddress);
-    }
+		this.beneficiaryAddress = beneficiaryAddress;
+		this.contractTokenid = contractTokenid;
+	}
 
-    
- 
+	public static ContractEventRecord cloneOrderRecord(ContractEventRecord old) {
+		return new ContractEventRecord(old.getBlockHash(), old.getCollectinghash(), old.contractTokenid,
+				old.isConfirmed(), old.isSpent(), old.getSpenderBlockHash(), old.targetValue, old.targetTokenid,
+				old.beneficiaryAddress);
+	}
 
-    public BigInteger getTargetValue() {
+	public BigInteger getTargetValue() {
 		return targetValue;
 	}
 
@@ -61,29 +56,25 @@ public class ContractEventRecord extends SpentBlock {
 	}
 
 	public String getTargetTokenid() {
-        return targetTokenid;
-    }
+		return targetTokenid;
+	}
 
-    public void setTargetTokenid(String targetTokenid) {
-        this.targetTokenid = targetTokenid;
-    }
+	public void setTargetTokenid(String targetTokenid) {
+		this.targetTokenid = targetTokenid;
+	}
 
- 
- 
-    public static long getSerialversionuid() {
-        return serialVersionUID;
-    }
- 
-   
+	public static long getSerialversionuid() {
+		return serialVersionUID;
+	}
 
-    public String getBeneficiaryAddress() {
-        return beneficiaryAddress;
-    }
+	public String getBeneficiaryAddress() {
+		return beneficiaryAddress;
+	}
 
-    public void setBeneficiaryAddress(String beneficiaryAddress) {
-        this.beneficiaryAddress = beneficiaryAddress;
-    }
- 
+	public void setBeneficiaryAddress(String beneficiaryAddress) {
+		this.beneficiaryAddress = beneficiaryAddress;
+	}
+
 	public String getContractTokenid() {
 		return contractTokenid;
 	}
@@ -92,21 +83,19 @@ public class ContractEventRecord extends SpentBlock {
 		this.contractTokenid = contractTokenid;
 	}
 
- 
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(beneficiaryAddress, contractTokenid, targetTokenid, targetValue );
+	public Sha256Hash getCollectinghash() {
+		return collectinghash;
 	}
 
-	 
+	public void setCollectinghash(Sha256Hash collectinghash) {
+		this.collectinghash = collectinghash;
+	}
 
 	@Override
 	public String toString() {
-		return "ContractEventRecord [blockhash=" + getBlockHashHex() + ", contractTokenid=" + contractTokenid
-				+ ", targetValue=" + targetValue + ", targetTokenid=" + targetTokenid + ", beneficiaryAddress="
-				+ beneficiaryAddress   + "]";
+		return "ContractEventRecord [  beneficiaryAddress=" + beneficiaryAddress + ", collectinghash=" + collectinghash
+				+ ", contractTokenid=" + contractTokenid + ", targetValue=" + targetValue + ", targetTokenid="
+				+ targetTokenid + "]";
 	}
-	 
- 
+
 }

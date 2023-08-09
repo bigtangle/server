@@ -18,7 +18,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +41,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
@@ -79,6 +79,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.ContractExecutionService;
 import net.bigtangle.server.service.MCMCService;
@@ -306,7 +307,7 @@ public abstract class AbstractIntegrationTest {
 	protected Block makeAndConfirmTransaction(ECKey fromKey, ECKey beneficiary, String tokenId, long sellAmount,
 			List<Block> addedBlocks) throws Exception {
 
-		Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
+		Block predecessor = tipsService.getValidatedBlockPair(store).getLeft().getBlock();
 		return makeAndConfirmTransaction(fromKey, beneficiary, tokenId, sellAmount, addedBlocks, predecessor);
 	}
 
@@ -450,7 +451,7 @@ public abstract class AbstractIntegrationTest {
 
 	protected Block makeCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks) throws Exception {
 
-		Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
+		Block predecessor = tipsService.getValidatedBlockPair(store).getLeft().getBlock();
 		return makeCancelOp(order, legitimatingKey, addedBlocks, predecessor);
 	}
 
@@ -481,7 +482,7 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	protected Block makeRewardBlock() throws Exception {
-		Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
+		Block predecessor = tipsService.getValidatedBlockPair(store).getLeft().getBlock();
 		return makeRewardBlock(predecessor);
 	}
 
@@ -490,7 +491,7 @@ public abstract class AbstractIntegrationTest {
 		if (b != null) {
 			addedBlocks.add(b);
 		}
-		Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
+		Block predecessor =  tipsService.getValidatedBlockPair(store).getLeft().getBlock();
 		Block block = makeRewardBlock(predecessor);
 		if (addedBlocks != null)
 			addedBlocks.add(block);
@@ -511,7 +512,7 @@ public abstract class AbstractIntegrationTest {
 
 	protected Block makeAndConfirmContractExecution(List<Block> addedBlocks) throws Exception {
 
-		Block predecessor = store.get(tipsService.getValidatedBlockPair(store).getLeft());
+		Block predecessor = tipsService.getValidatedBlockPair(store).getLeft().getBlock();
 
 		Block block = makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(), predecessor.getHash(),
 				predecessor.getHash());
@@ -1277,7 +1278,8 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	public Block makeRewardBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch) throws Exception {
-		Block block = rewardService.createMiningRewardBlock(prevHash, prevTrunk, prevBranch, store);
+		Block block = rewardService.createMiningRewardBlock(prevHash,
+				blockService.getBlockWrap(prevTrunk, store), blockService.getBlockWrap(prevBranch, store), store);
 		if (block != null) {
 			blockService.saveBlock(block, store);
 			blockGraph.updateChain();
@@ -1361,4 +1363,7 @@ public abstract class AbstractIntegrationTest {
 		mcmcServiceUpdate();
 
 	}
+	  public BlockWrap defaultBlockWrap(Block block) throws Exception {
+	    	return new BlockWrap(block, BlockEvaluation.buildInitial(block), null, networkParameters);
+	    }
 }

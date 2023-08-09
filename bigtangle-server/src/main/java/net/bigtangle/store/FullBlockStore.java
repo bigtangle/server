@@ -186,12 +186,15 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 	public void insertOrder(Collection<OrderRecord> records) throws BlockStoreException;
 
 	public void insertCancelOrder(OrderCancel orderCancel) throws BlockStoreException;
-
+	public List<OrderCancel> getOrderCancelConfirmed() throws BlockStoreException;
+	public void updateOrderCancelSpent(Set<Sha256Hash> cancels, Sha256Hash blockhash, Boolean spent) throws BlockStoreException;
 	public void updateOrderConfirmed(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
+			throws BlockStoreException;
+	public void updateOrderConfirmed(Set<Sha256Hash> hashs, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
 			throws BlockStoreException;
 
 	public void updateOrderConfirmed(Collection<OrderRecord> orderRecords, boolean confirm) throws BlockStoreException;
-
+ 
 	public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException;
 	public void updateOrderSpent(Set<Sha256Hash> orderRecords, Sha256Hash blockhash, Boolean spent) throws BlockStoreException;
 	
@@ -476,7 +479,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 	public void updateContractEventConfirmed(Collection<Sha256Hash> contracts, boolean confirm)
 			throws BlockStoreException;
 
-	public List<ContractEventRecord> getOpenContractEvent(String contractid) throws BlockStoreException;
+	public Set<ContractEventRecord> getOpenContractEvent(String contractid, Sha256Hash prevHash) throws BlockStoreException;
 
 	public List<String> getOpenContractid() throws BlockStoreException;
 
@@ -491,7 +494,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
 	public void updateContractResultConfirmed(Sha256Hash contract, boolean confirm) throws BlockStoreException;
 
-	public ContractResult getLastContractResult(String contractid) throws BlockStoreException;
+	public Sha256Hash getLastContractResultBlockHash(String contractid) throws BlockStoreException;
 
 	public Sha256Hash checkContractResultSpent(Sha256Hash contractResultRecords) throws BlockStoreException;
 

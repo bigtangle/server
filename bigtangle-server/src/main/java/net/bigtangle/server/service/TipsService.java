@@ -124,7 +124,7 @@ public class TipsService {
      * @return Two blockhashes selected via MCMC
      * @throws BlockStoreException
      */
-    public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(FullBlockStore store) throws BlockStoreException {
+    public Pair<BlockWrap, BlockWrap> getValidatedBlockPair(FullBlockStore store) throws BlockStoreException {
      
       return getValidatedBlockPair(store.getMaxConfirmedReward(), new HashSet<>(), store);
     }
@@ -141,7 +141,7 @@ public class TipsService {
      *             if the given prototype is not compatible with the current
      *             milestone
      */
-    public Pair<Sha256Hash, Sha256Hash> getValidatedBlockPairCompatibleWithExisting(Block prototype,
+    public Pair<BlockWrap, BlockWrap> getValidatedBlockPairCompatibleWithExisting(Block prototype,
             FullBlockStore store) throws BlockStoreException {
         TXReward maxConfirmedReward = store.getMaxConfirmedReward();
         ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
@@ -159,21 +159,21 @@ public class TipsService {
      * @return Two blockhashes selected via MCMC
      * @throws BlockStoreException
      */
-    public Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPair(Sha256Hash prevRewardHash, FullBlockStore store)
+    public Pair<BlockWrap, BlockWrap> getValidatedRewardBlockPair(Sha256Hash prevRewardHash, FullBlockStore store)
             throws BlockStoreException {
         return getValidatedRewardBlockPair(store.getMaxConfirmedReward(), new HashSet<>(), prevRewardHash, store);
     }
 
-    private Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPair(TXReward maxConfirmedReward,
+    private Pair<BlockWrap, BlockWrap> getValidatedRewardBlockPair(TXReward maxConfirmedReward,
             HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, Sha256Hash prevRewardHash, FullBlockStore store)
             throws BlockStoreException {
       
-        Pair<Sha256Hash, Sha256Hash> candidate = getValidatedRewardBlockPairDo(maxConfirmedReward, currentApprovedNonMilestoneBlocks, prevRewardHash, store);
+    	Pair<BlockWrap, BlockWrap> candidate = getValidatedRewardBlockPairDo(maxConfirmedReward, currentApprovedNonMilestoneBlocks, prevRewardHash, store);
         if(!candidate.getLeft().equals(candidate.getRight())) {
             return candidate;
         }
         for (int i = 0; i <5; i++) {
-           Pair<Sha256Hash, Sha256Hash> paar = getValidatedRewardBlockPairDo(maxConfirmedReward, currentApprovedNonMilestoneBlocks, prevRewardHash, store);
+        	Pair<BlockWrap, BlockWrap>paar = getValidatedRewardBlockPairDo(maxConfirmedReward, currentApprovedNonMilestoneBlocks, prevRewardHash, store);
            if(!paar.getLeft().equals(paar.getRight())) {
                return paar;
            }
@@ -181,7 +181,7 @@ public class TipsService {
         return candidate;
     }
 
-    private Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPairDo(TXReward maxConfirmedReward,
+    private Pair<BlockWrap, BlockWrap> getValidatedRewardBlockPairDo(TXReward maxConfirmedReward,
             HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, Sha256Hash prevRewardHash, FullBlockStore store)
             throws BlockStoreException {
         List<BlockWrap> entryPoints = getEntryPoints(2,  maxConfirmedReward.getChainLength(),
@@ -191,7 +191,7 @@ public class TipsService {
         return getValidatedRewardBlockPair(currentApprovedNonMilestoneBlocks, left, right, prevRewardHash, store);
     }
     
-    private Pair<Sha256Hash, Sha256Hash> getValidatedRewardBlockPair(
+    private Pair<BlockWrap, BlockWrap> getValidatedRewardBlockPair(
             HashSet<BlockWrap> currentApprovedUnconfirmedBlocks, BlockWrap left, BlockWrap right,
             Sha256Hash prevRewardHash, FullBlockStore store) throws BlockStoreException {
         Stopwatch watch = Stopwatch.createStarted();
@@ -331,10 +331,10 @@ public class TipsService {
         watch.stop();
         log.trace("getValidatedRewardBlockPair iteration time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-        return Pair.of(left.getBlock().getHash(), right.getBlock().getHash());
+        return Pair.of(left, right);
     }
 
-    private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(TXReward maxConfirmedReward,
+    private Pair<BlockWrap, BlockWrap> getValidatedBlockPair(TXReward maxConfirmedReward,
             HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, FullBlockStore store) throws BlockStoreException {
         List<BlockWrap> entryPoints = getEntryPoints(2,  maxConfirmedReward.getChainLength(),
                 store);
@@ -343,7 +343,7 @@ public class TipsService {
         return getValidatedBlockPair(maxConfirmedReward, currentApprovedNonMilestoneBlocks, left, right, store);
     }
 
-    private Pair<Sha256Hash, Sha256Hash> getValidatedBlockPair(TXReward maxConfirmedReward,
+    private Pair<BlockWrap, BlockWrap> getValidatedBlockPair(TXReward maxConfirmedReward,
             HashSet<BlockWrap> currentApprovedUnconfirmedBlocks, BlockWrap left, BlockWrap right, FullBlockStore store)
             throws BlockStoreException {
         Stopwatch watch = Stopwatch.createStarted();
@@ -421,7 +421,7 @@ public class TipsService {
         watch.stop();
         log.trace("getValidatedBlockPair iteration time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-        return Pair.of(left.getBlock().getHash(), right.getBlock().getHash());
+        return Pair.of(left , right );
     }
 
     // Does not redo finding next step if next step was still valid

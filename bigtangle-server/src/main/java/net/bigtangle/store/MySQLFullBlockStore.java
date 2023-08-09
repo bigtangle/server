@@ -352,6 +352,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
 
     private static final String CREATE_CONTRACT_EVENT_TABLE = "CREATE TABLE contractevent (\n"
             + "    blockhash binary(32) NOT NULL,\n" 
+            + "    collectinghash binary(32) NOT NULL,\n" 
             + "    contracttokenid varchar(255) NOT NULL,\n" 
              + "   targetcoinvalue mediumblob,\n" 
             + "    targettokenid varchar(255),\n" 
@@ -364,13 +365,13 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             // returned or used for another  )
             + "    spent boolean NOT NULL,\n" 
             + "    spenderblockhash  binary(32),\n" 
-            + "    CONSTRAINT contractevent_pk PRIMARY KEY (blockhash) "
+            + "    CONSTRAINT contractevent_pk PRIMARY KEY (blockhash, collectinghash) "
             + " USING HASH \n" + ") ENGINE=InnoDB \n";
 
 
     //account for the contract execution
     private static final String CREATE_CONTRACT_RESULT_TABLE = "CREATE TABLE contractresult (\n"
-            + "   blockhash binary(32) NOT NULL,\n" 
+            + "   blockhash binary(32) NOT NULL,\n"  
             + "   contracttokenid varchar(255)  NOT NULL,\n" 
             + "   contractresult mediumblob NOT NULL,\n" 
             //prev contract execution blockhash 

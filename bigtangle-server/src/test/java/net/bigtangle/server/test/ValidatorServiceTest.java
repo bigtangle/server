@@ -65,19 +65,19 @@ import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.ServiceBase;
 import net.bigtangle.utils.Json;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
-import net.bigtangle.wallet.Wallet;
 
 public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 	@Test
 	public void testVerificationFutureTimestamp() throws Exception {
 
-		Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair(store);
-		Block r1 = blockService.getBlock(tipsToApprove.getLeft(), store);
-		Block r2 = blockService.getBlock(tipsToApprove.getRight(), store);
+		Pair<BlockWrap, BlockWrap> tipsToApprove = tipsService.getValidatedBlockPair(store);
+		Block r1 = tipsToApprove.getLeft().getBlock();
+		Block r2 = tipsToApprove.getRight().getBlock();
 		Block b = r2.createNextBlock(r1);
 		b.setTime(1887836800); //
 		b.solve();
@@ -91,9 +91,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 	@Test
 	public void testAdjustTimestamp() throws Exception {
 
-		Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair(store);
-		Block r1 = blockService.getBlock(tipsToApprove.getLeft(), store);
-		Block r2 = blockService.getBlock(tipsToApprove.getRight(), store);
+		Pair<BlockWrap, BlockWrap> tipsToApprove = tipsService.getValidatedBlockPair(store);
+		Block r1 = tipsToApprove.getLeft().getBlock();
+		Block r2 = tipsToApprove.getRight().getBlock();
 		Block b = r2.createNextBlock(r1);
 		b.setTime(1567836800); //
 		b.addTransaction(wallet.feeTransaction(null));
@@ -105,9 +105,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 	@Test
 	public void testVerificationIncorrectPoW() throws Exception {
 
-		Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipsService.getValidatedBlockPair(store);
-		Block r1 = blockService.getBlock(tipsToApprove.getLeft(), store);
-		Block r2 = blockService.getBlock(tipsToApprove.getRight(), store);
+		Pair<BlockWrap, BlockWrap> tipsToApprove = tipsService.getValidatedBlockPair(store);
+		Block r1 = tipsToApprove.getLeft().getBlock();
+		Block r2 = tipsToApprove.getRight().getBlock();
 		Block b = r2.createNextBlock(r1);
 		for (int i = 0; i < 300; i++) {
 			b.setNonce(i);
@@ -289,48 +289,29 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 	@Test
 	public void testUnsolidMissingReward() throws Exception {
 
-		List<Block> blocks1 = new ArrayList<>();
-		List<Block> blocks2 = new ArrayList<>();
-
 		// Generate blocks until passing first reward interval and second reward
 		// interval
-		   List<Block> blocksAddedAll = new ArrayList<Block>();
-           Block rollingBlock = addFixedBlocks(  3,
-                   networkParameters.getGenesisBlock(), blocksAddedAll );
-		for (Block b : blocks1) {
-			blockGraph.add(b, true, store);
-		}
+		List<Block> blocksAddedAll = new ArrayList<Block>();
+		Block rollingBlock = addFixedBlocks(3, networkParameters.getGenesisBlock(), blocksAddedAll);
 
 		// Generate eligible mining reward block
 		Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-				rollingBlock.getHash(), rollingBlock.getHash(), store);
+				defaultBlockWrap(rollingBlock ),
+				defaultBlockWrap(rollingBlock), store);
 		blockGraph.updateChain();
 
 		// Mining reward block should go through
 		assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
 
-		// Make more for next reward interval
-		for (int i = 0; i < 1 + 1 + 1; i++) {
-			rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-			blocks2.add(rollingBlock);
-		}
-		for (Block b : blocks2) {
-			blockGraph.add(b, true, store);
-		}
-
 		// Generate eligible second mining reward block
-		Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash(), rollingBlock.getHash(),
-				rollingBlock.getHash(), store);
+		Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash(), defaultBlockWrap(rollingBlock ),
+				defaultBlockWrap(rollingBlock), store);
 		blockGraph.updateChain();
 
 		store.resetStore();
-		for (Block b : blocks1) {
+		for (Block b : blocksAddedAll) {
 			blockGraph.add(b, true, store);
 		}
-		for (Block b : blocks2) {
-			blockGraph.add(b, true, store);
-		}
-
 		// Add block allowing unsolids
 		blockService.addConnected(rewardBlock2.bitcoinSerialize(), true);
 		blockGraph.updateChain();
@@ -402,13 +383,13 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate blocks until passing first reward interval and second reward
 		// interval
-		   List<Block> blocksAddedAll = new ArrayList<Block>();
-           Block rollingBlock = addFixedBlocks(  3,
-                   networkParameters.getGenesisBlock(), blocksAddedAll );
+		List<Block> blocksAddedAll = new ArrayList<Block>();
+		Block rollingBlock = addFixedBlocks(3, networkParameters.getGenesisBlock(), blocksAddedAll);
 
 		// Generate eligible mining reward block
 		Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-				rollingBlock.getHash(), rollingBlock.getHash(), store);
+				defaultBlockWrap(rollingBlock ),
+				defaultBlockWrap(rollingBlock), store);
 
 		// The consensus number should now be equal to the previous number + 1
 		assertEquals(rollingBlock.getLastMiningRewardBlock() + 1, rewardBlock1.getLastMiningRewardBlock());
@@ -447,8 +428,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		blockGraph.updateChain();
 		try {
-			Block failingBlock = rewardService.createMiningRewardBlock(rewardBlock1.getHash(), rollingBlock.getHash(),
-					rollingBlock.getHash(), store);
+			Block failingBlock = rewardService.createMiningRewardBlock(rewardBlock1.getHash(), defaultBlockWrap(rollingBlock ),
+					defaultBlockWrap(rollingBlock), store);
 			blockGraph.updateChain();
 			failingBlock.setLastMiningRewardBlock(123);
 
@@ -756,7 +737,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate mining reward block with spending inputs
 		Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-				rollingBlock.getHash(), rollingBlock.getHash(), store);
+				defaultBlockWrap(rollingBlock ),
+				defaultBlockWrap(rollingBlock), store);
 		rewardBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget() * 2);
 
 		// Should not go through
@@ -783,7 +765,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate mining reward block with spending inputs
 		Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-				rollingBlock.getHash(), rollingBlock.getHash(), store);
+				defaultBlockWrap(rollingBlock ),
+				defaultBlockWrap(rollingBlock), store);
 		Transaction tx = rewardBlock.getTransactions().get(0);
 
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
@@ -823,7 +806,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate mining reward block with additional tx
 		Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-				rollingBlock.getHash(), rollingBlock.getHash(), store);
+				defaultBlockWrap(rollingBlock ),
+				defaultBlockWrap(rollingBlock), store);
 		Transaction tx = createTestTransaction();
 		rewardBlock.addTransaction(tx);
 		rewardBlock.solve();
@@ -850,7 +834,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate mining reward block with malformed tx data
 		Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-				rollingBlock.getHash(), rollingBlock.getHash(), store);
+				defaultBlockWrap(rollingBlock ),
+				defaultBlockWrap(rollingBlock), store);
 		rewardBlock.getTransactions().get(0).setData(null);
 		rewardBlock.solve();
 
@@ -877,7 +862,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate mining reward block with malformed tx data
 		Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-				rollingBlock.getHash(), rollingBlock.getHash(), store);
+				defaultBlockWrap(rollingBlock ),
+				defaultBlockWrap(rollingBlock), store);
 		rewardBlock.getTransactions().get(0).setData(new byte[] { 2, 3, 4 });
 		;
 		rewardBlock.solve();
@@ -903,7 +889,8 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate mining reward block with malformed fields
 		Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-				rollingBlock.getHash(), rollingBlock.getHash(), store);
+				defaultBlockWrap(rollingBlock ),
+				defaultBlockWrap(rollingBlock), store);
 		blockGraph.updateChain();
 		Block testBlock1 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
 		Block testBlock2 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
@@ -2438,10 +2425,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 			List<UTXO> outputs = getBalance(false, testKey).stream()
 					.filter(out -> Utils.HEX.encode(out.getValue().getTokenid())
 							.equals(Utils.HEX.encode(NetworkParameters.BIGTANGLE_TOKENID)))
-					.collect(Collectors.toList()); 
+					.collect(Collectors.toList());
 			UTXO output = getLargeUTXO(outputs);
-			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters,
-					output);
+			TransactionOutput spendableOutput = new FreeStandingTransactionOutput(this.networkParameters, output);
 			Coin amount = Coin.valueOf(2, NetworkParameters.BIGTANGLE_TOKENID);
 			// BURN: tx.addOutput(new TransactionOutput(networkParameters, tx,
 			// amount, testKey));

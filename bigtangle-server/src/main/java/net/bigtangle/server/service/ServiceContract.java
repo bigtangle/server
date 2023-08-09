@@ -1,8 +1,8 @@
 package net.bigtangle.server.service;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -42,15 +42,15 @@ public class ServiceContract extends ServiceBase {
 	/*
 	 * the ContractEvent received and do next action
 	 */
-	public ContractResult executeContract(Block block, FullBlockStore blockStore, String contractid)
-			throws BlockStoreException {
+	public ContractResult executeContract(Block block, FullBlockStore blockStore, String contractid,
+			Sha256Hash prevHash) throws BlockStoreException {
 		if (ContractResult.ordermatch.equals(contractid)) {
-			return orderMatching(block, blockStore);
+			return orderMatching(block, prevHash, blockStore);
 		} else {
 			Token contract = blockStore.getTokenID(contractid).get(0);
 			String classname = getValue("classname", contract.getTokenKeyValues());
 			if ("net.bigtangle.server.service.LotteryContract".equals(classname)) {
-				return lotteryContract(block, blockStore, contract);
+				return lotteryContract(block, blockStore, contract, prevHash);
 			}
 			// TODO run others
 			return null;
@@ -60,17 +60,16 @@ public class ServiceContract extends ServiceBase {
 	/*
 	 * 
 	 */
-	public ContractResult lotteryContract(Block block, FullBlockStore blockStore, Token contract)
+	public ContractResult lotteryContract(Block block, FullBlockStore blockStore, Token contract, Sha256Hash prevHash)
 			throws BlockStoreException {
 
-		List<ContractEventRecord> records = calContractEventRecord(contract.getTokenid(), blockStore);
+		Set<ContractEventRecord> records = calContractEventRecord(contract.getTokenid(), prevHash, blockStore);
 		String winnerAmount = getValue("winnerAmount", contract.getTokenKeyValues());
 		String amount = getValue("amount", contract.getTokenKeyValues());
-		List<ContractEventRecord> userRecord = new ArrayList<>();
+		Set<ContractEventRecord> userRecord = new HashSet<>();
 		if (winnerAmount != null && canTakeWinner(records, userRecord, new BigInteger(winnerAmount))) {
-			return doTakeWinner(block, blockStore, userRecord, new BigInteger(amount));
+			return doTakeWinner(block, blockStore, userRecord, new BigInteger(amount), prevHash, records);
 		}
-
 		return null;
 	}
 
@@ -88,34 +87,63 @@ public class ServiceContract extends ServiceBase {
 	 * can be check on each node, the winner, the winnerBlock hash calculate the
 	 * unique userAddress, userUtxos for check and generate the dynamic outputs
 	 */
-	private ContractResult doTakeWinner(Block winnerBlock, FullBlockStore blockStore, List<ContractEventRecord> opens,
-			BigInteger amount) {
+	private ContractResult doTakeWinner(Block winnerBlock, FullBlockStore blockStore,
+			Set<ContractEventRecord> usedRecords, BigInteger amount, Sha256Hash prevHash,
+			Set<ContractEventRecord> allRecords) {
 
 		// Deterministic randomization
-		long randomness = winnerBlock.getPrevBlockHash().toBigInteger().longValue();
+		long randomness = winnerBlock.getTimeSeconds();
 		// .xor(winnerBlock.getPrevBranchBlockHash().toBigInteger());
 		Random se = new Random(randomness);
-		List<String> userlist = baseList(opens, amount);
+		List<String> userlist = baseList(usedRecords, amount);
 		int randomWin = se.nextInt(userlist.size());
 		log.debug("randomn win = " + randomWin + " userlist size =" + userlist.size());
-		ContractEventRecord winner = findList(opens, userlist.get(randomWin));
+		ContractEventRecord winner = findList(usedRecords, userlist.get(randomWin));
 		log.debug("winner = " + winner.toString());
 		Transaction tx = createOrderPayoutTransaction(winnerBlock, winner,
-				new Coin(sum(opens), winner.getTargetTokenid()));
-		Set<Sha256Hash> spentContractEventRecord = new HashSet<>();
-		for (ContractEventRecord o : opens) {
-			spentContractEventRecord.add(o.getBlockHash());
-		}
+				new Coin(sum(usedRecords), winner.getTargetTokenid()));
+		return new ContractResult(null, winner.getContractTokenid(),
+				getContractEventRecordHash(allRecords), tx.getHash(), tx, prevHash, new HashSet<>(),
+				getRemainder(allRecords, usedRecords), winnerBlock.getTimeSeconds(), null,
+				getRemainderContractEventRecord(allRecords, usedRecords));
+	}
 
-		return new ContractResult(winnerBlock.getHash(), winner.getContractTokenid(), spentContractEventRecord,
-				tx.getHash(), tx, null, winnerBlock.getTimeSeconds());
+	public Set<Sha256Hash> getContractEventRecordHash(Set<ContractEventRecord> orders) {
+		Set<Sha256Hash> hashs = new HashSet<>();
+		for (ContractEventRecord o : orders) {
+			hashs.add(o.getBlockHash());
+		}
+		return hashs;
+	}
+
+	public Set<Sha256Hash> getRemainder(Set<ContractEventRecord> all, Set<ContractEventRecord> used) {
+		Set<Sha256Hash> hashs = new HashSet<>();
+		for (ContractEventRecord o : all) {
+			if (!used.contains(o)) { 
+				hashs.add(o.getBlockHash());
+
+			}
+		}
+		return hashs;
+	}
+
+	public Set<ContractEventRecord> getRemainderContractEventRecord(Set<ContractEventRecord> all,
+			Set<ContractEventRecord> used) {
+		Set<ContractEventRecord> re = new HashSet<>();
+		for (ContractEventRecord o : all) {
+			if (!used.contains(o)) {
+				o.setConfirmed(true);
+				re.add(o);
+			}
+		}
+		return re;
 	}
 
 	/*
 	 * condition for execute the lottery 1) no other pending payment 2) can do the
 	 * send failed block again 3) the sum is ok
 	 */
-	private boolean canTakeWinner(List<ContractEventRecord> player, List<ContractEventRecord> userlist,
+	private boolean canTakeWinner(Collection<ContractEventRecord> player, Collection<ContractEventRecord> userlist,
 			BigInteger winnerAmount) {
 
 		BigInteger sum = BigInteger.ZERO;
@@ -131,7 +159,7 @@ public class ServiceContract extends ServiceBase {
 
 	}
 
-	private List<String> baseList(List<ContractEventRecord> userlist, BigInteger baseAmount) {
+	private List<String> baseList(Set<ContractEventRecord> userlist, BigInteger baseAmount) {
 		List<String> addresses = new ArrayList<String>();
 
 		for (ContractEventRecord eventRecord : userlist) {
@@ -144,7 +172,7 @@ public class ServiceContract extends ServiceBase {
 		return addresses;
 	}
 
-	private ContractEventRecord findList(List<ContractEventRecord> userlist, String address) {
+	private ContractEventRecord findList(Set<ContractEventRecord> userlist, String address) {
 		for (ContractEventRecord u : userlist) {
 			if (address.equals(u.getBeneficiaryAddress())) {
 				return u;
@@ -167,7 +195,7 @@ public class ServiceContract extends ServiceBase {
 		return tx;
 	}
 
-	public BigInteger sum(List<ContractEventRecord> opens) {
+	public BigInteger sum(Collection<ContractEventRecord> opens) {
 		BigInteger sum = BigInteger.ZERO;
 		for (ContractEventRecord u : opens) {
 			sum = sum.add(u.getTargetValue());
@@ -175,26 +203,14 @@ public class ServiceContract extends ServiceBase {
 		return sum;
 	}
 
-	// calculate the open ContractEventRecord and must be repeatable for the
-	// selected
+	// calculate the all open ContractEventRecord = new + previous remainder
 
-	protected List<ContractEventRecord> calContractEventRecord(String contractTokenid, FullBlockStore store)
-			throws BlockStoreException {
+	protected Set<ContractEventRecord> calContractEventRecord(String contractTokenid, Sha256Hash prevHash,
+			FullBlockStore store) throws BlockStoreException {
 
-		return store.getOpenContractEvent(contractTokenid).stream()
-				.sorted((o1, o2) -> o1.getBlockHash().compareTo(o2.getBlockHash())).collect(Collectors.toList());
+		return store.getOpenContractEvent(contractTokenid, prevHash).stream()
+				.sorted((o1, o2) -> o1.getBlockHash().compareTo(o2.getBlockHash())).collect(Collectors.toSet());
 
-	}
-
-	public void checkContractExecute(Block block, FullBlockStore blockStore) {
-
-		try {
-			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
-
-			// blockStore.updateContractEvent( );
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 }

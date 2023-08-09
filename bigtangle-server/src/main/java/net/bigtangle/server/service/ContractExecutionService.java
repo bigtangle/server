@@ -13,7 +13,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,7 +120,7 @@ public class ContractExecutionService {
 	public Block createOrder(FullBlockStore store) throws Exception {
 		Block contractExecution = createContractExecution(store, ContractResult.ordermatch);
 		if (contractExecution != null) {
-	//		log.debug(" createOrder block is created: " + contractExecution);
+			// log.debug(" createOrder block is created: " + contractExecution);
 			blockService.saveBlock(contractExecution, store);
 			return contractExecution;
 		}
@@ -147,46 +146,30 @@ public class ContractExecutionService {
 	public Block createContractExecution(String contractid, FullBlockStore store) throws Exception {
 
 		Stopwatch watch = Stopwatch.createStarted();
-		Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedBlockPair(store);
+		Block b = blockService.getBlockPrototype(store);
 		log.debug("  getValidatedContractExecutionBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-		return createContractExecution(tipsToApprove.getLeft(), tipsToApprove.getRight(), contractid, store);
+		return createContractExecution(b, contractid, store);
 
 	}
 
-	public Block createContractExecution(Sha256Hash prevTrunk, Sha256Hash prevBranch, String contractid,
-			FullBlockStore store)
-
+	public Block createContractExecution(Block block, String contractid, FullBlockStore store)
 			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-		Stopwatch watch = Stopwatch.createStarted();
-
-		Block r1 = blockService.getBlock(prevTrunk, store);
-		Block r2 = blockService.getBlock(prevBranch, store);
-
-		long currentTime = Math.max(System.currentTimeMillis() / 1000,
-				Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
-
-		Block block = Block.createBlock(networkParameters, r1, r2);
-
 		block.setBlockType(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
-		block.setHeight(Math.max(r1.getHeight(), r2.getHeight()) + 1);
-
-		// Enforce timestamp equal to previous max for contractExecution blocktypes
-		block.setTime(currentTime);
 		// Build transaction for block
 		Transaction tx = new Transaction(networkParameters);
 		block.addTransaction(tx);
-		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
-				store, contractid);
-		if (result == null || result.getSpentContractEventRecord().isEmpty())
-			return null;
+		Sha256Hash prevHash = Sha256Hash.ZERO_HASH;
 		// calculate prev
-		ContractResult prev = store.getLastContractResult(contractid);
+		Sha256Hash prev = store.getLastContractResultBlockHash(contractid);
 		if (prev != null) {
-			result.setPrevblockhash(prev.getBlockHash());
-		} else {
-			result.setPrevblockhash(networkParameters.getGenesisBlock().getHash());
+			prevHash = prev;
 		}
+		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
+				store, contractid, prevHash);
+		if (result == null || result.getAllRecords().isEmpty())
+			return null;
+
 		tx.setData(result.toByteArray());
 
 		blockService.adjustHeightRequiredBlocks(block, store);

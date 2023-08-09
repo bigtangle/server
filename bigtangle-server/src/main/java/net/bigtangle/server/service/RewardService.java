@@ -137,24 +137,24 @@ public class RewardService {
 	public Block createReward(Sha256Hash prevRewardHash, FullBlockStore store) throws Exception {
 		try {
 			Stopwatch watch = Stopwatch.createStarted();
-			Pair<Sha256Hash, Sha256Hash> tipsToApprove = tipService.getValidatedRewardBlockPair(prevRewardHash, store);
+			Pair<BlockWrap, BlockWrap> tipsToApprove = tipService.getValidatedRewardBlockPair(prevRewardHash, store);
 			log.debug("  getValidatedRewardBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
 			return createReward(prevRewardHash, tipsToApprove.getLeft(), tipsToApprove.getRight(), store);
 		} catch (CutoffException | InfeasiblePrototypeException | NullPointerException e) {
 			// fall back to use prev reward as tip
 			log.debug(" fall back to use prev reward as tip: ", e);
-			Block prevreward = store.get(prevRewardHash);
-			return createReward(prevRewardHash, prevreward.getHash(), prevreward.getHash(), store);
+			  BlockWrap prevreward = blockService.getBlockWrap(prevRewardHash,store);
+			return createReward(prevRewardHash, prevreward , prevreward , store);
 		}
 	}
 
-	public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+	public Block createReward(Sha256Hash prevRewardHash, BlockWrap prevTrunk, BlockWrap prevBranch,
 			FullBlockStore store) throws Exception {
 		return createReward(prevRewardHash, prevTrunk, prevBranch, null, store);
 	}
 
-	public Block createReward(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch, Long timeOverride,
+	public Block createReward(Sha256Hash prevRewardHash, BlockWrap prevTrunk, BlockWrap prevBranch, Long timeOverride,
 			FullBlockStore store) throws Exception {
 
 		Block block = createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, timeOverride, store);
@@ -171,19 +171,19 @@ public class RewardService {
 		return block;
 	}
 
-	public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+	public Block createMiningRewardBlock(Sha256Hash prevRewardHash, BlockWrap prevTrunk, BlockWrap prevBranch,
 			FullBlockStore store)
 			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
 		return createMiningRewardBlock(prevRewardHash, prevTrunk, prevBranch, null, store);
 	}
 
-	public Block createMiningRewardBlock(Sha256Hash prevRewardHash, Sha256Hash prevTrunk, Sha256Hash prevBranch,
+	public Block createMiningRewardBlock(Sha256Hash prevRewardHash, BlockWrap prevTrunk, BlockWrap prevBranch,
 			Long timeOverride, FullBlockStore store)
 			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
 		Stopwatch watch = Stopwatch.createStarted();
 
-		Block r1 = blockService.getBlock(prevTrunk, store);
-		Block r2 = blockService.getBlock(prevBranch, store);
+		Block r1 = prevTrunk.getBlock();
+		Block r2 = prevBranch.getBlock();
 
 		long currentTime = Math.max(System.currentTimeMillis() / 1000,
 				Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
@@ -212,12 +212,10 @@ public class RewardService {
 
 		block.addTransaction(tx);
 		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
-		OrderMatchingResult ordermatchresult = serviceBase
-				.generateOrderMatching(block, currRewardInfo, store);
+		OrderMatchingResult ordermatchresult = serviceBase.generateOrderMatching(block, currRewardInfo, store);
 		currRewardInfo.setOrdermatchingResult(ordermatchresult.getOrderMatchingResultHash());
 		tx.setData(currRewardInfo.toByteArray());
-		Transaction miningTx = serviceBase
-				.generateVirtualMiningRewardTX(block, store);
+		Transaction miningTx = serviceBase.generateVirtualMiningRewardTX(block, store);
 		currRewardInfo.setMiningResult(miningTx.getHash());
 		tx.setData(currRewardInfo.toByteArray());
 
@@ -280,7 +278,7 @@ public class RewardService {
 	 * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
 	 *         perTxReward)
 	 */
-	public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash,
+	public RewardBuilderResult makeReward(BlockWrap prevTrunk, BlockWrap prevBranch, Sha256Hash prevRewardHash,
 			long currentTime, FullBlockStore store) throws BlockStoreException {
 
 		// Read previous reward block's data
@@ -293,14 +291,11 @@ public class RewardService {
 		long cutoffheight = blockService.getRewardCutoffHeight(prevRewardHash, store);
 
 		// Count how many blocks from miners in the reward interval are approved
-		BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
-		BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
 
 		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
-		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength, true,
+		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true,
 				store);
-		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength, true,
-				store);
+		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true, store);
 
 		long difficultyReward = serviceBase.calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1,
 				currentTime, store);

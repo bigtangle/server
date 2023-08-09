@@ -717,12 +717,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertTrue(store.getRewardConfirmed(rewardBlock.getHash()));
 		assertFalse(store.getRewardSpent(rewardBlock.getHash()));
 
-		// Generate spending block
-		Block betweenBlock = createAndAddNextBlockWithTransaction(rollingBlock, rollingBlock,
-				wallet.feeTransaction(null));
-		mcmc();
-
-		Block spenderBlock = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock,
+	 
+		Block spenderBlock = createAndAddNextBlockWithTransaction(rewardBlock, rewardBlock,
 				wallet.feeTransaction(null));
 
 		// Confirm

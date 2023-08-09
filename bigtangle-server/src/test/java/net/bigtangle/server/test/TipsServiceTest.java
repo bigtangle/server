@@ -33,6 +33,7 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
  
@@ -117,7 +118,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
+             Pair<BlockWrap, BlockWrap> tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -132,7 +133,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         makeRewardBlock(b1);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
+        	 Pair<BlockWrap, BlockWrap> tips = tipsService.getValidatedBlockPair(store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
@@ -161,9 +162,9 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         // Generate eligible mining reward blocks
         Block b1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash(),store);
+        		defaultBlockWrap( rollingBlock1 ), defaultBlockWrap(rollingBlock1 ),store);
         Block b2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-                rollingBlock1.getHash(), rollingBlock1.getHash(),store);
+        		defaultBlockWrap(  rollingBlock1 ), defaultBlockWrap(rollingBlock1 ),store);
 
         for (int i = 0; i < 5; i++) {
             createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
@@ -173,7 +174,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
+             Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -189,7 +190,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         makeRewardBlock(b1);
         
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
+             Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair(store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
@@ -247,7 +248,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
+             Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -263,7 +264,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         makeRewardBlock(b1);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
+             Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair(store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
@@ -320,7 +321,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit2 = false;
 		mcmcService.update(store); 
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
+             Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -336,7 +337,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         makeRewardBlock(b1);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
+             Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair(store);
              assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
@@ -381,7 +382,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
+             Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -397,7 +398,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         makeRewardBlock(b1);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
+             Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair(store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
@@ -446,7 +447,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
+             Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -462,7 +463,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         makeRewardBlock(b1);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
+             Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair(store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
@@ -496,7 +497,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit1 = false;
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair( store);
+             Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair( store);
             hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
             hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
             assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
@@ -512,7 +513,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         makeRewardBlock(b1);
 
         for (int i = 0; i < 20; i++) {
-            Pair<Sha256Hash, Sha256Hash> tips = tipsService.getValidatedBlockPair(store);
+             Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair(store);
             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
         }
 
