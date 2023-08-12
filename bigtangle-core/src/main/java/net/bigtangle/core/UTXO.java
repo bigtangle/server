@@ -240,6 +240,7 @@ public class UTXO extends SpentBlock {
                 + ", coinbase=" + coinbase + ", \n address=" + address + ", \n fromaddress=" + fromaddress
                 + ", \n time=" + Utils.dateTimeFormat(getTime()*1000)
                 + ", \n memo=" + memo + ", \n spendPending=" + spendPending 
+                + ", \n confirmed=" + isConfirmed() 
                 + ", \n spendPendingTime="          + spendPendingTime 
                 + ", \n spenderBlockHash="          + getSpenderBlockHash()  
                 + ", \n tokenId=" + tokenId + ", \n minimumsign=" + minimumsign + " \n ]";

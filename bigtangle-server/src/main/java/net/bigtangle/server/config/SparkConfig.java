@@ -12,7 +12,7 @@ public class SparkConfig {
     @Value("${spark.appname:bigtangle}")
     private String appName;
 
-    @Value("${spark.home}")
+    @Value("${spark.home:localhost}")
     private String sparkHome;
 
     @Value("${spark.masteruri:local}")

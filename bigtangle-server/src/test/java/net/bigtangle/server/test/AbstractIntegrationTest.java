@@ -381,7 +381,7 @@ public abstract class AbstractIntegrationTest {
 
 		Block block = makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount,
 				NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
-		mcmc();
+		makeOrderAndReward(addedBlocks);
 		return block;
 	}
 
@@ -399,7 +399,7 @@ public abstract class AbstractIntegrationTest {
 			String basetoken, List<Block> addedBlocks) throws Exception {
 
 		Block block = makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount, basetoken, addedBlocks);
-		makeRewardBlock(addedBlocks);
+		makeOrderAndReward(addedBlocks);
 		return block;
 	}
 
@@ -427,7 +427,7 @@ public abstract class AbstractIntegrationTest {
 
 		Block block = makeBuyOrder(beneficiary, tokenId, buyPrice, buyAmount,
 				NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
-		makeRewardBlock(addedBlocks);
+		makeOrderAndReward(addedBlocks);
 		return block;
 	}
 
@@ -445,7 +445,7 @@ public abstract class AbstractIntegrationTest {
 			String basetoken, List<Block> addedBlocks) throws Exception {
 
 		Block block = makeBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, basetoken, addedBlocks);
-		makeRewardBlock(addedBlocks);
+		makeOrderAndReward(addedBlocks);
 		return block;
 	}
 
@@ -487,11 +487,8 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	protected Block makeRewardBlock(List<Block> addedBlocks) throws Exception {
-		Block b= contractExecutionService.createOrder(store);
-		if (b != null) {
-			addedBlocks.add(b);
-		}
-		Block predecessor =  tipsService.getValidatedBlockPair(store).getLeft().getBlock();
+
+		Block predecessor = tipsService.getValidatedBlockPair(store).getLeft().getBlock();
 		Block block = makeRewardBlock(predecessor);
 		if (addedBlocks != null)
 			addedBlocks.add(block);
@@ -499,14 +496,31 @@ public abstract class AbstractIntegrationTest {
 		return block;
 	}
 
+	protected Block makeOrderAndReward(List<Block> addedBlocks) throws Exception {
+		Block b = contractExecutionService.createOrder(store);
+		if (b != null) {
+			if (addedBlocks != null  ) {
+				addedBlocks.add(b);
+			}
+			Block block = makeRewardBlock(b);
+			if (addedBlocks != null && block != null) {
+				addedBlocks.add(block);
+			}
+			return block;
+		} else {
+			return makeRewardBlock(addedBlocks);
+		}
+
+	}
+
 	protected Block makeRewardBlock(Block predecessor) throws Exception {
 		return makeRewardBlock(predecessor.getHash());
 	}
 
 	protected Block makeRewardBlock(Sha256Hash predecessor) throws Exception {
-	 
+
 		Block block = makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(), predecessor, predecessor);
-	
+
 		return block;
 	}
 
@@ -567,7 +581,7 @@ public abstract class AbstractIntegrationTest {
 		// Adds the token values of open orders and UTXOs to a hashMap
 		HashMap<String, Long> hashMap = new HashMap<>();
 		addCurrentUTXOTokens(hashMap);
-		addCurrentOrderTokens(hashMap);
+	   addCurrentOrderTokens(hashMap);
 		return hashMap;
 	}
 
@@ -923,7 +937,7 @@ public abstract class AbstractIntegrationTest {
 		if (coin.getValue().compareTo(sum.getValue()) != 0) {
 			log.error(" expected: " + coin + " got: " + sum);
 		}
-		assertTrue(coin.getValue().compareTo(sum.getValue()) == 0, coin + " " + sum);
+		assertTrue(coin.getValue().compareTo(sum.getValue()) == 0, coin + " != " + sum);
 
 	}
 
@@ -1278,8 +1292,8 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	public Block makeRewardBlock(Sha256Hash prevHash, Sha256Hash prevTrunk, Sha256Hash prevBranch) throws Exception {
-		Block block = rewardService.createMiningRewardBlock(prevHash,
-				blockService.getBlockWrap(prevTrunk, store), blockService.getBlockWrap(prevBranch, store), store);
+		Block block = rewardService.createMiningRewardBlock(prevHash, blockService.getBlockWrap(prevTrunk, store),
+				blockService.getBlockWrap(prevBranch, store), store);
 		if (block != null) {
 			blockService.saveBlock(block, store);
 			blockGraph.updateChain();
@@ -1363,7 +1377,8 @@ public abstract class AbstractIntegrationTest {
 		mcmcServiceUpdate();
 
 	}
-	  public BlockWrap defaultBlockWrap(Block block) throws Exception {
-	    	return new BlockWrap(block, BlockEvaluation.buildInitial(block), null, networkParameters);
-	    }
+
+	public BlockWrap defaultBlockWrap(Block block) throws Exception {
+		return new BlockWrap(block, BlockEvaluation.buildInitial(block), null, networkParameters);
+	}
 }

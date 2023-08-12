@@ -167,7 +167,7 @@ public class ContractExecutionService {
 		}
 		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
 				store, contractid, prevHash);
-		if (result == null || result.getAllRecords().isEmpty())
+		if (result == null || result.getOutputTx().getOutputs().isEmpty())
 			return null;
 
 		tx.setData(result.toByteArray());

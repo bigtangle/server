@@ -3833,9 +3833,9 @@ public class ServiceBase {
 			if (ContractResult.ordermatch.equals(result.getContracttokenid())) {
 				blockStore.updateOrderSpent(result.getAllRecords(), block.getHash(), false);
 				blockStore.updateOrderConfirmed(result.getRemainderRecords(), block.getHash(), false);
-				removeMatchingEvents(result.getOutputTx(), blockStore);
+				removeMatchingEvents(result.getOutputTxHash(), blockStore);
 			} else {
-				blockStore.updateContractEventSpent(result.getAllRecords(),block.getHash(), false);
+				blockStore.updateContractEventSpent(result.getAllRecords(), block.getHash(), false);
 			}
 			blockStore.updateContractResultConfirmed(block.getHash(), false);
 			blockStore.updateTransactionOutputConfirmed(block.getHash(), result.getOutputTxHash(), 0, false);
@@ -4242,11 +4242,11 @@ public class ServiceBase {
 		blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
 
 		// Update the matching history in db
-		removeMatchingEvents(matchingResult.getOutputTx(), blockStore);
+		removeMatchingEvents(matchingResult.getOutputTx().getHash(), blockStore);
 	}
 
-	public void removeMatchingEvents(Transaction outputTx, FullBlockStore store) throws BlockStoreException {
-		store.deleteMatchingEvents(outputTx.getHashAsString());
+	public void removeMatchingEvents(Sha256Hash h, FullBlockStore store) throws BlockStoreException {
+		store.deleteMatchingEvents(h.toString());
 	}
 
 	private void unconfirmOrderOpen(Block block, FullBlockStore blockStore) throws BlockStoreException {
@@ -4389,6 +4389,7 @@ public class ServiceBase {
 						block.getTimeSeconds(), null);
 
 				if (!newOut.isZero()) {
+					logger.debug(newOut.toString());
 					utxos.add(newOut);
 					if (script.isSentToMultiSig()) {
 
@@ -4562,14 +4563,23 @@ public class ServiceBase {
 			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
 			ContractResult check = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
 					blockStore, result.getContracttokenid(), result.getPrevblockhash());
+
 			if (check != null && result.getOutputTxHash().equals(check.getOutputTxHash())
-					&& result.getAllRecords().equals(check.getAllRecords())) {
+					&& result.getAllRecords().equals(check.getAllRecords())
+					&& result.getRemainderRecords().equals(check.getRemainderRecords())
+					&& result.getCancelRecords().equals(check.getCancelRecords())) {
+				insertVirtualUTXOs(block, check.getOrderMatchingResult().getOutputTx(), blockStore);
+				insertVirtualOrderRecords(block, check.getOrderMatchingResult().getRemainingOrders(), blockStore);
+				result.setBlockHash(block.getHash());
+				blockStore.insertContractResult(result);
+			} else {
+
 				result.setBlockHash(block.getHash());
 				blockStore.insertContractResult(result);
 				insertVirtualUTXOs(block, check.getOutputTx(), blockStore);
 				// Set virtual outputs confirmed
-
 			}
+
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -4738,18 +4748,25 @@ public class ServiceBase {
 		// Deterministic randomization
 		byte[] randomness = Utils.xor(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes());
 
-		// Collect all orders approved by this block in the interval
-		List<OrderCancel> cancels = blockStore.getOrderCancelConfirmed();
+		// Collect all orders confirmed
 		Map<Sha256Hash, OrderRecord> sortedNewOrders = new TreeMap<>(
 				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
-		HashMap<Sha256Hash, OrderRecord> remainingOrders = blockStore.getOrderMatchingIssuedOrders(prevHash);
-		Set<OrderRecord> toBeSpentOrders = new HashSet<>();
+		sortedNewOrders.putAll(blockStore.getOrderMatchingIssuedOrders(Sha256Hash.ZERO_HASH));
+
+		HashMap<Sha256Hash, OrderRecord> remainingOrders = new HashMap<Sha256Hash, OrderRecord>();
+		if (!prevHash.equals(Sha256Hash.ZERO_HASH)) {
+			remainingOrders = blockStore.getOrderMatchingIssuedOrders(prevHash);
+		}
+		List<OrderCancel> cancels = blockStore.getOrderCancelConfirmed();
 		Set<OrderRecord> cancelledOrders = new HashSet<>();
+
+		Set<OrderRecord> toBeSpentOrders = new HashSet<>();
 		for (OrderRecord r : remainingOrders.values()) {
 			toBeSpentOrders.add(OrderRecord.cloneOrderRecord(r));
 		}
-		sortedNewOrders.putAll(blockStore.getOrderMatchingIssuedOrders(Sha256Hash.ZERO_HASH));
-
+		for (OrderRecord r : sortedNewOrders.values()) {
+			toBeSpentOrders.add(OrderRecord.cloneOrderRecord(r));
+		}
 		// sort order for execute in deterministic randomness
 		Map<Sha256Hash, OrderRecord> sortedOldOrders = new TreeMap<>(
 				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));

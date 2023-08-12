@@ -102,10 +102,9 @@ public class ServiceContract extends ServiceBase {
 		log.debug("winner = " + winner.toString());
 		Transaction tx = createOrderPayoutTransaction(winnerBlock, winner,
 				new Coin(sum(usedRecords), winner.getTargetTokenid()));
-		return new ContractResult(null, winner.getContractTokenid(),
-				getContractEventRecordHash(allRecords), tx.getHash(), tx, prevHash, new HashSet<>(),
-				getRemainder(allRecords, usedRecords), winnerBlock.getTimeSeconds(), null,
-				getRemainderContractEventRecord(allRecords, usedRecords));
+		return new ContractResult(null, winner.getContractTokenid(), getContractEventRecordHash(allRecords),
+				tx.getHash(), tx, prevHash, new HashSet<>(), getRemainder(allRecords, usedRecords),
+				winnerBlock.getTimeSeconds(), null, getRemainderContractEventRecord(allRecords, usedRecords));
 	}
 
 	public Set<Sha256Hash> getContractEventRecordHash(Set<ContractEventRecord> orders) {
@@ -119,7 +118,7 @@ public class ServiceContract extends ServiceBase {
 	public Set<Sha256Hash> getRemainder(Set<ContractEventRecord> all, Set<ContractEventRecord> used) {
 		Set<Sha256Hash> hashs = new HashSet<>();
 		for (ContractEventRecord o : all) {
-			if (!used.contains(o)) { 
+			if (!used.contains(o)) {
 				hashs.add(o.getBlockHash());
 
 			}
