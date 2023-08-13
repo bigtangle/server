@@ -2474,7 +2474,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 			block1.solve();
 			blockGraph.add(block1, false, store);
 			fail();
-		} catch (InvalidOrderException e) {
+		} catch (VerificationException e) {
 		}
 	}
 

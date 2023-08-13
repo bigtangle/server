@@ -245,7 +245,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 	protected final String INSERT_CONTRACT_EVENT_SQL = getInsert()
 			+ "  INTO contractevent (blockhash, contracttokenid, confirmed, spent, spenderblockhash, "
-			+ "targetcoinvalue, targettokenid,    beneficiaryaddress, collectinghash) " + " VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)";
+			+ "targetcoinvalue, targettokenid,    beneficiaryaddress, collectinghash) "
+			+ " VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)";
 	protected final String CONTRACT_TEMPLATE = " blockhash, collectinghash, contracttokenid, confirmed, spent, spenderblockhash,  "
 			+ "targetcoinvalue, targettokenid,    beneficiaryaddress";
 
@@ -4631,9 +4632,16 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
+			// "blockhash, orderblockhash, confirmed, spent, spenderblockhash,time";
 			preparedStatement = getConnection().prepareStatement(INSERT_OrderCancel_SQL);
 			preparedStatement.setBytes(1, orderCancel.getBlockHash().getBytes());
 			preparedStatement.setBytes(2, orderCancel.getOrderBlockHash().getBytes());
+			preparedStatement.setBoolean(3, true);
+			preparedStatement.setBoolean(4, orderCancel.isSpent());
+			preparedStatement.setBytes(5,
+					orderCancel.getSpenderBlockHash() != null ? orderCancel.getSpenderBlockHash().getBytes() : null);
+			preparedStatement.setLong(6, orderCancel.getTime());
+			preparedStatement.executeUpdate();
 		} catch (SQLException e) {
 			if (!(e.getSQLState().equals(getDuplicateKeyErrorCode())))
 				throw new BlockStoreException(e);
@@ -4875,7 +4883,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 				preparedStatement.setBytes(5,
 						record.getSpenderBlockHash() != null ? record.getSpenderBlockHash().getBytes() : null);
 				preparedStatement.setBytes(6, record.getTargetValue().toByteArray());
-				preparedStatement.setString(7, record.getTargetTokenid()); 
+				preparedStatement.setString(7, record.getTargetTokenid());
 				preparedStatement.setString(8, record.getBeneficiaryAddress());
 				preparedStatement.setBytes(9, record.getCollectinghash().getBytes());
 				preparedStatement.addBatch();
@@ -5076,10 +5084,10 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_CONTRACTRESULT_LAST__SQL);
 			preparedStatement.setString(1, contractid);
-			ResultSet resultSet = preparedStatement.executeQuery(); 
-			if (resultSet.next()) { 
-					return Sha256Hash.wrap(resultSet.getBytes("blockhash"));
-		 
+			ResultSet resultSet = preparedStatement.executeQuery();
+			if (resultSet.next()) {
+				return Sha256Hash.wrap(resultSet.getBytes("blockhash"));
+
 			}
 			return null;
 

@@ -478,6 +478,7 @@ public abstract class AbstractIntegrationTest {
 		this.blockGraph.add(block, true, store);
 		addedBlocks.add(block);
 
+		mcmcServiceUpdate();
 		return block;
 	}
 

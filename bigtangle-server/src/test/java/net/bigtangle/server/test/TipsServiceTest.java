@@ -119,10 +119,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
              Pair<BlockWrap, BlockWrap> tips = tipsService.getValidatedBlockPair( store);
-            hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
-            hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
-                    || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b1.getHash())));
+            hit1 |= tips.getLeft().getBlockHash().equals(b1.getHash()) || tips.getRight().getBlockHash().equals(b1.getHash());
+            hit2 |= tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash());
+            assertFalse((tips.getLeft().getBlockHash().equals(b1.getHash()) && tips.getRight().getBlockHash().equals(b2.getHash()))
+                    || (tips.getLeft().getBlockHash().equals(b2.getHash()) && tips.getRight().getBlockHash().equals(b1.getHash())));
             if (hit1 && hit2)
                 break;
         }
@@ -134,7 +134,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         for (int i = 0; i < 20; i++) {
         	 Pair<BlockWrap, BlockWrap> tips = tipsService.getValidatedBlockPair(store);
-            assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
+            assertFalse(tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash()));
         }
 
         try {
@@ -175,10 +175,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
              Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair( store);
-            hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
-            hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
-                    || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b1.getHash())));
+            hit1 |= tips.getLeft().getBlockHash().equals(b1.getHash()) || tips.getRight().getBlockHash().equals(b1.getHash());
+            hit2 |= tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash());
+            assertFalse((tips.getLeft().getBlockHash().equals(b1.getHash()) && tips.getRight().getBlockHash().equals(b2.getHash()))
+                    || (tips.getLeft().getBlockHash().equals(b2.getHash()) && tips.getRight().getBlockHash().equals(b1.getHash())));
             if (hit1 && hit2)
                 break;
         }
@@ -191,7 +191,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         
         for (int i = 0; i < 20; i++) {
              Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair(store);
-            assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
+            assertFalse(tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash()));
         }
 
         try {
@@ -249,10 +249,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
              Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair( store);
-            hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
-            hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
-                    || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b1.getHash())));
+            hit1 |= tips.getLeft().getBlockHash().equals(b1.getHash()) || tips.getRight().getBlockHash().equals(b1.getHash());
+            hit2 |= tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash());
+            assertFalse((tips.getLeft().getBlockHash().equals(b1.getHash()) && tips.getRight().getBlockHash().equals(b2.getHash()))
+                    || (tips.getLeft().getBlockHash().equals(b2.getHash()) && tips.getRight().getBlockHash().equals(b1.getHash())));
             if (hit1 && hit2)
                 break;
         }
@@ -265,7 +265,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         for (int i = 0; i < 20; i++) {
              Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair(store);
-            assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
+            assertFalse(tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash()));
         }
 
         try {
@@ -322,10 +322,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 		mcmcService.update(store); 
         for (int i = 0; i < 150; i++) {
              Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair( store);
-            hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
-            hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
-                    || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b1.getHash())));
+            hit1 |= tips.getLeft().getBlockHash().equals(b1.getHash()) || tips.getRight().getBlockHash().equals(b1.getHash());
+            hit2 |= tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash());
+            assertFalse((tips.getLeft().getBlockHash().equals(b1.getHash()) && tips.getRight().getBlockHash().equals(b2.getHash()))
+                    || (tips.getLeft().getBlockHash().equals(b2.getHash()) && tips.getRight().getBlockHash().equals(b1.getHash())));
             if (hit1 && hit2)
                 break;
         }
@@ -338,7 +338,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         for (int i = 0; i < 20; i++) {
              Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair(store);
-             assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
+             assertFalse(tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash()));
         }
 
         try {
@@ -383,10 +383,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
              Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair( store);
-            hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
-            hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
-                    || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b1.getHash())));
+            hit1 |= tips.getLeft().getBlockHash().equals(b1.getHash()) || tips.getRight().getBlockHash().equals(b1.getHash());
+            hit2 |= tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash());
+            assertFalse((tips.getLeft().getBlockHash().equals(b1.getHash()) && tips.getRight().getBlockHash().equals(b2.getHash()))
+                    || (tips.getLeft().getBlockHash().equals(b2.getHash()) && tips.getRight().getBlockHash().equals(b1.getHash())));
             if (hit1 && hit2)
                 break;
         }
@@ -399,7 +399,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         for (int i = 0; i < 20; i++) {
              Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair(store);
-            assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
+            assertFalse(tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash()));
         }
 
         try {
@@ -448,10 +448,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
              Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair( store);
-            hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
-            hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
-                    || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b1.getHash())));
+            hit1 |= tips.getLeft().getBlockHash().equals(b1.getHash()) || tips.getRight().getBlockHash().equals(b1.getHash());
+            hit2 |= tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash());
+            assertFalse((tips.getLeft().getBlockHash().equals(b1.getHash()) && tips.getRight().getBlockHash().equals(b2.getHash()))
+                    || (tips.getLeft().getBlockHash().equals(b2.getHash()) && tips.getRight().getBlockHash().equals(b1.getHash())));
             if (hit1 && hit2)
                 break;
         }
@@ -464,7 +464,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         for (int i = 0; i < 20; i++) {
              Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair(store);
-            assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
+            assertFalse(tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash()));
         }
 
         try {
@@ -498,10 +498,10 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         boolean hit2 = false;
         for (int i = 0; i < 150; i++) {
              Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair( store);
-            hit1 |= tips.getLeft().equals(b1.getHash()) || tips.getRight().equals(b1.getHash());
-            hit2 |= tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash());
-            assertFalse((tips.getLeft().equals(b1.getHash()) && tips.getRight().equals(b2.getHash()))
-                    || (tips.getLeft().equals(b2.getHash()) && tips.getRight().equals(b1.getHash())));
+            hit1 |= tips.getLeft().getBlockHash().equals(b1.getHash()) || tips.getRight().getBlockHash().equals(b1.getHash());
+            hit2 |= tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash());
+            assertFalse((tips.getLeft().getBlockHash().equals(b1.getHash()) && tips.getRight().getBlockHash().equals(b2.getHash()))
+                    || (tips.getLeft().getBlockHash().equals(b2.getHash()) && tips.getRight().getBlockHash().equals(b1.getHash())));
             if (hit1 && hit2)
                 break;
         }
@@ -514,7 +514,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 
         for (int i = 0; i < 20; i++) {
              Pair<BlockWrap, BlockWrap>tips = tipsService.getValidatedBlockPair(store);
-            assertFalse(tips.getLeft().equals(b2.getHash()) || tips.getRight().equals(b2.getHash()));
+            assertFalse(tips.getLeft().getBlockHash().equals(b2.getHash()) || tips.getRight().getBlockHash().equals(b2.getHash()));
         }
 
         try {

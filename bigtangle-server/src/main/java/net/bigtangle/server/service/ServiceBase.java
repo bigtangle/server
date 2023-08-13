@@ -3805,6 +3805,7 @@ public class ServiceBase {
 				if (ContractResult.ordermatch.equals(check.getContracttokenid())) {
 					blockStore.updateOrderSpent(check.getAllRecords(), block.getHash(), true);
 					confirmOrderMatching(block, check.getOrderMatchingResult(), blockStore);
+					blockStore.updateOrderCancelSpent( check.getCancelRecords(), block.getHash(), true);
 				} else {
 					blockStore.updateContractEventSpent(check.getAllRecords(), block.getHash(), true);
 					for (ContractEventRecord c : check.getRemainderContractEventRecord()) {
@@ -4389,7 +4390,7 @@ public class ServiceBase {
 						block.getTimeSeconds(), null);
 
 				if (!newOut.isZero()) {
-					logger.debug(newOut.toString());
+				//	logger.debug(newOut.toString());
 					utxos.add(newOut);
 					if (script.isSentToMultiSig()) {
 
@@ -4568,18 +4569,19 @@ public class ServiceBase {
 					&& result.getAllRecords().equals(check.getAllRecords())
 					&& result.getRemainderRecords().equals(check.getRemainderRecords())
 					&& result.getCancelRecords().equals(check.getCancelRecords())) {
-				insertVirtualUTXOs(block, check.getOrderMatchingResult().getOutputTx(), blockStore);
-				insertVirtualOrderRecords(block, check.getOrderMatchingResult().getRemainingOrders(), blockStore);
-				result.setBlockHash(block.getHash());
-				blockStore.insertContractResult(result);
-			} else {
+				if (ContractResult.ordermatch.equals(result.getContracttokenid())) {
+					insertVirtualUTXOs(block, check.getOrderMatchingResult().getOutputTx(), blockStore);
+					insertVirtualOrderRecords(block, check.getOrderMatchingResult().getRemainingOrders(), blockStore);
+					result.setBlockHash(block.getHash());
+					blockStore.insertContractResult(result);
+				} else {
 
-				result.setBlockHash(block.getHash());
-				blockStore.insertContractResult(result);
-				insertVirtualUTXOs(block, check.getOutputTx(), blockStore);
-				// Set virtual outputs confirmed
+					result.setBlockHash(block.getHash());
+					blockStore.insertContractResult(result);
+					insertVirtualUTXOs(block, check.getOutputTx(), blockStore);
+					// Set virtual outputs confirmed
+				}
 			}
-
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -5034,8 +5036,8 @@ public class ServiceBase {
 	private void orderstoCancelled(List<OrderCancel> cancels, HashMap<Sha256Hash, OrderRecord> remainingOrders,
 			Set<OrderRecord> cancelledOrders) {
 		for (OrderCancel c : cancels) {
-			if (remainingOrders.containsKey(c.getBlockHash())) {
-				cancelledOrders.add(remainingOrders.get(c.getBlockHash()));
+			if (remainingOrders.containsKey(c.getOrderBlockHash())) {
+				cancelledOrders.add(remainingOrders.get(c.getOrderBlockHash()));
 			}
 		}
 	}

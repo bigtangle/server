@@ -297,7 +297,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		block1.solve();
 		this.blockGraph.add(block1, true, store);
 
-		makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(), rollingBlock.getHash(), block1.getHash());
+		makeOrderAndReward( null);
 
 		// Ensure the order is confirmed now
 		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
@@ -347,8 +347,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		this.blockGraph.add(block1, true, store);
 
 		// Generate matching blocks
-		Block rewardBlock1 = makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(),
-				store.getMaxConfirmedReward().getBlockHash(), block1.getHash());
+		Block rewardBlock1 = makeOrderAndReward(null);
 
 		// Should be confirmed now
 		assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
@@ -386,7 +385,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		// Generate matching block
 		// Execute order matching
-		Block rewardBlock1 = makeRewardBlock(addedBlocks);
+		Block rewardBlock1 = makeOrderAndReward(addedBlocks);
 
 		// Should be confirmed now
 		assertTrue(store.getRewardConfirmed(rewardBlock1.getHash()));
@@ -567,7 +566,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		// Generate matching block
 		// Execute order matching
-		Block rewardBlock1 = makeRewardBlock(addedBlocks);
+		Block rewardBlock1 = makeOrderAndReward(addedBlocks);
 
 		// Unconfirm
 		new ServiceBase(serverConfiguration, networkParameters).unconfirm(rewardBlock1.getHash(), new HashSet<>(),
@@ -829,7 +828,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		makeBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
 
 		// Execute order matching
-		Block rewardBlock = makeRewardBlock(addedBlocks);
+		Block rewardBlock = makeOrderAndReward(addedBlocks);
 
 		// Generate spending block
 		Block betweenBlock = makeAndConfirmBlock(addedBlocks, addedBlocks.get(addedBlocks.size() - 2));
