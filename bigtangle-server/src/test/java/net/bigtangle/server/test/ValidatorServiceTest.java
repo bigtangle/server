@@ -304,8 +304,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
 
 		// Generate eligible second mining reward block
-		Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash(), defaultBlockWrap(rollingBlock ),
-				defaultBlockWrap(rollingBlock), store);
+		Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash() , store);
 		blockGraph.updateChain();
 
 		store.resetStore();

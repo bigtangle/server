@@ -497,6 +497,12 @@ public abstract class AbstractIntegrationTest {
 		return block;
 	}
 
+	protected Block makeOrdermatch( ) throws Exception {
+		return  contractExecutionService.createOrder(store); 
+
+	}
+
+	
 	protected Block makeOrderAndReward(List<Block> addedBlocks) throws Exception {
 		Block b = contractExecutionService.createOrder(store);
 		if (b != null) {
@@ -616,9 +622,11 @@ public abstract class AbstractIntegrationTest {
 		}
 	}
 
-	protected void checkOrders(int ordersize) throws BlockStoreException {
+	protected void checkAllOpenOrders(int ordersize) throws BlockStoreException {
 		// Snapshot current state
-		assertTrue(store.getAllOpenOrdersSorted(null, null).size() == ordersize);
+		List<OrderRecord> allOpenOrdersSorted = store.getAllOpenOrdersSorted(null, null);
+		for(OrderRecord o: allOpenOrdersSorted ) log.debug(o.toString());
+		assertTrue(allOpenOrdersSorted.size() == ordersize);
 
 	}
 

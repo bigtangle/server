@@ -265,7 +265,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			+ " contractresult, prevblockhash, inserttime) " + " VALUES (?, ?, ?, ?, ?, ?, ?,?)";
 
 	protected final String SELECT_CONTRACTRESULT_LAST__SQL = "SELECT  blockhash "
-			+ " FROM contractresult WHERE contracttokenid=?  order by inserttime desc limit 1 ";
+			+ " FROM contractresult WHERE contracttokenid=? and confirmed=true and spent=false order by inserttime desc limit 1 ";
 
 	protected final String INSERT_TOKENS_SQL = getInsert()
 			+ " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, "

@@ -184,7 +184,7 @@ public class ContractExecutionService {
 		final Future<String> handler = executor.submit(new Callable() {
 			@Override
 			public String call() throws Exception {
-				log.debug(" contractExecution block solve started  : " + chainTargetFinal + " \n for block" + block);
+			//	log.debug(" contractExecution block solve started  : " + chainTargetFinal + " \n for block" + block);
 				block.solve(chainTargetFinal);
 				return "";
 			}
@@ -199,7 +199,7 @@ public class ContractExecutionService {
 		} finally {
 			executor.shutdownNow();
 		}
-		log.debug("contractExecution Solved time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+	//	log.debug("contractExecution Solved time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 		return block;
 	}
 

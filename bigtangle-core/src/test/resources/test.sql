@@ -79,6 +79,7 @@ select * from tokens   ;
 select * from orders  where orderbasetoken !='bc' limit 1 ;
 
 select * FROM ordercancel WHERE confirmed = true and spent=false
+select * from contractresult;
 
 select * from multisign
 select count(*) from orders where collectinghash= 0x0000000000000000000000000000000000000000000000000000000000000000   

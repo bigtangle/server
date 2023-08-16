@@ -303,7 +303,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		assertTrue(order.isConfirmed());
-		assertTrue(order.isSpent());
+		assertFalse(order.isSpent());
 	}
 
 	@Test
@@ -357,10 +357,10 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		assertTrue(order.isConfirmed());
-		assertTrue(order.isSpent());
+		assertFalse(order.isSpent());
 
 		// Ensure remaining orders are confirmed now
-		OrderRecord order2 = store.getOrder(block1.getHash(), rewardBlock1.getHash());
+		OrderRecord order2 = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order2);
 		assertTrue(order2.isConfirmed());
 		assertFalse(order2.isSpent());
@@ -402,12 +402,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertTrue(order2.isConfirmed());
 		assertTrue(order2.isSpent());
 
-		// Ensure virtual UTXOs are now confirmed
-		Transaction tx = new ServiceBase(serverConfiguration, networkParameters)
-				.generateOrderMatching(rewardBlock1, store).getOutputTx();
-		final UTXO utxo1 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(rewardBlock1.getHash()), store);
-		assertTrue(utxo1.isConfirmed());
-		assertFalse(utxo1.isSpent());
+ 
 	}
 
 	@Test
@@ -558,42 +553,45 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		String testTokenId = testKey.getPublicKeyAsHex();
 		// Make a buy order for testKey.getPubKey()s
 
-		Block block1 = makeBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks);
-
+		Block block1 = makeBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks); 
+		makeRewardBlock();
 		// Make a sell order for testKey.getPubKey()s
 		// Open sell order for test tokens
 		Block block3 = makeSellOrder(testKey, testTokenId, 2, 2, addedBlocks);
-
+		makeRewardBlock();
 		// Generate matching block
 		// Execute order matching
-		Block rewardBlock1 = makeOrderAndReward(addedBlocks);
-
-		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters).unconfirm(rewardBlock1.getHash(), new HashSet<>(),
-				store);
-
-		// Should be unconfirmed now
-		assertFalse(store.getRewardConfirmed(rewardBlock1.getHash()));
-		assertFalse(store.getRewardSpent(rewardBlock1.getHash()));
-		assertNull(store.getRewardSpender(rewardBlock1.getHash()));
-
+		Block ex = contractExecutionService.createOrder(store); 
+		makeRewardBlock(ex);
 		// Ensure all consumed order records are now unspent
 		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		// assertFalse(order.isConfirmed());
+		assertTrue(order.isSpent());
+		// Unconfirm
+		new ServiceBase(serverConfiguration, networkParameters).unconfirm(ex.getHash(), new HashSet<>(),
+				store);
+ 
+		// Ensure all consumed order records are now unspent
+		  order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
+		assertNotNull(order);
+		// assertFalse(order.isConfirmed());
 		assertFalse(order.isSpent());
 
-		OrderRecord order3 = store.getOrder(block3.getHash(), Sha256Hash.ZERO_HASH);
+		OrderRecord order3 = store.getOrder(block3.getHash(),  Sha256Hash.ZERO_HASH);
 		assertNotNull(order3);
 		assertTrue(order3.isConfirmed());
 		assertFalse(order3.isSpent());
-
-		// Ensure virtual UTXOs are now confirmed
-		Transaction tx = new ServiceBase(serverConfiguration, networkParameters)
-				.generateOrderMatching(rewardBlock1, store).getOutputTx();
-		final UTXO utxo1 = blockService.getUTXO(tx.getOutput(0).getOutPointFor(rewardBlock1.getHash()), store);
-		assertFalse(utxo1.isConfirmed());
-		assertFalse(utxo1.isSpent());
+ 
+		// Execute order matching again
+		 
+		  ex = contractExecutionService.createOrder(store); 
+		makeRewardBlock(ex);
+		// Ensure all consumed order records are now unspent
+		  order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
+		assertNotNull(order);
+		// assertFalse(order.isConfirmed());
+		assertTrue(order.isSpent());
 	}
 
 	@Test

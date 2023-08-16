@@ -3418,7 +3418,7 @@ public class ServiceBase {
 				BlockWrap block = store.getBlockWrap(hash);
 				if (block == null)
 					return SolidityState.from(hash, true);
-				if (block.getBlock().getHeight() <= cutoffHeight)
+				if (block.getBlock().getHeight() <= cutoffHeight && cutoffHeight>0)
 					throw new VerificationException("Referenced blocks are below cutoff height.");
 
 				SolidityState requirementResult = checkRequiredBlocks(rewardInfo, block, store);
@@ -3803,7 +3803,7 @@ public class ServiceBase {
 					&& result.getRemainderRecords().equals(check.getRemainderRecords())
 					&& result.getCancelRecords().equals(check.getCancelRecords())) {
 				if (ContractResult.ordermatch.equals(check.getContracttokenid())) {
-					blockStore.updateOrderSpent(check.getAllRecords(), block.getHash(), true);
+					blockStore.updateOrderSpent(check.getAllRecords(), check.getPrevblockhash(), true);
 					confirmOrderMatching(block, check.getOrderMatchingResult(), blockStore);
 					blockStore.updateOrderCancelSpent( check.getCancelRecords(), block.getHash(), true);
 				} else {
@@ -3831,7 +3831,7 @@ public class ServiceBase {
 		try {
 			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
 			blockStore.updateContractResultSpent(block.getHash(), null, false);
-			if (ContractResult.ordermatch.equals(result.getContracttokenid())) {
+			if (ContractResult.ordermatch.equals(result.getContracttokenid())) { 
 				blockStore.updateOrderSpent(result.getAllRecords(), block.getHash(), false);
 				blockStore.updateOrderConfirmed(result.getRemainderRecords(), block.getHash(), false);
 				removeMatchingEvents(result.getOutputTxHash(), blockStore);
@@ -4246,6 +4246,8 @@ public class ServiceBase {
 		removeMatchingEvents(matchingResult.getOutputTx().getHash(), blockStore);
 	}
 
+	 
+	
 	public void removeMatchingEvents(Sha256Hash h, FullBlockStore store) throws BlockStoreException {
 		store.deleteMatchingEvents(h.toString());
 	}
@@ -4800,13 +4802,7 @@ public class ServiceBase {
 		for (OrderRecord o : sortedOldOrders.values()) {
 			if (o.isValidYet(block.getTimeSeconds()))
 				insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
-		}
-
-		// Now orders not valid before but valid now
-		for (OrderRecord o : sortedOldOrders.values()) {
-			if (o.isValidYet(block.getTimeSeconds()))
-				insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
-		}
+		} 
 
 		// Now new orders that are valid yet
 		for (OrderRecord o : sortedNewOrders.values()) {

@@ -1,6 +1,8 @@
 package net.bigtangle.server.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -21,6 +23,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpenInfo;
+import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Transaction;
@@ -344,11 +347,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		// Open sell order for test tokens
 		makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-		checkOrders(1);
+		checkAllOpenOrders(1);
 
 		// Open buy order for test tokens
 		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
-		checkOrders(0);
+		checkAllOpenOrders(0);
 
 		// Verify the tokens changed possession
 		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100000l);
@@ -381,11 +384,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		// Open sell order for test tokens
 		makeAndConfirmSellOrder(testKey, testTokenId, priceshift, 2, yuan.getPublicKeyAsHex(), addedBlocks);
-		checkOrders(1);
+		checkAllOpenOrders(1);
 
 		// Open buy order for test tokens
 		makeAndConfirmBuyOrder(yuan, testTokenId, priceshift, 2, yuan.getPublicKeyAsHex(), addedBlocks);
-		checkOrders(0);
+		checkAllOpenOrders(0);
 
 		// Verify the tokens changed possession
 		assertHasAvailableToken(testKey, yuan.getPublicKeyAsHex(), 2l);
@@ -442,11 +445,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		// Open sell order for test tokens
 		makeAndConfirmSellOrder(testKey, testTokenId, priceshift, 2, yuan.getPublicKeyAsHex(), addedBlocks);
-		checkOrders(1);
+		checkAllOpenOrders(1);
 
 		// Open buy order for test tokens
 		makeAndConfirmBuyOrder(yuan, testTokenId, priceshift, 2, yuan.getPublicKeyAsHex(), addedBlocks);
-		checkOrders(0);
+		checkAllOpenOrders(0);
 
 		String testTokenId2 = testKey2.getPublicKeyAsHex();
 
@@ -486,11 +489,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(), addedBlocks);
 		// Open sell order for test tokens
 		makeAndConfirmSellOrder(testKey, testTokenId, priceshift, 200, yuan.getPublicKeyAsHex(), addedBlocks);
-		checkOrders(1);
+		checkAllOpenOrders(1);
 
 		// Open buy order for test tokens
 		makeAndConfirmBuyOrder(yuan, testTokenId, priceshift, 200, yuan.getPublicKeyAsHex(), addedBlocks);
-		checkOrders(0);
+		checkAllOpenOrders(0);
 
 		// Verify the tokens changed possession
 		assertHasAvailableToken(testKey, yuan.getPublicKeyAsHex(), 2l);
@@ -509,6 +512,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 		// base token
 		ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
+		String orderbaseToken = yuan.getPublicKeyAsHex();
 		int amount = 1000000;
 		long tokennumber = amount * 1000;
 		makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
@@ -519,27 +523,26 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
-		// Open sell order for test tokens
-		makeAndConfirmSellOrder(testKey, testTokenId, 200, amount, yuan.getPublicKeyAsHex(), addedBlocks);
-		checkOrders(1);
-
-		// Open buy order for test tokens
+		// Open sell order for test tokens 
+		makeAndConfirmSellOrder(testKey, testTokenId, 200, amount, orderbaseToken, addedBlocks);
+		checkAllOpenOrders(1);
+		// Open buy order for test tokens restAmount=1
 		int buyAmount = amount + 100;
-		makeAndConfirmBuyOrder(yuan, testTokenId, 200, buyAmount, yuan.getPublicKeyAsHex(), addedBlocks);
+		makeAndConfirmBuyOrder(yuan, testTokenId, 200, buyAmount, orderbaseToken, addedBlocks);
 
 		// the first in will execute the two order with the price, the buy order will be
 		// remainder buyAmount - amount = 100
-		checkOrders(1);
+		checkAllOpenOrders(1);
 
 		// Verify the tokens changed possession
-		assertHasAvailableToken(testKey, yuan.getPublicKeyAsHex(), 2l);
+		assertHasAvailableToken(testKey, orderbaseToken, 2l);
 		assertHasAvailableToken(yuan, testKey.getPublicKeyAsHex(), amount * 1l);
 		// Open sell order for test tokens
-		makeAndConfirmSellOrder(testKey, testTokenId, 200, amount, yuan.getPublicKeyAsHex(), addedBlocks);
-		  checkOrders(1);
-		 
+		makeAndConfirmSellOrder(testKey, testTokenId, 200, buyAmount, orderbaseToken, addedBlocks);
+		//checkAllOpenOrders(1);
+
 		// Verify the tokens changed possession
-		assertHasAvailableToken(testKey, yuan.getPublicKeyAsHex(), 2l);
+		assertHasAvailableToken(testKey, orderbaseToken, 2l);
 		assertHasAvailableToken(yuan, testKey.getPublicKeyAsHex(), amount * 1l + 100);
 
 		// Verify token amount invariance
@@ -572,7 +575,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(), addedBlocks);
 		// Open sell order for test tokens, orderbase yuan
 		makeAndConfirmSellOrder(testKey, testTokenId, priceshift, 2, yuan.getPublicKeyAsHex(), addedBlocks);
-		checkOrders(1);
+		checkAllOpenOrders(1);
 		makeOrderAndReward(addedBlocks);
 		// Open buy order for test tokens,orderbase yuan
 		makeAndConfirmBuyOrder(yuan, testTokenId, priceshift, 2, yuan.getPublicKeyAsHex(), addedBlocks);
@@ -928,9 +931,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		// ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
 		// Utils.HEX.decode(testPub));
 		ECKey testKey = new ECKey();
-		;
 		List<Block> addedBlocks = new ArrayList<>();
-
 		// Make test token
 		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
@@ -958,6 +959,62 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		// Verify deterministic overall execution
 		readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+	}
+
+	@Test
+	public void cancelUnconfirm() throws Exception {
+
+		ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
+				Utils.HEX.decode(testPub));
+		ECKey testKey = new ECKey();
+
+		List<Block> addedBlocks = new ArrayList<>();
+
+		// Make test token
+		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		String testTokenId = testKey.getPublicKeyAsHex();
+		generateSpareChange(genesisKey, addedBlocks);
+
+		// Get current existing token amount
+		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+
+		// Open sell orders for test tokens
+		Block sell = makeSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
+
+		// Open buy order for test tokens
+		Block buy = makeBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
+
+		// Cancel all
+		makeCancelOp(sell, testKey, addedBlocks);
+		makeCancelOp(buy, genesisKey, addedBlocks);
+		// Execute order matching
+		Block ex = contractExecutionService.createOrder(store);
+		makeRewardBlock(ex);
+
+		// Verify all tokens did not change possession
+		// assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+		// null);
+		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 0l);
+		// Ensure all consumed order records are now unspent
+		OrderRecord order = store.getOrder(buy.getHash(), Sha256Hash.ZERO_HASH);
+		assertNotNull(order);
+		assertTrue(order.isConfirmed());
+		assertTrue(order.isSpent());
+		// Unconfirm
+		new ServiceBase(serverConfiguration, networkParameters).unconfirm(ex.getHash(), new HashSet<>(), store);
+		order = store.getOrder(buy.getHash(), Sha256Hash.ZERO_HASH);
+		assertNotNull(order);
+		assertFalse(order.isSpent());
+		// execution after unconfirm shoud do the cancel still there and no matching
+		ex = contractExecutionService.createOrder(store);
+		makeRewardBlock(ex);
+
+		// Ensure all consumed order records are now unspent
+		order = store.getOrder(buy.getHash(), Sha256Hash.ZERO_HASH);
+		assertNotNull(order);
+		assertTrue(order.isConfirmed());
+		assertTrue(order.isSpent());
+
 	}
 
 	@Test
@@ -1061,12 +1118,12 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
 
 		// Execute order matching
-		 makeOrderAndReward(addedBlocks);
+		makeOrderAndReward(addedBlocks);
 
 		// Verify the order is still open
 		// NOTE: Can fail if the test takes longer than 5 seconds. In that case,
 		// increase the wait time variable
-		checkOrders(2);
+		checkAllOpenOrders(2);
 		// Wait until valid
 		Thread.sleep(waitTime);
 
@@ -1074,7 +1131,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeOrderAndReward(addedBlocks);
 
 		// Verify the order is now closed
-		checkOrders(0);
+		checkAllOpenOrders(0);
 		// Verify token amount invariance
 		assertCurrentTokenAmountEquals(origTokenAmounts);
 
@@ -1348,7 +1405,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		}
 
 		// targeValue=20 (0.2 yuan)
-		checkOrders(1);
+		checkAllOpenOrders(1);
 
 		// Open buy order for dollar, target value=2 dollar Block Transaction=
 		// 20 in Yuan
