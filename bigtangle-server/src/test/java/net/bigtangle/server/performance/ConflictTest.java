@@ -41,7 +41,7 @@ public class ConflictTest extends AbstractIntegrationTest {
             Block b1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
                     networkParameters.getGenesisBlock(), doublespendTX);
             blockGraph.add(b1, true, store);
-            sendEmpty(3);
+          
             // add blocks and want to get fast resolve of double spending
             mcmcServiceUpdate();
         }

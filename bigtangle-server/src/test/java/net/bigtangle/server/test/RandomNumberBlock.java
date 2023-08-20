@@ -34,10 +34,7 @@ public class RandomNumberBlock extends AbstractIntegrationTest {
         rnumbers.add(Math.abs(l1));
     }
     public Block createReward(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
-        for (int j = 1; j < 3; j++) {
-            sendEmpty(j);
-        }
-
+     
         // Generate mining reward block
         Block next =  makeRewardBlock(rewardBlock1.getHash());
         blocksAddedAll.add(next);

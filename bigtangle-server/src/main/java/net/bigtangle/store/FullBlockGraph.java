@@ -237,7 +237,7 @@ public class FullBlockGraph {
 
 			// Check the block is partially formally valid and fulfills PoW
 			block.verifyHeader();
-			// block.verifyTransactions();
+			  block.verifyTransactions();
 
 			ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
 			SolidityState solidityState = serviceBase.checkChainSolidity(block, true, store);

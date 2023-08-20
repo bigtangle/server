@@ -535,7 +535,7 @@ public class TokenTest extends AbstractIntegrationTest {
 				TokenType.identity.ordinal(), new ECKey().getPublicKeyAsHex(), wallet, userkey.getPubKey(), null);
 		TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
 		wallet.multiSign(currentToken.getToken().getTokenid(), key, aesKey);
-		sendEmpty(10);
+	 
 		makeRewardBlock();
 
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();

@@ -212,10 +212,10 @@ public class OrderRecord extends SpentBlock {
 
 	@Override
 	public String toString() {
-		return "OrderRecord [  price " + price + " , offerValue=" + offerValue
+		return "OrderRecord [  price " + price  + ", side=" + side+ " , offerValue=" + offerValue
 				+ ", offerTokenid=" + offerTokenid + ", targetValue=" + targetValue + ", targetTokenid=" + targetTokenid
 				+ ", beneficiaryAddress=" + beneficiaryAddress + ", validToTime=" + validToTime + ", validFromTime="
-				+ validFromTime + ", side=" + side +", issuingMatcherBlockHash=" + issuingMatcherBlockHash + "]";
+				+ validFromTime  +", issuingMatcherBlockHash=" + issuingMatcherBlockHash + "]";
 	}
 
 }

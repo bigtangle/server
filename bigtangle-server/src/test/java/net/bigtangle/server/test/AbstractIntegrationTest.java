@@ -6,6 +6,7 @@ package net.bigtangle.server.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.description;
 
 import java.io.IOException;
 import java.math.BigInteger;
@@ -41,8 +42,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Block.Type;
+import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
@@ -219,7 +220,7 @@ public abstract class AbstractIntegrationTest {
 		payTestTokenTo(beneficiary, testKey, amount, new ArrayList<>());
 	}
 
-	protected void payBigTo(ECKey beneficiary, BigInteger amount, List<Block> addedBlocks) throws Exception {
+	protected Block payBigTo(ECKey beneficiary, BigInteger amount, List<Block> addedBlocks) throws Exception {
 		HashMap<String, BigInteger> giveMoneyResult = new HashMap<String, BigInteger>();
 
 		giveMoneyResult.put(beneficiary.toAddress(networkParameters).toString(), amount);
@@ -230,6 +231,7 @@ public abstract class AbstractIntegrationTest {
 			addedBlocks.add(b);
 		mcmcServiceUpdate();
 		// makeRewardBlock(addedBlocks);
+		return b;
 	}
 
 	protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, BigInteger amount, List<Block> addedBlocks)
@@ -565,7 +567,7 @@ public abstract class AbstractIntegrationTest {
 			if (skipBig && currTokenAmount.getKey().equals(NetworkParameters.BIGTANGLE_TOKENID_STRING))
 				continue;
 
-			assertTrue(origTokenAmounts.containsKey(currTokenAmount.getKey()));
+	 		assertTrue(origTokenAmounts.containsKey(currTokenAmount.getKey()));
 			assertEquals(origTokenAmounts.get(currTokenAmount.getKey()), currTokenAmount.getValue());
 		}
 	}
@@ -596,6 +598,7 @@ public abstract class AbstractIntegrationTest {
 		// Adds the token values of open orders to the hashMap
 		List<OrderRecord> orders = store.getAllOpenOrdersSorted(null, null);
 		for (OrderRecord o : orders) {
+			log.debug(o.toString());
 			String tokenId = o.getOfferTokenid();
 			if (!hashMap.containsKey(tokenId))
 				hashMap.put(tokenId, 0L);
@@ -1310,18 +1313,7 @@ public abstract class AbstractIntegrationTest {
 		return block;
 	}
 
-	public void sendEmpty(int c) throws JsonProcessingException {
-
-		for (int i = 0; i < c; i++) {
-			try {
-				send();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-		}
-	}
+ 
 
 	public void send() throws JsonProcessingException, Exception {
 

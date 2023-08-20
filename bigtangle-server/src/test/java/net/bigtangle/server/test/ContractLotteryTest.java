@@ -69,6 +69,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 
 	public void lotteryDo() throws Exception {
 		prepare();
+	 
 		executionAndCheck();
 
 	}
@@ -83,8 +84,11 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		Map<String, BigInteger> startMap = new HashMap<>();
 		check(ulist, startMap);
 		// createUserPay(accountKey, ulist);
-		payContract(ulist, new ArrayList<>());
-		makeRewardBlock();
+		ArrayList<Block> blocks = new ArrayList<>();
+		payContract(ulist, blocks);
+		mcmc();
+		
+		makeRewardBlock(blocks.get(blocks.size()-1));
 	}
 
 	private void executionAndCheck()
@@ -99,6 +103,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 
 		Block resultBlock = contractExecutionService.createContractExecution(tip, contractKey.getPublicKeyAsHex(),
 				store);
+ 
 		blockService.saveBlock(resultBlock, store);
 
 		assertTrue(resultBlock != null);

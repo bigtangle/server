@@ -249,16 +249,22 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			+ " VALUES (?, ?, ?, ?, ?, ?, ?, ?,?)";
 	protected final String CONTRACT_TEMPLATE = " blockhash, collectinghash, contracttokenid, confirmed, spent, spenderblockhash,  "
 			+ "targetcoinvalue, targettokenid,    beneficiaryaddress";
-
-	protected final String UPDATE_CONTRACT_SPENT_SQL = getUpdate()
-			+ " contractevent SET spent = ?, spenderblockhash = ? " + " WHERE blockhash = ?";
-	protected final String UPDATE_CONTRACT_CONFIRMED_SQL = getUpdate() + " contractevent SET confirmed = ? "
+	
+	protected final String UPDATE_CONTRACT_EVENT_CONFIRMED_SQL = getUpdate() + " contractevent SET confirmed = ? "
+			+ " WHERE blockhash = ?";
+	protected final String UPDATE_CONTRACT_EVENT_SPENT_SQL = getUpdate() + " contractevent SET spent = ?, spenderblockhash = ? "
+			+ " WHERE blockhash = ?";
+	
+	protected final String UPDATE_CONTRACTRESULT_SPENT_SQL = getUpdate()
+			+ " contractresult SET spent = ?, spenderblockhash = ? " + " WHERE blockhash = ?";
+	
+	protected final String UPDATE_CONTRACTRESULT_CONFIRMED_SQL = getUpdate() + " contractresult SET confirmed = ? "
 			+ " WHERE blockhash = ?";
 
 	protected final String SELECT_OPEN_CONTRACT_SQL = "SELECT " + CONTRACT_TEMPLATE
 			+ " FROM contractevent WHERE contracttokenid = ? AND (collectinghash=? or collectinghash=?)  AND confirmed = true AND spent=false";
 	protected final String SELECT_OPEN_CONTRACTID_CONTRACT_SQL = "SELECT distinct (contracttokenid)"
-			+ " FROM contractevent WHERE confirmed = true AND spent=false";
+			+ " FROM contractresult WHERE confirmed = true AND spent=false";
 
 	protected final String INSERT_CONTRACT_RESULT_SQL = getInsert()
 			+ "  INTO contractresult (blockhash,  contracttokenid, confirmed, spent, spenderblockhash, "
@@ -5001,7 +5007,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = getConnection().prepareStatement(UPDATE_CONTRACT_CONFIRMED_SQL);
+			preparedStatement = getConnection().prepareStatement(UPDATE_CONTRACT_EVENT_CONFIRMED_SQL);
 			for (Sha256Hash o : records) {
 				preparedStatement.setBoolean(1, confirm);
 				preparedStatement.setBytes(2, o.getBytes());
@@ -5235,7 +5241,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		maybeConnect();
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = getConnection().prepareStatement(UPDATE_CONTRACT_CONFIRMED_SQL);
+			preparedStatement = getConnection().prepareStatement(UPDATE_CONTRACTRESULT_CONFIRMED_SQL);
 
 			preparedStatement.setBoolean(1, confirm);
 			preparedStatement.setBytes(2, record.getBytes());

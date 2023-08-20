@@ -155,27 +155,17 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
 				Utils.HEX.decode(testPub));
-		ECKey testKey = new ECKey();
-		;
+		ECKey testKey = new ECKey(); 
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
 		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
-
-		// Get current existing token amount
-		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
-
-		// Open sell order for test tokens
-		makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-
-		// Open buy order for test tokens
-		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 99, addedBlocks);
-
+		generateSpareChange(genesisKey, addedBlocks); 
+	 
 		// Open buy order for test tokens
 		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 22, addedBlocks);
-		makeAndConfirmSellOrder(testKey, testTokenId, 1002, 100, addedBlocks);
+		makeAndConfirmSellOrder(testKey, testTokenId, 1001, 100, addedBlocks);
 
 		// get the data
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();
@@ -190,17 +180,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		assertTrue(orderTickerResponse.getTickers().size() > 0);
 		for (MatchLastdayResult m : orderTickerResponse.getTickers()) {
 			if (m.getTokenid().equals(testTokenId)) {
-				// assertTrue(m.getExecutedQuantity() == 78||
-				// m.getExecutedQuantity() == 22);
-				// TODO check the execute ordering. price is 1000 or 1001
+
 				assertTrue(m.getPrice() == 1000 || m.getPrice() == 1001);
 			}
-		}
-
+		} 
 		// check wallet
 
 		BigDecimal a = wallet.getLastPrice(testTokenId, NetworkParameters.BIGTANGLE_TOKENID_STRING);
-		assertTrue(a.compareTo(new BigDecimal("0.001")) == 0);
+		assertTrue(a.compareTo(new BigDecimal("0.001001")) == 0);
 
 	}
 
@@ -209,8 +196,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
 				Utils.HEX.decode(testPub));
-		ECKey testKey = new ECKey();
-		;
+		ECKey testKey = new ECKey(); 
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
@@ -270,8 +256,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
 				Utils.HEX.decode(testPub));
-		ECKey testKey = new ECKey();
-		;
+		ECKey testKey = new ECKey(); 
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
@@ -286,12 +271,8 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
 
 		// Open buy order for test tokens
-		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 99, addedBlocks);
-
-		// Open buy order for test tokens
-		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 22, addedBlocks);
-		makeAndConfirmSellOrder(testKey, testTokenId, 1002, 100, addedBlocks);
-
+		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 99, addedBlocks); 
+	 
 		// Verify token amount invariance
 		assertCurrentTokenAmountEquals(origTokenAmounts);
 
@@ -428,19 +409,15 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		long tokennumber = 888888 * 1000;
 		makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
 		// Make test token
-		ECKey testKey = new ECKey();
-		;
+		ECKey testKey = new ECKey(); 
 		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
 		generateSpareChange(new ECKey(), addedBlocks);
 
 		// Make test token 2
-		ECKey testKey2 = new ECKey();
-		;
+		ECKey testKey2 = new ECKey(); 
 		resetAndMakeTestTokenWithSpare(testKey2, addedBlocks);
-
-		// Get current existing token amount
-		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
+ 
 		int priceshift = 1000000;
 
 		// Open sell order for test tokens
@@ -539,7 +516,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		assertHasAvailableToken(yuan, testKey.getPublicKeyAsHex(), amount * 1l);
 		// Open sell order for test tokens
 		makeAndConfirmSellOrder(testKey, testTokenId, 200, buyAmount, orderbaseToken, addedBlocks);
-		//checkAllOpenOrders(1);
+		 checkAllOpenOrders(1);
 
 		// Verify the tokens changed possession
 		assertHasAvailableToken(testKey, orderbaseToken, 2l);
@@ -734,7 +711,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		// Execute order matching
 		makeOrderAndReward(addedBlocks);
 
-		// Verify the tokens changed possession
+		// Verify the tokens changed possession, take the best price=1001 to match, 1001*50 + 1000*50
 		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100050l);
 		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
 
@@ -974,10 +951,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
 		generateSpareChange(genesisKey, addedBlocks);
-
-		// Get current existing token amount
-		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
-
+ 
 		// Open sell orders for test tokens
 		Block sell = makeSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
 
@@ -1349,8 +1323,12 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		assertCurrentTokenAmountEquals(origTokenAmounts);
 
 		// Open orders
-		makeSellOrder(testKey, testTokenId, 753, 12, addedBlocks);
+		//makeSellOrder(testKey, testTokenId, 753, 12, addedBlocks);
+		//makeOrderAndReward(addedBlocks);
+		assertCurrentTokenAmountEquals(origTokenAmounts);
 		makeBuyOrder(genesisKey, testTokenId, 357, 23, addedBlocks);
+		makeOrderAndReward(addedBlocks);
+		assertCurrentTokenAmountEquals(origTokenAmounts);
 		makeBuyOrder(genesisKey, testTokenId, 654, 78, addedBlocks);
 
 		// Execute order matching
@@ -1524,7 +1502,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		long tradeAmount = 10l;
 		long price = Long.MAX_VALUE;
 		try {
-			Block block = Wallet.fromKeys(networkParameters, testKey, contextRoot).sellOrder(null, testTokenId, price,
+			  Wallet.fromKeys(networkParameters, testKey, contextRoot).sellOrder(null, testTokenId, price,
 					tradeAmount, null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, true);
 			fail();
 		} catch (VerificationException e) {

@@ -124,7 +124,7 @@ select * from  exchange;
 select * from ordermatch;
 select * from orderpublish;
 select * from orders;
-
+SELECT * FROM blocks
 
 SELECT blockhash FROM blocks INNER JOIN orders 
 ON orders.blockhash=blocks.hash 

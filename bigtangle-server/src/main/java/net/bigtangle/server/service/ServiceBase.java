@@ -3445,7 +3445,7 @@ public class ServiceBase {
 			// the required block must be in this referenced blocks or in
 			// milestone
 			if (req == null) {
-				return SolidityState.from(reqHash, true);
+		//		return SolidityState.from(reqHash, true);
 			}
 		}
 
@@ -4757,24 +4757,24 @@ public class ServiceBase {
 				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
 		sortedNewOrders.putAll(blockStore.getOrderMatchingIssuedOrders(Sha256Hash.ZERO_HASH));
 
+		// sort order for execute in deterministic randomness
+		Map<Sha256Hash, OrderRecord> sortedOldOrders = new TreeMap<>(
+				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
 		HashMap<Sha256Hash, OrderRecord> remainingOrders = new HashMap<Sha256Hash, OrderRecord>();
 		if (!prevHash.equals(Sha256Hash.ZERO_HASH)) {
-			remainingOrders = blockStore.getOrderMatchingIssuedOrders(prevHash);
+			sortedOldOrders = blockStore.getOrderMatchingIssuedOrders(prevHash);
 		}
 		List<OrderCancel> cancels = blockStore.getOrderCancelConfirmed();
 		Set<OrderRecord> cancelledOrders = new HashSet<>();
 
 		Set<OrderRecord> toBeSpentOrders = new HashSet<>();
-		for (OrderRecord r : remainingOrders.values()) {
+		for (OrderRecord r : sortedOldOrders.values()) {
 			toBeSpentOrders.add(OrderRecord.cloneOrderRecord(r));
 		}
 		for (OrderRecord r : sortedNewOrders.values()) {
 			toBeSpentOrders.add(OrderRecord.cloneOrderRecord(r));
 		}
-		// sort order for execute in deterministic randomness
-		Map<Sha256Hash, OrderRecord> sortedOldOrders = new TreeMap<>(
-				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
-		sortedOldOrders.putAll(remainingOrders);
+		remainingOrders.putAll(sortedOldOrders);
 		remainingOrders.putAll(sortedNewOrders);
 
 		// Issue timeout cancels, set issuing order blockhash
