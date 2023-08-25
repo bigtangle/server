@@ -2011,7 +2011,7 @@ public class ServiceBase {
 				|| networkParameters.getId().equals(NetworkParameters.ID_UNITTESTNET);
 	}
 
-	private boolean enableOrderContract(Block block) {
+	public boolean enableOrderContract(Block block) {
 		return enableFee(block);
 	}
 
@@ -3418,7 +3418,7 @@ public class ServiceBase {
 				BlockWrap block = store.getBlockWrap(hash);
 				if (block == null)
 					return SolidityState.from(hash, true);
-				if (block.getBlock().getHeight() <= cutoffHeight && cutoffHeight>0)
+				if (block.getBlock().getHeight() <= cutoffHeight && cutoffHeight > 0)
 					throw new VerificationException("Referenced blocks are below cutoff height.");
 
 				SolidityState requirementResult = checkRequiredBlocks(rewardInfo, block, store);
@@ -3445,7 +3445,7 @@ public class ServiceBase {
 			// the required block must be in this referenced blocks or in
 			// milestone
 			if (req == null) {
-		//		return SolidityState.from(reqHash, true);
+				// return SolidityState.from(reqHash, true);
 			}
 		}
 
@@ -3805,7 +3805,7 @@ public class ServiceBase {
 				if (ContractResult.ordermatch.equals(check.getContracttokenid())) {
 					blockStore.updateOrderSpent(check.getAllRecords(), check.getPrevblockhash(), true);
 					confirmOrderMatching(block, check.getOrderMatchingResult(), blockStore);
-					blockStore.updateOrderCancelSpent( check.getCancelRecords(), block.getHash(), true);
+					blockStore.updateOrderCancelSpent(check.getCancelRecords(), block.getHash(), true);
 				} else {
 					blockStore.updateContractEventSpent(check.getAllRecords(), block.getHash(), true);
 					for (ContractEventRecord c : check.getRemainderContractEventRecord()) {
@@ -3831,7 +3831,7 @@ public class ServiceBase {
 		try {
 			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
 			blockStore.updateContractResultSpent(block.getHash(), null, false);
-			if (ContractResult.ordermatch.equals(result.getContracttokenid())) { 
+			if (ContractResult.ordermatch.equals(result.getContracttokenid())) {
 				blockStore.updateOrderSpent(result.getAllRecords(), block.getHash(), false);
 				blockStore.updateOrderConfirmed(result.getRemainderRecords(), block.getHash(), false);
 				removeMatchingEvents(result.getOutputTxHash(), blockStore);
@@ -4246,8 +4246,6 @@ public class ServiceBase {
 		removeMatchingEvents(matchingResult.getOutputTx().getHash(), blockStore);
 	}
 
-	 
-	
 	public void removeMatchingEvents(Sha256Hash h, FullBlockStore store) throws BlockStoreException {
 		store.deleteMatchingEvents(h.toString());
 	}
@@ -4392,7 +4390,7 @@ public class ServiceBase {
 						block.getTimeSeconds(), null);
 
 				if (!newOut.isZero()) {
-				//	logger.debug(newOut.toString());
+					// logger.debug(newOut.toString());
 					utxos.add(newOut);
 					if (script.isSentToMultiSig()) {
 
@@ -4802,7 +4800,7 @@ public class ServiceBase {
 		for (OrderRecord o : sortedOldOrders.values()) {
 			if (o.isValidYet(block.getTimeSeconds()))
 				insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
-		} 
+		}
 
 		// Now new orders that are valid yet
 		for (OrderRecord o : sortedNewOrders.values()) {
@@ -5086,6 +5084,31 @@ public class ServiceBase {
 		}
 	}
 
+	//
+	public Transaction generateVirtualMiningRewardTX(Block block, FullBlockStore blockStore)
+			throws BlockStoreException {
+		if (enableOrderContract(block)) {
+			return generateVirtualMiningRewardTXFeeBased(block, blockStore);
+		} else {
+			return generateVirtualMiningRewardTX1(block, blockStore);
+		}
+	}
+
+	public Transaction generateVirtualMiningRewardTXFeeBased(Block block, FullBlockStore blockStore)
+			throws BlockStoreException {
+		RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
+		Set<Sha256Hash> candidateBlocks = rewardInfo.getBlocks();
+
+		// Build transaction outputs sorted by addresses
+		Transaction tx = new Transaction(networkParameters);
+
+		// Reward the consensus block with the static reward
+		tx.addOutput(Coin.FEE_DEFAULT.times(candidateBlocks.size()),
+				new Address(networkParameters, block.getMinerAddress()));
+
+		return tx;
+	}
+
 	/**
 	 * Deterministically creates a mining reward transaction based on the previous
 	 * blocks and previous reward transaction. DOES NOT CHECK FOR SOLIDITY. You have
@@ -5094,7 +5117,7 @@ public class ServiceBase {
 	 * @return mining reward transaction
 	 * @throws BlockStoreException
 	 */
-	public Transaction generateVirtualMiningRewardTX(Block block, FullBlockStore blockStore)
+	public Transaction generateVirtualMiningRewardTX1(Block block, FullBlockStore blockStore)
 			throws BlockStoreException {
 
 		RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());

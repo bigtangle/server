@@ -52,7 +52,7 @@ public class Tokensums  extends DataClass implements java.io.Serializable {
 
     public boolean check() {
         if (NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(tokenid)) {
-            return initial.compareTo(unspent.add(order)) < 0;
+            return initial.compareTo(unspent.add(order)) <= 0;
         } else {
             return initial.compareTo(unspent.add(order)) >= 0;
         }

@@ -144,8 +144,8 @@ public class RewardService {
 		} catch (CutoffException | InfeasiblePrototypeException | NullPointerException e) {
 			// fall back to use prev reward as tip
 			log.debug(" fall back to use prev reward as tip: ", e);
-			  BlockWrap prevreward = blockService.getBlockWrap(prevRewardHash,store);
-			return createReward(prevRewardHash, prevreward , prevreward , store);
+			BlockWrap prevreward = blockService.getBlockWrap(prevRewardHash, store);
+			return createReward(prevRewardHash, prevreward, prevreward, store);
 		}
 	}
 
@@ -212,9 +212,11 @@ public class RewardService {
 
 		block.addTransaction(tx);
 		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
-		OrderMatchingResult ordermatchresult = serviceBase.generateOrderMatching(block, currRewardInfo, store);
-		currRewardInfo.setOrdermatchingResult(ordermatchresult.getOrderMatchingResultHash());
-		tx.setData(currRewardInfo.toByteArray());
+		if (serviceBase.enableOrderContract(block)) {
+			OrderMatchingResult ordermatchresult = serviceBase.generateOrderMatching(block, currRewardInfo, store);
+			currRewardInfo.setOrdermatchingResult(ordermatchresult.getOrderMatchingResultHash());
+			tx.setData(currRewardInfo.toByteArray());
+		}
 		Transaction miningTx = serviceBase.generateVirtualMiningRewardTX(block, store);
 		currRewardInfo.setMiningResult(miningTx.getHash());
 		tx.setData(currRewardInfo.toByteArray());
