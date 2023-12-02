@@ -25,6 +25,7 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
+import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Tokensums;
 import net.bigtangle.core.TokensumsMap;
 import net.bigtangle.core.UTXO;
@@ -34,6 +35,7 @@ import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.checkpoint.CheckpointService;
+import net.bigtangle.server.service.MissingNumberCheckService;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 
@@ -218,6 +220,34 @@ public class RewardService2Test extends AbstractIntegrationTest {
 
 		}
 
+	}
+	public void createNonChain(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
+		for (int j = 1; j < 2; j++) {
+			payMoneyToWallet1(j, blocksAddedAll);
+			makeRewardBlock(blocksAddedAll);
+
+			sell(blocksAddedAll);
+			buy(blocksAddedAll);
+		}
+	}
+
+	//@Test
+	public void testSyncCheckChain() throws Exception {
+		List<Block> a1 = new ArrayList<Block>();
+		testToken(a1);
+		makeRewardBlock(a1);
+		Block r1 = networkParameters.getGenesisBlock();
+		for (int i = 0; i < 3; i++) {
+			createNonChain(r1, a1);
+		}
+		serverConfiguration.setRequester(contextRoot);
+		syncBlockService.startSingleProcess();
+		for (int i = 0; i < 130; i++) {
+			createReward(r1, a1);
+		}
+		List<TXReward> allConfirmedReward = store.getAllConfirmedReward();
+		MissingNumberCheckService missingNumberCheckService = new MissingNumberCheckService();
+		missingNumberCheckService.check(allConfirmedReward);
 	}
 
 }

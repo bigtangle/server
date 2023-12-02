@@ -2,3 +2,9 @@
 /build/
 /target/
 /bin/
+/.vscode/
+/.settings/
+bigtangle-docker/.settings/
+logs/
+
+

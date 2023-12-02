@@ -14,6 +14,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Address;
@@ -78,7 +79,7 @@ public class BlockService {
 	private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
 	// cache only binary block only
-	// @Cacheable(value = "blocksCache", key = "#blockhash")
+	 @Cacheable(value = "blocksCache", key = "#blockhash")
 	public Block getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
 		// logger.debug("read from databse and no cache for:"+ blockhash);
 		return store.get(blockhash);

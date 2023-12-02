@@ -1,0 +1,10 @@
+{
+    
+    "redhat.telemetry.enabled": false,
+    "git.confirmSync": false,
+    "git.autofetch": true,
+    "java.test.config": {
+        
+        "vmArgs": ["--add-exports", "java.base/sun.nio.ch=ALL-UNNAMED"]
+    }
+}

@@ -1,0 +1,26 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+  
+        "configurations": [
+            
+
+            {
+                "type": "java",
+                "vmArgs": "--add-exports java.base/sun.nio.ch=ALL-UNNAMED  -Xmx14g ",
+                "name": "bigtangle-server",
+                "request": "launch",
+                "mainClass": "net.bigtangle.server.ServerStart",
+                "projectName": "bigtangle-server",
+                "env": {
+                    "REQUESTER": "https://bigtangle.de:8088",
+                    "SERVER_NET": "Mainnet",
+                    "SERVICE_MINING": true, 
+                    "SERVICE_MCMC": true
+                }
+            }
+        ]
+    }
+ 
