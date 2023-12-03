@@ -19,7 +19,7 @@ public class CachingConfig {
         Config config = new Config();
         MapConfig mapconfig = new MapConfig().setName("configuration")
                 .setMaxSizeConfig(new MaxSizeConfig(200, MaxSizeConfig.MaxSizePolicy.FREE_HEAP_SIZE))
-                .setEvictionPolicy(EvictionPolicy.LRU).setTimeToLiveSeconds(360).setMaxIdleSeconds(20);
+                .setEvictionPolicy(EvictionPolicy.LRU).setTimeToLiveSeconds(360).setMaxIdleSeconds(60);
         config.setInstanceName("hazelcast-instance")
                 .addMapConfig(mapconfig)   ;
 

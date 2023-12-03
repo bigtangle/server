@@ -38,12 +38,12 @@ public class Secp256k1Context {
         boolean isEnabled = true;
         long contextRef = -1;
         try {
-            log.info("java.library.path=" + System.getProperty("java.library.path"));
+           log.info("java.library.path=" + System.getProperty("java.library.path"));
             System.loadLibrary("secp256k1");
             contextRef = secp256k1_init_context();
             log.info("System.loadLibrary(secp256k1) done.");
         } catch (UnsatisfiedLinkError e) {
-            log.info("", e);
+         //   log.info("", e);
             isEnabled = false;
         } catch (AccessControlException e) {
             log.debug("",e);

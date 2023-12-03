@@ -63,8 +63,12 @@ public class SolidityState {
         return new SolidityState(State.MissingPredecessor, outpoint.getBlockHash(), directlyMissing);
     }
     
-    @Override
-    public String toString() {
-        return "Solidity [state=" + state + ", missingDependency=" + missingDependency + "]";
+     public static SolidityState fromReferenced(Sha256Hash prevBlockHash, boolean directlyMissing) {
+        return new SolidityState(State.MissingPredecessor, prevBlockHash, directlyMissing);
     }
+
+       public static SolidityState fromPrevReward(Sha256Hash prevBlockHash, boolean directlyMissing) {
+        return new SolidityState(State.MissingPredecessor, prevBlockHash, directlyMissing);
+    }
+
 }

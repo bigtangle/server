@@ -462,13 +462,13 @@ public class ServiceBase {
 	}
 
 	public List<BlockWrap> getAllRequirements(Block block, FullBlockStore store) throws BlockStoreException {
-		return getAllRequirements(block, getAllRequiredBlockHashes(block, false), store);
+		return getAllBlocks(block, getAllRequiredBlockHashes(block, false), store);
 	}
 
-	public List<BlockWrap> getAllRequirements(Block block, Set<Sha256Hash> allPredecessorBlockHashes,
+	public List<BlockWrap> getAllBlocks(Block block, Set<Sha256Hash> allBlockHashes,
 			FullBlockStore store) throws BlockStoreException {
 		List<BlockWrap> result = new ArrayList<>();
-		for (Sha256Hash pred : allPredecessorBlockHashes)
+		for (Sha256Hash pred : allBlockHashes)
 			result.add(store.getBlockWrap(pred));
 		return result;
 	}
@@ -516,14 +516,17 @@ public class ServiceBase {
 
 	/**
 	 * Returns all blocks that must be confirmed if this block is confirmed.
-	 *
+	 * All transactions related to this block must be confirmed before this block
+	 * The edge is does not reuired the two getPrevBlockHash and
+	 * getPrevBranchBlockHash checked
 	 */
 
-	public Set<Sha256Hash> getAllRequiredBlockHashes(Block block, boolean includeTransaction) {
+	public Set<Sha256Hash> getAllRequiredBlockHashes(Block block, boolean edge) {
 		Set<Sha256Hash> predecessors = new HashSet<>();
-		predecessors.add(block.getPrevBlockHash());
-		predecessors.add(block.getPrevBranchBlockHash());
-
+		if (!edge) {
+			predecessors.add(block.getPrevBlockHash());
+			predecessors.add(block.getPrevBranchBlockHash());
+		}
 		// All used transaction outputs
 
 		final List<Transaction> transactions = block.getTransactions();
@@ -539,41 +542,41 @@ public class ServiceBase {
 
 		}
 		switch (block.getBlockType()) {
-		case BLOCKTYPE_CROSSTANGLE:
-			break;
-		case BLOCKTYPE_FILE:
-			break;
-		case BLOCKTYPE_GOVERNANCE:
-			break;
-		case BLOCKTYPE_INITIAL:
-			break;
-		case BLOCKTYPE_REWARD:
-			RewardInfo rewardInfo = new RewardInfo().parseChecked(transactions.get(0).getData());
-			predecessors.add(rewardInfo.getPrevRewardHash());
-			break;
-		case BLOCKTYPE_TOKEN_CREATION:
-			TokenInfo currentToken = new TokenInfo().parseChecked(transactions.get(0).getData());
-			predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()));
-			if (currentToken.getToken().getPrevblockhash() != null)
-				predecessors.add(currentToken.getToken().getPrevblockhash());
-			break;
-		case BLOCKTYPE_TRANSFER:
-			break;
-		case BLOCKTYPE_USERDATA:
-			break;
-		case BLOCKTYPE_CONTRACT_EVENT:
-			break;
-		case BLOCKTYPE_CONTRACT_EXECUTE:
-			break;
-		case BLOCKTYPE_ORDER_OPEN:
-			break;
-		case BLOCKTYPE_ORDER_CANCEL:
-			// OrderCancelInfo opInfo = new
-			// OrderCancelInfo().parseChecked(transactions.get(0).getData());
-			// predecessors.add(opInfo.getBlockHash());
-			break;
-		default:
-			throw new RuntimeException("No Implementation");
+			case BLOCKTYPE_CROSSTANGLE:
+				break;
+			case BLOCKTYPE_FILE:
+				break;
+			case BLOCKTYPE_GOVERNANCE:
+				break;
+			case BLOCKTYPE_INITIAL:
+				break;
+			case BLOCKTYPE_REWARD:
+				RewardInfo rewardInfo = new RewardInfo().parseChecked(transactions.get(0).getData());
+				predecessors.add(rewardInfo.getPrevRewardHash());
+				break;
+			case BLOCKTYPE_TOKEN_CREATION:
+				TokenInfo currentToken = new TokenInfo().parseChecked(transactions.get(0).getData());
+				predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()));
+				if (currentToken.getToken().getPrevblockhash() != null)
+					predecessors.add(currentToken.getToken().getPrevblockhash());
+				break;
+			case BLOCKTYPE_TRANSFER:
+				break;
+			case BLOCKTYPE_USERDATA:
+				break;
+			case BLOCKTYPE_CONTRACT_EVENT:
+				break;
+			case BLOCKTYPE_CONTRACT_EXECUTE:
+				break;
+			case BLOCKTYPE_ORDER_OPEN:
+				break;
+			case BLOCKTYPE_ORDER_CANCEL:
+				// OrderCancelInfo opInfo = new
+				// OrderCancelInfo().parseChecked(transactions.get(0).getData());
+				// predecessors.add(opInfo.getBlockHash());
+				break;
+			default:
+				throw new RuntimeException("No Implementation");
 		}
 
 		return predecessors;
@@ -603,15 +606,15 @@ public class ServiceBase {
 
 	public void checkDomainname(Block block) {
 		switch (block.getBlockType()) {
-		case BLOCKTYPE_TOKEN_CREATION:
-			TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
-			if (TokenType.domainname.ordinal() == currentToken.getToken().getTokentype()) {
-				if (!DomainValidator.getInstance().isValid(currentToken.getToken().getTokenname()))
-					throw new VerificationException("Domain name is not valid.");
-			}
-			break;
-		default:
-			break;
+			case BLOCKTYPE_TOKEN_CREATION:
+				TokenInfo currentToken = new TokenInfo().parseChecked(block.getTransactions().get(0).getData());
+				if (TokenType.domainname.ordinal() == currentToken.getToken().getTokentype()) {
+					if (!DomainValidator.getInstance().isValid(currentToken.getToken().getTokenname()))
+						throw new VerificationException("Domain name is not valid.");
+				}
+				break;
+			default:
+				break;
 		}
 	}
 
@@ -789,64 +792,64 @@ public class ServiceBase {
 
 	public boolean hasSpentDependencies(ConflictCandidate c, FullBlockStore store) throws BlockStoreException {
 		switch (c.getConflictPoint().getType()) {
-		case TXOUT:
-			return getUTXOSpent(c.getConflictPoint().getConnectedOutpoint(), store);
-		case TOKENISSUANCE:
-			final Token connectedToken = c.getConflictPoint().getConnectedToken();
+			case TXOUT:
+				return getUTXOSpent(c.getConflictPoint().getConnectedOutpoint(), store);
+			case TOKENISSUANCE:
+				final Token connectedToken = c.getConflictPoint().getConnectedToken();
 
-			// Initial issuances are allowed iff no other same token issuances
-			// are confirmed, i.e. spent iff any token confirmed
-			if (connectedToken.getTokenindex() == 0)
-				return store.getTokenAnyConfirmed(connectedToken.getTokenid(), connectedToken.getTokenindex());
-			else
-				return store.getTokenSpent(connectedToken.getPrevblockhash());
-		case REWARDISSUANCE:
-			return store.getRewardSpent(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
-		case DOMAINISSUANCE:
-			// exception for the block
-			final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
-			return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
-					connectedDomainToken.getDomainNameBlockHash(), connectedDomainToken.getTokenindex()) != null;
-		case CONTRACTEXECUTE:
-			final ContractResult connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
-			if (connectedContracExecute.getPrevblockhash().equals(networkParameters.getGenesisBlock().getHash())) {
-				return false;
-			} else {
-				return store.checkContractResultSpent(connectedContracExecute.getPrevblockhash()) != null;
-			}
-		default:
-			throw new RuntimeException("Not Implemented");
+				// Initial issuances are allowed iff no other same token issuances
+				// are confirmed, i.e. spent iff any token confirmed
+				if (connectedToken.getTokenindex() == 0)
+					return store.getTokenAnyConfirmed(connectedToken.getTokenid(), connectedToken.getTokenindex());
+				else
+					return store.getTokenSpent(connectedToken.getPrevblockhash());
+			case REWARDISSUANCE:
+				return store.getRewardSpent(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
+			case DOMAINISSUANCE:
+				// exception for the block
+				final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
+				return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
+						connectedDomainToken.getDomainNameBlockHash(), connectedDomainToken.getTokenindex()) != null;
+			case CONTRACTEXECUTE:
+				final ContractResult connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
+				if (connectedContracExecute.getPrevblockhash().equals(networkParameters.getGenesisBlock().getHash())) {
+					return false;
+				} else {
+					return store.checkContractResultSpent(connectedContracExecute.getPrevblockhash()) != null;
+				}
+			default:
+				throw new RuntimeException("Not Implemented");
 		}
 	}
 
 	public boolean hasConfirmedDependencies(ConflictCandidate c, FullBlockStore store) throws BlockStoreException {
 		switch (c.getConflictPoint().getType()) {
-		case TXOUT:
-			return getUTXOConfirmed(c.getConflictPoint().getConnectedOutpoint(), store);
-		case TOKENISSUANCE:
-			final Token connectedToken = c.getConflictPoint().getConnectedToken();
+			case TXOUT:
+				return getUTXOConfirmed(c.getConflictPoint().getConnectedOutpoint(), store);
+			case TOKENISSUANCE:
+				final Token connectedToken = c.getConflictPoint().getConnectedToken();
 
-			// Initial issuances are allowed (although they may be spent
-			// already)
-			if (connectedToken.getTokenindex() == 0)
-				return true;
-			else
-				return store.getTokenConfirmed(connectedToken.getPrevblockhash());
-		case REWARDISSUANCE:
-			return store.getRewardConfirmed(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
-		case DOMAINISSUANCE:
-			final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
-			return store.getTokenConfirmed(Sha256Hash.wrap(connectedDomainToken.getDomainNameBlockHash()));
-		case CONTRACTEXECUTE:
-			final ContractResult connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
-			if (connectedContracExecute.getPrevblockhash().equals(Sha256Hash.ZERO_HASH)) {
-				return true;
-			} else {
-				return store.checkContractResultConfirmed(connectedContracExecute.getPrevblockhash());
-			}
+				// Initial issuances are allowed (although they may be spent
+				// already)
+				if (connectedToken.getTokenindex() == 0)
+					return true;
+				else
+					return store.getTokenConfirmed(connectedToken.getPrevblockhash());
+			case REWARDISSUANCE:
+				return store.getRewardConfirmed(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
+			case DOMAINISSUANCE:
+				final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
+				return store.getTokenConfirmed(Sha256Hash.wrap(connectedDomainToken.getDomainNameBlockHash()));
+			case CONTRACTEXECUTE:
+				final ContractResult connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
+				if (connectedContracExecute.getPrevblockhash().equals(Sha256Hash.ZERO_HASH)) {
+					return true;
+				} else {
+					return store.checkContractResultConfirmed(connectedContracExecute.getPrevblockhash());
+				}
 
-		default:
-			throw new RuntimeException("not implemented");
+			default:
+				throw new RuntimeException("not implemented");
 		}
 	}
 
@@ -1213,38 +1216,38 @@ public class ServiceBase {
 	// Returns null if no spending block found
 	private BlockWrap getSpendingBlock(ConflictCandidate c, FullBlockStore store) throws BlockStoreException {
 		switch (c.getConflictPoint().getType()) {
-		case TXOUT:
-			final BlockEvaluation utxoSpender = getUTXOSpender(c.getConflictPoint().getConnectedOutpoint(), store);
-			if (utxoSpender == null)
-				return null;
-			return store.getBlockWrap(utxoSpender.getBlockHash());
-		case TOKENISSUANCE:
-			final Token connectedToken = c.getConflictPoint().getConnectedToken();
+			case TXOUT:
+				final BlockEvaluation utxoSpender = getUTXOSpender(c.getConflictPoint().getConnectedOutpoint(), store);
+				if (utxoSpender == null)
+					return null;
+				return store.getBlockWrap(utxoSpender.getBlockHash());
+			case TOKENISSUANCE:
+				final Token connectedToken = c.getConflictPoint().getConnectedToken();
 
-			// The spender is always the one block with the same tokenid and
-			// index that is confirmed
-			return store.getTokenIssuingConfirmedBlock(connectedToken.getTokenid(), connectedToken.getTokenindex());
-		case REWARDISSUANCE:
-			final Sha256Hash txRewardSpender = store
-					.getRewardSpender(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
-			if (txRewardSpender == null)
-				return null;
-			return store.getBlockWrap(txRewardSpender);
-		case DOMAINISSUANCE:
-			final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
+				// The spender is always the one block with the same tokenid and
+				// index that is confirmed
+				return store.getTokenIssuingConfirmedBlock(connectedToken.getTokenid(), connectedToken.getTokenindex());
+			case REWARDISSUANCE:
+				final Sha256Hash txRewardSpender = store
+						.getRewardSpender(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
+				if (txRewardSpender == null)
+					return null;
+				return store.getBlockWrap(txRewardSpender);
+			case DOMAINISSUANCE:
+				final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
 
-			// The spender is always the one block with the same domainname and
-			// predecessing domain tokenid that is confirmed
-			return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
-					connectedDomainToken.getDomainNameBlockHash(), connectedDomainToken.getTokenindex());
-		case CONTRACTEXECUTE:
-			final ContractResult connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
-			Sha256Hash t = connectedContracExecute.getSpenderBlockHash();
-			if (t == null)
-				return null;
-			return store.getBlockWrap(t);
-		default:
-			throw new RuntimeException("No Implementation");
+				// The spender is always the one block with the same domainname and
+				// predecessing domain tokenid that is confirmed
+				return store.getDomainIssuingConfirmedBlock(connectedDomainToken.getTokenname(),
+						connectedDomainToken.getDomainNameBlockHash(), connectedDomainToken.getTokenindex());
+			case CONTRACTEXECUTE:
+				final ContractResult connectedContracExecute = c.getConflictPoint().getConnectedContracExecute();
+				Sha256Hash t = connectedContracExecute.getSpenderBlockHash();
+				if (t == null)
+					return null;
+				return store.getBlockWrap(t);
+			default:
+				throw new RuntimeException("No Implementation");
 		}
 	}
 
@@ -1425,52 +1428,52 @@ public class ServiceBase {
 	private SolidityState checkFormalTypeSpecificSolidity(Block block, boolean throwExceptions)
 			throws BlockStoreException {
 		switch (block.getBlockType()) {
-		case BLOCKTYPE_CROSSTANGLE:
-			break;
-		case BLOCKTYPE_FILE:
-			break;
-		case BLOCKTYPE_GOVERNANCE:
-			break;
-		case BLOCKTYPE_INITIAL:
-			break;
-		case BLOCKTYPE_REWARD:
-			// Check rewards are solid
-			SolidityState rewardSolidityState = checkFormalRewardSolidity(block, throwExceptions);
-			if (!(rewardSolidityState.getState() == State.Success)) {
-				return rewardSolidityState;
-			}
+			case BLOCKTYPE_CROSSTANGLE:
+				break;
+			case BLOCKTYPE_FILE:
+				break;
+			case BLOCKTYPE_GOVERNANCE:
+				break;
+			case BLOCKTYPE_INITIAL:
+				break;
+			case BLOCKTYPE_REWARD:
+				// Check rewards are solid
+				SolidityState rewardSolidityState = checkFormalRewardSolidity(block, throwExceptions);
+				if (!(rewardSolidityState.getState() == State.Success)) {
+					return rewardSolidityState;
+				}
 
-			break;
-		case BLOCKTYPE_TOKEN_CREATION:
-			// Check token issuances are solid
-			SolidityState tokenSolidityState = checkFormalTokenSolidity(block, throwExceptions);
-			if (!(tokenSolidityState.getState() == State.Success)) {
-				return tokenSolidityState;
-			}
+				break;
+			case BLOCKTYPE_TOKEN_CREATION:
+				// Check token issuances are solid
+				SolidityState tokenSolidityState = checkFormalTokenSolidity(block, throwExceptions);
+				if (!(tokenSolidityState.getState() == State.Success)) {
+					return tokenSolidityState;
+				}
 
-			break;
-		case BLOCKTYPE_TRANSFER:
-			break;
-		case BLOCKTYPE_USERDATA:
-			break;
-		case BLOCKTYPE_CONTRACT_EXECUTE:
-			break;
-		case BLOCKTYPE_ORDER_OPEN:
-			SolidityState openSolidityState = checkFormalOrderOpenSolidity(block, throwExceptions);
-			if (!(openSolidityState.getState() == State.Success)) {
-				return openSolidityState;
-			}
-			break;
-		case BLOCKTYPE_ORDER_CANCEL:
-			SolidityState opSolidityState = checkFormalOrderOpSolidity(block, throwExceptions);
-			if (!(opSolidityState.getState() == State.Success)) {
-				return opSolidityState;
-			}
-			break;
-		case BLOCKTYPE_CONTRACT_EVENT:
-			break;
-		default:
-			throw new RuntimeException("No Implementation");
+				break;
+			case BLOCKTYPE_TRANSFER:
+				break;
+			case BLOCKTYPE_USERDATA:
+				break;
+			case BLOCKTYPE_CONTRACT_EXECUTE:
+				break;
+			case BLOCKTYPE_ORDER_OPEN:
+				SolidityState openSolidityState = checkFormalOrderOpenSolidity(block, throwExceptions);
+				if (!(openSolidityState.getState() == State.Success)) {
+					return openSolidityState;
+				}
+				break;
+			case BLOCKTYPE_ORDER_CANCEL:
+				SolidityState opSolidityState = checkFormalOrderOpSolidity(block, throwExceptions);
+				if (!(opSolidityState.getState() == State.Success)) {
+					return opSolidityState;
+				}
+				break;
+			case BLOCKTYPE_CONTRACT_EVENT:
+				break;
+			default:
+				throw new RuntimeException("No Implementation");
 		}
 
 		return SolidityState.getSuccessState();
@@ -1921,7 +1924,9 @@ public class ServiceBase {
 								in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
 						if (prevOut == null) {
 							// Cannot happen due to solidity checks before
-							throw new RuntimeException("Block attempts to spend a not yet existent output!");
+							throw new RuntimeException("Block attempts to spend a not yet existent output: "
+									+ in.getOutpoint().toString());
+
 						}
 
 						if (valueIn.containsKey(Utils.HEX.encode(prevOut.getValue().getTokenid()))) {
@@ -2096,57 +2101,57 @@ public class ServiceBase {
 	private SolidityState checkFullTypeSpecificSolidity(Block block, BlockWrap storedPrev, BlockWrap storedPrevBranch,
 			long height, boolean throwExceptions, FullBlockStore store) throws BlockStoreException {
 		switch (block.getBlockType()) {
-		case BLOCKTYPE_CROSSTANGLE:
-			break;
-		case BLOCKTYPE_FILE:
-			break;
-		case BLOCKTYPE_GOVERNANCE:
-			break;
-		case BLOCKTYPE_INITIAL:
-			break;
-		case BLOCKTYPE_REWARD:
-			// Check rewards are solid
-			SolidityState rewardSolidityState = checkFullRewardSolidity(block, storedPrev, storedPrevBranch, height,
-					throwExceptions, store);
-			if (!(rewardSolidityState.getState() == State.Success)) {
-				return rewardSolidityState;
-			}
+			case BLOCKTYPE_CROSSTANGLE:
+				break;
+			case BLOCKTYPE_FILE:
+				break;
+			case BLOCKTYPE_GOVERNANCE:
+				break;
+			case BLOCKTYPE_INITIAL:
+				break;
+			case BLOCKTYPE_REWARD:
+				// Check rewards are solid
+				SolidityState rewardSolidityState = checkFullRewardSolidity(block, storedPrev, storedPrevBranch, height,
+						throwExceptions, store);
+				if (!(rewardSolidityState.getState() == State.Success)) {
+					return rewardSolidityState;
+				}
 
-			break;
-		case BLOCKTYPE_TOKEN_CREATION:
-			// Check token issuances are solid
-			SolidityState tokenSolidityState = checkFullTokenSolidity(block, height, throwExceptions, store);
-			if (!(tokenSolidityState.getState() == State.Success)) {
-				return tokenSolidityState;
-			}
+				break;
+			case BLOCKTYPE_TOKEN_CREATION:
+				// Check token issuances are solid
+				SolidityState tokenSolidityState = checkFullTokenSolidity(block, height, throwExceptions, store);
+				if (!(tokenSolidityState.getState() == State.Success)) {
+					return tokenSolidityState;
+				}
 
-			break;
-		case BLOCKTYPE_TRANSFER:
-			break;
-		case BLOCKTYPE_USERDATA:
-			break;
-		case BLOCKTYPE_CONTRACT_EXECUTE:
-			break;
-		case BLOCKTYPE_ORDER_OPEN:
-			SolidityState openSolidityState = checkFullOrderOpenSolidity(block, height, throwExceptions, store);
-			if (!(openSolidityState.getState() == State.Success)) {
-				return openSolidityState;
-			}
-			break;
-		case BLOCKTYPE_ORDER_CANCEL:
-			SolidityState opSolidityState = checkFullOrderOpSolidity(block, height, throwExceptions, store);
-			if (!(opSolidityState.getState() == State.Success)) {
-				return opSolidityState;
-			}
-			break;
-		case BLOCKTYPE_CONTRACT_EVENT:
-			SolidityState check = checkFullContractEventSolidity(block, height, throwExceptions, store);
-			if (!(check.getState() == State.Success)) {
-				return check;
-			}
-			break;
-		default:
-			throw new RuntimeException("No Implementation");
+				break;
+			case BLOCKTYPE_TRANSFER:
+				break;
+			case BLOCKTYPE_USERDATA:
+				break;
+			case BLOCKTYPE_CONTRACT_EXECUTE:
+				break;
+			case BLOCKTYPE_ORDER_OPEN:
+				SolidityState openSolidityState = checkFullOrderOpenSolidity(block, height, throwExceptions, store);
+				if (!(openSolidityState.getState() == State.Success)) {
+					return openSolidityState;
+				}
+				break;
+			case BLOCKTYPE_ORDER_CANCEL:
+				SolidityState opSolidityState = checkFullOrderOpSolidity(block, height, throwExceptions, store);
+				if (!(opSolidityState.getState() == State.Success)) {
+					return opSolidityState;
+				}
+				break;
+			case BLOCKTYPE_CONTRACT_EVENT:
+				SolidityState check = checkFullContractEventSolidity(block, height, throwExceptions, store);
+				if (!(check.getState() == State.Success)) {
+					return check;
+				}
+				break;
+			default:
+				throw new RuntimeException("No Implementation");
 		}
 
 		return SolidityState.getSuccessState();
@@ -2288,7 +2293,9 @@ public class ServiceBase {
 						in.getOutpoint().getIndex());
 				if (prevOut == null) {
 					// Cannot happen due to solidity checks before
-					throw new RuntimeException("Block attempts to spend a not yet existent output!");
+					throw new RuntimeException(
+							"Block attempts to spend a not yet existent output: " + in.getOutpoint().toString()
+									+ " countBurnedToken block = " + block.toString());
 				}
 
 				if (burnedCoins == null)
@@ -2332,7 +2339,9 @@ public class ServiceBase {
 						in.getOutpoint().getIndex());
 				if (prevOut == null) {
 					// Cannot happen due to solidity checks before
-					throw new RuntimeException("Block attempts to spend a not yet existent output!");
+					throw new RuntimeException(
+							"Block attempts to spend a not yet existent output: " + in.getOutpoint().toString());
+
 				}
 				if (Utils.HEX.encode(prevOut.getValue().getTokenid()).equals(tokenid)) {
 					if (burnedCoins == null)
@@ -2451,7 +2460,7 @@ public class ServiceBase {
 		Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
 		BlockWrap dependency = store.getBlockWrap(prevRewardHash);
 		if (dependency == null)
-			return SolidityState.from(prevRewardHash, true);
+			return SolidityState.fromPrevReward(prevRewardHash, true);
 
 		// Ensure dependency (prev reward hash) is valid predecessor
 		if (dependency.getBlock().getBlockType() != Type.BLOCKTYPE_INITIAL
@@ -2940,7 +2949,7 @@ public class ServiceBase {
 			if (formalSolidityResult.isFailState())
 				return formalSolidityResult;
 			final Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
-			List<BlockWrap> allRequirements = getAllRequirements(block, allPredecessorBlockHashes, store);
+			List<BlockWrap> allRequirements = getAllBlocks(block, allPredecessorBlockHashes, store);
 			// Predecessors must exist and be ok
 			SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions, allRequirements,
 					store);
@@ -2967,12 +2976,12 @@ public class ServiceBase {
 
 			// Inherit solidity from predecessors if they are not solid
 			switch (minPredecessorSolidity.getState()) {
-			case MissingCalculation:
-			case Invalid:
-			case MissingPredecessor:
-				return minPredecessorSolidity;
-			case Success:
-				break;
+				case MissingCalculation:
+				case Invalid:
+				case MissingPredecessor:
+					return minPredecessorSolidity;
+				case Success:
+					break;
 			}
 
 			// Otherwise, the solidity of the block itself is checked
@@ -3302,7 +3311,7 @@ public class ServiceBase {
 		for (Sha256Hash hash : currRewardInfo.getBlocks()) {
 			BlockWrap block = store.getBlockWrap(hash);
 			if (block == null)
-				return SolidityState.from(hash, true);
+				return SolidityState.fromReferenced(hash, true);
 			if (block.getBlock().getHeight() <= cutoffHeight)
 				throw new VerificationException("Referenced blocks are below cutoff height.");
 
@@ -3384,7 +3393,7 @@ public class ServiceBase {
 
 		Block prevRewardBlock = store.get(prevRewardHash);
 		if (prevRewardBlock == null)
-			return SolidityState.from(prevRewardHash, true);
+			return SolidityState.fromPrevReward(prevRewardHash, true);
 		if (prevRewardBlock.getBlockType() != Type.BLOCKTYPE_REWARD
 				&& prevRewardBlock.getBlockType() != Type.BLOCKTYPE_INITIAL)
 			throw new VerificationException("Previous reward block is not reward block.");
@@ -3406,7 +3415,7 @@ public class ServiceBase {
 
 			Block prevRewardBlock = store.get(prevRewardHash);
 			if (prevRewardBlock == null)
-				return SolidityState.from(prevRewardHash, true);
+				return SolidityState.fromPrevReward(prevRewardHash, true);
 			if (prevRewardBlock.getBlockType() != Type.BLOCKTYPE_REWARD
 					&& prevRewardBlock.getBlockType() != Type.BLOCKTYPE_INITIAL)
 				throw new VerificationException("Previous reward block is not reward block.");
@@ -3417,7 +3426,7 @@ public class ServiceBase {
 			for (Sha256Hash hash : rewardInfo.getBlocks()) {
 				BlockWrap block = store.getBlockWrap(hash);
 				if (block == null)
-					return SolidityState.from(hash, true);
+					return SolidityState.fromReferenced(hash, true);
 				if (block.getBlock().getHeight() <= cutoffHeight && cutoffHeight > 0)
 					throw new VerificationException("Referenced blocks are below cutoff height.");
 
@@ -3612,43 +3621,43 @@ public class ServiceBase {
 		OrderMatchingResult matchingResult = null;
 
 		switch (block.getBlockType()) {
-		case BLOCKTYPE_CROSSTANGLE:
-			break;
-		case BLOCKTYPE_FILE:
-			break;
-		case BLOCKTYPE_GOVERNANCE:
-			break;
-		case BLOCKTYPE_INITIAL:
-			break;
-		case BLOCKTYPE_REWARD:
-			tx = generateVirtualMiningRewardTX(block, blockStore);
-			insertVirtualUTXOs(block, tx, blockStore);
-
-			// Get list of consumed orders, virtual order matching tx and newly
-			// generated remaining order book
-			if (!enableOrderContract(block)) {
-				matchingResult = generateOrderMatching(block, blockStore);
-				tx = matchingResult.getOutputTx();
+			case BLOCKTYPE_CROSSTANGLE:
+				break;
+			case BLOCKTYPE_FILE:
+				break;
+			case BLOCKTYPE_GOVERNANCE:
+				break;
+			case BLOCKTYPE_INITIAL:
+				break;
+			case BLOCKTYPE_REWARD:
+				tx = generateVirtualMiningRewardTX(block, blockStore);
 				insertVirtualUTXOs(block, tx, blockStore);
-				insertVirtualOrderRecords(block, matchingResult.getRemainingOrders(), blockStore);
-			}
-			break;
-		case BLOCKTYPE_TOKEN_CREATION:
-			break;
-		case BLOCKTYPE_TRANSFER:
-			break;
-		case BLOCKTYPE_USERDATA:
-			break;
-		case BLOCKTYPE_CONTRACT_EVENT:
-			break;
-		case BLOCKTYPE_CONTRACT_EXECUTE:
-			break;
-		case BLOCKTYPE_ORDER_OPEN:
-			break;
-		case BLOCKTYPE_ORDER_CANCEL:
-			break;
-		default:
-			throw new RuntimeException("Not Implemented");
+
+				// Get list of consumed orders, virtual order matching tx and newly
+				// generated remaining order book
+				if (!enableOrderContract(block)) {
+					matchingResult = generateOrderMatching(block, blockStore);
+					tx = matchingResult.getOutputTx();
+					insertVirtualUTXOs(block, tx, blockStore);
+					insertVirtualOrderRecords(block, matchingResult.getRemainingOrders(), blockStore);
+				}
+				break;
+			case BLOCKTYPE_TOKEN_CREATION:
+				break;
+			case BLOCKTYPE_TRANSFER:
+				break;
+			case BLOCKTYPE_USERDATA:
+				break;
+			case BLOCKTYPE_CONTRACT_EVENT:
+				break;
+			case BLOCKTYPE_CONTRACT_EXECUTE:
+				break;
+			case BLOCKTYPE_ORDER_OPEN:
+				break;
+			case BLOCKTYPE_ORDER_CANCEL:
+				break;
+			default:
+				throw new RuntimeException("Not Implemented");
 
 		}
 
@@ -3668,43 +3677,43 @@ public class ServiceBase {
 
 		// type-specific updates
 		switch (block.getBlock().getBlockType()) {
-		case BLOCKTYPE_CROSSTANGLE:
-			break;
-		case BLOCKTYPE_FILE:
-			break;
-		case BLOCKTYPE_GOVERNANCE:
-			break;
-		case BLOCKTYPE_INITIAL:
-			break;
-		case BLOCKTYPE_REWARD:
-			// For rewards, update reward to be confirmed now
-			confirmReward(block, blockStore);
-			if (!enableOrderContract(block.getBlock())) {
-				confirmOrderMatching(block, blockStore);
-			}
-			break;
-		case BLOCKTYPE_TOKEN_CREATION:
-			// For token creations, update token db
-			confirmToken(block, blockStore);
-			break;
-		case BLOCKTYPE_TRANSFER:
-			break;
-		case BLOCKTYPE_USERDATA:
-			confirmVOSOrUserData(block, blockStore);
-			break;
-		case BLOCKTYPE_CONTRACT_EVENT:
-			confirmContractEvent(block.getBlock(), blockStore);
-			break;
-		case BLOCKTYPE_CONTRACT_EXECUTE:
-			confirmContractExecute(block.getBlock(), blockStore);
-			break;
-		case BLOCKTYPE_ORDER_OPEN:
-			confirmOrderOpen(block, blockStore);
-			break;
-		case BLOCKTYPE_ORDER_CANCEL:
-			break;
-		default:
-			throw new RuntimeException("Not Implemented");
+			case BLOCKTYPE_CROSSTANGLE:
+				break;
+			case BLOCKTYPE_FILE:
+				break;
+			case BLOCKTYPE_GOVERNANCE:
+				break;
+			case BLOCKTYPE_INITIAL:
+				break;
+			case BLOCKTYPE_REWARD:
+				// For rewards, update reward to be confirmed now
+				confirmReward(block, blockStore);
+				if (!enableOrderContract(block.getBlock())) {
+					confirmOrderMatching(block, blockStore);
+				}
+				break;
+			case BLOCKTYPE_TOKEN_CREATION:
+				// For token creations, update token db
+				confirmToken(block, blockStore);
+				break;
+			case BLOCKTYPE_TRANSFER:
+				break;
+			case BLOCKTYPE_USERDATA:
+				confirmVOSOrUserData(block, blockStore);
+				break;
+			case BLOCKTYPE_CONTRACT_EVENT:
+				confirmContractEvent(block.getBlock(), blockStore);
+				break;
+			case BLOCKTYPE_CONTRACT_EXECUTE:
+				confirmContractExecute(block.getBlock(), blockStore);
+				break;
+			case BLOCKTYPE_ORDER_OPEN:
+				confirmOrderOpen(block, blockStore);
+				break;
+			case BLOCKTYPE_ORDER_CANCEL:
+				break;
+			default:
+				throw new RuntimeException("Not Implemented");
 
 		}
 	}
@@ -4048,39 +4057,39 @@ public class ServiceBase {
 
 		// Disconnect all type-specific dependents
 		switch (block.getBlockType()) {
-		case BLOCKTYPE_CROSSTANGLE:
-			break;
-		case BLOCKTYPE_FILE:
-			break;
-		case BLOCKTYPE_GOVERNANCE:
-			break;
-		case BLOCKTYPE_INITIAL:
-			break;
-		case BLOCKTYPE_REWARD:
-			// Unconfirm dependents
-			unconfirmRewardDependents(block, traversedBlockHashes, blockStore);
-			unconfirmOrderMatchingDependents(block, traversedBlockHashes, blockStore);
-			break;
-		case BLOCKTYPE_TOKEN_CREATION:
-			// Unconfirm dependents
-			unconfirmTokenDependents(block, traversedBlockHashes, blockStore);
-			break;
-		case BLOCKTYPE_TRANSFER:
-			break;
-		case BLOCKTYPE_USERDATA:
-			break;
-		case BLOCKTYPE_CONTRACT_EVENT:
-			unconfirmContractEventDependents(block, traversedBlockHashes, blockStore);
-			break;
-		case BLOCKTYPE_CONTRACT_EXECUTE:
-			break;
-		case BLOCKTYPE_ORDER_OPEN:
-			unconfirmOrderOpenDependents(block, traversedBlockHashes, blockStore);
-			break;
-		case BLOCKTYPE_ORDER_CANCEL:
-			break;
-		default:
-			throw new RuntimeException("Not Implemented");
+			case BLOCKTYPE_CROSSTANGLE:
+				break;
+			case BLOCKTYPE_FILE:
+				break;
+			case BLOCKTYPE_GOVERNANCE:
+				break;
+			case BLOCKTYPE_INITIAL:
+				break;
+			case BLOCKTYPE_REWARD:
+				// Unconfirm dependents
+				unconfirmRewardDependents(block, traversedBlockHashes, blockStore);
+				unconfirmOrderMatchingDependents(block, traversedBlockHashes, blockStore);
+				break;
+			case BLOCKTYPE_TOKEN_CREATION:
+				// Unconfirm dependents
+				unconfirmTokenDependents(block, traversedBlockHashes, blockStore);
+				break;
+			case BLOCKTYPE_TRANSFER:
+				break;
+			case BLOCKTYPE_USERDATA:
+				break;
+			case BLOCKTYPE_CONTRACT_EVENT:
+				unconfirmContractEventDependents(block, traversedBlockHashes, blockStore);
+				break;
+			case BLOCKTYPE_CONTRACT_EXECUTE:
+				break;
+			case BLOCKTYPE_ORDER_OPEN:
+				unconfirmOrderOpenDependents(block, traversedBlockHashes, blockStore);
+				break;
+			case BLOCKTYPE_ORDER_CANCEL:
+				break;
+			default:
+				throw new RuntimeException("Not Implemented");
 
 		}
 	}
@@ -4179,40 +4188,40 @@ public class ServiceBase {
 			calculateAccount(block, blockStore);
 		// Then unconfirm type-specific stuff
 		switch (block.getBlockType()) {
-		case BLOCKTYPE_CROSSTANGLE:
-			break;
-		case BLOCKTYPE_FILE:
-			break;
-		case BLOCKTYPE_GOVERNANCE:
-			break;
-		case BLOCKTYPE_INITIAL:
-			break;
-		case BLOCKTYPE_REWARD:
-			unconfirmReward(block, blockStore);
-			if (!enableOrderContract(block)) {
-				unconfirmOrderMatching(block, blockStore);
-			}
-			break;
-		case BLOCKTYPE_TOKEN_CREATION:
-			unconfirmToken(block, blockStore);
-			break;
-		case BLOCKTYPE_TRANSFER:
-			break;
-		case BLOCKTYPE_USERDATA:
-			break;
-		case BLOCKTYPE_CONTRACT_EVENT:
-			unConfirmContractEvent(block, blockStore);
-			break;
-		case BLOCKTYPE_CONTRACT_EXECUTE:
-			unConfirmContractExecute(block, blockStore);
-			break;
-		case BLOCKTYPE_ORDER_OPEN:
-			unconfirmOrderOpen(block, blockStore);
-			break;
-		case BLOCKTYPE_ORDER_CANCEL:
-			break;
-		default:
-			throw new RuntimeException("Not Implemented");
+			case BLOCKTYPE_CROSSTANGLE:
+				break;
+			case BLOCKTYPE_FILE:
+				break;
+			case BLOCKTYPE_GOVERNANCE:
+				break;
+			case BLOCKTYPE_INITIAL:
+				break;
+			case BLOCKTYPE_REWARD:
+				unconfirmReward(block, blockStore);
+				if (!enableOrderContract(block)) {
+					unconfirmOrderMatching(block, blockStore);
+				}
+				break;
+			case BLOCKTYPE_TOKEN_CREATION:
+				unconfirmToken(block, blockStore);
+				break;
+			case BLOCKTYPE_TRANSFER:
+				break;
+			case BLOCKTYPE_USERDATA:
+				break;
+			case BLOCKTYPE_CONTRACT_EVENT:
+				unConfirmContractEvent(block, blockStore);
+				break;
+			case BLOCKTYPE_CONTRACT_EXECUTE:
+				unConfirmContractExecute(block, blockStore);
+				break;
+			case BLOCKTYPE_ORDER_OPEN:
+				unconfirmOrderOpen(block, blockStore);
+				break;
+			case BLOCKTYPE_ORDER_CANCEL:
+				break;
+			default:
+				throw new RuntimeException("Not Implemented");
 
 		}
 	}
@@ -4311,58 +4320,58 @@ public class ServiceBase {
 			// logger.debug(block.toString());
 		}
 		switch (solidityState.getState()) {
-		case MissingCalculation:
-			blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
-
-			// Reward blocks follow different logic: If this is new, run
-			// consensus logic
-			if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-				solidifyReward(block, blockStore);
-				return;
-			}
-			// Insert other blocks into waiting list
-			// insertUnsolidBlock(block, solidityState, blockStore);
-			break;
-		case MissingPredecessor:
-			if (block.getBlockType() == Type.BLOCKTYPE_INITIAL
-					&& blockStore.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() > 0) {
-				throw new RuntimeException("Should not happen");
-			}
-
-			blockStore.updateBlockEvaluationSolid(block.getHash(), 0);
-
-			// Insert into waiting list
-			// insertUnsolidBlock(block, solidityState, blockStore);
-			break;
-		case Success:
-			// If already set, nothing to do here...
-			if (blockStore.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2)
-				return;
-
-			// TODO don't calculate again, it may already have been calculated
-			// before
-			connectUTXOs(block, blockStore);
-			connectTypeSpecificUTXOs(block, blockStore);
-			calculateBlockOrderMatchingResult(block, blockStore);
-
-			if (block.getBlockType() == Type.BLOCKTYPE_REWARD && !setMilestoneSuccess) {
-				// If we don't want to set the milestone success, initialize as
-				// missing calc
+			case MissingCalculation:
 				blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
-			} else {
-				// Else normal update
-				blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
-			}
-			if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
-				solidifyReward(block, blockStore);
-				return;
-			}
 
-			break;
-		case Invalid:
+				// Reward blocks follow different logic: If this is new, run
+				// consensus logic
+				if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
+					solidifyReward(block, blockStore);
+					return;
+				}
+				// Insert other blocks into waiting list
+				// insertUnsolidBlock(block, solidityState, blockStore);
+				break;
+			case MissingPredecessor:
+				if (block.getBlockType() == Type.BLOCKTYPE_INITIAL
+						&& blockStore.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() > 0) {
+					throw new RuntimeException("Should not happen");
+				}
 
-			blockStore.updateBlockEvaluationSolid(block.getHash(), -1);
-			break;
+				blockStore.updateBlockEvaluationSolid(block.getHash(), 0);
+
+				// Insert into waiting list
+				// insertUnsolidBlock(block, solidityState, blockStore);
+				break;
+			case Success:
+				// If already set, nothing to do here...
+				if (blockStore.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2)
+					return;
+
+				// TODO don't calculate again, it may already have been calculated
+				// before
+				connectUTXOs(block, blockStore);
+				connectTypeSpecificUTXOs(block, blockStore);
+				calculateBlockOrderMatchingResult(block, blockStore);
+
+				if (block.getBlockType() == Type.BLOCKTYPE_REWARD && !setMilestoneSuccess) {
+					// If we don't want to set the milestone success, initialize as
+					// missing calc
+					blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
+				} else {
+					// Else normal update
+					blockStore.updateBlockEvaluationSolid(block.getHash(), 2);
+				}
+				if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
+					solidifyReward(block, blockStore);
+					return;
+				}
+
+				break;
+			case Invalid:
+
+				blockStore.updateBlockEvaluationSolid(block.getHash(), -1);
+				break;
 		}
 	}
 
@@ -4436,36 +4445,36 @@ public class ServiceBase {
 
 	private void connectTypeSpecificUTXOs(Block block, FullBlockStore blockStore) throws BlockStoreException {
 		switch (block.getBlockType()) {
-		case BLOCKTYPE_CROSSTANGLE:
-			break;
-		case BLOCKTYPE_FILE:
-			break;
-		case BLOCKTYPE_GOVERNANCE:
-			break;
-		case BLOCKTYPE_INITIAL:
-			break;
-		case BLOCKTYPE_REWARD:
-			break;
-		case BLOCKTYPE_TOKEN_CREATION:
-			connectToken(block, blockStore);
-			break;
-		case BLOCKTYPE_TRANSFER:
-			break;
-		case BLOCKTYPE_USERDATA:
-			break;
-		case BLOCKTYPE_CONTRACT_EXECUTE:
-			connectContractExecute(block, blockStore);
-			break;
-		case BLOCKTYPE_ORDER_OPEN:
-			connectOrder(block, blockStore);
-			break;
-		case BLOCKTYPE_ORDER_CANCEL:
-			connectCancelOrder(block, blockStore);
-			break;
-		case BLOCKTYPE_CONTRACT_EVENT:
-			connectContractEvent(block, blockStore);
-		default:
-			break;
+			case BLOCKTYPE_CROSSTANGLE:
+				break;
+			case BLOCKTYPE_FILE:
+				break;
+			case BLOCKTYPE_GOVERNANCE:
+				break;
+			case BLOCKTYPE_INITIAL:
+				break;
+			case BLOCKTYPE_REWARD:
+				break;
+			case BLOCKTYPE_TOKEN_CREATION:
+				connectToken(block, blockStore);
+				break;
+			case BLOCKTYPE_TRANSFER:
+				break;
+			case BLOCKTYPE_USERDATA:
+				break;
+			case BLOCKTYPE_CONTRACT_EXECUTE:
+				connectContractExecute(block, blockStore);
+				break;
+			case BLOCKTYPE_ORDER_OPEN:
+				connectOrder(block, blockStore);
+				break;
+			case BLOCKTYPE_ORDER_CANCEL:
+				connectCancelOrder(block, blockStore);
+				break;
+			case BLOCKTYPE_CONTRACT_EVENT:
+				connectContractEvent(block, blockStore);
+			default:
+				break;
 
 		}
 	}

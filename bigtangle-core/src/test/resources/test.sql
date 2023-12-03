@@ -22,7 +22,7 @@ select * from mcmc  ;
 select *  FROM blocks, mcmc  WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 
 AND confirmed = false   AND mcmc.rating >= 5;
 
-select *  FROM blocks where 00fee4ba4aa56d21a989c7617fa20954f346f73a6de3a0dbb61f4421c5655661
+select *  FROM info.blocks where  hash=0x000051e704d8ca112b077308fc2873e0062cb0530bab4757ccc1bb03779c2209;
 
 select * from blocks where blocktype=2 order by height desc limit 500
 select * from blocks where milestone=339 and blocktype=3
@@ -68,6 +68,7 @@ update blocks set milestone=0    where height=0
 select count(*) from outputs where confirmed=1 and spent=0 and tokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
 select * from orders where confirmed=1 and spent=0 and offertokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
 select * from outputs where blockhash = 0x000051e704d8ca112b077308fc2873e0062cb0530bab4757ccc1bb03779c2209;
+
 
 select * from txreward join orders on txreward.blockhash=orders.collectinghash order by toheight desc  ;
 
@@ -160,3 +161,7 @@ select count(*) from outputs where confirmed=1 and spent=0 and tokenid = "03bed6
  txreward.difficulty, txreward.chainlength FROM txreward where chainlength=446310;
  
  
+
+ ALTER USER 'root' IDENTIFIED WITH mysql_native_password BY 'test1234';
+flush privileges;
+use info;

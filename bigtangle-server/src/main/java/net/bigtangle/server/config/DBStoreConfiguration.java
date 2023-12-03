@@ -36,7 +36,7 @@ import net.bigtangle.store.MySQLFullBlockStore;
 @Configuration
 public class DBStoreConfiguration {
 
-    private static final Logger logger = LoggerFactory.getLogger(DispatcherController.class);
+    private static final Logger logger = LoggerFactory.getLogger(DBStoreConfiguration.class);
 
     @Value("${db.dbtype:mysql}")
     private String dbtype;
@@ -80,6 +80,7 @@ public class DBStoreConfiguration {
         config.addDataSourceProperty("cacheServerConfiguration", "true");
         config.setMaximumPoolSize(100);
         config.setLeakDetectionThreshold(300000);
+        logger.debug( config.getJdbcUrl());
         return new HikariDataSource(config);
 
     }

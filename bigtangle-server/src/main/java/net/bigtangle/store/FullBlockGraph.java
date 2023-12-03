@@ -237,8 +237,10 @@ public class FullBlockGraph {
 
 			// Check the block is partially formally valid and fulfills PoW
 			block.verifyHeader();
-			  block.verifyTransactions();
-
+		    block.verifyTransactions();
+			if(block.getLastMiningRewardBlock() == 91040){
+				log.info("saveChainConnected block 91040");
+			}
 			ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
 			SolidityState solidityState = serviceBase.checkChainSolidity(block, true, store);
 

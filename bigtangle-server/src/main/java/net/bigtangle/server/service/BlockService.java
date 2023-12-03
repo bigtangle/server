@@ -336,7 +336,8 @@ public class BlockService {
 	}
 
 	public List<BlockWrap> getAllRequirements(Block block, FullBlockStore store) throws BlockStoreException {
-		Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
+		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
+		Set<Sha256Hash> allPredecessorBlockHashes = serviceBase.getAllRequiredBlockHashes(block, false);
 		List<BlockWrap> result = new ArrayList<>();
 		for (Sha256Hash pred : allPredecessorBlockHashes)
 			result.add(store.getBlockWrap(pred));
@@ -384,71 +385,7 @@ public class BlockService {
 		return store.get(currPrevRewardHash).getHeight();
 	}
 
-	/**
-	 * Returns all blocks that must be confirmed if this block is confirmed.
-	 *
-	 */
-
-	public Set<Sha256Hash> getAllRequiredBlockHashes(Block block, boolean includeTransaction) {
-		Set<Sha256Hash> predecessors = new HashSet<>();
-		predecessors.add(block.getPrevBlockHash());
-		predecessors.add(block.getPrevBranchBlockHash());
-
-		// All used transaction outputs
-
-		final List<Transaction> transactions = block.getTransactions();
-
-		for (final Transaction tx : transactions) {
-			if (!tx.isCoinBase()) {
-				for (int index = 0; index < tx.getInputs().size(); index++) {
-					TransactionInput in = tx.getInputs().get(index);
-					// due to virtual txs from order/reward
-					predecessors.add(in.getOutpoint().getBlockHash());
-				}
-			}
-
-		}
-		switch (block.getBlockType()) {
-		case BLOCKTYPE_CROSSTANGLE:
-			break;
-		case BLOCKTYPE_FILE:
-			break;
-		case BLOCKTYPE_GOVERNANCE:
-			break;
-		case BLOCKTYPE_INITIAL:
-			break;
-		case BLOCKTYPE_REWARD:
-			RewardInfo rewardInfo = new RewardInfo().parseChecked(transactions.get(0).getData());
-			predecessors.add(rewardInfo.getPrevRewardHash());
-			break;
-		case BLOCKTYPE_TOKEN_CREATION:
-			TokenInfo currentToken = new TokenInfo().parseChecked(transactions.get(0).getData());
-			predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()));
-			if (currentToken.getToken().getPrevblockhash() != null)
-				predecessors.add(currentToken.getToken().getPrevblockhash());
-			break;
-		case BLOCKTYPE_TRANSFER:
-			break;
-		case BLOCKTYPE_USERDATA:
-			break;
-		case BLOCKTYPE_CONTRACT_EVENT:
-			break;
-		case BLOCKTYPE_CONTRACT_EXECUTE:
-			break;
-		case BLOCKTYPE_ORDER_OPEN:
-			break;
-		case BLOCKTYPE_ORDER_CANCEL:
-			// OrderCancelInfo opInfo = new
-			// OrderCancelInfo().parseChecked(transactions.get(0).getData());
-			// predecessors.add(opInfo.getBlockHash());
-			break;
-		default:
-			throw new RuntimeException("No Implementation");
-		}
-
-		return predecessors;
-	}
-
+ 
 	/*
 	 * failed blocks without conflict for retry
 	 */
