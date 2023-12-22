@@ -6,5 +6,11 @@
 /.settings/
 bigtangle-docker/.settings/
 logs/
+/.vscode/
+/.idea/
 
 
+/bigtangle-seeds/.settings/org.eclipse.core.resources.prefs
+/bigtangle-subtangle/.settings/org.eclipse.core.resources.prefs
+/bigtangle-seeds/.settings/org.eclipse.jdt.core.prefs
+/bigtangle-subtangle/.settings/org.eclipse.jdt.core.prefs
