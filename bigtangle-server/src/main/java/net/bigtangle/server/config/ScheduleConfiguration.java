@@ -28,6 +28,9 @@ public class ScheduleConfiguration {
     @Value("${service.schedule.syncrate:50000}")
     Long syncrate;
 
+    @Value("${service.schedule.initsync:false}")
+    boolean initSync;
+    
     public boolean isMilestone_active() {
         return milestone_active;
     }
@@ -84,11 +87,21 @@ public class ScheduleConfiguration {
         this.syncrate = syncrate;
     }
 
-    @Override
-    public String toString() {
-        return "ScheduleConfiguration [milestone_active=" + milestone_active + ", mcmcrate=" + mcmcrate + ", mining="
-                + mining + ", blockBatchService_active=" + blockBatchService_active + ", miningrate=" + miningrate
-                + ", blockbatchrate=" + blockbatchrate + ", syncrate=" + syncrate + "]";
-    }
+	public boolean isInitSync() {
+		return initSync;
+	}
+
+	public void setInitSync(boolean initSync) {
+		this.initSync = initSync;
+	}
+
+	@Override
+	public String toString() {
+		return "ScheduleConfiguration [milestone_active=" + milestone_active + ", mcmcrate=" + mcmcrate + ", mining="
+				+ mining + ", blockBatchService_active=" + blockBatchService_active + ", miningrate=" + miningrate
+				+ ", blockbatchrate=" + blockbatchrate + ", syncrate=" + syncrate + ", initSync=" + initSync + "]";
+	}
+
+ 
 
 }

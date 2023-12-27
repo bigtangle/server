@@ -975,7 +975,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		assertTrue(order.isConfirmed());
 		assertTrue(order.isSpent());
 		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters).unconfirm(ex.getHash(), new HashSet<>(), store);
+		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirm(ex.getHash(), new HashSet<>(), store);
 		order = store.getOrder(buy.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		assertFalse(order.isSpent());
@@ -1242,7 +1242,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		// Execute order matching and then unexecute it
 		Block b = contractExecutionService.createOrder(store);
 
-		new ServiceBase(serverConfiguration, networkParameters).unconfirm(b.getHash(), new HashSet<>(), store);
+		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirm(b.getHash(), new HashSet<>(), store);
 
 		// Verify the tokens did not change possession
 		// TODO FEE assertHasAvailableToken(testKey,

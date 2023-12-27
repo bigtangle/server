@@ -32,12 +32,15 @@ import net.bigtangle.store.FullBlockStore;
 
 public class ServiceContract extends ServiceBase {
 
+	public ServiceContract(ServerConfiguration serverConfiguration, NetworkParameters networkParameters,
+			CacheBlockService cacheBlockService) {
+		super(serverConfiguration, networkParameters, cacheBlockService);
+	 
+	}
+
 	private static final Logger log = LoggerFactory.getLogger(ServiceBase.class);
 
-	public ServiceContract(ServerConfiguration serverConfiguration, NetworkParameters networkParameters) {
-		super(serverConfiguration, networkParameters);
-
-	}
+	 
 
 	/*
 	 * the ContractEvent received and do next action

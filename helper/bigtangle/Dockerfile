@@ -27,7 +27,7 @@ RUN cd secp256k1/ && git checkout jni && ./autogen.sh \
  && make &&  cp .libs/libsecp256k1.so /usr/lib/ 
 
 RUN git config --global http.sslVerify false
-RUN  git clone https://cui:Kaicui1234!@bigtangle.de:1080/digi/bignetcoin.git  /root/bignetcoin
+RUN  git clone $gitsourceurl  /root/bignetcoin
 RUN cd /root/bignetcoin && git checkout ordermatch && mvn  -DskipTests=true clean install
 
 

@@ -72,17 +72,16 @@ public class BlockService {
 
 	@Autowired
 	protected ServerConfiguration serverConfiguration;
-
+	
 	@Autowired
 	protected TipsService tipService;
-
+    @Autowired
+    protected CacheBlockService cacheBlockService;
 	private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
-
-	// cache only binary block only
-	 @Cacheable(value = "blocksCache", key = "#blockhash")
+ 
 	public Block getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
-		// logger.debug("read from databse and no cache for:"+ blockhash);
-		return store.get(blockhash);
+		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
+		return serviceBase.getBlock(blockhash,store);
 	}
 
 	public BlockWrap getBlockWrap(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
@@ -336,7 +335,7 @@ public class BlockService {
 	}
 
 	public List<BlockWrap> getAllRequirements(Block block, FullBlockStore store) throws BlockStoreException {
-		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
+		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
 		Set<Sha256Hash> allPredecessorBlockHashes = serviceBase.getAllRequiredBlockHashes(block, false);
 		List<BlockWrap> result = new ArrayList<>();
 		for (Sha256Hash pred : allPredecessorBlockHashes)

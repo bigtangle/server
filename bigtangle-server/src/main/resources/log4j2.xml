@@ -15,7 +15,7 @@
 			<Policies>
 				<!-- rollover on startup, daily and when the file reaches 10 MegaBytes -->
 				<OnStartupTriggeringPolicy />
-				<SizeBasedTriggeringPolicy size="10 MB" />
+				<SizeBasedTriggeringPolicy size="30 MB" />
 				<TimeBasedTriggeringPolicy />
 			</Policies>
 		</RollingFile>

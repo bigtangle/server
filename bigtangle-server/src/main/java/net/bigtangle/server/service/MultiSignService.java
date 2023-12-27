@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,6 +51,9 @@ public class MultiSignService {
     protected TokenDomainnameService tokenDomainnameService;
     @Autowired
     private BlockService blockService;
+    @Autowired
+    protected CacheBlockService cacheBlockService;
+    
     @Autowired
     protected ServerConfiguration serverConfiguration;
     
@@ -195,8 +197,9 @@ public class MultiSignService {
 
     public void signTokenAndSaveBlock(Block block, boolean allowConflicts,FullBlockStore store) throws Exception {
         try {
-        	new ServiceBase(serverConfiguration,networkParameters).checkTokenUnique(block,store);
-            if (new ServiceBase(serverConfiguration, networkParameters).checkFullTokenSolidity(block, 0, true,store) == SolidityState.getSuccessState()) {
+        	ServiceBase serviceBase = new ServiceBase(serverConfiguration,networkParameters,cacheBlockService);
+			serviceBase.checkTokenUnique(block,store);
+            if (serviceBase.checkFullTokenSolidity(block, 0, true,store) == SolidityState.getSuccessState()) {
                 this.saveMultiSign(block,store);
                 // check the block prototype and may do update
 

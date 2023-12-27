@@ -47,7 +47,8 @@ public interface BlockStore {
      * parameter. If no such block is found, returns null.
      */
      Block get(Sha256Hash hash) throws BlockStoreException;
-    
+     
+     byte[] getByte(Sha256Hash hash) throws BlockStoreException;
     /** Closes the store. */
     void close() throws BlockStoreException;
 

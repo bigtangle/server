@@ -227,7 +227,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			+ "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, "
 			+ "beneficiarypubkey, validToTime, validFromTime, side , beneficiaryaddress, orderbasetoken, price, tokendecimals ";
 	protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT " + ORDER_TEMPLATE
-			+ " FROM orders WHERE collectinghash = ? and spent=false";
+			+ " FROM orders WHERE collectinghash = ?";
 
 	protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM orders WHERE blockhash = ? AND collectinghash = ?";
 	protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM orders WHERE blockhash = ? AND collectinghash = ?";
@@ -906,6 +906,18 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 	public Block get(Sha256Hash hash) throws BlockStoreException {
 
+		try {
+		 
+		 byte[] re = getByte(hash);
+		 if(re==null) return null;
+			return params.getDefaultSerializer().makeZippedBlock(re);
+		} catch ( IOException ex) {
+			throw new BlockStoreException(ex);
+		}
+	 
+	}
+	public   byte[] getByte(Sha256Hash hash) throws BlockStoreException {
+
 		maybeConnect();
 		PreparedStatement s = null;
 		// log.info("find block hexStr : " + hash.toString());
@@ -918,7 +930,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			}
 			// Parse it.
 
-			return params.getDefaultSerializer().makeZippedBlock(results.getBytes(2));
+			return  results.getBytes(2) ;
 
 		} catch (SQLException ex) {
 			throw new BlockStoreException(ex);
@@ -934,7 +946,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			}
 		}
 	}
-
 	public List<byte[]> blocksFromChainLength(long start, long end) throws BlockStoreException {
 		// Optimize for chain head
 		List<byte[]> re = new ArrayList<byte[]>();

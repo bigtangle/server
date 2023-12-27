@@ -58,7 +58,8 @@ public class ContractExecutionService {
 	private StoreService storeService;
 	@Autowired
 	private ScheduleConfiguration scheduleConfiguration;
-
+    @Autowired
+    protected CacheBlockService cacheBlockService;
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	private final String LOCKID = this.getClass().getName();
@@ -165,7 +166,7 @@ public class ContractExecutionService {
 		if (prev != null) {
 			prevHash = prev;
 		}
-		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(block,
+		ContractResult result = new ServiceContract(serverConfiguration, networkParameters,cacheBlockService).executeContract(block,
 				store, contractid, prevHash);
 		if (result == null || result.getOutputTx().getOutputs().isEmpty())
 			return null;

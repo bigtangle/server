@@ -53,6 +53,8 @@ JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1  and
 select  missingdependency, height from unsolidblocks where directlymissing=1
 select * from blocks where hash =373;
 
+select * from blocks where hash=0x000000b8374049724da3bfede9dee27a7b5f310942981028a27e779631fb8657;
+
 select * from blocks join outputs on blocks.hash=outputs.blockhash where blocks.hash= 0x000039b6b149700642826b603800cbbbbe73a8b9af24980b3fb9154c2a0119e8;
 select * from blocks where hash=0x00000075491105d21a1654d8f4566dd819c111b100818c07b66a3ae8a8b4de76 ;
 select * from blocks where blocktype=12 ;
@@ -67,7 +69,7 @@ select * from ordercancel
 update blocks set milestone=0    where height=0
 select count(*) from outputs where confirmed=1 and spent=0 and tokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
 select * from orders where confirmed=1 and spent=0 and offertokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
-select * from outputs where blockhash = 0x000051e704d8ca112b077308fc2873e0062cb0530bab4757ccc1bb03779c2209;
+select * from outputs where blockhash = 0x000000b8374049724da3bfede9dee27a7b5f310942981028a27e779631fb8657;
 
 
 select * from txreward join orders on txreward.blockhash=orders.collectinghash order by toheight desc  ;
@@ -78,9 +80,13 @@ OUTPUTS
 select * from outputs where tokenid !='bc' and coinbase=true;
 select * from tokens   ;
 select * from orders  where orderbasetoken !='bc' limit 1 ;
-
+select *  FROM orders WHERE collectinghash = 0x000000b95317048c9a90e779769e5c15bcb8757a7379917ab6c9c09b9e5337a2 
+select *  FROM orders WHERE  blockhash=0x000005964AF7DB191AEB73BEDD6FA739324D338F31D21A7F5FA03F2130C392BC
 select * FROM ordercancel WHERE confirmed = true and spent=false
 select * from contractresult;
+
+
+select max(milestone) FROM orders, blocks WHERE  blockhash=0x000005964AF7DB191AEB73BEDD6FA739324D338F31D21A7F5FA03F2130C392BC and collectinghash=hash;
 
 select * from multisign
 select count(*) from orders where collectinghash= 0x0000000000000000000000000000000000000000000000000000000000000000   
@@ -89,6 +95,7 @@ select count(*) from orders where collectinghash= 0x0000000000000000000000000000
 select * from txreward  order by chainlength desc ;
 select count(distinct(difficulty)) from txreward   ;
 delete    from txreward where  difficulty <= 2490057664
+delete    from txreward where   chainlength > 91100
 select * from matching   ;
 select * from  multisignaddress
 select * from  multisign

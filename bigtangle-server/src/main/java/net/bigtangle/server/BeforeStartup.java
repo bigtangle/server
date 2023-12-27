@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.hazelcast.config.Config;
+
 import jakarta.annotation.PostConstruct;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.kafka.BlockStreamHandler;
@@ -45,16 +47,8 @@ public class BeforeStartup {
         }
    
         Secp256k1Context.getContext();
-        if (scheduleConfiguration.isMilestone_active()) {
-            try {
-                logger.debug("syncBlockService startInit" );
-                syncBlockService.startInit();
-            } catch (Exception e) {
-                logger.error("", e);
-                // TODO sync checkpoint System.exit(-1);
-            }
-        }
-        serverConfiguration.setServiceReady(true);
+ 
+     
         if (serverConfiguration.getRunKafkaStream()) {
             blockStreamHandler.runStream();
         }
@@ -62,10 +56,7 @@ public class BeforeStartup {
     }
 
     @Autowired
-    private ScheduleConfiguration scheduleConfiguration;
-
-    @Autowired
-    private SyncBlockService syncBlockService;
+    private ScheduleConfiguration scheduleConfiguration; 
 
     @Autowired
     private ServerConfiguration serverConfiguration;
@@ -76,5 +67,5 @@ public class BeforeStartup {
 
     @Autowired
     BlockStreamHandler blockStreamHandler;
-  
+ 
 }

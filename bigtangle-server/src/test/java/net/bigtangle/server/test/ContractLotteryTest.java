@@ -98,7 +98,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		if (prev == null) {
 			prev = Sha256Hash.ZERO_HASH;
 		}
-		ContractResult check = new ServiceContract(serverConfiguration, networkParameters).executeContract(tip, store,
+		ContractResult check = new ServiceContract(serverConfiguration, networkParameters,cacheBlockService).executeContract(tip, store,
 				contractKey.getPublicKeyAsHex(), prev);
 
 		Block resultBlock = contractExecutionService.createContractExecution(tip, contractKey.getPublicKeyAsHex(),
@@ -165,7 +165,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		assertTrue(resultBlock2 != null);
 		blockService.saveBlock(resultBlock2, store);
 
-		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(resultBlock,
+		ContractResult result = new ServiceContract(serverConfiguration, networkParameters,cacheBlockService).executeContract(resultBlock,
 				store, contractKey.getPublicKeyAsHex(), resultBlock.getHash());
 		Address winnerAddress = result.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
 
@@ -200,7 +200,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		if (prev == null) {
 			prev = Sha256Hash.ZERO_HASH;
 		}
-		ContractResult result = new ServiceContract(serverConfiguration, networkParameters).executeContract(tip, store,
+		ContractResult result = new ServiceContract(serverConfiguration, networkParameters,cacheBlockService).executeContract(tip, store,
 				contractKey.getPublicKeyAsHex(), prev);
 
 		Block resultBlock = contractExecutionService.createContractExecution(tip, contractKey.getPublicKeyAsHex(),
@@ -216,7 +216,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		assertTrue(endMap.get(winnerAddress.toString()).equals(new BigInteger(winnerAmount)));
 		// unconfirm enven and will lead to unconfirm result
 
-		new ServiceBase(serverConfiguration, networkParameters).unconfirm(events.get(0).getHash(), new HashSet<>(),
+		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirm(events.get(0).getHash(), new HashSet<>(),
 				store);
 		endMap = new HashMap<>();
 		check(ulist, endMap);
@@ -233,7 +233,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		if (prev == null) {
 			prev = Sha256Hash.ZERO_HASH;
 		}
-		ContractResult check = new ServiceContract(serverConfiguration, networkParameters).executeContract(tip, store,
+		ContractResult check = new ServiceContract(serverConfiguration, networkParameters,cacheBlockService).executeContract(tip, store,
 				contractKey.getPublicKeyAsHex(), prev);
 
 		Block resultBlock = contractExecutionService.createContractExecution(tip, contractKey.getPublicKeyAsHex(),
@@ -245,7 +245,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		check(ulist, endMap);
 
 		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters).unconfirmRecursive(resultBlock.getHash(),
+		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirmRecursive(resultBlock.getHash(),
 				new HashSet<>(), store);
 		Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
 

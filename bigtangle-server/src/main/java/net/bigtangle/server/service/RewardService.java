@@ -72,6 +72,9 @@ public class RewardService {
 	@Autowired
 	private ScheduleConfiguration scheduleConfiguration;
 
+    @Autowired
+    protected CacheBlockService cacheBlockService;
+    
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	private final String LOCKID = this.getClass().getName();
@@ -211,7 +214,7 @@ public class RewardService {
 		}
 
 		block.addTransaction(tx);
-		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
+		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
 		if (serviceBase.enableOrderContract(block)) {
 			OrderMatchingResult ordermatchresult = serviceBase.generateOrderMatching(block, currRewardInfo, store);
 			currRewardInfo.setOrdermatchingResult(ordermatchresult.getOrderMatchingResultHash());
@@ -294,7 +297,7 @@ public class RewardService {
 
 		// Count how many blocks from miners in the reward interval are approved
 
-		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters);
+		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
 		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true,
 				store);
 		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true, store);

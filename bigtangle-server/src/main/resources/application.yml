@@ -50,6 +50,7 @@ service:
     syncrate: ${SERVICE_SYNC_RATE:50000}
     blockbatch: ${SERVICE_BLOCKBATCH:false}
     blockbatchrate: ${SERVICE_BLOCKBATCH_RATE:50000}
+    initsync: ${SERVICE_INITSYNC:false}
     
 kafka:
   bootstrapServers: ${BOOT_STRAP_SERVERS:}
