@@ -15,14 +15,7 @@ $ mvn clean install
 
 ```
 
-
-#For development using the latest eclipse
-checkout this project and import this project.  
-
-
-# start the server
-java  -Xmx5028m --add-exports java.base/sun.nio.ch=ALL-UNNAMED net.bigtangle.server.ServerStart
-
+ 
 
 ## docker service
  helper/testdocker.sh
