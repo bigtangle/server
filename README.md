@@ -1,6 +1,22 @@
-# Installing
+# Deploy and Development
 
-You have two options, the preferred option is that you compile yourself. The second option is that you utilize the provided jar, which is released regularly (when new updates occur) here: [ Releases](https://).
+ 
+##  start with docker build and Test
+```
+ cd helper/bigtangle
+ sh build
+ 
+ sh helper/testdocker.sh
+ 
+```
+ 
+## Production
+```
+ cd helper/divers
+ sh db.sh
+ sh bigtangle.sh
+ 
+``` 
 
 
 ### Compiling yourself  
@@ -14,13 +30,10 @@ $ cd bigtangle
 $ mvn clean install
 
 ```
+#For development using the latest eclipse
+checkout this project and import this project.  
 
- 
 
-## docker service
- helper/testdocker.sh
- 
+# start the server
+java  -Xmx5028m --add-exports java.base/sun.nio.ch=ALL-UNNAMED net.bigtangle.server.ServerStart
 
- 
- 
- 

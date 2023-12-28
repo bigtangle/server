@@ -23,6 +23,7 @@ server:
   syncblocks: ${SYNCBLOCKS:1000}
   dockerCreateDBHost: ${DOCKERCREATEDBHOST:false}
   dockerDBHost: ${DOCKERDBHOST:bigtangle-mysql}
+ 
   
 db:
   dbtype: ${DBTYPE:mysql}
@@ -50,7 +51,7 @@ service:
     syncrate: ${SERVICE_SYNC_RATE:50000}
     blockbatch: ${SERVICE_BLOCKBATCH:false}
     blockbatchrate: ${SERVICE_BLOCKBATCH_RATE:50000}
-    initsync: ${SERVICE_INITSYNC:false}
+    initsync: ${SERVICE_INITSYNC:true}
     
 kafka:
   bootstrapServers: ${BOOT_STRAP_SERVERS:}
