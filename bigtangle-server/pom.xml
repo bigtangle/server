@@ -49,7 +49,7 @@
 			<artifactId>spring-boot-starter-cache</artifactId>
 			<version>${org.springframework.boot.version}</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-configuration-processor</artifactId>
@@ -96,7 +96,7 @@
 			<artifactId>bigtangle-core</artifactId>
 			<version>${project.version}</version>
 		</dependency>
-
+		<!--
 		<dependency>
 			<groupId>org.apache.spark</groupId>
 			<artifactId>spark-sql_2.13</artifactId>
@@ -113,7 +113,7 @@
 			<artifactId>scala-library</artifactId>
 			<version>2.13.11</version>
 		</dependency>
-
+-->
 		<dependency>
 			<groupId>com.hazelcast</groupId>
 			<artifactId>
@@ -121,7 +121,11 @@
 			<version>4.0.2</version>
 		</dependency>
 
-
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.14.0</version>
+		</dependency>
 	</dependencies>
 
 

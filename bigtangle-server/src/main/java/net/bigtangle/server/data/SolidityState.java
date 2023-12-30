@@ -71,4 +71,10 @@ public class SolidityState {
         return new SolidityState(State.MissingPredecessor, prevBlockHash, directlyMissing);
     }
 
+	@Override
+	public String toString() {
+		return "SolidityState [state=" + state + ", missingDependency=" + missingDependency + ", directlyMissing="
+				+ directlyMissing + "]";
+	}
+
 }

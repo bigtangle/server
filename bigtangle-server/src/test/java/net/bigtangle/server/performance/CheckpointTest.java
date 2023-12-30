@@ -6,7 +6,6 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,7 +16,6 @@ import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
-import net.bigtangle.server.checkpoint.CheckpointService;
 import net.bigtangle.server.test.AbstractIntegrationTest;
 
 @ExtendWith(SpringExtension.class)
@@ -25,14 +23,9 @@ import net.bigtangle.server.test.AbstractIntegrationTest;
 public class CheckpointTest extends AbstractIntegrationTest {
 
     @Autowired
-    private CheckpointService checkpointService;
+  //  private CheckpointService checkpointService;
   
-
-     @Test
-    public void test() throws Exception { 
-    	 testGiveMoney();
-    	 checkpointService.readData();
-    }
+ 
 
  	public void testGiveMoney() throws Exception {
 

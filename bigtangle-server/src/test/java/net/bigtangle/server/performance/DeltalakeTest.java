@@ -1,22 +1,9 @@
 package net.bigtangle.server.performance;
 
-import java.io.IOException;
-import java.util.HashMap;
-
-import org.apache.spark.SparkConf;
-import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.functions;
-import org.junit.jupiter.api.Test;
-
-import io.delta.tables.DeltaTable;
-
 public class DeltalakeTest {
 
 	public static final String ENV_LOCAL = "local";
-
+/* 
 	SparkSession spark;
 	// create tables
 
@@ -119,4 +106,5 @@ public class DeltalakeTest {
 			spark.stop();
 		}
 	}
+	*/
 }
