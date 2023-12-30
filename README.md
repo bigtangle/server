@@ -15,25 +15,19 @@
  cd helper/divers
  sh db.sh
  sh bigtangle.sh
+```
  
-``` 
-
-
-### Compiling yourself  
+## Compiling yourself  
 
 Make sure to have Java 17 installed on your computer.
 
-#### To compile & package
+#### compile & package
 ```
-$ git clone https://git.dasimi.com/digi/bigtangle.git
-$ cd bigtangle
-$ mvn clean install
+git clone https://github.com/bigtangle/server.git
+cd server
+mvn clean install
 
-```
-#For development using the latest eclipse
-checkout this project and import this project.  
-
-
-# start the server
+For development using the latest eclipse you can import this maven project
+and start the server with
 java  -Xmx5028m --add-exports java.base/sun.nio.ch=ALL-UNNAMED net.bigtangle.server.ServerStart
-
+```
