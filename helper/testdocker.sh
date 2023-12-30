@@ -1,5 +1,5 @@
 set -x
-#docker network create --driver bridge   bigtangle-bridged-network
+docker network create --driver bridge   bigtangle-bridged-network
 
 export BIGTANGLEVERSION=0.3.6
 export DBHOST=test-bigtangle-mysql
@@ -15,10 +15,10 @@ export SERVICE_MINING=true
 export DB_PASSWORD=test1234
 export SERVERPORT=8089
 export SERVICE_MINING_RATE=136000
-export JAVA_OPTS=-Ddebug  -Xmx5028m --add-exports java.base/sun.nio.ch=ALL-UNNAMED -Dfile.encoding=UTF-8
+export JAVA_OPTS="-Ddebug  -Xmx5028m --add-exports java.base/sun.nio.ch=ALL-UNNAMED -Dfile.encoding=UTF-8"
  
 docker rm -f $DBHOST 
-docker run -d  -t --net=bigtangle-bridged-network     \
+docker run -d  -t --net=bigtangle-bridged-network   -p 3306:3306  \
 -v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql   \
 -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \
 -e MYSQL_DATABASE=info  --name=$DBHOST  -h $DBHOST   mysql:8.0.23 
@@ -27,7 +27,7 @@ docker run -d  -t --net=bigtangle-bridged-network     \
 docker rm -f $SERVERHOST 
 docker  run -d -t --net=bigtangle-bridged-network   --link $DBHOST \
 -p $SERVERPORT:8088 --name  $SERVERHOST  -e JAVA_OPTS=$JAVA_OPTS \
--e DB_PASSWORD=$DB_PASSWORD -e SERVER_PORT=8088  -e DB_NAME=info \
+-e DB_PASSWORD=$DB_PASSWORD -e SERVER_PORT=$SERVERPORT  -e DB_NAME=info \
 -e DB_HOSTNAME=$DBHOST  -e SERVICE_MCMC_RATE=1000 \
 -e SERVER_MINERADDRESS=$SERVER_MINERADDRESS -e SERVERMODE= \
 -e BOOT_STRAP_SERVERS=$KAFKA    -e TOPIC_OUT_NAME=$TOPIC_OUT_NAME \
