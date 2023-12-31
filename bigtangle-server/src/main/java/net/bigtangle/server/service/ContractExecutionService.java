@@ -118,10 +118,10 @@ public class ContractExecutionService {
 
 	}
 
-	public Block createOrder(FullBlockStore store) throws Exception {
+	public Block createOrderExecution(FullBlockStore store) throws Exception {
 		Block contractExecution = createContractExecution(store, ContractResult.ordermatch);
 		if (contractExecution != null) {
-			// log.debug(" createOrder block is created: " + contractExecution);
+		//	 log.debug(" createOrder block is created: " + contractExecution);
 			blockService.saveBlock(contractExecution, store);
 			return contractExecution;
 		}

@@ -4774,7 +4774,7 @@ public class ServiceBase {
 		// Collect all orders confirmed
 		Map<Sha256Hash, OrderRecord> sortedNewOrders = new TreeMap<>(
 				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
-		sortedNewOrders.putAll(blockStore.getOrderMatchingIssuedOrders(Sha256Hash.ZERO_HASH));
+		sortedNewOrders.putAll(blockStore.getOrderMatchingIssuedOrdersNotSpent(Sha256Hash.ZERO_HASH));
 
 		// sort order for execute in deterministic randomness
 		Map<Sha256Hash, OrderRecord> sortedOldOrders = new TreeMap<>(

@@ -51,19 +51,8 @@ public class ScheduleInitService {
 
 		try {
 			logger.debug("server config: " + serverConfiguration.toString());
-			logger.debug("Schedule: " + scheduleConfiguration.toString());
-
-			// set false in test
-			if (serverConfiguration.getCreatetable()) {
-				MySQLFullBlockStore store = new MySQLFullBlockStore(networkParameters, dataSource.getConnection());
-				try {
-					store.create();
-					// update tables to new version after initial setup
-					store.updateDatabse();
-				} finally {
-					store.close();
-				}
-			}
+			logger.debug("Schedule: " + scheduleConfiguration.toString()); 
+	 
 
 			Secp256k1Context.getContext();
 			if (scheduleConfiguration.isMilestone_active()) {

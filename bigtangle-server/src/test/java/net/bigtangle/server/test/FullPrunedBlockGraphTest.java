@@ -156,7 +156,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		// Make the "test" token
 		List<Block> addedBlocks = new ArrayList<>();
-		resetAndMakeTestToken(testKey, addedBlocks);
+		makeTestToken(testKey, addedBlocks);
 
 		// Make a buy order for testKey.getPubKey()s
 
@@ -265,7 +265,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey tokenKey = new ECKey();
-		Block rollingBlock = resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
+		Block rollingBlock = makeTestToken(tokenKey, new ArrayList<Block>());
 
 		// Set the order
 		Transaction tx = new Transaction(networkParameters);
@@ -311,7 +311,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey tokenKey = new ECKey();
-		Block pre = resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
+		Block pre = makeTestToken(tokenKey, new ArrayList<Block>());
 
 		Block block1 = null;
 
@@ -372,7 +372,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		// Make the "test" token
 		List<Block> addedBlocks = new ArrayList<>();
-		resetAndMakeTestToken(testKey, addedBlocks);
+		makeTestToken(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
 		// Make a buy order for testKey.getPubKey()s
 		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(), addedBlocks);
@@ -526,7 +526,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		// Make the "test" token
 		List<Block> addedBlocks = new ArrayList<>();
-		resetAndMakeTestToken(testKey, addedBlocks);
+		makeTestToken(testKey, addedBlocks);
 
 		// Make a buy order for testKey.getPubKey()s
 
@@ -549,7 +549,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		// Make the "test" token
 		List<Block> addedBlocks = new ArrayList<>();
-		resetAndMakeTestToken(testKey, addedBlocks);
+		makeTestToken(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
 		// Make a buy order for testKey.getPubKey()s
 
@@ -561,7 +561,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		makeRewardBlock();
 		// Generate matching block
 		// Execute order matching
-		Block ex = contractExecutionService.createOrder(store); 
+		Block ex = contractExecutionService.createOrderExecution(store); 
 		makeRewardBlock(ex);
 		// Ensure all consumed order records are now unspent
 		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
@@ -585,7 +585,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
  
 		// Execute order matching again
 		 
-		  ex = contractExecutionService.createOrder(store); 
+		  ex = contractExecutionService.createOrderExecution(store); 
 		makeRewardBlock(ex);
 		// Ensure all consumed order records are now unspent
 		  order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
@@ -813,7 +813,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestToken(testKey, addedBlocks);
+		makeTestToken(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
 
 		// Get current existing token amount

@@ -2554,7 +2554,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey tokenKey = new ECKey();
-		Block pre = resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
+		Block pre = makeTestToken(tokenKey, new ArrayList<Block>());
 
 		Block block1 = null;
 		{
@@ -2627,7 +2627,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
 		ECKey tokenKey = new ECKey();
-		Block pre = resetAndMakeTestToken(tokenKey, new ArrayList<Block>());
+		Block pre = makeTestToken(tokenKey, new ArrayList<Block>());
 
 		Block block2 = null;
 		{

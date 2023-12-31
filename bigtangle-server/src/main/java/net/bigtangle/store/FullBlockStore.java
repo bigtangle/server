@@ -200,6 +200,8 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 	
 	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
 			throws BlockStoreException;
+	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrdersNotSpent(Sha256Hash issuingMatcherBlockHash)
+			throws BlockStoreException;
 
 	public void prunedHistoryUTXO(Long maxRewardblock) throws BlockStoreException;
 

@@ -228,6 +228,9 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			+ "beneficiarypubkey, validToTime, validFromTime, side , beneficiaryaddress, orderbasetoken, price, tokendecimals ";
 	protected final String SELECT_ORDERS_BY_ISSUER_SQL = "SELECT " + ORDER_TEMPLATE
 			+ " FROM orders WHERE collectinghash = ?";
+ 
+	protected final String SELECT_ORDERS_NotSpent_BY_ISSUER_SQL = "SELECT " + ORDER_TEMPLATE
+			+ " FROM orders WHERE collectinghash = ? and spent=false";
 
 	protected final String SELECT_ORDER_SPENT_SQL = "SELECT spent FROM orders WHERE blockhash = ? AND collectinghash = ?";
 	protected final String SELECT_ORDER_CONFIRMED_SQL = "SELECT confirmed FROM orders WHERE blockhash = ? AND collectinghash = ?";
@@ -4599,6 +4602,33 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		HashMap<Sha256Hash, OrderRecord> result = new HashMap<>();
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_ORDERS_BY_ISSUER_SQL);
+			preparedStatement.setBytes(1, issuingMatcherBlockHash.getBytes());
+			ResultSet resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+				result.put(Sha256Hash.wrap(resultSet.getBytes(1)), setOrder(resultSet));
+			}
+			return result;
+		} catch (SQLException ex) {
+			throw new BlockStoreException(ex);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+
+	@Override
+	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrdersNotSpent(Sha256Hash issuingMatcherBlockHash)
+			throws BlockStoreException {
+		maybeConnect();
+		PreparedStatement preparedStatement = null;
+		HashMap<Sha256Hash, OrderRecord> result = new HashMap<>();
+		try {
+			preparedStatement = getConnection().prepareStatement(SELECT_ORDERS_NotSpent_BY_ISSUER_SQL);
 			preparedStatement.setBytes(1, issuingMatcherBlockHash.getBytes());
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {

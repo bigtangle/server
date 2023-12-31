@@ -63,9 +63,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -129,11 +129,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		// Make test token
 		log.debug("====start resetAndMakeTestTokenWithSpare");
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		getBalanceAccount(false, testkeys);
 		String testTokenId = testKey.getPublicKeyAsHex();
 		log.debug("====start generateSpareChange");
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 		getBalanceAccount(false, genesisKeykeys);
 
 		// Open sell order for test tokens
@@ -159,9 +159,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks); 
+		payBigToAmount(genesisKey, addedBlocks); 
 	 
 		// Open buy order for test tokens
 		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 22, addedBlocks);
@@ -200,9 +200,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -260,9 +260,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -319,9 +319,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -356,7 +356,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		long tokennumber = 888888 * 1000;
 		makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
 
 		// Get current existing token amount
@@ -410,13 +410,13 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
 		// Make test token
 		ECKey testKey = new ECKey(); 
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(new ECKey(), addedBlocks);
+		payBigToAmount(new ECKey(), addedBlocks);
 
 		// Make test token 2
 		ECKey testKey2 = new ECKey(); 
-		resetAndMakeTestTokenWithSpare(testKey2, addedBlocks);
+		makeTestTokenWithSpare(testKey2, addedBlocks);
  
 		int priceshift = 1000000;
 
@@ -537,16 +537,14 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		ECKey testKey = new ECKey();
 		List<Block> addedBlocks = new ArrayList<>();
 		int priceshift = 1000000;
-
-		// base token
+		// yuan token
 		ECKey yuan = ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv));
-		resetAndMakeTestToken(yuan, addedBlocks);
+		makeTestToken(yuan, addedBlocks);
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
-
+		 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 		payBigTo(testKey, Coin.FEE_DEFAULT.getValue(), addedBlocks);
@@ -556,7 +554,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeOrderAndReward(addedBlocks);
 		// Open buy order for test tokens,orderbase yuan
 		makeAndConfirmBuyOrder(yuan, testTokenId, priceshift, 2, yuan.getPublicKeyAsHex(), addedBlocks);
-
+ 	
 		// Open sell order for test tokens orderbase BIG
 		makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
 
@@ -610,9 +608,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -647,9 +645,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -685,14 +683,12 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
 				Utils.HEX.decode(testPub));
-		ECKey testKey = new ECKey();
-		;
-		List<Block> addedBlocks = new ArrayList<>();
-
+		ECKey testKey = new ECKey(); 
+		List<Block> addedBlocks = new ArrayList<>(); 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -704,13 +700,13 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		// Execute order matching
 		makeOrderAndReward(addedBlocks);
-
+		showOrders();
 		// Open sell orders for test tokens
 		makeSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
 
 		// Execute order matching
 		makeOrderAndReward(addedBlocks);
-
+		showOrders();
 		// Verify the tokens changed possession, take the best price=1001 to match, 1001*50 + 1000*50
 		assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING, 100050l);
 		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
@@ -730,9 +726,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		ECKey testKey = new ECKey();
 		List<Block> addedBlocks = new ArrayList<>();
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -767,9 +763,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -804,9 +800,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -842,9 +838,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -879,7 +875,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		ECKey testKey = new ECKey();
 		List<Block> addedBlocks = new ArrayList<>();
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
 
 		// Get current existing token amount
@@ -910,7 +906,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		ECKey testKey = new ECKey();
 		List<Block> addedBlocks = new ArrayList<>();
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
 
 		// Get current existing token amount
@@ -948,9 +944,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
  
 		// Open sell orders for test tokens
 		Block sell = makeSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
@@ -962,7 +958,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeCancelOp(sell, testKey, addedBlocks);
 		makeCancelOp(buy, genesisKey, addedBlocks);
 		// Execute order matching
-		Block ex = contractExecutionService.createOrder(store);
+		Block ex = contractExecutionService.createOrderExecution(store);
 		makeRewardBlock(ex);
 
 		// Verify all tokens did not change possession
@@ -980,7 +976,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		assertNotNull(order);
 		assertFalse(order.isSpent());
 		// execution after unconfirm shoud do the cancel still there and no matching
-		ex = contractExecutionService.createOrder(store);
+		ex = contractExecutionService.createOrderExecution(store);
 		makeRewardBlock(ex);
 
 		// Ensure all consumed order records are now unspent
@@ -1001,9 +997,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -1042,9 +1038,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		ECKey testKey = new ECKey();
 		List<Block> addedBlocks = new ArrayList<>();
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -1118,7 +1114,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		ECKey testKey = new ECKey();
 		List<Block> addedBlocks = new ArrayList<>();
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
 
 		// Get current existing token amount
@@ -1186,9 +1182,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -1224,9 +1220,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -1240,7 +1236,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeBuyOrder(genesisKey, testTokenId, 1000, 75, addedBlocks);
 
 		// Execute order matching and then unexecute it
-		Block b = contractExecutionService.createOrder(store);
+		Block b = contractExecutionService.createOrderExecution(store);
 
 		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirm(b.getHash(), new HashSet<>(), store);
 
@@ -1262,9 +1258,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -1299,9 +1295,9 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		ECKey testKey = new ECKey();
 		List<Block> addedBlocks = new ArrayList<>();
 		// Make test token
-		resetAndMakeTestTokenWithSpare(testKey, addedBlocks);
+		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		generateSpareChange(genesisKey, addedBlocks);
+		payBigToAmount(genesisKey, addedBlocks);
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -1415,7 +1411,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestToken(testKey, addedBlocks);
+		makeTestToken(testKey, addedBlocks);
 
 		BigInteger amountToken = BigInteger.valueOf(88);
 		// split token
@@ -1434,7 +1430,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestToken(testKey, addedBlocks);
+		makeTestToken(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
 
 		BigInteger amountToken = BigInteger.valueOf(88);
@@ -1489,7 +1485,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
-		resetAndMakeTestToken(testKey, addedBlocks);
+		makeTestToken(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
 
 		BigInteger amountToken = BigInteger.valueOf(88);

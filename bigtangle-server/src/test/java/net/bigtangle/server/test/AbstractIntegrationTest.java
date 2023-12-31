@@ -206,10 +206,7 @@ public abstract class AbstractIntegrationTest {
 		store = storeService.getStore();
 		store.resetStore();
 		wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)), contextRoot);
-		/*
-		 * List<ECKey> keys = new ArrayList<ECKey>(); keys.add(ECKey.fromPrivate
-		 * (Utils.HEX.decode(yuanTokenPriv))); wallet.importKeys(keys);
-		 */
+		serverConfiguration.setServiceReady(true);
 
 	}
 
@@ -253,13 +250,13 @@ public abstract class AbstractIntegrationTest {
 		// Open sell order for test tokens
 	}
 
-	protected Block resetAndMakeTestToken(ECKey testKey, List<Block> addedBlocks)
+	protected Block makeTestToken(ECKey testKey, List<Block> addedBlocks)
 			throws JsonProcessingException, Exception, BlockStoreException {
 		Block block = makeTestToken(testKey, BigInteger.valueOf(77777L), addedBlocks, 0);
 		return block;
 	}
 
-	protected Block resetAndMakeTestTokenWithSpare(ECKey testKey, List<Block> addedBlocks)
+	protected Block makeTestTokenWithSpare(ECKey testKey, List<Block> addedBlocks)
 			throws JsonProcessingException, Exception, BlockStoreException {
 
 		Block block = makeTestToken(testKey, BigInteger.valueOf(77777L), addedBlocks, 0);
@@ -271,7 +268,7 @@ public abstract class AbstractIntegrationTest {
 		return block;
 	}
 
-	protected void generateSpareChange(ECKey beneficiary, List<Block> addedBlocks)
+	protected void payBigToAmount(ECKey beneficiary, List<Block> addedBlocks)
 			throws JsonProcessingException, Exception, BlockStoreException {
 		payBigTo(beneficiary, BigInteger.valueOf(500000), addedBlocks);
 		payBigTo(beneficiary, BigInteger.valueOf(400000), addedBlocks);
@@ -502,13 +499,13 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	protected Block makeOrdermatch( ) throws Exception {
-		return  contractExecutionService.createOrder(store); 
+		return  contractExecutionService.createOrderExecution(store); 
 
 	}
 
 	
 	protected Block makeOrderAndReward(List<Block> addedBlocks) throws Exception {
-		Block b = contractExecutionService.createOrder(store);
+		Block b = contractExecutionService.createOrderExecution(store);
 		if (b != null) {
 			if (addedBlocks != null  ) {
 				addedBlocks.add(b);
