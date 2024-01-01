@@ -128,7 +128,7 @@ public class TipsService {
      */
     public Pair<BlockWrap, BlockWrap> getValidatedBlockPair(FullBlockStore store) throws BlockStoreException {
      
-      return getValidatedBlockPair(store.getMaxConfirmedReward(), new HashSet<>(), store);
+      return getValidatedBlockPair(cacheBlockService.getMaxConfirmedReward(store), new HashSet<>(), store);
     }
 
     /**
@@ -145,7 +145,7 @@ public class TipsService {
      */
     public Pair<BlockWrap, BlockWrap> getValidatedBlockPairCompatibleWithExisting(Block prototype,
             FullBlockStore store) throws BlockStoreException {
-        TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+        TXReward maxConfirmedReward = cacheBlockService.getMaxConfirmedReward(store);
         ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
 		long cutoffHeight = serviceBase.getCurrentCutoffHeight(maxConfirmedReward, store);
         HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
@@ -163,7 +163,7 @@ public class TipsService {
      */
     public Pair<BlockWrap, BlockWrap> getValidatedRewardBlockPair(Sha256Hash prevRewardHash, FullBlockStore store)
             throws BlockStoreException {
-        return getValidatedRewardBlockPair(store.getMaxConfirmedReward(), new HashSet<>(), prevRewardHash, store);
+        return getValidatedRewardBlockPair(cacheBlockService.getMaxConfirmedReward(store), new HashSet<>(), prevRewardHash, store);
     }
 
     private Pair<BlockWrap, BlockWrap> getValidatedRewardBlockPair(TXReward maxConfirmedReward,
@@ -522,7 +522,7 @@ public class TipsService {
             throws BlockStoreException {
         List<BlockWrap> candidates = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).getEntryPointCandidates(currChainLength, store);
         if (candidates.isEmpty()) {
-            candidates.add(store.getBlockWrap(store.getMaxConfirmedReward().getBlockHash()));
+            candidates.add(store.getBlockWrap(cacheBlockService.getMaxConfirmedReward(store).getBlockHash()));
         }
         return pullRandomlyByCumulativeWeight(candidates, count);
     }

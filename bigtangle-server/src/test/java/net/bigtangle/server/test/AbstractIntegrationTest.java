@@ -527,7 +527,7 @@ public abstract class AbstractIntegrationTest {
 
 	protected Block makeRewardBlock(Sha256Hash predecessor) throws Exception {
 
-		Block block = makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(), predecessor, predecessor);
+		Block block = makeRewardBlock(cacheBlockService.getMaxConfirmedReward(store).getBlockHash(), predecessor, predecessor);
 
 		return block;
 	}
@@ -536,7 +536,7 @@ public abstract class AbstractIntegrationTest {
 
 		Block predecessor = tipsService.getValidatedBlockPair(store).getLeft().getBlock();
 
-		Block block = makeRewardBlock(store.getMaxConfirmedReward().getBlockHash(), predecessor.getHash(),
+		Block block = makeRewardBlock(cacheBlockService.getMaxConfirmedReward(store).getBlockHash(), predecessor.getHash(),
 				predecessor.getHash());
 		addedBlocks.add(block);
 

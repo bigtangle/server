@@ -83,7 +83,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		}
 		checkSum();
 		log.debug(r2.toString());
-		assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
+		assertTrue(r2.getRewardInfo().getChainlength() == cacheBlockService.getMaxConfirmedReward(store).getChainLength());
 
 		Sha256Hash hash = checkpointService.checkToken(store).hash();
 		// replay
@@ -95,14 +95,14 @@ public class RewardService2Test extends AbstractIntegrationTest {
 				blockGraph.add(b, true, true, store);
 		}
 		// check
-		assertTrue(r1.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
+		assertTrue(r1.getRewardInfo().getChainlength() == cacheBlockService.getMaxConfirmedReward(store).getChainLength());
 		// replay second chain
 		for (Block b : a2) {
 			if (b != null)
 				blockGraph.add(b, true, true, store);
 
 		}
-		assertTrue(r2.getRewardInfo().getChainlength() == store.getMaxConfirmedReward().getChainLength());
+		assertTrue(r2.getRewardInfo().getChainlength() == cacheBlockService.getMaxConfirmedReward(store).getChainLength());
 
 		Sha256Hash hash1 = checkSum();
 		assertTrue(hash.equals(checkpointService.checkToken(store).hash()));

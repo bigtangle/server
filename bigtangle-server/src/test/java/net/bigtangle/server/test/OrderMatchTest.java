@@ -1033,7 +1033,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 	@Test
 	public void testValidFromTime() throws Exception {
-		final int waitTime = 5000;
+		final int waitTime = 15000;
 
 		ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
 				Utils.HEX.decode(testPub));

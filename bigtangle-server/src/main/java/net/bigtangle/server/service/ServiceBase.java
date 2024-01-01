@@ -41,7 +41,6 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.Cacheable;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -82,7 +81,6 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.ConflictPossibleException;
 import net.bigtangle.core.exception.VerificationException.CutoffException;
@@ -434,7 +432,7 @@ public class ServiceBase {
 	public GetBlockListResponse blocksFromNonChainHeigth(long cutoffHeight, FullBlockStore store)
 			throws BlockStoreException {
 
-		TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+		TXReward maxConfirmedReward = cacheBlockService.getMaxConfirmedReward(store);
 		long my = getCurrentCutoffHeight(maxConfirmedReward, store);
 		return GetBlockListResponse.create(store.blocksFromNonChainHeigth(Math.max(cutoffHeight, my)));
 	}
@@ -3005,7 +3003,7 @@ public class ServiceBase {
 	public GetTXRewardResponse getMaxConfirmedReward(Map<String, Object> request, FullBlockStore store)
 			throws BlockStoreException {
 
-		return GetTXRewardResponse.create(store.getMaxConfirmedReward());
+		return GetTXRewardResponse.create(cacheBlockService.getMaxConfirmedReward(store));
 
 	}
 
@@ -3232,7 +3230,7 @@ public class ServiceBase {
 	}
 
 	private Block getChainHead(FullBlockStore store) throws BlockStoreException {
-		return store.get(store.getMaxConfirmedReward().getBlockHash());
+		return store.get(cacheBlockService.getMaxConfirmedReward(store).getBlockHash());
 	}
 
 	/**
@@ -5326,6 +5324,7 @@ public class ServiceBase {
 		long difficulty = rewardInfo.getDifficultyTargetReward();
 
 		blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
+		cacheBlockService.evictAllCacheValuesMaxConfirmedReward();
 	}
 
 	public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainNameBlockHash,

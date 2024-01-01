@@ -56,7 +56,8 @@ public class MCMCService {
 
     @Autowired
     private BlockService blockService;
-
+    @Autowired
+    protected CacheBlockService cacheBlockService;
     @Autowired
     private StoreService storeService;
     @Autowired
@@ -127,7 +128,7 @@ public class MCMCService {
     public void update(FullBlockStore store) throws InterruptedException, ExecutionException, BlockStoreException {
 
         try {
-            TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+            TXReward maxConfirmedReward = cacheBlockService.getMaxConfirmedReward(store);
             long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward, store);
             long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward, store);
             updateWeightAndDepth(maxConfirmedReward, cutoffHeight, maxHeight, store);

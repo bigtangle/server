@@ -79,7 +79,8 @@ public class SyncBlockService {
 
 	@Autowired
 	private ScheduleConfiguration scheduleConfiguration;
-
+    @Autowired
+    protected CacheBlockService cacheBlockService;
 	@Autowired
 	private StoreService storeService;
 	@Autowired
@@ -90,7 +91,7 @@ public class SyncBlockService {
 		TXReward my = null;
 		FullBlockStore store = storeService.getStore();
 		try {
-			my = store.getMaxConfirmedReward();
+			my = cacheBlockService.getMaxConfirmedReward(store);
 		} finally {
 			store.close();
 		}
@@ -305,7 +306,7 @@ public class SyncBlockService {
 		HashMap<String, String> requestParam = new HashMap<String, String>();
 		byte[] response = OkHttp3Util.postString(s.trim() + "/" + ReqCmd.blocksFromNonChainHeight,
 				Json.jsonmapper().writeValueAsString(requestParam));
-		TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+		TXReward maxConfirmedReward = cacheBlockService.getMaxConfirmedReward(store);
 		long chainlength = Math.max(0, maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
 		TXReward confirmedAtHeightReward = store.getRewardConfirmedAtHeight(chainlength);
 		requestParam.put("cutoffHeight", store.get(confirmedAtHeightReward.getBlockHash()).getHeight() + "");
@@ -371,7 +372,7 @@ public class SyncBlockService {
 		// mcmcService.cleanupNonSolidMissingBlocks();
 		String[] re = serverConfiguration.getRequester().split(",");
 		MaxConfirmedReward aMaxConfirmedReward = new MaxConfirmedReward();
-		TXReward my = store.getMaxConfirmedReward();
+		TXReward my = cacheBlockService.getMaxConfirmedReward(store);
 		if (chainlength > -1) {
 			TXReward my1 = store.getRewardConfirmedAtHeight(chainlength);
 			if (my1 != null)
@@ -530,7 +531,7 @@ public class SyncBlockService {
 	public void connectingOrphans(FullBlockStore blockStore) throws BlockStoreException {
 		List<ChainBlockQueue> orphanBlocks = blockStore.selectChainblockqueue(true,
 				serverConfiguration.getSyncblocks());
-		TXReward maxConfirmedReward = blockStore.getMaxConfirmedReward();
+		TXReward maxConfirmedReward = cacheBlockService.getMaxConfirmedReward(blockStore);
 		long cut = blockService.getCurrentCutoffHeight(maxConfirmedReward, blockStore);
 		if (orphanBlocks.size() > 0) {
 			log.debug("Orphan  size = {}", orphanBlocks.size());

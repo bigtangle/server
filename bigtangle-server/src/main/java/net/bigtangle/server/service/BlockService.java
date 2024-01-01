@@ -190,7 +190,7 @@ public class BlockService {
 	public GetBlockListResponse blocksFromNonChainHeigth(long cutoffHeight, FullBlockStore store)
 			throws BlockStoreException {
 
-		TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+		TXReward maxConfirmedReward = cacheBlockService.getMaxConfirmedReward(store);
 		long my = getCurrentCutoffHeight(maxConfirmedReward, store);
 		return GetBlockListResponse.create(store.blocksFromNonChainHeigth(Math.max(cutoffHeight, my)));
 	}

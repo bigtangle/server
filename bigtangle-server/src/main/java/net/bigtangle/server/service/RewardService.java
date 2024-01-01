@@ -129,7 +129,7 @@ public class RewardService {
 
 	public Block createReward(FullBlockStore store) throws Exception {
 
-		Sha256Hash prevRewardHash = store.getMaxConfirmedReward().getBlockHash();
+		Sha256Hash prevRewardHash = cacheBlockService.getMaxConfirmedReward(store).getBlockHash();
 		Block reward = createReward(prevRewardHash, store);
 		if (reward != null) {
 			log.debug(" reward block is created: " + reward);
@@ -164,7 +164,7 @@ public class RewardService {
 
 		if (block != null) {
 			// check, if the reward block is too old to avoid conflict.
-			TXReward latest = store.getMaxConfirmedReward();
+			TXReward latest = cacheBlockService.getMaxConfirmedReward(store);
 			if (latest.getChainLength() >= block.getLastMiningRewardBlock()) {
 				log.debug("resolved Reward is out of date.");
 			} else {
@@ -259,7 +259,7 @@ public class RewardService {
 	public GetTXRewardResponse getMaxConfirmedReward(Map<String, Object> request, FullBlockStore store)
 			throws BlockStoreException {
 
-		return GetTXRewardResponse.create(store.getMaxConfirmedReward());
+		return GetTXRewardResponse.create(cacheBlockService.getMaxConfirmedReward(store));
 
 	}
 

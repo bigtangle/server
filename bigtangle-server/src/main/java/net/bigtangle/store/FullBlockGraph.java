@@ -208,7 +208,7 @@ public class FullBlockGraph {
 			Stopwatch watch = Stopwatch.createStarted();
 			log.info("selectChainblockqueue with size  " + cbs.size());
 			// check only do add if there is longer chain as saved in database
-			TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+			TXReward maxConfirmedReward = cacheBlockService.getMaxConfirmedReward(store);
 			ChainBlockQueue maxFromQuery = cbs.get(cbs.size() - 1);
 			if (!updatelowchain && maxConfirmedReward.getChainLength() > maxFromQuery.getChainlength()) {
 				log.info("not longest chain in  selectChainblockqueue {}  < {}", maxFromQuery.toString(),
@@ -350,7 +350,7 @@ public class FullBlockGraph {
 			connect(block, solidityState, store);
 			return;
 		}
-		Block head = store.get(store.getMaxConfirmedReward().getBlockHash());
+		Block head = store.get(cacheBlockService.getMaxConfirmedReward(store).getBlockHash());
 		if (block.getRewardInfo().getPrevRewardHash().equals(head.getHash())) {
 			connect(block, solidityState, store);
 			new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).buildRewardChain(block, store);
@@ -531,7 +531,7 @@ public class FullBlockGraph {
 			}
 			if (canrun) {
 				Stopwatch watch = Stopwatch.createStarted();
-				TXReward maxConfirmedReward = store.getMaxConfirmedReward();
+				TXReward maxConfirmedReward = cacheBlockService.getMaxConfirmedReward(store);
 				updateConfirmedDo(maxConfirmedReward, store);
 				if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
 					log.info("updateConfirmedDo time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
