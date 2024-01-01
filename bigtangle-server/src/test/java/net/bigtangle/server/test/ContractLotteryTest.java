@@ -344,7 +344,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 			}
 			Block b = wallet.payToList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, "pay to user");
 			// log.debug("block " + (b == null ? "block is null" : b.toString()));
-			makeRewardBlock();
+			makeRewardBlock(b);
 		}
 
 	}

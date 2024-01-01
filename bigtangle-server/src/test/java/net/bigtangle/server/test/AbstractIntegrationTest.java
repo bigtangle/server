@@ -382,7 +382,7 @@ public abstract class AbstractIntegrationTest {
 
 		Block block = makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount,
 				NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
-		makeOrderAndReward(addedBlocks);
+		makeOrderExecutionAndReward(addedBlocks);
 		return block;
 	}
 
@@ -400,7 +400,7 @@ public abstract class AbstractIntegrationTest {
 			String basetoken, List<Block> addedBlocks) throws Exception {
 
 		Block block = makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount, basetoken, addedBlocks);
-		makeOrderAndReward(addedBlocks);
+		makeOrderExecutionAndReward(addedBlocks);
 		return block;
 	}
 
@@ -428,7 +428,7 @@ public abstract class AbstractIntegrationTest {
 
 		Block block = makeBuyOrder(beneficiary, tokenId, buyPrice, buyAmount,
 				NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
-		makeOrderAndReward(addedBlocks);
+		makeOrderExecutionAndReward(addedBlocks);
 		return block;
 	}
 
@@ -446,7 +446,7 @@ public abstract class AbstractIntegrationTest {
 			String basetoken, List<Block> addedBlocks) throws Exception {
 
 		Block block = makeBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, basetoken, addedBlocks);
-		makeOrderAndReward(addedBlocks);
+		makeOrderExecutionAndReward(addedBlocks);
 		return block;
 	}
 
@@ -504,7 +504,7 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	
-	protected Block makeOrderAndReward(List<Block> addedBlocks) throws Exception {
+	protected Block makeOrderExecutionAndReward(List<Block> addedBlocks) throws Exception {
 		Block b = contractExecutionService.createOrderExecution(store);
 		if (b != null) {
 			if (addedBlocks != null  ) {
