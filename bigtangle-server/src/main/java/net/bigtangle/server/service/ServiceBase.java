@@ -429,13 +429,7 @@ public class ServiceBase {
 		return GetBlockListResponse.create(store.blocksFromChainLength(start, end));
 	}
 
-	public GetBlockListResponse blocksFromNonChainHeigth(long cutoffHeight, FullBlockStore store)
-			throws BlockStoreException {
-
-		TXReward maxConfirmedReward = cacheBlockService.getMaxConfirmedReward(store);
-		long my = getCurrentCutoffHeight(maxConfirmedReward, store);
-		return GetBlockListResponse.create(store.blocksFromNonChainHeigth(Math.max(cutoffHeight, my)));
-	}
+ 
 
 	public boolean getUTXOSpent(TransactionOutPoint txout, FullBlockStore store) throws BlockStoreException {
 		UTXO a = store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
@@ -3877,6 +3871,7 @@ public class ServiceBase {
 
 		// Set own output confirmed
 		blockStore.updateRewardConfirmed(block.getBlock().getHash(), true);
+		cacheBlockService.updataMaxConfirmedReward(block.getBlock(), true, blockStore);
 	}
 
 	private void insertVirtualOrderRecords(Block block, Collection<OrderRecord> orders, FullBlockStore blockStore) {
@@ -4281,6 +4276,7 @@ public class ServiceBase {
 
 		// Set own output unconfirmed
 		blockStore.updateRewardConfirmed(block.getHash(), false);
+		cacheBlockService.updataMaxConfirmedReward(block , false, blockStore);
 	}
 
 	private void unconfirmToken(Block block, FullBlockStore blockStore) throws BlockStoreException {
@@ -5324,7 +5320,7 @@ public class ServiceBase {
 		long difficulty = rewardInfo.getDifficultyTargetReward();
 
 		blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
-		cacheBlockService.evictAllCacheValuesMaxConfirmedReward();
+		 
 	}
 
 	public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainNameBlockHash,

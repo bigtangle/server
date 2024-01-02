@@ -46,7 +46,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
 
 	@Test
 	public void testReorgMiningRewardLong() throws Exception {
-		store.resetStore();
+		 resetStore();
 
 		// Generate blocks until passing first reward interval
 		Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());

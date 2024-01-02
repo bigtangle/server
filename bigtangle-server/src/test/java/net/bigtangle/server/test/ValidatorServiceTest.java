@@ -264,7 +264,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		Transaction tx2 = createTestTransaction();
 		Block block = createAndAddNextBlockWithTransaction(confBlock, confBlock, tx2);
 
-		store.resetStore();
+		 resetStore();
 
 		// Add block allowing unsolids
 		blockService.addConnected(confBlock.bitcoinSerialize(), false);
@@ -307,7 +307,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash() , store);
 		blockGraph.updateChain();
 
-		store.resetStore();
+		 resetStore();
 		for (Block b : blocksAddedAll) {
 			blockGraph.add(b, true, store);
 		}
@@ -356,7 +356,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		Block block = saveTokenUnitTestWithTokenname(tokenInfo2, coinbase, outKey, null);
 
-		store.resetStore();
+		 resetStore();
 
 		// Add block allowing unsolids
 		blockService.addConnected(block.bitcoinSerialize(), true);
@@ -567,7 +567,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(),
 				tx1);
 
-		store.resetStore();
+		 resetStore();
 
 		// Again but with incorrect input script
 		try {
@@ -591,7 +591,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 					networkParameters.getGenesisBlock(), tx1);
 		}
 
-		store.resetStore();
+		resetStore();
 
 		// Again but with less output coins
 		{
@@ -616,7 +616,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 					networkParameters.getGenesisBlock(), tx2);
 		}
 
-		store.resetStore();
+	 resetStore();
 
 		// Again but with more output coins
 		try {

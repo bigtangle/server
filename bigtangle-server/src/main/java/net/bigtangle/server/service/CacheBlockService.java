@@ -1,10 +1,7 @@
 package net.bigtangle.server.service;
 
-import java.io.IOException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -19,6 +16,7 @@ import net.bigtangle.utils.Gzip;
 @Service
 public class CacheBlockService {
 	private static final Logger logger = LoggerFactory.getLogger(CacheBlockService.class);
+	public static TXReward lastConfirmedChainBlock;
 
 	@Cacheable(value = "blocksCache", key = "#blockhash")
 	public byte[] getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
@@ -34,21 +32,21 @@ public class CacheBlockService {
 	}
 
 	public TXReward getMaxConfirmedReward(FullBlockStore store) throws BlockStoreException {
-		try {
-			return new TXReward().parse(getMaxConfirmedRewardByte(store));
-		} catch (IOException e) {
-			throw new BlockStoreException(e);
+
+		if (lastConfirmedChainBlock == null) {
+			lastConfirmedChainBlock = store.getMaxConfirmedReward();
 		}
+		return lastConfirmedChainBlock;
 	}
 
-	@Cacheable(value = "MaxConfirmedReward")
-	public byte[] getMaxConfirmedRewardByte(FullBlockStore store) throws BlockStoreException {
-		logger.debug("read from database getMaxConfirmedReward ");
-		return store.getMaxConfirmedReward().toByteArray();
-	}
-
-	@CacheEvict(value = "MaxConfirmedReward", allEntries = true)
-	public void evictAllCacheValuesMaxConfirmedReward() {
+	public synchronized void updataMaxConfirmedReward(Block aChainBlock, Boolean confirmed, FullBlockStore store)
+			throws BlockStoreException {
+		logger.debug("updataMaxConfirmedReward ");
+		TXReward last = getMaxConfirmedReward(store);
+		if ((confirmed && aChainBlock.getLastMiningRewardBlock() > last.getChainLength()) || !confirmed) {
+			// forced reload last
+			lastConfirmedChainBlock = store.getMaxConfirmedReward();
+		}
 	}
 
 }

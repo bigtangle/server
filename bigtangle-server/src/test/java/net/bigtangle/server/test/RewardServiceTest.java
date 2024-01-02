@@ -201,10 +201,10 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 		List<Block> a2 = new ArrayList<Block>();
 		// first chains
 		Block rewardBlock1 = createReward(a1);
-		store.resetStore();
+		 resetStore();
 		// second chain
 		Block rewardBlock3 = createReward2(a2);
-		store.resetStore();
+		 resetStore();
 		// replay first chain
 		for (Block b : a1)
 			blockGraph.add(b, true, true, store);
@@ -228,7 +228,7 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 		List<Block> a2 = new ArrayList<Block>();
 
 		Block rewardBlock1 = createReward(a1);
-		store.resetStore();
+		 resetStore();
 		Block rewardBlock3 = createReward2(a2);
 		store.resetStore();
 		blocksAddedAll.addAll(a1);
@@ -239,7 +239,7 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 			// Check add in random order
 			Collections.shuffle(blocksAddedAll);
 
-			store.resetStore();
+			 resetStore();
 			// add many times to get chain out of order
 			for (Block b : blocksAddedAll)
 				blockGraph.add(b, true, true, store);

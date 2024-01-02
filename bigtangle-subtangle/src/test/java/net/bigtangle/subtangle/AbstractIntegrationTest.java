@@ -53,6 +53,7 @@ import net.bigtangle.kits.WalletAppKit;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.CacheBlockService;
 import net.bigtangle.server.service.MCMCService;
 import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.StoreService;
@@ -167,11 +168,24 @@ public abstract class AbstractIntegrationTest {
     public void setUp() throws Exception {
         Utils.unsetMockClock();
         store = storeService.getStore();
-        store.resetStore();
+        resetStore(); 
  
         this.initWalletKeysMapper();
 
     }
+	/**
+	 * Resets the store by deleting the contents of the tables and reinitialising
+	 * them.
+	 * 
+	 * @throws BlockStoreException If the tables couldn't be cleared and
+	 *                             initialised.
+	 */
+	public void resetStore() throws BlockStoreException {
+	 
+		store.resetStore();
+		CacheBlockService.lastConfirmedChainBlock=null;
+		 
+	}
 
     @AfterEach
     public void close() throws Exception {

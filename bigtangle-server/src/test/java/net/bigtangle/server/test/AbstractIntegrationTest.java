@@ -10,6 +10,7 @@ import static org.mockito.Mockito.description;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,6 +80,7 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.BlockService;
@@ -147,6 +149,9 @@ public abstract class AbstractIntegrationTest {
     @Autowired
     protected CacheBlockService cacheBlockService;
 	@Autowired
+	private ScheduleConfiguration scheduleConfiguration;
+	
+	@Autowired
 	protected void prepareContextRoot(@Value("${local.server.port}") int port) {
 		contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
 	}
@@ -203,8 +208,9 @@ public abstract class AbstractIntegrationTest {
 	@BeforeEach
 	public void setUp() throws Exception {
 		Utils.unsetMockClock();
+		scheduleConfiguration.setInitSync(false);
 		store = storeService.getStore();
-		store.resetStore();
+		resetStore();
 		wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)), contextRoot);
 		serverConfiguration.setServiceReady(true);
 
@@ -214,6 +220,21 @@ public abstract class AbstractIntegrationTest {
 	public void close() throws Exception {
 		store.close();
 	}
+	
+	/**
+	 * Resets the store by deleting the contents of the tables and reinitialising
+	 * them.
+	 * 
+	 * @throws BlockStoreException If the tables couldn't be cleared and
+	 *                             initialised.
+	 */
+	public void resetStore() throws BlockStoreException {
+	 
+		store.resetStore();
+		CacheBlockService.lastConfirmedChainBlock=null;
+		 
+	}
+
 
 	protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, BigInteger amount) throws Exception {
 		payTestTokenTo(beneficiary, testKey, amount, new ArrayList<>());
@@ -645,7 +666,7 @@ public abstract class AbstractIntegrationTest {
 		}
 
 		// Redo and assert snapshot equal to new state
-		store.resetStore();
+		 resetStore();
 		for (Block b : addedBlocks) {
 			blockGraph.add(b, true, true, store);
 		}

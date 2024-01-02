@@ -776,7 +776,7 @@ public class TokenTest extends AbstractIntegrationTest {
     }
 	@Test
 	public void walletCreateDomain() throws Exception {
-		store.resetStore();
+		 resetStore();
 
 		List<ECKey> keys = new ArrayList<ECKey>();
 		ECKey outKey3 = new ECKey();

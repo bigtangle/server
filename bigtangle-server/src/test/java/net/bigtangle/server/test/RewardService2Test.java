@@ -74,7 +74,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		}
 		log.debug(r1.toString());
 		checkSum();
-		store.resetStore();
+		 resetStore();
 		testToken(a2);
 		// second chain
 		Block r2 = networkParameters.getGenesisBlock();
@@ -87,7 +87,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 
 		Sha256Hash hash = checkpointService.checkToken(store).hash();
 		// replay
-		store.resetStore();
+		 resetStore();
 
 		// replay first chain
 		for (Block b : a1) {
@@ -107,7 +107,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		Sha256Hash hash1 = checkSum();
 		assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
 		// replay second and then replay first
-		store.resetStore();
+		 resetStore();
 		for (Block b : a2) {
 			if (b != null)
 				blockGraph.add(b, true, true, store);

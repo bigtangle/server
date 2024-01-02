@@ -23,7 +23,6 @@ import net.bigtangle.kafka.BlockStreamHandler;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.SyncBlockService;
-import net.bigtangle.store.MySQLFullBlockStore;
 
 @Component
 @EnableAsync
@@ -46,32 +45,34 @@ public class ScheduleInitService {
 	private static final Logger logger = LoggerFactory.getLogger(ScheduleInitService.class);
 
 	@Async
-	@Scheduled(initialDelay = 1000, fixedDelay = Long.MAX_VALUE, timeUnit = TimeUnit.NANOSECONDS)
+	@Scheduled(initialDelay = 5000, fixedDelay = Long.MAX_VALUE, timeUnit = TimeUnit.NANOSECONDS)
 	public void syncService() throws BlockStoreException {
+		if (scheduleConfiguration.isInitSync()) {
+			try {
+			 
+				logger.debug("Schedule: " + scheduleConfiguration.toString());
 
-		try {
-			logger.debug("server config: " + serverConfiguration.toString());
-			logger.debug("Schedule: " + scheduleConfiguration.toString()); 
-	 
+				Secp256k1Context.getContext();
 
-			Secp256k1Context.getContext();
-			if (scheduleConfiguration.isMilestone_active()) {
-				try {
-					logger.debug("syncBlockService startInit");
-					syncBlockService.startInit();
-				} catch (Exception e) {
-					logger.error("", e);
-					// TODO sync checkpoint System.exit(-1);
+				Secp256k1Context.getContext();
+				if (scheduleConfiguration.isMilestone_active()) {
+					try {
+						logger.debug("syncBlockService startInit");
+						syncBlockService.startInit();
+					} catch (Exception e) {
+						logger.error("", e);
+						// TODO sync checkpoint System.exit(-1);
+					}
 				}
-			}
-			serverConfiguration.setServiceReady(true);
-			if (serverConfiguration.getRunKafkaStream()) {
-				blockStreamHandler.runStream();
-			}
+				serverConfiguration.setServiceReady(true);
+				if (serverConfiguration.getRunKafkaStream()) {
+					blockStreamHandler.runStream();
+				}
 
-		} catch (Exception e) {
-			logger.error("", e);
-			// TODO sync checkpoint System.exit(-1);
+			} catch (Exception e) {
+				logger.error("", e);
+				// TODO sync checkpoint System.exit(-1);
+			}
 		}
 	}
 
