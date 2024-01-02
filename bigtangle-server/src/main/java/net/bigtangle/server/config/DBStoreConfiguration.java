@@ -64,7 +64,7 @@ public class DBStoreConfiguration {
 
     @Bean
     public DataSource dataSource() throws BlockStoreException, IOException, InterruptedException, ExecutionException {
-        createDatabase();
+      //  createDatabase();
 
         HikariConfig config = new HikariConfig();
 

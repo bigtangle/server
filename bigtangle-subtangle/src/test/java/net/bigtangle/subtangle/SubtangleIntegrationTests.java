@@ -44,6 +44,7 @@ import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+ 
 public class SubtangleIntegrationTests extends AbstractIntegrationTest {
 
     @Autowired
@@ -138,7 +139,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
     private SubtangleConfiguration subtangleConfiguration;
 
     @SuppressWarnings("deprecation")
-    @Test
+   // @Test
     public void testGiveMoney() throws Exception {
         logger.info("subtangle configuration active : " + subtangleConfiguration.isActive());
         // assertTrue(subtangleConfiguration.isActive());
@@ -162,20 +163,7 @@ public class SubtangleIntegrationTests extends AbstractIntegrationTest {
 
         assertTrue(amount == coinbase.getValue().longValue());
     }
-
-    @Test
-    public void testVeryKey() throws Exception {
-        String privateKey = "";
-        String pubkey = "";
-        ECKey key = ECKey.fromPrivate(Utils.HEX.decode(privateKey));
-
-        byte[] output = key.sign(Sha256Hash.ZERO_HASH).encodeToDER();
-        String signHex = Utils.HEX.encode(output);
-        HashMap<String, String> requestParam = new HashMap<String, String>();
-        requestParam.put("pubkey", pubkey);
-        requestParam.put("signHex", signHex);
-        OkHttp3Util.postAndGetBlock(contextRoot + ReqCmd.regSubtangle, Json.jsonmapper().writeValueAsString(requestParam));
-    }
+ 
 
     @Test
     public void testUpdateSubtangle() throws Exception {

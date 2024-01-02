@@ -132,10 +132,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeTestTokenWithSpare(testKey, addedBlocks);
 		getBalanceAccount(false, testkeys);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		log.debug("====start generateSpareChange");
-		payBigToAmount(genesisKey, addedBlocks);
-		getBalanceAccount(false, genesisKeykeys);
-
+ 
 		// Open sell order for test tokens
 		log.debug("====start makeAndConfirmSellOrder");
 		makeAndConfirmSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
@@ -161,8 +158,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		// Make test token
 		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		payBigToAmount(genesisKey, addedBlocks);
-
+		 
 		// Open buy order for test tokens
 		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1001, 22, addedBlocks);
 		makeAndConfirmSellOrder(testKey, testTokenId, 1001, 100, addedBlocks);
@@ -201,8 +197,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		// Make test token
 		makeTestTokenWithSpare(testKey, addedBlocks);
-		String testTokenId = testKey.getPublicKeyAsHex();
-		payBigToAmount(genesisKey, addedBlocks);
+		String testTokenId = testKey.getPublicKeyAsHex(); 
 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
@@ -262,8 +257,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		// Make test token
 		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		payBigToAmount(genesisKey, addedBlocks);
-
+	 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
@@ -321,8 +315,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		// Make test token
 		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		payBigToAmount(genesisKey, addedBlocks);
-
+	 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 

@@ -41,11 +41,12 @@ public class CacheBlockService {
 
 	public synchronized void updataMaxConfirmedReward(Block aChainBlock, Boolean confirmed, FullBlockStore store)
 			throws BlockStoreException {
-		logger.debug("updataMaxConfirmedReward ");
+		
 		TXReward last = getMaxConfirmedReward(store);
 		if ((confirmed && aChainBlock.getLastMiningRewardBlock() > last.getChainLength()) || !confirmed) {
+		//	logger.debug("updataMaxConfirmedReward " +  aChainBlock);
 			// forced reload last
-			lastConfirmedChainBlock = store.getMaxConfirmedReward();
+			lastConfirmedChainBlock = null;
 		}
 	}
 
