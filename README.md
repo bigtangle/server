@@ -3,18 +3,22 @@
  
 ##  start with docker build and Test
 ```
- cd helper/bigtangle
- sh build
+git clone https://github.com/bigtangle/server.git
+cd server
+cd helper/bigtangle
+./build
  
- sh helper/testdocker.sh
+sh helper/testdocker.sh
  
 ```
  
 ## Production
 ```
- cd helper/divers
- sh db.sh
- sh bigtangle.sh
+git clone https://github.com/bigtangle/server.git
+cd server
+cd helper/divers
+sh db.sh
+sh bigtangle.sh
 ```
  
 ## Compiling yourself  
