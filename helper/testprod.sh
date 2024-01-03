@@ -16,8 +16,8 @@ export DB_PASSWORD=test1234
 export SERVERPORT=18089
 export SERVICE_MINING_RATE=36000
 export SERVICE_INITSYNC=true
-  
-docker rm -f $DBHOST 
+docker rm -f $DBHOST   
+rm -fr /data/vm/$DBHOST/*
 docker run -d  -t --net=bigtangle-bridged-network   -p 3306:3306  \
 -v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql   \
 -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \
