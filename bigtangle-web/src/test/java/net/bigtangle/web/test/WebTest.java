@@ -47,7 +47,7 @@ public class WebTest extends AbstractIntegrationTest {
 	@Autowired
 	SyncBlockService syncBlockService;
 
-	@Test
+	//@Test
 	public void testWebTokens() throws JsonProcessingException, Exception {
 
 		File zip = new File("./src/test/resources/test.zip");

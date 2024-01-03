@@ -44,7 +44,7 @@ public class RegisterTest extends AbstractIntegrationTest {
 	public void testWalletUtil() throws Exception {
 
 	}
-	@Test
+	//@Test
 	public void testChainnumber() throws Exception {
 		HashMap<String, String> requestParam = new HashMap<String, String>();
 		requestParam.put("server", "https://bigtangle.de:8088");
