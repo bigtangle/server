@@ -2,6 +2,8 @@ select * from blocks  where milestone <0 order by height desc ;
 select * from orders   ;
 select * from contractevent   ;
 select * from contractresult   ;
+select * from orderresult   ;
+select * from outputs  where confirmed =true and spent=false ;
 select count( *) from blocks   ;
 select count( *) from blocks  WHERE milestone>9;
 select count( *) from unsolidblocks   where inserttime < 1515432033 ;
@@ -69,7 +71,7 @@ select * from ordercancel
 update blocks set milestone=0    where height=0
 select count(*) from outputs where confirmed=1 and spent=0 and tokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
 select * from orders where confirmed=1 and spent=0 and offertokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
-select * from outputs where blockhash = 0x000000b8374049724da3bfede9dee27a7b5f310942981028a27e779631fb8657;
+select * from outputs where blockhash = 0x006131c37244272ebba62f797a815f3f1f86703a054d015a3e50423e64876f12;
 
 
 select * from txreward join orders on txreward.blockhash=orders.collectinghash order by toheight desc  ;
@@ -120,7 +122,7 @@ select * from tokenserial   ;
 select count(*) from outputs where 
  fromaddress!=''
 
- select  * from outputs where toaddress='1DVMvugpdT2QuhhtUAiUU3cTBMxaDvCCud'
+ select  * from outputs where toaddress='14Kt2zgLFL3DSi4eHofBjZisQWogBRnZhN'
  fromaddress='' and coinbase=false
  
 select * from blockevaluation   ;

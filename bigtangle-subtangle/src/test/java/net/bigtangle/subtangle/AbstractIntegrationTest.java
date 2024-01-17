@@ -6,11 +6,9 @@ package net.bigtangle.subtangle;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.description;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -398,15 +396,7 @@ public abstract class AbstractIntegrationTest {
 				addedBlocks);
 	}
 
-	protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
-			List<Block> addedBlocks) throws Exception {
-
-		Block block = makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount,
-				NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
-		makeOrderExecutionAndReward(addedBlocks);
-		return block;
-	}
-
+	 
 	protected Block makeSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount, String basetoken,
 			List<Block> addedBlocks) throws Exception {
 		payBigTo(beneficiary, Coin.FEE_DEFAULT.getValue(), addedBlocks);
@@ -417,14 +407,7 @@ public abstract class AbstractIntegrationTest {
 
 	}
 
-	protected Block makeAndConfirmSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
-			String basetoken, List<Block> addedBlocks) throws Exception {
-
-		Block block = makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount, basetoken, addedBlocks);
-		makeOrderExecutionAndReward(addedBlocks);
-		return block;
-	}
-
+ 
 	protected Block makeAndConfirmPayContract(ECKey beneficiary, String tokenId, BigInteger buyAmount,
 			String contractTokenid, List<Block> addedBlocks) throws Exception {
 		Wallet w = Wallet.fromKeys(networkParameters, beneficiary, contextRoot);
@@ -444,14 +427,7 @@ public abstract class AbstractIntegrationTest {
 		return block;
 	}
 
-	protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
-			List<Block> addedBlocks) throws Exception {
-
-		Block block = makeBuyOrder(beneficiary, tokenId, buyPrice, buyAmount,
-				NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
-		makeOrderExecutionAndReward(addedBlocks);
-		return block;
-	}
+ 
 
 	protected Block makeBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount, String basetoken,
 			List<Block> addedBlocks) throws Exception {
@@ -463,13 +439,7 @@ public abstract class AbstractIntegrationTest {
 		return block;
 	}
 
-	protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
-			String basetoken, List<Block> addedBlocks) throws Exception {
-
-		Block block = makeBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, basetoken, addedBlocks);
-		makeOrderExecutionAndReward(addedBlocks);
-		return block;
-	}
+ 
 
 	protected Block makeCancelOp(Block order, ECKey legitimatingKey, List<Block> addedBlocks) throws Exception {
 
@@ -519,28 +489,7 @@ public abstract class AbstractIntegrationTest {
 		return block;
 	}
 
-	protected Block makeOrdermatch( ) throws Exception {
-		return  contractExecutionService.createOrderExecution(store); 
-
-	}
-
-	
-	protected Block makeOrderExecutionAndReward(List<Block> addedBlocks) throws Exception {
-		Block b = contractExecutionService.createOrderExecution(store);
-		if (b != null) {
-			if (addedBlocks != null  ) {
-				addedBlocks.add(b);
-			}
-			Block block = makeRewardBlock(b);
-			if (addedBlocks != null && block != null) {
-				addedBlocks.add(block);
-			}
-			return block;
-		} else {
-			return makeRewardBlock(addedBlocks);
-		}
-
-	}
+ 
 
 	protected Block makeRewardBlock(Block predecessor) throws Exception {
 		return makeRewardBlock(predecessor.getHash());

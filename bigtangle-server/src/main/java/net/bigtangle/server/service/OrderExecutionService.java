@@ -33,19 +33,19 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
-import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.server.data.LockObject;
+import net.bigtangle.server.data.OrderExecutionResult;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
 
 /**
  * <p>
- * A ContractExecutionService provides service for create and validate the
+ * A OrderExecutionService provides service for create and validate the
  * contract common execution.
  * </p>
  */
 @Service
-public class ContractExecutionService {
+public class OrderExecutionService {
 
 	@Autowired
 	protected FullBlockGraph blockGraph;
@@ -74,82 +74,77 @@ public class ContractExecutionService {
 	 * @throws BlockStoreException
 	 */
 
-	// createContractExecution is time boxed and can run parallel.
+	// createOrderExecution is time boxed and can run parallel.
 	public void startSingleProcess() throws BlockStoreException {
 
 		FullBlockStore store = storeService.getStore();
 
 		try {
-			// log.info("create ContractExecution started");
+			// log.info("create OrderExecution started");
 			LockObject lock = store.selectLockobject(LOCKID);
 			boolean canrun = false;
 			if (lock == null) {
 				store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
 				canrun = true;
 			} else if (lock.getLocktime() < System.currentTimeMillis() - 5 * scheduleConfiguration.getMiningrate()) {
-				log.info(" ContractExecution locked is fored delete   " + lock.getLocktime() + " < "
+				log.info(" OrderExecution locked is fored delete   " + lock.getLocktime() + " < "
 						+ (System.currentTimeMillis() - 5 * scheduleConfiguration.getMiningrate()));
 				store.deleteLockobject(LOCKID);
 				store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
 				canrun = true;
 			} else {
-				log.info("ContractExecution running return:  " + Utils.dateTimeFormat(lock.getLocktime()));
+				log.info("OrderExecution running return:  " + Utils.dateTimeFormat(lock.getLocktime()));
 			}
 			if (canrun) {
-				createContractExecution(store);
+				createOrderExecution(store);
 				store.deleteLockobject(LOCKID);
 			}
 
 		} catch (Exception e) {
-			log.error("create ContractExecution end  ", e);
+			log.error("create OrderExecution end  ", e);
 			store.deleteLockobject(LOCKID);
 		} finally {
 			store.close();
 		}
 
 	}
-
-	public void createContractExecution(FullBlockStore store) throws Exception {
-
-		// select all contractid from the table with unspent event
-		for (String contractid : store.getOpenContractid()) {
-			Block contractExecution = createContractExecution(contractid, store);
-			if (contractExecution != null) {
-				log.debug(" contractExecution block is created: " + contractExecution);
-				blockService.saveBlock(contractExecution, store);
-			}
+ 
+	public Block createOrderExecution(FullBlockStore store) throws Exception {
+		Block contractExecution = createOrderExecutionDo(store);
+		if (contractExecution != null) {
+			// log.debug(" createOrder block is created: " + contractExecution);
+			blockService.saveBlock(contractExecution, store);
+			return contractExecution;
 		}
-
+		return null;
 	}
 
- 
-
 	/**
-	 * Runs the ContractExecution making logic
+	 * Runs the OrderExecution making logic
 	 * 
 	 * @return the new block or block voted on
 	 * @throws Exception
 	 */
 
-	public Block createContractExecution(String contractid, FullBlockStore store) throws Exception {
+	public Block createOrderExecutionDo(FullBlockStore store) throws Exception {
 
 		Stopwatch watch = Stopwatch.createStarted();
 		Block b = blockService.getBlockPrototype(store);
-		log.debug("  getValidatedContractExecutionBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		log.debug("  getValidatedOrderExecutionBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
-		return createContractExecution(b, contractid, store);
+		return createOrderExecution(b, store);
 
 	}
 
-	public Block createContractExecution(Block block, String contractid, FullBlockStore store)
+	public Block createOrderExecution(Block block, FullBlockStore store)
 			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-		block.setBlockType(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
+		block.setBlockType(Block.Type.BLOCKTYPE_ORDER_EXECUTE);
 		// Build transaction for block
 		Transaction tx = new Transaction(networkParameters);
 		block.addTransaction(tx);
 		Sha256Hash prevHash = Sha256Hash.ZERO_HASH;
 		// calculate prev
-		Sha256Hash prev = store.getLastContractResultBlockHash(contractid);
+		Sha256Hash prev = store.getLastOrderResultBlockHash();
 		if (prev != null) {
 			prevHash = prev;
 		}
@@ -160,10 +155,9 @@ public class ContractExecutionService {
 		Set<Sha256Hash> referencedblocks = new HashSet<Sha256Hash>();
 		long cutoffheight = blockService.getRewardCutoffHeight(prevRewardHash, store);
 
-	 
 		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
-		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EVENT);
-	 
+		ordertypes.add(Block.Type.BLOCKTYPE_ORDER_CANCEL);
+		ordertypes.add(Block.Type.BLOCKTYPE_ORDER_OPEN);
 		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters, cacheBlockService);
 		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBlockHash(), store), cutoffheight, prevChainLength, true,
@@ -171,13 +165,12 @@ public class ContractExecutionService {
 		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBranchBlockHash(), store), cutoffheight, prevChainLength, true,
 				ordertypes, store);
- 
 
-		ContractResult result = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
-				.executeContract(block, store, contractid, prevHash, referencedblocks);
-		// do not create the execution block, if there is no new referencedblocks and no match 
-		if (result == null || (result.getOutputTx().getOutputs().isEmpty()
-			 && referencedblocks.isEmpty()) )
+		OrderExecutionResult result = new ServiceOrderExecution(serverConfiguration, networkParameters,
+				cacheBlockService).orderMatching(block, prevHash, referencedblocks, store);
+		// do not create the execution block, if there is no new referencedblocks and no
+		// match
+		if (result == null || (result.getOutputTx().getOutputs().isEmpty() && referencedblocks.isEmpty()))
 			return null;
 
 		tx.setData(result.toByteArray());

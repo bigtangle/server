@@ -131,8 +131,8 @@ public class Block extends Message {
         BLOCKTYPE_CONTRACT_EXECUTE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // Smart-contracts execution
         BLOCKTYPE_CROSSTANGLE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // mainnet to permissioned
         BLOCKTYPE_ORDER_OPEN(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // new-order
-        BLOCKTYPE_ORDER_CANCEL(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false); // cancel-order
-     	
+        BLOCKTYPE_ORDER_CANCEL(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false), // cancel-order
+    	BLOCKTYPE_ORDER_EXECUTE(false, NetworkParameters.MAX_DEFAULT_BLOCK_SIZE, false); // Order execution
         private boolean allowCoinbaseTransaction;
         private int maxSize;
         private boolean requiresCalculation;

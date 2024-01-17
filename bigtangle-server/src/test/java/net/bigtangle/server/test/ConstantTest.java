@@ -25,6 +25,7 @@ public class ConstantTest {
         assertTrue(Block.Type.BLOCKTYPE_CROSSTANGLE.ordinal() == 9);
         assertTrue(Block.Type.BLOCKTYPE_ORDER_OPEN.ordinal() == 10);
         assertTrue(Block.Type.BLOCKTYPE_ORDER_CANCEL.ordinal() == 11);
+        assertTrue(Block.Type.BLOCKTYPE_ORDER_EXECUTE.ordinal() == 12);
     }
 
 

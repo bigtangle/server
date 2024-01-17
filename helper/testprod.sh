@@ -2,8 +2,8 @@ set -x
 docker network create --driver bridge   bigtangle-bridged-network
 
 export BIGTANGLEVERSION=0.3.6
-export DBHOST=test-bigtangle-mysql
-export SERVERHOST=test-bigtangle
+export DBHOST=testprod-bigtangle-mysql
+export SERVERHOST=testprod-bigtangle
 export REQUESTER=https://bigtangle.org:8088
 export SERVER_MINERADDRESS=1LLtbSLJJn1D2churfWG55aDYqQQTu4eqH
 export KAFKA=bigtangle.de:9092
@@ -13,7 +13,7 @@ export SSL=true
 export KEYSTORE=/app/bigtangle-server/ca.pkcs12
 export SERVICE_MINING=true
 export DB_PASSWORD=test1234
-export SERVERPORT=18089
+export SERVERPORT=18090
 export SERVICE_MINING_RATE=36000
 export SERVICE_INITSYNC=true
 docker rm -f $DBHOST   

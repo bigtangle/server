@@ -39,15 +39,10 @@ public class CacheBlockService {
 		return lastConfirmedChainBlock;
 	}
 
-	public synchronized void updataMaxConfirmedReward(Block aChainBlock, Boolean confirmed, FullBlockStore store)
+	// reset the lastConfirmedChainBlock = null, for new calculation
+	public synchronized void resetMaxConfirmedReward(Block aChainBlock, Boolean confirmed, FullBlockStore store)
 			throws BlockStoreException {
-		
-		TXReward last = getMaxConfirmedReward(store);
-		if ((confirmed && aChainBlock.getLastMiningRewardBlock() > last.getChainLength()) || !confirmed) {
-		//	logger.debug("updataMaxConfirmedReward " +  aChainBlock);
-			// forced reload last
-			lastConfirmedChainBlock = null;
-		}
+		lastConfirmedChainBlock = null;
 	}
 
 }

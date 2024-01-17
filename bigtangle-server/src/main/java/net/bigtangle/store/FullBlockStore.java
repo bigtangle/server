@@ -47,6 +47,7 @@ import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.server.data.DepthAndWeight;
 import net.bigtangle.server.data.LockObject;
+import net.bigtangle.server.data.OrderExecutionResult;
 import net.bigtangle.server.data.Rating;
 
 /**
@@ -475,13 +476,16 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
 	void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException;
 
+	public ContractEventRecord getContractEvent( Sha256Hash blockhash,   Sha256Hash collectionhash)
+			throws BlockStoreException;
+	
 	public void updateContractEventSpent(Set<Sha256Hash> contractEventRecords, Sha256Hash spentBlock, boolean spent)
 			throws BlockStoreException;
 
 	public void updateContractEventConfirmed(Collection<Sha256Hash> contracts, boolean confirm)
 			throws BlockStoreException;
 
-	public Set<ContractEventRecord> getOpenContractEvent(String contractid, Sha256Hash prevHash) throws BlockStoreException;
+	public  Map<Sha256Hash,ContractEventRecord> getContractEventPrev(String contractid, Sha256Hash prevHash) throws BlockStoreException;
 
 	public List<String> getOpenContractid() throws BlockStoreException;
 
@@ -502,18 +506,23 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
 	public boolean checkContractResultConfirmed(Sha256Hash contractResultRecords) throws BlockStoreException;
 
+	public void updateOrderResultConfirmed(Sha256Hash contract, boolean confirm) throws BlockStoreException;
+
+	public Sha256Hash getLastOrderResultBlockHash() throws BlockStoreException;
+
+	public Sha256Hash checkOrderResultSpent(Sha256Hash OrderResultRecords) throws BlockStoreException;
+
+	public boolean checkOrderResultConfirmed(Sha256Hash OrderResultRecords) throws BlockStoreException;
+	void insertOrderResult(OrderExecutionResult record) throws BlockStoreException;
+	public void updateOrderResultSpent(Sha256Hash result, Sha256Hash spentBlock, boolean spent)
+			throws BlockStoreException;
+	
+	
 	public List<Coin> queryAccountCoinList(String address, String tokenid) throws BlockStoreException;
 
 	public List<UTXO> queryAccountUtxoList(String address, String tokenid) throws BlockStoreException;
 
-	public Coin queryAccountCoin(String address, String tokenid) throws BlockStoreException;
-
-	public void addAccountCoin(String address, String tokenid, Coin coin, Sha256Hash contractResult)
-			throws BlockStoreException;
-
-	public void updateAccountCoin(String address, String tokenid, Coin coin, Sha256Hash contractResult)
-			throws BlockStoreException;
-
+ 
 	public Map<String, Map<String, Coin>> queryOutputsMap(String address, String tokenid) throws BlockStoreException;
 
 	public void addAccountCoinBatch(Map<String, Map<String, Coin>> toaddressMap) throws BlockStoreException;

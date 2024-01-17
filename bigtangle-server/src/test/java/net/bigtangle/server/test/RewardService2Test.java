@@ -39,12 +39,15 @@ import net.bigtangle.server.service.MissingNumberCheckService;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 
- 
+/*
+ * test payment, buy and sell and create the roll back of reward  by switch to longest chain
+ */
 public class RewardService2Test extends AbstractIntegrationTest {
 
 	@Autowired
 	CheckpointService checkpointService;
 
+	//test payment, buy and sell
 	public Block createReward(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
 		for (int j = 1; j < 2; j++) {
 			payMoneyToWallet1(j, blocksAddedAll);
@@ -74,7 +77,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		}
 		log.debug(r1.toString());
 		checkSum();
-		 resetStore();
+		resetStore();
 		testToken(a2);
 		// second chain
 		Block r2 = networkParameters.getGenesisBlock();
@@ -83,11 +86,12 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		}
 		checkSum();
 		log.debug(r2.toString());
-		assertTrue(r2.getRewardInfo().getChainlength() == cacheBlockService.getMaxConfirmedReward(store).getChainLength());
+		assertTrue(
+				r2.getRewardInfo().getChainlength() == cacheBlockService.getMaxConfirmedReward(store).getChainLength());
 
 		Sha256Hash hash = checkpointService.checkToken(store).hash();
 		// replay
-		 resetStore();
+		resetStore();
 
 		// replay first chain
 		for (Block b : a1) {
@@ -95,19 +99,21 @@ public class RewardService2Test extends AbstractIntegrationTest {
 				blockGraph.add(b, true, true, store);
 		}
 		// check
-		assertTrue(r1.getRewardInfo().getChainlength() == cacheBlockService.getMaxConfirmedReward(store).getChainLength());
+		assertTrue(
+				r1.getRewardInfo().getChainlength() == cacheBlockService.getMaxConfirmedReward(store).getChainLength());
 		// replay second chain
 		for (Block b : a2) {
 			if (b != null)
 				blockGraph.add(b, true, true, store);
 
 		}
-		assertTrue(r2.getRewardInfo().getChainlength() == cacheBlockService.getMaxConfirmedReward(store).getChainLength());
+		assertTrue(
+				r2.getRewardInfo().getChainlength() == cacheBlockService.getMaxConfirmedReward(store).getChainLength());
 
 		Sha256Hash hash1 = checkSum();
 		assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
 		// replay second and then replay first
-		 resetStore();
+		resetStore();
 		for (Block b : a2) {
 			if (b != null)
 				blockGraph.add(b, true, true, store);
@@ -127,7 +133,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		TokensumsMap map = checkpointService.checkToken(store);
 		Map<String, Tokensums> r11 = map.getTokensumsMap();
 		for (Entry<String, Tokensums> a : r11.entrySet()) {
-			assertTrue( a.getValue().check()," " + a.toString());
+			assertTrue(a.getValue().check(), " " + a.toString());
 		}
 		return map.hash();
 	}
@@ -137,13 +143,6 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		testCreateToken(wallet.walletKeys().get(0), "test", blocksAddedAll);
 		makeRewardBlock(blocksAddedAll);
 
-		// testCreateToken(walletAppKit.wallet().walletKeys().get(1));
-		// makeRewardBlock(blocksAddedAll);
-		// testCreateToken(walletAppKit.wallet().walletKeys().get(2));
-		// makeRewardBlock(blocksAddedAll);
-		// testCreateToken(walletAppKit.wallet().walletKeys().get(3));
-		// makeRewardBlock(blocksAddedAll);
-		// sendEmpty(20);
 	}
 
 	public void sell(List<Block> blocksAddedAll) throws Exception {
@@ -165,9 +164,10 @@ public class RewardService2Test extends AbstractIntegrationTest {
 			if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())) {
 				wallet.setServerURL(contextRoot);
 				try {
-					blocksAddedAll.add(
-							wallet.sellOrder(null, utxo.getTokenId(), 10000000, utxo.getValue().getValue().longValue(),
-									null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, true));
+					Block sellOrder = wallet.sellOrder(null, utxo.getTokenId(), 10000000, utxo.getValue().getValue().longValue(),
+							null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, true);
+					blocksAddedAll.add(sellOrder);
+					makeOrderExecutionAndReward(blocksAddedAll);
 				} catch (InsufficientMoneyException e) {
 					// ignore: handle exception
 				}
@@ -216,11 +216,12 @@ public class RewardService2Test extends AbstractIntegrationTest {
 
 			blocksAddedAll.add(wallet.buyOrder(null, orderRecord.getOfferTokenid(), price, orderRecord.getOfferValue(),
 					null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, false));
-			makeRewardBlock(blocksAddedAll);
+			makeOrderExecutionAndReward(blocksAddedAll);
 
 		}
 
 	}
+
 	public void createNonChain(Block rewardBlock1, List<Block> blocksAddedAll) throws Exception {
 		for (int j = 1; j < 2; j++) {
 			payMoneyToWallet1(j, blocksAddedAll);
@@ -231,7 +232,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		}
 	}
 
-	//@Test
+	// @Test
 	public void testSyncCheckChain() throws Exception {
 		List<Block> a1 = new ArrayList<Block>();
 		testToken(a1);

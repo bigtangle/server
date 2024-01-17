@@ -369,7 +369,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + " USING HASH \n" + ") ENGINE=InnoDB \n";
 
 
-    //account for the contract execution
+    // the contract execution result
     private static final String CREATE_CONTRACT_RESULT_TABLE = "CREATE TABLE contractresult (\n"
             + "   blockhash binary(32) NOT NULL,\n"  
             + "   contracttokenid varchar(255)  NOT NULL,\n" 
@@ -382,6 +382,17 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    inserttime bigint NOT NULL,\n"
             + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
    
+    //  the order execution result
+    private static final String CREATE_ORDER_RESULT_TABLE = "CREATE TABLE orderresult (\n"
+            + "   blockhash binary(32) NOT NULL,\n"  
+            + "   orderresult mediumblob NOT NULL,\n" 
+            //prev order execution blockhash 
+            + "   prevblockhash binary(32) NOT NULL,\n" 
+            + "   confirmed boolean NOT NULL,\n" 
+            + "   spent boolean NOT NULL,\n"
+            + "   spenderblockhash binary(32),\n" 
+            + "    inserttime bigint NOT NULL,\n"
+            + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
     private static final String CREATE_CHAINBLOCKQUEUE_TABLE = "CREATE TABLE chainblockqueue (\n" 
             + "    hash binary(32) NOT NULL,\n" 
             + "    block mediumblob NOT NULL,\n" 
@@ -468,6 +479,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_ACCESS_GRANT_TABLE);
         sqlStatements.add(CREATE_CONTRACT_EVENT_TABLE);
         sqlStatements.add(CREATE_CONTRACT_RESULT_TABLE); 
+        sqlStatements.add(CREATE_ORDER_RESULT_TABLE); 
         sqlStatements.add(CREATE_CHAINBLOCKQUEUE_TABLE);
         sqlStatements.add(CREATE_LOCKOBJECT_TABLE); 
         sqlStatements.add(CREATE_MATCHINGDAILY_TABLE); 

@@ -16,6 +16,7 @@ import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.server.data.ContractResult;
+import net.bigtangle.server.data.OrderExecutionResult;
 
 /**
  * Wraps a {@link Block} object with extra data from the db
@@ -136,6 +137,16 @@ public class BlockWrap {
 			try {
 				ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
 				blockConflicts.add(ConflictCandidate.fromContractExecute(this, result));
+
+			} catch (IOException e) {
+				// Cannot happen since any blocks added already were checked.
+				throw new RuntimeException(e);
+			}
+			break;
+		case BLOCKTYPE_ORDER_EXECUTE:
+			try {
+				OrderExecutionResult result = new OrderExecutionResult().parse(block.getTransactions().get(0).getData());
+				blockConflicts.add(ConflictCandidate.fromOrderExecute(this, result));
 
 			} catch (IOException e) {
 				// Cannot happen since any blocks added already were checked.

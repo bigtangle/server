@@ -368,15 +368,15 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
-        Block b1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null,null,null,false);
+        Block b = tipsService.getValidatedBlockPair(store).getLeft().getBlock();
+        Block b1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,b,b,null,false);
 
         // Make another conflicting issuance that goes through
-        Block genHash = networkParameters.getGenesisBlock();
-        Block b2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, genHash, genHash,null,false);
+       
+        Block b2 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, b, b,null,false);
 
         for (int i = 0; i < 5; i++) {
-            createAndAddNextBlock(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock());
+            createAndAddNextBlock(b, b);
         }
         
         boolean hit1 = false;
@@ -426,8 +426,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo.setToken(tokens);
         tokenInfo.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
-        Block b1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,null,null,null,false);
+        Block b = tipsService.getValidatedBlockPair(store).getLeft().getBlock();
+        Block b1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null,b,b,null,false);
 
         // Generate another issuance slightly different
         TokenInfo tokenInfo2 = new TokenInfo();
@@ -438,9 +438,8 @@ public class TipsServiceTest extends AbstractIntegrationTest {
         tokenInfo2.setToken(tokens2);
         tokenInfo2.getMultiSignAddresses()
                 .add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-
-        Block genHash = networkParameters.getGenesisBlock() ;
-        Block b2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null,genHash,genHash,null,false);
+  
+        Block b2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null,b,b,null,false);
 
      
         

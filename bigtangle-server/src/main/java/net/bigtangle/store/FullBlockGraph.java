@@ -256,7 +256,7 @@ public class FullBlockGraph {
 			}
 
 			if (solidityState.isFailState()) {
-				log.debug("Block isFailState. remove it from ChainBlockQueue." + block.toString());
+				log.warn("Block isFailState. remove it from ChainBlockQueue." + block.toString());
 				return;
 			}
 			// Inherit solidity from predecessors if they are not solid
@@ -346,6 +346,9 @@ public class FullBlockGraph {
 	private void connectRewardBlock(final Block block, SolidityState solidityState, FullBlockStore store)
 			throws BlockStoreException, VerificationException {
 
+		if(block.getLastMiningRewardBlock()==6) {
+			log.info("connectRewardBlock  " + block.toString());	
+		}
 		if (solidityState.isFailState()) {
 			connect(block, solidityState, store);
 			return;

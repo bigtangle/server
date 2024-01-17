@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -32,19 +31,15 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
-import net.bigtangle.core.response.GetBalancesResponse;
-import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.server.service.ServiceBase;
 import net.bigtangle.server.service.ServiceContract;
-import net.bigtangle.utils.Json;
-import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
 public class ContractLotteryTest extends AbstractIntegrationTest {
 
 	protected static final Logger log = LoggerFactory.getLogger(ContractLotteryTest.class);
-	 
+
 	@Autowired
 	public NetworkParameters networkParameters;
 	public static String yuanTokenPub = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a";
@@ -61,20 +56,15 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 	public BigInteger payContractAmount = new BigInteger(contractAmount);
 
 	public void lotteryM() throws Exception {
-
-	
 		lotteryDo();
-
 	}
 
 	public void lotteryDo() throws Exception {
 		prepare();
-	 
 		executionAndCheck();
-
 	}
 
-	private void prepare() throws JsonProcessingException, Exception {
+	private List<Block> prepare() throws JsonProcessingException, Exception {
 		wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
 		testTokens();
 		testContractTokens();
@@ -87,25 +77,24 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		ArrayList<Block> blocks = new ArrayList<>();
 		payContract(ulist, blocks);
 		mcmc();
-		
-		makeRewardBlock(blocks.get(blocks.size()-1));
+ 
+		return blocks;
 	}
 
 	private void executionAndCheck()
 			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException, Exception {
-		Block tip = blockService.getBlockPrototype(store);
+
 		Sha256Hash prev = store.getLastContractResultBlockHash(contractKey.getPublicKeyAsHex());
 		if (prev == null) {
 			prev = Sha256Hash.ZERO_HASH;
 		}
-		ContractResult check = new ServiceContract(serverConfiguration, networkParameters,cacheBlockService).executeContract(tip, store,
-				contractKey.getPublicKeyAsHex(), prev);
+		Block resultBlock = contractExecutionService.createContractExecution(contractKey.getPublicKeyAsHex(), store);
+		ContractResult result = new ContractResult().parse(resultBlock.getTransactions().get(0).getData());
 
-		Block resultBlock = contractExecutionService.createContractExecution(tip, contractKey.getPublicKeyAsHex(),
-				store);
- 
+		ContractResult check = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
+				.executeContract(resultBlock, store, result.getContracttokenid(), result.getPrevblockhash(),
+						result.getReferencedBlocks());
 		blockService.saveBlock(resultBlock, store);
-
 		assertTrue(resultBlock != null);
 		Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
 
@@ -140,7 +129,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 
 	@Test
 	public void testlotteryRepeat() throws Exception {
- 
+
 		lotteryDo();
 		// repeat of execution
 		executionAndCheck();
@@ -156,18 +145,22 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		Map<String, BigInteger> payContractMap = new HashMap<>();
 		check(ulist, payContractMap);
 
-		Block resultBlock = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
+		Block resultBlock = contractExecutionService.createContractExecution(contractKey.getPublicKeyAsHex(), store);
 		assertTrue(resultBlock != null);
 
 		blockService.saveBlock(resultBlock, store);
 
-		Block resultBlock2 = contractExecutionService.createContractExecution(store, contractKey.getPublicKeyAsHex());
+		Block resultBlock2 = contractExecutionService.createContractExecution(contractKey.getPublicKeyAsHex(), store);
 		assertTrue(resultBlock2 != null);
 		blockService.saveBlock(resultBlock2, store);
 
-		ContractResult result = new ServiceContract(serverConfiguration, networkParameters,cacheBlockService).executeContract(resultBlock,
-				store, contractKey.getPublicKeyAsHex(), resultBlock.getHash());
-		Address winnerAddress = result.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
+		ContractResult result = new ContractResult().parse(resultBlock.getTransactions().get(0).getData());
+
+		ContractResult check = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
+				.executeContract(resultBlock, store, result.getContracttokenid(), result.getPrevblockhash(),
+						result.getReferencedBlocks());
+
+		Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
 
 		makeRewardBlock();
 		// check one of user get the winnerAmount
@@ -182,42 +175,31 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 	@Test
 	public void unconfirmEvent() throws Exception {
 		// unconfirm the a event, -> unconfirm result
-		// create two blocks for the ContractExecution and only one is taken 
-		wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
-		testTokens();
-		testContractTokens();
-		List<ECKey> ulist = createUserkey();
-		payUserKeys(ulist);
-		payBigUserKeys(ulist);
-		Map<String, BigInteger> startMap = new HashMap<>();
-		check(ulist, startMap);
-		// createUserPay(accountKey, ulist);
-		List<Block> events = new ArrayList<>();
-		payContract(ulist, events);
-		mcmc();
-		Block tip = blockService.getBlockPrototype(store);
+		List<Block> events = prepare();
+
 		Sha256Hash prev = store.getLastContractResultBlockHash(contractKey.getPublicKeyAsHex());
 		if (prev == null) {
 			prev = Sha256Hash.ZERO_HASH;
 		}
-		ContractResult result = new ServiceContract(serverConfiguration, networkParameters,cacheBlockService).executeContract(tip, store,
-				contractKey.getPublicKeyAsHex(), prev);
 
-		Block resultBlock = contractExecutionService.createContractExecution(tip, contractKey.getPublicKeyAsHex(),
-				store);
+		Block resultBlock = contractExecutionService.createContractExecution(contractKey.getPublicKeyAsHex(), store);
 		blockService.saveBlock(resultBlock, store);
+		ContractResult result = new ContractResult().parse(resultBlock.getTransactions().get(0).getData());
 
-		mcmc();
-		Address winnerAddress = result.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
+		ContractResult check = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
+				.executeContract(resultBlock, store, result.getContracttokenid(), result.getPrevblockhash(),
+						result.getReferencedBlocks());
 
+		Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
+		makeRewardBlock(resultBlock);
 		// check one of user get the winnerAmount
 		Map<String, BigInteger> endMap = new HashMap<>();
 		check(ulist, endMap);
 		assertTrue(endMap.get(winnerAddress.toString()).equals(new BigInteger(winnerAmount)));
-		// unconfirm enven and will lead to unconfirm result
+		// unconfirm evnt and will lead to unconfirm result
 
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirm(events.get(0).getHash(), new HashSet<>(),
-				store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).unconfirm(events.get(0).getHash(),
+				new HashSet<>(), store);
 		endMap = new HashMap<>();
 		check(ulist, endMap);
 		assertTrue(endMap.get(winnerAddress.toString()) == null);
@@ -225,28 +207,31 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	public void testUnconfirmChain() throws Exception { 
- 
+	public void testUnconfirmChain() throws Exception {
+
 		prepare();
-		Block tip = blockService.getBlockPrototype(store);
+
 		Sha256Hash prev = store.getLastContractResultBlockHash(contractKey.getPublicKeyAsHex());
 		if (prev == null) {
 			prev = Sha256Hash.ZERO_HASH;
 		}
-		ContractResult check = new ServiceContract(serverConfiguration, networkParameters,cacheBlockService).executeContract(tip, store,
-				contractKey.getPublicKeyAsHex(), prev);
 
-		Block resultBlock = contractExecutionService.createContractExecution(tip, contractKey.getPublicKeyAsHex(),
-				store);
+		Block resultBlock = contractExecutionService.createContractExecution(contractKey.getPublicKeyAsHex(), store);
 		blockService.saveBlock(resultBlock, store);
+		ContractResult result = new ContractResult().parse(resultBlock.getTransactions().get(0).getData());
+
+		ContractResult check = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
+				.executeContract(resultBlock, store, result.getContracttokenid(), result.getPrevblockhash(),
+						result.getReferencedBlocks());
 
 		// check one of user get the winnerAmount
 		Map<String, BigInteger> endMap = new HashMap<>();
 		check(ulist, endMap);
 
 		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirmRecursive(resultBlock.getHash(),
-				new HashSet<>(), store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService)
+				.unconfirmRecursive(resultBlock.getHash(), new HashSet<>(), store);
+
 		Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
 
 		// Winner Should be unconfirmed now

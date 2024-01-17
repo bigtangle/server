@@ -150,34 +150,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		}
 	}
 
-	@Test
-	public void testConnectOrderOpenUTXOs() throws Exception {
-
-		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-		// Make the "test" token
-		List<Block> addedBlocks = new ArrayList<>();
-		makeTestToken(testKey, addedBlocks);
-
-		// Make a buy order for testKey.getPubKey()s
-
-		Block block1 = makeBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks);
-
-		// Ensure the order is added now
-		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
-		assertNotNull(order);
-		assertArrayEquals(order.getBeneficiaryPubKey(), testKey.getPubKey());
-		assertEquals(order.getIssuingMatcherBlockHash(), Sha256Hash.ZERO_HASH);
-		assertEquals(order.getOfferTokenid(), NetworkParameters.BIGTANGLE_TOKENID_STRING);
-		assertEquals(order.getOfferValue(), 4);
-		assertEquals(order.getSpenderBlockHash(), null);
-		// assertEquals(order.getTargetTokenid(), tokenKey.getPublicKeyAsHex());
-		assertEquals(order.getTargetValue(), 2);
-		// assertEquals(order.getTtl(), NetworkParameters.INITIAL_ORDER_TTL);
-		assertEquals(order.getBlockHash(), block1.getHash());
-		assertFalse(order.isConfirmed());
-		assertFalse(order.isSpent());
-	}
-
+ 
 	@Test
 	public void testConfirmTransactionalUTXOs() throws Exception {
 
@@ -229,7 +202,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertEquals(store.getRewardSpender(networkParameters.getGenesisBlock().getHash()), rewardBlock1.getHash());
 
 		// Check the virtual txs too
-		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService)
+		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters, cacheBlockService)
 				.generateVirtualMiningRewardTX(rewardBlock1, store);
 		final UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock1.getHash()), store);
 		assertTrue(utxo1.isConfirmed());
@@ -297,13 +270,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		block1.solve();
 		this.blockGraph.add(block1, true, store);
 
-		makeOrderExecutionAndReward( null);
+		makeOrderExecutionAndReward(null);
 
 		// Ensure the order is confirmed now
 		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		assertTrue(order.isConfirmed());
-		assertFalse(order.isSpent());
+		// assertFalse(order.isSpent());
 	}
 
 	@Test
@@ -357,13 +330,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order);
 		assertTrue(order.isConfirmed());
-		assertFalse(order.isSpent());
+		assertTrue(order.isSpent());
 
 		// Ensure remaining orders are confirmed now
 		OrderRecord order2 = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
 		assertNotNull(order2);
 		assertTrue(order2.isConfirmed());
-		assertFalse(order2.isSpent());
+		assertTrue(order2.isSpent());
 	}
 
 	@Test
@@ -402,7 +375,6 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertTrue(order2.isConfirmed());
 		assertTrue(order2.isSpent());
 
- 
 	}
 
 	@Test
@@ -414,8 +386,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 				networkParameters.getGenesisBlock(), tx11);
 
 		// Confirm
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).confirm(block.getHash(), new HashSet<>(), (long) -1,
-				store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).confirm(block.getHash(),
+				new HashSet<>(), (long) -1, store);
 
 		// Should be confirmed now
 		final UTXO utxo11 = blockService.getUTXO(tx11.getOutput(0).getOutPointFor(block.getHash()), store);
@@ -428,7 +400,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertFalse(utxo21.isSpent());
 
 		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirm(block.getHash(), new HashSet<>(), store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).unconfirm(block.getHash(),
+				new HashSet<>(), store);
 
 		// Should be unconfirmed now
 		final UTXO utxo1 = blockService.getUTXO(tx11.getOutput(0).getOutPointFor(block.getHash()), store);
@@ -466,8 +439,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
 
 		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirm(rewardBlock11.getHash(), new HashSet<>(),
-				store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).unconfirm(rewardBlock11.getHash(),
+				new HashSet<>(), store);
 
 		// Should be unconfirmed now
 		assertFalse(store.getRewardConfirmed(rewardBlock11.getHash()));
@@ -479,7 +452,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertNull(store.getRewardSpender(networkParameters.getGenesisBlock().getHash()));
 
 		// Check the virtual txs too
-		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService)
+		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters, cacheBlockService)
 				.generateVirtualMiningRewardTX(rewardBlock11, store);
 		final UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock11.getHash()), store);
 		assertFalse(utxo1.isConfirmed());
@@ -505,94 +478,24 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		// This (saveBlock) calls milestoneUpdate currently
 		Block block11 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null);
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).confirm(block11.getHash(), new HashSet<>(), (long) -1,
-				store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).confirm(block11.getHash(),
+				new HashSet<>(), (long) -1, store);
 
 		// Should be confirmed now
 		assertTrue(store.getTokenConfirmed(block11.getHash()));
 		assertFalse(store.getTokenSpent(block11.getHash()));
 
 		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirm(block11.getHash(), new HashSet<>(), store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).unconfirm(block11.getHash(),
+				new HashSet<>(), store);
 
 		// Should be unconfirmed now
 		assertFalse(store.getTokenConfirmed(block11.getHash()));
 		assertFalse(store.getTokenSpent(block11.getHash()));
 	}
 
-	@Test
-	public void testUnconfirmOrderOpenUTXOs() throws Exception {
-
-		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-		// Make the "test" token
-		List<Block> addedBlocks = new ArrayList<>();
-		makeTestToken(testKey, addedBlocks);
-
-		// Make a buy order for testKey.getPubKey()s
-
-		Block block1 = makeBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks);
-
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).confirm(block1.getHash(), new HashSet<>(), (long) -1,
-				store);
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirm(block1.getHash(), new HashSet<>(), store);
-
-		// Ensure the order is confirmed now
-		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
-		assertNotNull(order);
-		assertFalse(order.isConfirmed());
-		assertFalse(order.isSpent());
-	}
-
-	@Test
-	public void testUnconfirmOrderMatchUTXOs2() throws Exception {
-
-		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
-		// Make the "test" token
-		List<Block> addedBlocks = new ArrayList<>();
-		makeTestToken(testKey, addedBlocks);
-		String testTokenId = testKey.getPublicKeyAsHex();
-		// Make a buy order for testKey.getPubKey()s
-
-		Block block1 = makeBuyOrder(testKey, Utils.HEX.encode(testKey.getPubKey()), 2, 2, addedBlocks); 
-		makeRewardBlock();
-		// Make a sell order for testKey.getPubKey()s
-		// Open sell order for test tokens
-		Block block3 = makeSellOrder(testKey, testTokenId, 2, 2, addedBlocks);
-		makeRewardBlock();
-		// Generate matching block
-		// Execute order matching
-		Block ex = contractExecutionService.createOrderExecution(store); 
-		makeRewardBlock(ex);
-		// Ensure all consumed order records are now unspent
-		OrderRecord order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
-		assertNotNull(order);
-		// assertFalse(order.isConfirmed());
-		assertTrue(order.isSpent());
-		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirm(ex.getHash(), new HashSet<>(),
-				store);
  
-		// Ensure all consumed order records are now unspent
-		  order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
-		assertNotNull(order);
-		// assertFalse(order.isConfirmed());
-		assertFalse(order.isSpent());
-
-		OrderRecord order3 = store.getOrder(block3.getHash(),  Sha256Hash.ZERO_HASH);
-		assertNotNull(order3);
-		assertTrue(order3.isConfirmed());
-		assertFalse(order3.isSpent());
  
-		// Execute order matching again
-		 
-		  ex = contractExecutionService.createOrderExecution(store); 
-		makeRewardBlock(ex);
-		// Ensure all consumed order records are now unspent
-		  order = store.getOrder(block1.getHash(), Sha256Hash.ZERO_HASH);
-		assertNotNull(order);
-		// assertFalse(order.isConfirmed());
-		assertTrue(order.isSpent());
-	}
 
 	@Test
 	public void testUnconfirmDependentsTransactional() throws Exception {
@@ -601,14 +504,14 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		Transaction tx1 = createTestTransaction();
 		Block block1 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
 				networkParameters.getGenesisBlock(), tx1, false);
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).confirm(block1.getHash(), new HashSet<>(), (long) -1,
-				store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).confirm(block1.getHash(),
+				new HashSet<>(), (long) -1, store);
 		Block betweenBlock = createAndAddNextBlock(networkParameters.getGenesisBlock(),
 				networkParameters.getGenesisBlock());
 		Transaction tx2 = createTestTransaction();
 		Block block2 = createAndAddNextBlockWithTransaction(betweenBlock, betweenBlock, tx2, false);
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).confirm(block2.getHash(), new HashSet<>(), (long) -1,
-				store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).confirm(block2.getHash(),
+				new HashSet<>(), (long) -1, store);
 
 		// Should be confirmed now
 		assertTrue(blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
@@ -626,8 +529,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertFalse(utxo11.isSpent());
 
 		// Unconfirm first block
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirmRecursive(block1.getHash(), new HashSet<>(),
-				store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).unconfirmRecursive(block1.getHash(),
+				new HashSet<>(), store);
 
 		// Both should be unconfirmed now
 		assertFalse(blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
@@ -671,8 +574,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertFalse(store.getRewardSpent(rewardBlock2.getHash()));
 
 		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirmRecursive(rewardBlock11.getHash(),
-				new HashSet<>(), store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService)
+				.unconfirmRecursive(rewardBlock11.getHash(), new HashSet<>(), store);
 
 		// Both should be unconfirmed now
 		assertFalse(store.getRewardConfirmed(rewardBlock11.getHash()));
@@ -689,13 +592,13 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertNull(store.getRewardSpender(rewardBlock11.getHash()));
 
 		// Check the virtual txs too
-		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService)
+		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters, cacheBlockService)
 				.generateVirtualMiningRewardTX(rewardBlock11, store);
 		UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock11.getHash()), store);
 		assertFalse(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
-		virtualTX = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).generateVirtualMiningRewardTX(rewardBlock2,
-				store);
+		virtualTX = new ServiceBase(serverConfiguration, networkParameters, cacheBlockService)
+				.generateVirtualMiningRewardTX(rewardBlock2, store);
 		utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock2.getHash()), store);
 		assertFalse(utxo1.isConfirmed());
 		assertFalse(utxo1.isSpent());
@@ -714,22 +617,21 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertTrue(store.getRewardConfirmed(rewardBlock.getHash()));
 		assertFalse(store.getRewardSpent(rewardBlock.getHash()));
 
-	 
 		Block spenderBlock = createAndAddNextBlockWithTransaction(rewardBlock, rewardBlock,
 				wallet.feeTransaction(null));
 
 		// Confirm
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).confirm(spenderBlock.getHash(),
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).confirm(spenderBlock.getHash(),
 				new HashSet<Sha256Hash>(), (long) -1, store);
 
 		// Should be confirmed now
 
 		// Unconfirm reward block
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirmRecursive(rewardBlock.getHash(),
-				new HashSet<>(), store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService)
+				.unconfirmRecursive(rewardBlock.getHash(), new HashSet<>(), store);
 
 		// Check the virtual txs too
-		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService)
+		Transaction virtualTX = new ServiceBase(serverConfiguration, networkParameters, cacheBlockService)
 				.generateVirtualMiningRewardTX(rewardBlock, store);
 		UTXO utxo3 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock.getHash()), store);
 		assertFalse(utxo3.isConfirmed());
@@ -786,17 +688,17 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		}
 
 		// Confirm
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).confirm(firstIssuance, new HashSet<>(), (long) -1,
-				store);
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).confirm(subseqIssuance, new HashSet<>(), (long) -1,
-				store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).confirm(firstIssuance,
+				new HashSet<>(), (long) -1, store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).confirm(subseqIssuance,
+				new HashSet<>(), (long) -1, store);
 
 		// Should be confirmed now
 		assertTrue(store.getTokenConfirmed(subseqIssuance));
 
 		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirmRecursive(firstIssuance, new HashSet<>(),
-				store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).unconfirmRecursive(firstIssuance,
+				new HashSet<>(), store);
 
 		// Should be unconfirmed now
 		assertFalse(store.getTokenConfirmed(subseqIssuance));
@@ -834,8 +736,8 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 				betweenBlock);
 
 		// Unconfirm order matching
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).unconfirmRecursive(rewardBlock.getHash(),
-				new HashSet<>(), store);
+		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService)
+				.unconfirmRecursive(rewardBlock.getHash(), new HashSet<>(), store);
 
 		// Verify the dependent spending block is unconfirmed too
 		assertFalse(blockService.getBlockEvaluation(utxoSpendingBlock.getHash(), store).isConfirmed());

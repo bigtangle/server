@@ -11,6 +11,7 @@ import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TransactionOutPoint;
 import net.bigtangle.server.data.ContractResult;
+import net.bigtangle.server.data.OrderExecutionResult;
 
 public class ConflictCandidate {
 
@@ -46,6 +47,11 @@ public class ConflictCandidate {
         return new ConflictCandidate(block, ConflictPoint.fromContractExecute(token));
     }
 
+    public static ConflictCandidate fromOrderExecute(BlockWrap block, OrderExecutionResult token) {
+        return new ConflictCandidate(block, ConflictPoint.fromOrderExecute(token));
+    }
+
+    
 	public BlockWrap getBlock() {
         return block;
     }

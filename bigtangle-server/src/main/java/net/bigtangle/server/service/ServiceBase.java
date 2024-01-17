@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.google.common.collect.Sets;
 import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Address;
@@ -124,6 +125,7 @@ import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.core.ConflictCandidate;
 import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.ContractResult;
+import net.bigtangle.server.data.OrderExecutionResult;
 import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.data.SolidityState.State;
@@ -271,8 +273,8 @@ public class ServiceBase {
 	 *
 	 */
 	public boolean addRequiredNonContainedBlockHashesTo(Collection<Sha256Hash> blocks, BlockWrap startingBlock,
-			long cutoffHeight, long prevMilestoneNumber, boolean throwException, FullBlockStore store)
-			throws BlockStoreException {
+			long cutoffHeight, long prevMilestoneNumber, boolean throwException, List<Block.Type> blocktypes,
+			FullBlockStore store) throws BlockStoreException {
 
 		PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
 				Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
@@ -305,8 +307,21 @@ public class ServiceBase {
 				}
 			}
 
-			// Add this block.
-			blocks.add(block.getBlockHash());
+			// Add this block and recursive referenced.
+			if (blocktypes == null) {
+				blocks.add(block.getBlockHash());
+			} else {
+				for (Block.Type type : blocktypes) {
+					if (type.equals(block.getBlock().getBlockType())) {
+						blocks.add(block.getBlockHash());
+						// contract execution add all referenced blocks
+						if (Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(block.getBlock().getBlockType())
+								|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(block.getBlock().getBlockType())) {
+							blocks.addAll(getReferrencedBlockHashes(block.getBlock()));
+						}
+					}
+				}
+			}
 
 			// Queue all of its required blocks if not already queued.
 			for (Sha256Hash req : getAllRequiredBlockHashes(block.getBlock(), false)) {
@@ -429,14 +444,17 @@ public class ServiceBase {
 		return GetBlockListResponse.create(store.blocksFromChainLength(start, end));
 	}
 
- 
-
 	public boolean getUTXOSpent(TransactionOutPoint txout, FullBlockStore store) throws BlockStoreException {
 		UTXO a = store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
+		// the TransactionOutPoint does not exist, try do the calculation
 		if (a == null) {
 			solidifyWaiting(getBlock(txout.getBlockHash(), store), store);
 			a = store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
 		}
+		// the TransactionOutPoint does not exist, the conflict would be ok, but it will
+		// not confirmed later.
+		if (a == null)
+			return false;
 		return a.isSpent();
 
 	}
@@ -503,7 +521,6 @@ public class ServiceBase {
 		Sha256Hash currPrevRewardHash = prevRewardHash;
 		for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF; i++) {
 			Block currRewardBlock;
-
 			currRewardBlock = getBlock(currPrevRewardHash, store);
 			RewardInfo currRewardInfo = new RewardInfo()
 					.parseChecked(currRewardBlock.getTransactions().get(0).getData());
@@ -514,6 +531,17 @@ public class ServiceBase {
 
 		}
 		return getBlock(currPrevRewardHash, store).getHeight();
+	}
+
+	public Set<Sha256Hash> getReferrencedBlockHashes(Block block) {
+		if (block.getBlockType().equals(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE)) {
+			return new ContractResult().parseChecked(block.getTransactions().get(0).getData()).getReferencedBlocks();
+		}
+		if (block.getBlockType().equals(Block.Type.BLOCKTYPE_ORDER_EXECUTE)) {
+			return new OrderExecutionResult().parseChecked(block.getTransactions().get(0).getData())
+					.getReferencedBlocks();
+		}
+		return new HashSet<Sha256Hash>();
 	}
 
 	/**
@@ -528,6 +556,11 @@ public class ServiceBase {
 		if (!edge) {
 			predecessors.add(block.getPrevBlockHash());
 			predecessors.add(block.getPrevBranchBlockHash());
+		}
+		// contract execution add all referenced blocks
+		if (Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(block.getBlockType())
+				|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(block.getBlockType())) {
+			predecessors.addAll(getReferrencedBlockHashes(block));
 		}
 		// All used transaction outputs
 
@@ -570,12 +603,11 @@ public class ServiceBase {
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			break;
+		case BLOCKTYPE_ORDER_EXECUTE:
+			break;
 		case BLOCKTYPE_ORDER_OPEN:
 			break;
 		case BLOCKTYPE_ORDER_CANCEL:
-			// OrderCancelInfo opInfo = new
-			// OrderCancelInfo().parseChecked(transactions.get(0).getData());
-			// predecessors.add(opInfo.getBlockHash());
 			break;
 		default:
 			throw new RuntimeException("No Implementation");
@@ -819,6 +851,14 @@ public class ServiceBase {
 			} else {
 				return store.checkContractResultSpent(connectedContracExecute.getPrevblockhash()) != null;
 			}
+		case ORDEREXECUTE:
+			final OrderExecutionResult connectedOrderExecute = c.getConflictPoint().getConnectedOrderExecute();
+			if (connectedOrderExecute.getPrevblockhash().equals(networkParameters.getGenesisBlock().getHash())) {
+				return false;
+			} else {
+				return store.checkContractResultSpent(connectedOrderExecute.getPrevblockhash()) != null;
+			}
+
 		default:
 			throw new RuntimeException("Not Implemented");
 		}
@@ -849,7 +889,13 @@ public class ServiceBase {
 			} else {
 				return store.checkContractResultConfirmed(connectedContracExecute.getPrevblockhash());
 			}
-
+		case ORDEREXECUTE:
+			final OrderExecutionResult connectedOrderExecute = c.getConflictPoint().getConnectedOrderExecute();
+			if (connectedOrderExecute.getPrevblockhash().equals(Sha256Hash.ZERO_HASH)) {
+				return true;
+			} else {
+				return store.checkOrderResultConfirmed(connectedOrderExecute.getPrevblockhash());
+			}
 		default:
 			throw new RuntimeException("not implemented");
 		}
@@ -1248,6 +1294,12 @@ public class ServiceBase {
 			if (t == null)
 				return null;
 			return store.getBlockWrap(t);
+		case ORDEREXECUTE:
+			final OrderExecutionResult connectedOrderExecute = c.getConflictPoint().getConnectedOrderExecute();
+			Sha256Hash spent = connectedOrderExecute.getSpenderBlockHash();
+			if (spent == null)
+				return null;
+			return store.getBlockWrap(spent);
 		default:
 			throw new RuntimeException("No Implementation");
 		}
@@ -1460,6 +1512,9 @@ public class ServiceBase {
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			break;
+		case BLOCKTYPE_ORDER_EXECUTE:
+			break;
+
 		case BLOCKTYPE_ORDER_OPEN:
 			SolidityState openSolidityState = checkFormalOrderOpenSolidity(block, throwExceptions);
 			if (!(openSolidityState.getState() == State.Success)) {
@@ -1850,7 +1905,8 @@ public class ServiceBase {
 		// only reward block and contract can be set coinbase and check by caculation
 		for (final Transaction tx : block.getTransactions()) {
 			if (tx.isCoinBase() && (block.getBlockType() == Type.BLOCKTYPE_REWARD
-					|| block.getBlockType() == Type.BLOCKTYPE_CONTRACT_EXECUTE)) {
+					|| block.getBlockType() == Type.BLOCKTYPE_CONTRACT_EXECUTE
+					|| block.getBlockType() == Type.BLOCKTYPE_ORDER_EXECUTE)) {
 				throw new InvalidTransactionException("coinbase is not allowed ");
 			}
 		}
@@ -1909,7 +1965,8 @@ public class ServiceBase {
 			// pro block check fee
 			Boolean checkFee = false;
 			if (block.getBlockType().equals(Block.Type.BLOCKTYPE_REWARD)
-					|| block.getBlockType().equals(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE)) {
+					|| block.getBlockType().equals(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE)
+					|| block.getBlockType().equals(Block.Type.BLOCKTYPE_ORDER_EXECUTE)) {
 				checkFee = true;
 			}
 			for (final Transaction tx : block.getTransactions()) {
@@ -2133,6 +2190,8 @@ public class ServiceBase {
 		case BLOCKTYPE_USERDATA:
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
+			break;
+		case BLOCKTYPE_ORDER_EXECUTE:
 			break;
 		case BLOCKTYPE_ORDER_OPEN:
 			SolidityState openSolidityState = checkFullOrderOpenSolidity(block, height, throwExceptions, store);
@@ -3024,6 +3083,27 @@ public class ServiceBase {
 	public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash,
 			long currentTime, FullBlockStore store) throws BlockStoreException {
 
+		BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
+		BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
+		return makeReward(prevTrunkBlock, prevBranchBlock, prevRewardHash, currentTime, store);
+	}
+
+	/**
+	 * DOES NOT CHECK FOR SOLIDITY. Computes eligibility of rewards + data tx +
+	 * Pair.of(new difficulty + new perTxReward) here for new reward blocks. This is
+	 * a prototype implementation. In the actual Spark implementation, the
+	 * computational cost is not a problem, since it is instead backpropagated and
+	 * calculated for free with delay. For more info, see notes.
+	 * 
+	 * @param prevTrunk      a predecessor block in the db
+	 * @param prevBranch     a predecessor block in the db
+	 * @param prevRewardHash the predecessor reward
+	 * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
+	 *         perTxReward)
+	 */
+	public RewardBuilderResult makeReward(BlockWrap prevTrunk, BlockWrap prevBranch, Sha256Hash prevRewardHash,
+			long currentTime, FullBlockStore store) throws BlockStoreException {
+
 		// Read previous reward block's data
 		long prevChainLength = store.getRewardChainLength(prevRewardHash);
 
@@ -3033,14 +3113,26 @@ public class ServiceBase {
 		Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();
 		long cutoffheight = getRewardCutoffHeight(prevRewardHash, store);
 
-		// Count how many blocks from miners in the reward interval are approved
-		BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
-		BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
+		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
+		ordertypes.add(Block.Type.BLOCKTYPE_INITIAL);
+		ordertypes.add(Block.Type.BLOCKTYPE_TRANSFER);
+		ordertypes.add(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+		ordertypes.add(Block.Type.BLOCKTYPE_FILE);
+		ordertypes.add(Block.Type.BLOCKTYPE_USERDATA);
+		ordertypes.add(Block.Type.BLOCKTYPE_REWARD);
+		ordertypes.add(Block.Type.BLOCKTYPE_GOVERNANCE);
+		ordertypes.add(Block.Type.BLOCKTYPE_CROSSTANGLE);
+		ordertypes.add(Block.Type.BLOCKTYPE_ORDER_EXECUTE);
+		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
+		// exclude the contract event and order open , cancel
+		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters, cacheBlockService);
+		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true,
+				ordertypes, store);
+		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true,
+				ordertypes, store);
 
-		addRequiredNonContainedBlockHashesTo(blocks, prevBranchBlock, cutoffheight, prevChainLength, true, store);
-		addRequiredNonContainedBlockHashesTo(blocks, prevTrunkBlock, cutoffheight, prevChainLength, true, store);
-
-		long difficultyReward = calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
+		long difficultyReward = serviceBase.calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1,
+				currentTime, store);
 
 		// Build the type-specific tx data
 		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
@@ -3578,7 +3670,7 @@ public class ServiceBase {
 	 */
 	public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber,
 			FullBlockStore blockStore) throws BlockStoreException {
-		confirm(blockHash, traversedBlockHashes, milestoneNumber, blockStore, false);
+		confirm(blockHash, traversedBlockHashes, milestoneNumber, blockStore, true);
 	}
 
 	public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber,
@@ -3653,6 +3745,8 @@ public class ServiceBase {
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			break;
+		case BLOCKTYPE_ORDER_EXECUTE:
+			break;
 		case BLOCKTYPE_ORDER_OPEN:
 			break;
 		case BLOCKTYPE_ORDER_CANCEL:
@@ -3707,6 +3801,9 @@ public class ServiceBase {
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			confirmContractExecute(block.getBlock(), blockStore);
+			break;
+		case BLOCKTYPE_ORDER_EXECUTE:
+			confirmOrderExecute(block.getBlock(), blockStore);
 			break;
 		case BLOCKTYPE_ORDER_OPEN:
 			confirmOrderOpen(block, blockStore);
@@ -3799,6 +3896,59 @@ public class ServiceBase {
 		}
 	}
 
+	public void addMatchingEventsOrderExecution(OrderExecutionResult orderExecutionResult, String transactionHash, long matchBlockTime,
+			FullBlockStore store) throws BlockStoreException {
+		// collect the spend order volumes and ticker to write to database
+		List<MatchResult> matchResultList = new ArrayList<MatchResult>();
+		try {
+			for (Entry<TradePair, List<Event>> entry : orderExecutionResult.getTokenId2Events().entrySet()) {
+				for (Event event : entry.getValue()) {
+					if (event instanceof Match) {
+						MatchResult f = new MatchResult(transactionHash, entry.getKey().getOrderToken(),
+								entry.getKey().getOrderBaseToken(), ((OrderBookEvents.Match) event).price,
+								((OrderBookEvents.Match) event).executedQuantity, matchBlockTime);
+						matchResultList.add(f);
+
+					}
+				}
+			}
+			if (!matchResultList.isEmpty())
+				store.insertMatchingEvent(matchResultList);
+
+		} catch (Exception e) {
+			// this is analysis data and is not consensus relevant
+		}
+	}
+	/*
+	 * connect from the contract Execution
+	 */
+	public void confirmOrderExecute(Block block, FullBlockStore blockStore) throws BlockStoreException {
+
+		try {
+			OrderExecutionResult result = new OrderExecutionResult().parse(block.getTransactions().get(0).getData());
+			OrderExecutionResult check = new ServiceOrderExecution(serverConfiguration, networkParameters,
+					cacheBlockService)
+					.orderMatching(block, result.getPrevblockhash(), result.getReferencedBlocks(), blockStore);
+			if (check != null && result.getOutputTxHash().equals(check.getOutputTxHash())
+					&& result.getAllRecords().equals(check.getAllRecords())
+					&& result.getRemainderRecords().equals(check.getRemainderRecords())
+					&& result.getCancelRecords().equals(check.getCancelRecords())) {
+				blockStore.updateOrderSpent(check.getAllRecords(), check.getPrevblockhash(), true);
+				blockStore.updateOrderConfirmed(check.getRemainderRecords(), block.getHash(), true);
+				blockStore.updateOrderCancelSpent(check.getCancelRecords(), block.getHash(), true);
+				blockStore.updateOrderResultConfirmed(block.getHash(), true);
+				
+				confirmTransaction(block, check.getOutputTx(), blockStore);
+				// Update the matching 
+				addMatchingEventsOrderExecution(check, check.getOutputTx().getHashAsString(),
+						block.getTimeSeconds(), blockStore);
+			}
+			// blockStore.updateContractEvent( );
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	/*
 	 * connect from the contract Execution
 	 */
@@ -3807,23 +3957,16 @@ public class ServiceBase {
 		try {
 			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
 			ContractResult check = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
-					.executeContract(block, blockStore, result.getContracttokenid(), result.getPrevblockhash());
+					.executeContract(block, blockStore, result.getContracttokenid(), result.getPrevblockhash(),
+							result.getReferencedBlocks());
+			Sets.difference(result.getRemainderRecords(), check.getRemainderRecords());
+			Sets.difference(check.getRemainderRecords(), result.getRemainderRecords());
 			if (check != null && result.getOutputTxHash().equals(check.getOutputTxHash())
 					&& result.getAllRecords().equals(check.getAllRecords())
 					&& result.getRemainderRecords().equals(check.getRemainderRecords())
 					&& result.getCancelRecords().equals(check.getCancelRecords())) {
-				if (ContractResult.ordermatch.equals(check.getContracttokenid())) {
-					blockStore.updateOrderSpent(check.getAllRecords(), check.getPrevblockhash(), true);
-					confirmOrderMatching(block, check.getOrderMatchingResult(), blockStore);
-					blockStore.updateOrderCancelSpent(check.getCancelRecords(), block.getHash(), true);
-				} else {
-					blockStore.updateContractEventSpent(check.getAllRecords(), block.getHash(), true);
-					for (ContractEventRecord c : check.getRemainderContractEventRecord()) {
-						c.setCollectinghash(block.getHash());
-					}
-					blockStore.insertContractEvent(check.getRemainderContractEventRecord());
-					// remainder will be saved as new with collectinghash
-				}
+
+				blockStore.updateContractEventSpent(check.getAllRecords(), block.getHash(), true);
 
 				blockStore.updateContractResultConfirmed(block.getHash(), true);
 				blockStore.updateContractResultSpent(result.getPrevblockhash(), block.getHash(), true);
@@ -3841,14 +3984,22 @@ public class ServiceBase {
 		try {
 			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
 			blockStore.updateContractResultSpent(block.getHash(), null, false);
-			if (ContractResult.ordermatch.equals(result.getContracttokenid())) {
-				blockStore.updateOrderSpent(result.getAllRecords(), block.getHash(), false);
-				blockStore.updateOrderConfirmed(result.getRemainderRecords(), block.getHash(), false);
-				removeMatchingEvents(result.getOutputTxHash(), blockStore);
-			} else {
-				blockStore.updateContractEventSpent(result.getAllRecords(), block.getHash(), false);
-			}
 			blockStore.updateContractResultConfirmed(block.getHash(), false);
+			blockStore.updateContractEventSpent(result.getAllRecords(), block.getHash(), false);
+			blockStore.updateTransactionOutputConfirmed(block.getHash(), result.getOutputTxHash(), 0, false);
+
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public void unConfirmOrderExecute(Block block, FullBlockStore blockStore) throws BlockStoreException {
+
+		try {
+			OrderExecutionResult result = new OrderExecutionResult().parse(block.getTransactions().get(0).getData());
+			blockStore.updateOrderResultSpent(block.getHash(), result.getPrevblockhash(), false);
+			blockStore.updateOrderResultConfirmed(block.getHash(), false);
+			blockStore.updateOrderSpent(result.getAllRecords(), block.getHash(), false);
 			blockStore.updateTransactionOutputConfirmed(block.getHash(), result.getOutputTxHash(), 0, false);
 
 		} catch (IOException e) {
@@ -3871,7 +4022,7 @@ public class ServiceBase {
 
 		// Set own output confirmed
 		blockStore.updateRewardConfirmed(block.getBlock().getHash(), true);
-		cacheBlockService.updataMaxConfirmedReward(block.getBlock(), true, blockStore);
+		cacheBlockService.resetMaxConfirmedReward(block.getBlock(), true, blockStore);
 	}
 
 	private void insertVirtualOrderRecords(Block block, Collection<OrderRecord> orders, FullBlockStore blockStore) {
@@ -4085,6 +4236,8 @@ public class ServiceBase {
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			break;
+		case BLOCKTYPE_ORDER_EXECUTE:
+			break;
 		case BLOCKTYPE_ORDER_OPEN:
 			unconfirmOrderOpenDependents(block, traversedBlockHashes, blockStore);
 			break;
@@ -4217,6 +4370,9 @@ public class ServiceBase {
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			unConfirmContractExecute(block, blockStore);
 			break;
+		case BLOCKTYPE_ORDER_EXECUTE:
+			unConfirmOrderExecute(block, blockStore);
+			break;
 		case BLOCKTYPE_ORDER_OPEN:
 			unconfirmOrderOpen(block, blockStore);
 			break;
@@ -4276,7 +4432,7 @@ public class ServiceBase {
 
 		// Set own output unconfirmed
 		blockStore.updateRewardConfirmed(block.getHash(), false);
-		cacheBlockService.updataMaxConfirmedReward(block , false, blockStore);
+		cacheBlockService.resetMaxConfirmedReward(block, false, blockStore);
 	}
 
 	private void unconfirmToken(Block block, FullBlockStore blockStore) throws BlockStoreException {
@@ -4446,7 +4602,7 @@ public class ServiceBase {
 		return fromAddress;
 	}
 
-	private void connectTypeSpecificUTXOs(Block block, FullBlockStore blockStore) throws BlockStoreException {
+	protected void connectTypeSpecificUTXOs(Block block, FullBlockStore blockStore) throws BlockStoreException {
 		switch (block.getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
 			break;
@@ -4467,6 +4623,9 @@ public class ServiceBase {
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			connectContractExecute(block, blockStore);
+			break;
+		case BLOCKTYPE_ORDER_EXECUTE:
+			connectOrderExecute(block, blockStore);
 			break;
 		case BLOCKTYPE_ORDER_OPEN:
 			connectOrder(block, blockStore);
@@ -4575,24 +4734,60 @@ public class ServiceBase {
 		try {
 			ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
 			ContractResult check = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
-					.executeContract(block, blockStore, result.getContracttokenid(), result.getPrevblockhash());
+					.executeContract(block, blockStore, result.getContracttokenid(), result.getPrevblockhash(),
+							result.getReferencedBlocks());
+			// check.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
 
 			if (check != null && result.getOutputTxHash().equals(check.getOutputTxHash())
 					&& result.getAllRecords().equals(check.getAllRecords())
 					&& result.getRemainderRecords().equals(check.getRemainderRecords())
 					&& result.getCancelRecords().equals(check.getCancelRecords())) {
-				if (ContractResult.ordermatch.equals(result.getContracttokenid())) {
-					insertVirtualUTXOs(block, check.getOrderMatchingResult().getOutputTx(), blockStore);
-					insertVirtualOrderRecords(block, check.getOrderMatchingResult().getRemainingOrders(), blockStore);
-					result.setBlockHash(block.getHash());
-					blockStore.insertContractResult(result);
-				} else {
-
-					result.setBlockHash(block.getHash());
-					blockStore.insertContractResult(result);
-					insertVirtualUTXOs(block, check.getOutputTx(), blockStore);
-					// Set virtual outputs confirmed
+				result.setBlockHash(block.getHash());
+				blockStore.insertContractResult(result);
+				insertVirtualUTXOs(block, check.getOutputTx(), blockStore);
+				for (ContractEventRecord c : check.getRemainderContractEventRecord()) {
+					c.setCollectinghash(block.getHash());
 				}
+				blockStore.insertContractEvent(check.getRemainderContractEventRecord());
+
+			} else {
+				// the ContractExecute can not be reproduced here
+				logger.debug("ContractResult check failed  from result " + result.toString() + " compare to check "
+						+ check.toString());
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void connectOrderExecute(Block block, FullBlockStore blockStore) throws BlockStoreException {
+		try {
+			OrderExecutionResult result = new OrderExecutionResult().parse(block.getTransactions().get(0).getData());
+			OrderExecutionResult check = new ServiceOrderExecution(serverConfiguration, networkParameters,
+					cacheBlockService)
+					.orderMatching(block, result.getPrevblockhash(), result.getReferencedBlocks(), blockStore);
+
+			if (check != null && result.getOutputTxHash().equals(check.getOutputTxHash())
+					&& result.getAllRecords().equals(check.getAllRecords())
+					&& result.getRemainderRecords().equals(check.getRemainderRecords())
+					&& result.getCancelRecords().equals(check.getCancelRecords())) {
+				result.setBlockHash(block.getHash());
+				blockStore.insertOrderResult(result);
+				insertVirtualUTXOs(block, check.getOutputTx(), blockStore);
+				for (OrderRecord c : check.getSpentOrderRecord() ) {
+					c.setSpent(true);
+					c.setSpenderBlockHash(block.getHash());
+				}
+				blockStore.updateOrderSpent(check.getSpentOrderRecord() );
+				for (OrderRecord c : check.getRemainderOrderRecord()) {
+					c.setIssuingMatcherBlockHash(block.getHash());
+				}
+				blockStore.insertOrder(check.getRemainderOrderRecord());
+
+			} else {
+				// the ContractExecute can not be reproduced here
+				logger.debug("OrderExecutionResult check failed  from result " + result.toString()
+						+ " compare to check " + check.toString());
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -4630,7 +4825,7 @@ public class ServiceBase {
 		}
 	}
 
-	private void insertIntoOrderBooks(OrderRecord o, TreeMap<TradePair, OrderBook> orderBooks,
+	protected void insertIntoOrderBooks(OrderRecord o, TreeMap<TradePair, OrderBook> orderBooks,
 			ArrayList<OrderRecord> orderId2Order, long orderId, FullBlockStore blockStore) throws BlockStoreException {
 
 		Side side = o.getSide();
@@ -4675,9 +4870,6 @@ public class ServiceBase {
 			throws BlockStoreException {
 		TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts = new TreeMap<>();
 
-		if (block.getLastMiningRewardBlock() == 90949) {
-			logger.debug(block.toString());
-		}
 		// Get previous order matching block
 		Sha256Hash prevHash = rewardInfo.getPrevRewardHash();
 		Set<Sha256Hash> collectedBlocks = rewardInfo.getBlocks();
@@ -4758,92 +4950,6 @@ public class ServiceBase {
 		return new OrderMatchingResult(toBeSpentOrders, tx, remainingOrders.values(), tokenId2Events);
 	}
 
-	public ContractResult orderMatching(Block block, Sha256Hash prevHash, FullBlockStore blockStore)
-			throws BlockStoreException {
-		TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts = new TreeMap<>();
-
-		// Deterministic randomization
-		byte[] randomness = Utils.xor(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes());
-
-		// Collect all orders confirmed
-		Map<Sha256Hash, OrderRecord> sortedNewOrders = new TreeMap<>(
-				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
-		sortedNewOrders.putAll(blockStore.getOrderMatchingIssuedOrdersNotSpent(Sha256Hash.ZERO_HASH));
-
-		// sort order for execute in deterministic randomness
-		Map<Sha256Hash, OrderRecord> sortedOldOrders = new TreeMap<>(
-				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
-		HashMap<Sha256Hash, OrderRecord> remainingOrders = new HashMap<Sha256Hash, OrderRecord>();
-		if (!prevHash.equals(Sha256Hash.ZERO_HASH)) {
-			sortedOldOrders = blockStore.getOrderMatchingIssuedOrders(prevHash);
-		}
-		List<OrderCancel> cancels = blockStore.getOrderCancelConfirmed();
-		Set<OrderRecord> cancelledOrders = new HashSet<>();
-
-		Set<OrderRecord> toBeSpentOrders = new HashSet<>();
-		for (OrderRecord r : sortedOldOrders.values()) {
-			toBeSpentOrders.add(OrderRecord.cloneOrderRecord(r));
-		}
-		for (OrderRecord r : sortedNewOrders.values()) {
-			toBeSpentOrders.add(OrderRecord.cloneOrderRecord(r));
-		}
-		remainingOrders.putAll(sortedOldOrders);
-		remainingOrders.putAll(sortedNewOrders);
-
-		// Issue timeout cancels, set issuing order blockhash
-		setIssuingBlockHash(block, remainingOrders);
-		timeoutOrdersToCancelled(block, remainingOrders, cancelledOrders);
-		orderstoCancelled(cancels, remainingOrders, cancelledOrders);
-
-		// Remove the now cancelled orders from rest of orders
-		for (OrderRecord c : cancelledOrders) {
-			remainingOrders.remove(c.getBlockHash());
-			sortedOldOrders.remove(c.getBlockHash());
-			sortedNewOrders.remove(c.getBlockHash());
-		}
-
-		// Add to proceeds all cancelled orders going back to the beneficiary
-		payoutCancelledOrders(payouts, cancelledOrders);
-
-		// From all orders and ops, begin order matching algorithm by filling
-		// order books
-		int orderId = 0;
-		ArrayList<OrderRecord> orderId2Order = new ArrayList<>();
-		TreeMap<TradePair, OrderBook> orderBooks = new TreeMap<TradePair, OrderBook>();
-
-		// Add old orders first without not valid yet
-		for (OrderRecord o : sortedOldOrders.values()) {
-			if (o.isValidYet(block.getTimeSeconds()))
-				insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
-		}
-
-		// Now new orders that are valid yet
-		for (OrderRecord o : sortedNewOrders.values()) {
-			if (o.isValidYet(block.getTimeSeconds()))
-				insertIntoOrderBooks(o, orderBooks, orderId2Order, orderId++, blockStore);
-		}
-
-		// Collect and process all matching events
-		Map<TradePair, List<Event>> tokenId2Events = new HashMap<>();
-		for (Entry<TradePair, OrderBook> orderBook : orderBooks.entrySet()) {
-			processOrderBook(payouts, remainingOrders, orderId2Order, tokenId2Events, orderBook);
-		}
-
-		for (OrderRecord o : remainingOrders.values()) {
-			o.setDefault();
-		}
-
-		// Make deterministic tx with proceeds
-		Transaction tx = createOrderPayoutTransaction(block, payouts);
-
-		OrderMatchingResult orderMatchingResult = new OrderMatchingResult(toBeSpentOrders, tx, remainingOrders.values(),
-				tokenId2Events);
-
-		return new ContractResult(block.getHash(), "ordermatch", getOrderRecordHash(toBeSpentOrders), tx.getHash(), tx,
-				prevHash, getOrderRecordHash(cancelledOrders), remainingOrders.keySet(), block.getTimeSeconds(),
-				orderMatchingResult, null);
-	}
-
 	public Set<Sha256Hash> getOrderRecordHash(Set<OrderRecord> orders) {
 		Set<Sha256Hash> hashs = new HashSet<>();
 		for (OrderRecord o : orders) {
@@ -4876,7 +4982,7 @@ public class ServiceBase {
 		return tx;
 	}
 
-	private void processOrderBook(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
+	protected void processOrderBook(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
 			HashMap<Sha256Hash, OrderRecord> remainingOrders, ArrayList<OrderRecord> orderId2Order,
 			Map<TradePair, List<Event>> tokenId2Events, Entry<TradePair, OrderBook> orderBook)
 			throws BlockStoreException {
@@ -5007,7 +5113,7 @@ public class ServiceBase {
 		return re.longValue();
 	}
 
-	private void payoutCancelledOrders(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
+	protected void payoutCancelledOrders(TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts,
 			Set<OrderRecord> cancelledOrders) {
 		for (OrderRecord o : cancelledOrders) {
 			byte[] beneficiaryPubKey = o.getBeneficiaryPubKey();
@@ -5033,7 +5139,7 @@ public class ServiceBase {
 		proceeds.put(tokenid, offerTokenProceeds.add(BigInteger.valueOf(tokenValue)));
 	}
 
-	private void cancelOrderstoCancelled(List<OrderCancelInfo> cancels,
+	protected void cancelOrderstoCancelled(List<OrderCancelInfo> cancels,
 			HashMap<Sha256Hash, OrderRecord> remainingOrders, Set<OrderRecord> cancelledOrders) {
 		for (OrderCancelInfo c : cancels) {
 			if (remainingOrders.containsKey(c.getBlockHash())) {
@@ -5051,7 +5157,7 @@ public class ServiceBase {
 		}
 	}
 
-	private void setIssuingBlockHash(Block block, HashMap<Sha256Hash, OrderRecord> remainingOrders) {
+	protected void setIssuingBlockHash(Block block, HashMap<Sha256Hash, OrderRecord> remainingOrders) {
 		Iterator<Entry<Sha256Hash, OrderRecord>> it = remainingOrders.entrySet().iterator();
 		while (it.hasNext()) {
 			OrderRecord order = it.next().getValue();
@@ -5059,7 +5165,7 @@ public class ServiceBase {
 		}
 	}
 
-	private void timeoutOrdersToCancelled(Block block, HashMap<Sha256Hash, OrderRecord> remainingOrders,
+	protected void timeoutOrdersToCancelled(Block block, HashMap<Sha256Hash, OrderRecord> remainingOrders,
 			Set<OrderRecord> cancelledOrders) {
 		// Issue timeout cancels, set issuing order blockhash
 		Iterator<Entry<Sha256Hash, OrderRecord>> it = remainingOrders.entrySet().iterator();
@@ -5071,7 +5177,7 @@ public class ServiceBase {
 		}
 	}
 
-	private void collectOrdersWithCancel(Block block, Set<Sha256Hash> collectedBlocks, List<OrderCancelInfo> cancels,
+	protected void collectOrdersWithCancel(Block block, Set<Sha256Hash> collectedBlocks, List<OrderCancelInfo> cancels,
 			Map<Sha256Hash, OrderRecord> newOrders, Set<OrderRecord> spentOrders, FullBlockStore blockStore)
 			throws BlockStoreException {
 		for (Sha256Hash bHash : collectedBlocks) {
@@ -5320,7 +5426,7 @@ public class ServiceBase {
 		long difficulty = rewardInfo.getDifficultyTargetReward();
 
 		blockStore.insertReward(block.getHash(), prevRewardHash, difficulty, currChainLength);
-		 
+
 	}
 
 	public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainNameBlockHash,

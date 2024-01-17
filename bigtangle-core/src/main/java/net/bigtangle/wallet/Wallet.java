@@ -1695,6 +1695,13 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 	}
 
 	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, String memo,
+			byte[] tokenid) throws JsonProcessingException, IOException, InsufficientMoneyException {
+
+		return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo, calculateAllSpendCandidates(aesKey, false),
+				3, 60000);
+	}
+
+	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, String memo,
 			List<FreeStandingTransactionOutput> coinList)
 			throws JsonProcessingException, IOException, InsufficientMoneyException {
 
@@ -1851,7 +1858,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 	}
 
 	public Block payToScript(KeyParameter aesKey, Coin amount, MemoInfo memo, Script script)
-			throws  InsufficientMoneyException, IOException {
+			throws InsufficientMoneyException, IOException {
 
 		List<FreeStandingTransactionOutput> coinList = calculateAllSpendCandidates(aesKey, false);
 
@@ -1973,8 +1980,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		return multispent;
 	}
 
-	public Transaction feeTransaction(KeyParameter aesKey)
-			throws  InsufficientMoneyException, IOException {
+	public Transaction feeTransaction(KeyParameter aesKey) throws InsufficientMoneyException, IOException {
 		return feeTransaction(aesKey, calculateAllSpendCandidates(aesKey, false));
 	}
 
@@ -2449,7 +2455,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
 		return payFromList(aesKey, destination.toString(), amount, new MemoInfo(memo));
 	}
- 
+
 	public List<Block> pay(KeyParameter aesKey, String destination, Coin amount, MemoInfo memo)
 			throws JsonProcessingException, IOException, InsufficientMoneyException {
 
@@ -2474,7 +2480,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 			Address destination, Coin amount, String memo)
 			throws JsonProcessingException, IOException, InsufficientMoneyException {
 
-		return payFromListNoSplitTransaction(aesKey, destination.toString(), amount,  new MemoInfo(memo), candidates);
+		return payFromListNoSplitTransaction(aesKey, destination.toString(), amount, new MemoInfo(memo), candidates);
 	}
 
 //no repeat here
@@ -2530,8 +2536,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 	}
 
 	public Block saveUserdata(ECKey userKey, Transaction transaction, boolean encrypt, KeyParameter aesKey)
-			throws JsonProcessingException, IOException, InsufficientMoneyException, InvalidCipherTextException 
-			  {
+			throws JsonProcessingException, IOException, InsufficientMoneyException, InvalidCipherTextException {
 		// transaction.getData() is not encrypted
 		if (encrypt) {
 			byte[] cipher = ECIESCoder.encrypt(userKey.getPubKeyPoint(), transaction.getData());

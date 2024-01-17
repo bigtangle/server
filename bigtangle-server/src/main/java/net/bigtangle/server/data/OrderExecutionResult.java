@@ -5,30 +5,35 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.SpentBlock;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.ordermatch.TradePair;
+import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 
 /*
- * Contract Execution provide the results from the execution based on prev results.
- * It must be check on every node and should be the same result.
- * The data is saved in table ContractResult mainly as byte.
+ * OrderExecutionResult provide the results from the execution based on prev results.
+ * It must be check on every node and should return the same result.
+ * The data is saved in table OrderExecutionResult mainly as byte.
  */
-public class ContractResult extends SpentBlock {
-	 
-	String contracttokenid;
+public class OrderExecutionResult extends SpentBlock {
+
 	// reference the previous ContractResult block, it forms a chain
 	Sha256Hash prevblockhash;
 	// referenced new order blocks
 	Set<Sha256Hash> referencedBlocks = new HashSet<>();;
 
-	// this ContractResult produces coinbase outputTxHash
+	// coinbase outputTxHash
 	Sha256Hash outputTxHash;
-	// all records used in this calculation of ContractResult
+	// all records used in this calculation
 	Set<Sha256Hash> allRecords = new HashSet<>();
 	// the cancelled records referenced by this ContractResult
 	Set<Sha256Hash> cancelRecords = new HashSet<>();
@@ -41,18 +46,21 @@ public class ContractResult extends SpentBlock {
 	// with re calculation to save
 	Transaction outputTx;
 
-	Set<ContractEventRecord> remainderContractEventRecord;
-
-	public ContractResult() {
+	Collection<OrderRecord> remainderOrderRecord;
+	Set<OrderRecord> spentOrderRecord;
+	Map<TradePair, List<Event>> tokenId2Events;
+	
+	public OrderExecutionResult() {
 
 	}
 
-	public ContractResult(Sha256Hash blockhash, String contractid, Set<Sha256Hash> toBeSpent, Sha256Hash outputTxHash,
+	public OrderExecutionResult(Sha256Hash blockhash, Set<Sha256Hash> toBeSpent, Sha256Hash outputTxHash,
 			Transaction outputTx, Sha256Hash prevblockhash, Set<Sha256Hash> cancelRecords,
-			Set<Sha256Hash> remainderRecords, long inserttime, Set<ContractEventRecord> remainderContractEventRecord,
-			Set<Sha256Hash> referencedOrderBlocks) {
+			Set<Sha256Hash> remainderRecords, long inserttime, Collection<OrderRecord> remainderOrderRecord,
+			Set<OrderRecord> spentOrderRecord,
+			Set<Sha256Hash> referencedOrderBlocks, Map<TradePair, List<Event>> tokenId2Events ) {
 		this.setBlockHash(blockhash);
-		this.contracttokenid = contractid;
+
 		this.prevblockhash = prevblockhash;
 		this.outputTxHash = outputTxHash;
 		this.outputTx = outputTx;
@@ -61,8 +69,10 @@ public class ContractResult extends SpentBlock {
 		this.remainderRecords = remainderRecords;
 		this.setTime(inserttime);
 
-		this.remainderContractEventRecord = remainderContractEventRecord;
+		this.remainderOrderRecord = remainderOrderRecord;
 		this.referencedBlocks = referencedOrderBlocks;
+		this.	spentOrderRecord= spentOrderRecord;
+		this.tokenId2Events=tokenId2Events;
 	}
 
 	public byte[] toByteArray() {
@@ -70,7 +80,7 @@ public class ContractResult extends SpentBlock {
 		try {
 			DataOutputStream dos = new DataOutputStream(baos);
 			dos.write(super.toByteArray());
-			Utils.writeNBytesString(dos, contracttokenid);
+
 			Utils.writeNBytes(dos, outputTxHash.getBytes());
 			Utils.writeNBytes(dos, prevblockhash.getBytes());
 
@@ -100,9 +110,9 @@ public class ContractResult extends SpentBlock {
 	}
 
 	@Override
-	public ContractResult parseDIS(DataInputStream dis) throws IOException {
+	public OrderExecutionResult parseDIS(DataInputStream dis) throws IOException {
 		super.parseDIS(dis);
-		contracttokenid = Utils.readNBytesString(dis);
+
 		outputTxHash = Sha256Hash.wrap(Utils.readNBytes(dis));
 		prevblockhash = Sha256Hash.wrap(Utils.readNBytes(dis));
 		allRecords = new HashSet<>();
@@ -129,7 +139,7 @@ public class ContractResult extends SpentBlock {
 		return this;
 	}
 
-	public ContractResult parseChecked(byte[] buf) {
+	public OrderExecutionResult parseChecked(byte[] buf) {
 		try {
 			return parse(buf);
 		} catch (IOException e) {
@@ -138,7 +148,7 @@ public class ContractResult extends SpentBlock {
 		}
 	}
 
-	public ContractResult parse(byte[] buf) throws IOException {
+	public OrderExecutionResult parse(byte[] buf) throws IOException {
 		ByteArrayInputStream bain = new ByteArrayInputStream(buf);
 		DataInputStream dis = new DataInputStream(bain);
 		parseDIS(dis);
@@ -161,14 +171,6 @@ public class ContractResult extends SpentBlock {
 
 	public void setOutputTx(Transaction outputTx) {
 		this.outputTx = outputTx;
-	}
-
-	public String getContracttokenid() {
-		return contracttokenid;
-	}
-
-	public void setContracttokenid(String contracttokenid) {
-		this.contracttokenid = contracttokenid;
 	}
 
 	public Sha256Hash getPrevblockhash() {
@@ -203,14 +205,6 @@ public class ContractResult extends SpentBlock {
 		this.remainderRecords = remainderRecords;
 	}
 
-	public Set<ContractEventRecord> getRemainderContractEventRecord() {
-		return remainderContractEventRecord;
-	}
-
-	public void setRemainderContractEventRecord(Set<ContractEventRecord> remainderContractEventRecord) {
-		this.remainderContractEventRecord = remainderContractEventRecord;
-	}
-
 	public Set<Sha256Hash> getReferencedBlocks() {
 		return referencedBlocks;
 	}
@@ -219,11 +213,28 @@ public class ContractResult extends SpentBlock {
 		this.referencedBlocks = referencedBlocks;
 	}
 
-	@Override
-	public String toString() {
-		return "ContractResult [contracttokenid=" + contracttokenid + ", prevblockhash=" + prevblockhash
-				+ ", outputTxHash=" + outputTxHash + ", outputTx=" + outputTx + ", allRecords=" + allRecords
-				+ ", cancelRecords=" + cancelRecords + ", remainderRecords=" + remainderRecords + "]";
+	public Collection<OrderRecord> getRemainderOrderRecord() {
+		return remainderOrderRecord;
+	}
+
+	public void setRemainderOrderRecord(Collection<OrderRecord> remainderOrderRecord) {
+		this.remainderOrderRecord = remainderOrderRecord;
+	}
+
+	public Set<OrderRecord> getSpentOrderRecord() {
+		return spentOrderRecord;
+	}
+
+	public void setSpentOrderRecord(Set<OrderRecord> spentOrderRecord) {
+		this.spentOrderRecord = spentOrderRecord;
+	}
+
+	public Map<TradePair, List<Event>> getTokenId2Events() {
+		return tokenId2Events;
+	}
+
+	public void setTokenId2Events(Map<TradePair, List<Event>> tokenId2Events) {
+		this.tokenId2Events = tokenId2Events;
 	}
 
 }

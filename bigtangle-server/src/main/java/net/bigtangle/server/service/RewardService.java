@@ -5,7 +5,9 @@
 package net.bigtangle.server.service;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -72,9 +74,9 @@ public class RewardService {
 	@Autowired
 	private ScheduleConfiguration scheduleConfiguration;
 
-    @Autowired
-    protected CacheBlockService cacheBlockService;
-    
+	@Autowired
+	protected CacheBlockService cacheBlockService;
+
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	private final String LOCKID = this.getClass().getName();
@@ -192,7 +194,8 @@ public class RewardService {
 				Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 		if (timeOverride != null)
 			currentTime = timeOverride;
-		RewardBuilderResult result = makeReward(prevTrunk, prevBranch, prevRewardHash, currentTime, store);
+		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters, cacheBlockService);
+		RewardBuilderResult result = serviceBase.makeReward(prevTrunk, prevBranch, prevRewardHash, currentTime, store);
 
 		Block block = Block.createBlock(networkParameters, r1, r2);
 
@@ -214,8 +217,7 @@ public class RewardService {
 		}
 
 		block.addTransaction(tx);
-		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
-		if (serviceBase.enableOrderContract(block)) {
+		if (!serviceBase.enableOrderContract(block)) {
 			OrderMatchingResult ordermatchresult = serviceBase.generateOrderMatching(block, currRewardInfo, store);
 			currRewardInfo.setOrdermatchingResult(ordermatchresult.getOrderMatchingResultHash());
 			tx.setData(currRewardInfo.toByteArray());
@@ -268,48 +270,6 @@ public class RewardService {
 
 		return GetTXRewardListResponse.create(store.getAllConfirmedReward());
 
-	}
-
-	/**
-	 * DOES NOT CHECK FOR SOLIDITY. Computes eligibility of rewards + data tx +
-	 * Pair.of(new difficulty + new perTxReward) here for new reward blocks. This is
-	 * a prototype implementation. In the actual Spark implementation, the
-	 * computational cost is not a problem, since it is instead backpropagated and
-	 * calculated for free with delay. For more info, see notes.
-	 * 
-	 * @param prevTrunk      a predecessor block in the db
-	 * @param prevBranch     a predecessor block in the db
-	 * @param prevRewardHash the predecessor reward
-	 * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
-	 *         perTxReward)
-	 */
-	public RewardBuilderResult makeReward(BlockWrap prevTrunk, BlockWrap prevBranch, Sha256Hash prevRewardHash,
-			long currentTime, FullBlockStore store) throws BlockStoreException {
-
-		// Read previous reward block's data
-		long prevChainLength = store.getRewardChainLength(prevRewardHash);
-
-		// Build transaction for block
-		Transaction tx = new Transaction(networkParameters);
-
-		Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();
-		long cutoffheight = blockService.getRewardCutoffHeight(prevRewardHash, store);
-
-		// Count how many blocks from miners in the reward interval are approved
-
-		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
-		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true,
-				store);
-		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true, store);
-
-		long difficultyReward = serviceBase.calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1,
-				currentTime, store);
-
-		// Build the type-specific tx data
-		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
-		tx.setData(rewardInfo.toByteArray());
-		tx.setMemo(new MemoInfo("Reward"));
-		return new RewardBuilderResult(tx, difficultyReward);
 	}
 
 	public long calculateNextBlockDifficulty(RewardInfo currRewardInfo) {
