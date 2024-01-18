@@ -291,10 +291,11 @@ public class FullBlockGraph {
 
 	public boolean addNonChain(Block block, boolean allowUnsolid, FullBlockStore blockStore,
 			boolean allowMissingPredecessor) throws BlockStoreException {
-		/*
-		 * if (block.getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
-		 * log.debug(block.toString()); }
-		 */
+		 
+		  // if (block.getBlockType() == Type.BLOCKTYPE_ORDER_EXECUTE) {
+		 //  log.debug(block.toString()); 
+		  // }
+		  
 		// Check the block is partially formally valid and fulfills PoW
 
 		block.verifyHeader();

@@ -4087,8 +4087,10 @@ public class ServiceBase {
 						in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
 
 				// Sanity check
-				if (prevOut == null)
-					throw new RuntimeException("Attempted to spend a non-existent output!");
+				if (prevOut == null) {
+					Block b = getBlock(in.getOutpoint().getBlockHash(), blockStore);
+					throw new RuntimeException("Attempted to spend a non-existent output from block" +b.toString());
+				}
 				// FIXME transaction check at connected if (prevOut.isSpent())
 				// throw new RuntimeException("Attempted to spend an already spent output!");
 
@@ -4475,8 +4477,8 @@ public class ServiceBase {
 
 	public void solidifyBlock(Block block, SolidityState solidityState, boolean setMilestoneSuccess,
 			FullBlockStore blockStore) throws BlockStoreException {
-		if (block.getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
-			// logger.debug(block.toString());
+		if (block.getBlockType() == Type.BLOCKTYPE_ORDER_EXECUTE) {
+			  logger.debug(block.toString());
 		}
 		switch (solidityState.getState()) {
 		case MissingCalculation:
@@ -4504,8 +4506,8 @@ public class ServiceBase {
 			break;
 		case Success:
 			// If already set, nothing to do here...
-			if (blockStore.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2)
-				return;
+		 	if (blockStore.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2)
+		 		return;
 
 			// TODO don't calculate again, it may already have been calculated
 			// before
@@ -4786,7 +4788,7 @@ public class ServiceBase {
 
 			} else {
 				// the ContractExecute can not be reproduced here
-				logger.debug("OrderExecutionResult check failed  from result " + result.toString()
+				logger.warn("OrderExecutionResult check failed  from result " + result.toString()
 						+ " compare to check " + check.toString());
 			}
 		} catch (IOException e) {
@@ -5187,11 +5189,11 @@ public class ServiceBase {
 				OrderRecord order = blockStore.getOrder(b.getBlock().getHash(), Sha256Hash.ZERO_HASH);
 				// order is null, write it to
 				if (order == null) {
-					if (b.getBlockEvaluation().getSolid() > 0) {
+					 
 						connectUTXOs(b.getBlock(), blockStore);
 						connectTypeSpecificUTXOs(b.getBlock(), blockStore);
 						order = blockStore.getOrder(b.getBlock().getHash(), Sha256Hash.ZERO_HASH);
-					}
+					 
 				}
 				if (order != null) {
 					newOrders.put(b.getBlock().getHash(), OrderRecord.cloneOrderRecord(order));

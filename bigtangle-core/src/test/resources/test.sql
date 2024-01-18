@@ -24,7 +24,7 @@ select * from mcmc  ;
 select *  FROM blocks, mcmc  WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 
 AND confirmed = false   AND mcmc.rating >= 5;
 
-select *  FROM info.blocks where  hash=0x000051e704d8ca112b077308fc2873e0062cb0530bab4757ccc1bb03779c2209;
+select *  FROM info.blocks where  hash=0x000c1f398adde6b2c31722340987dea675eadff2841cdb7825afc90f1d4c5097;
 
 select * from blocks where blocktype=2 order by height desc limit 500
 select * from blocks where milestone=339 and blocktype=3
