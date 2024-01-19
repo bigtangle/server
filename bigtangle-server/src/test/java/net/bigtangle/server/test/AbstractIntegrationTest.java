@@ -530,7 +530,7 @@ public abstract class AbstractIntegrationTest {
 		this.blockGraph.add(block, true, store);
 		addedBlocks.add(block);
 
-		mcmcServiceUpdate();
+		makeOrderExecutionAndReward(addedBlocks);
 		return block;
 	}
 
@@ -556,6 +556,11 @@ public abstract class AbstractIntegrationTest {
 
 	protected Block makeOrderExecutionAndReward(List<Block> addedBlocks) throws Exception {
 		Block b = orderExecutionService.createOrderExecution(store);
+		return rewardWithBlock(addedBlocks, b);
+
+	}
+
+	private Block rewardWithBlock(List<Block> addedBlocks, Block b) throws Exception {
 		if (b != null) {
 			if (addedBlocks != null) {
 				addedBlocks.add(b);
@@ -568,7 +573,6 @@ public abstract class AbstractIntegrationTest {
 		} else {
 			return makeRewardBlock(addedBlocks);
 		}
-
 	}
 
 	protected Block makeRewardBlock(Block predecessor) throws Exception {

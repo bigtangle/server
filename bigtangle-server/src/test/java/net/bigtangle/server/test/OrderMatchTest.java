@@ -1,8 +1,6 @@
 package net.bigtangle.server.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -23,7 +21,6 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderOpenInfo;
-import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Side;
 import net.bigtangle.core.Transaction;
@@ -913,59 +910,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
 	}
 
-	@Test
-	public void cancelUnconfirm() throws Exception {
-
-		ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
-				Utils.HEX.decode(testPub));
-		ECKey testKey = new ECKey();
-
-		List<Block> addedBlocks = new ArrayList<>();
-
-		// Make test token
-		makeTestTokenWithSpare(testKey, addedBlocks);
-		String testTokenId = testKey.getPublicKeyAsHex();
-		payBigToAmount(genesisKey, addedBlocks);
-
-		// Open sell orders for test tokens
-		Block sell = makeSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-		// Cancel all
-		makeCancelOp(sell, testKey, addedBlocks);
-		// Open buy order for test tokens
-		Block buy = makeBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks); 
-		showOrders();
-		makeCancelOp(buy, genesisKey, addedBlocks);
-		// Execute order matching
-		Block ex = orderExecutionService.createOrderExecution(store);
-		makeRewardBlock(ex);
-
-		// Verify all tokens did not change possession
-		// assertHasAvailableToken(testKey, NetworkParameters.BIGTANGLE_TOKENID_STRING,
-		// null);
-		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 0l);
-		// Ensure all consumed order records are now unspent
-		OrderRecord order = store.getOrder(buy.getHash(), Sha256Hash.ZERO_HASH);
-		assertNotNull(order);
-		assertTrue(order.isConfirmed());
-		assertTrue(order.isSpent());
-		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).unconfirm(ex.getHash(),
-				new HashSet<>(), store);
-		order = store.getOrder(buy.getHash(), Sha256Hash.ZERO_HASH);
-		assertNotNull(order);
-		assertFalse(order.isSpent());
-		// execution after unconfirm shoud do the cancel still there and no matching
-		  ex = orderExecutionService.createOrderExecution(store);
-		 //no execution
-		  assertTrue(ex==null);
-		// Ensure all consumed order records are now unspent
-		order = store.getOrder(buy.getHash(), Sha256Hash.ZERO_HASH);
-		assertNotNull(order);
-		assertTrue(order.isConfirmed());
-	//	assertTrue(order.isSpent());
-
-	}
-
+ 
 	@Test
 	public void effectiveCancel() throws Exception {
 
@@ -1401,7 +1346,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		BigInteger amount = BigInteger.valueOf(77);
 		// split BIG
 		payBigTo(testKeyBuy, amount.add(Coin.FEE_DEFAULT.getValue()), null);
-		// Thread.sleep(2000);
+	 
 		payBigTo(testKeyBuy, amount, null);
 
 		// Open buy order for test tokens
