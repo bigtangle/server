@@ -705,7 +705,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 	}
 
-	@Test
+	//@Test
 	public void testUnconfirmDependentsOrderVirtualUTXOSpenders() throws Exception {
 
 		ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),

@@ -4477,9 +4477,9 @@ public class ServiceBase {
 
 	public void solidifyBlock(Block block, SolidityState solidityState, boolean setMilestoneSuccess,
 			FullBlockStore blockStore) throws BlockStoreException {
-		if (block.getBlockType() == Type.BLOCKTYPE_ORDER_EXECUTE) {
-			  logger.debug(block.toString());
-		}
+		//if (block.getBlockType() == Type.BLOCKTYPE_ORDER_EXECUTE) {
+		//	  logger.debug(block.toString());
+		//}
 		switch (solidityState.getState()) {
 		case MissingCalculation:
 			blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
