@@ -43,7 +43,7 @@ import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.service.base.ServiceBaseConnect.RewardBuilderResult;
 import net.bigtangle.server.service.base.ServiceBaseReward;
-import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
 
 /**
@@ -55,7 +55,7 @@ import net.bigtangle.store.FullBlockStore;
 public class RewardService {
 
 	@Autowired
-	protected FullBlockGraph blockGraph;
+	protected FullBlockStoreImpl blockGraph;
 	@Autowired
 	private BlockService blockService;
 	@Autowired

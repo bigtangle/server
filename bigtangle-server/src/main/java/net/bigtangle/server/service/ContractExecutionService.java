@@ -37,7 +37,7 @@ import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.service.base.ServiceBaseConnect;
 import net.bigtangle.server.service.base.ServiceContract;
-import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
 
 /**
@@ -50,7 +50,7 @@ import net.bigtangle.store.FullBlockStore;
 public class ContractExecutionService {
 
 	@Autowired
-	protected FullBlockGraph blockGraph;
+	protected FullBlockStoreImpl blockGraph;
 	@Autowired
 	private BlockService blockService;
 	@Autowired

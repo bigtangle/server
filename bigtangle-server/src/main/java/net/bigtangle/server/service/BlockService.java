@@ -48,7 +48,7 @@ import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.base.ServiceBaseConnect;
-import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.DomainValidator;
 import net.bigtangle.utils.Gzip;
@@ -67,7 +67,7 @@ public class BlockService {
 	@Autowired
 	protected NetworkParameters networkParameters;
 	@Autowired
-	FullBlockGraph blockgraph;
+	FullBlockStoreImpl blockgraph;
 	@Autowired
 	protected KafkaConfiguration kafkaConfiguration;
 

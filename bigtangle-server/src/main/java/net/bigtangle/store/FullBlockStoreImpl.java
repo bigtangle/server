@@ -54,21 +54,19 @@ import net.bigtangle.utils.Gzip;
 
 /**
  * <p>
- * A FullBlockGraph works in conjunction with a {@link FullBlockStore} to verify
+ * A FullBlockStoreImpl works in conjunction with a {@link DatabaseFullBlockStore} to verify
  * all the rules of the BigTangle system. Chain block as reward block is added
  * first into ChainBlockQueue as other blocks will be added in parallel. The
  * process of ChainBlockQueue by update chain is locked by database. Chain block
  * will add to chain if there is no exception. if the reward block is unsolid as
  * missing previous block, then it will trigger a sync and be deleted.
- * UpdateConfirm can add UTXO using MCMC and can run only as part of update
- * chain and will be boxed timeout.
  * 
  * </p>
  */
 @Service
-public class FullBlockGraph {
+public class FullBlockStoreImpl {
 
-	private static final Logger log = LoggerFactory.getLogger(FullBlockGraph.class);
+	private static final Logger log = LoggerFactory.getLogger(FullBlockStoreImpl.class);
 
 	@Autowired
 	protected NetworkParameters networkParameters;

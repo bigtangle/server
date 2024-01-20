@@ -15,7 +15,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.data.LockObject;
-import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
 
 /**
@@ -27,7 +27,7 @@ import net.bigtangle.store.FullBlockStore;
 public class AVGPriceService {
 
     @Autowired
-    protected FullBlockGraph blockGraph;
+    protected FullBlockStoreImpl blockGraph;
     @Autowired
     protected ServerConfiguration serverConfiguration;
 

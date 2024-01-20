@@ -45,7 +45,7 @@ import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.LockObject;
-import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
@@ -67,7 +67,7 @@ public class SyncBlockService {
 	@Autowired
 	protected NetworkParameters networkParameters;
 	@Autowired
-	FullBlockGraph blockgraph;
+	FullBlockStoreImpl blockgraph;
 
 	@Autowired
 	private BlockService blockService;

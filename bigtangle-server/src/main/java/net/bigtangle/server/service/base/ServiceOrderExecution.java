@@ -8,12 +8,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.Map.Entry;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
@@ -23,8 +20,8 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.ordermatch.TradePair;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
+import net.bigtangle.core.ordermatch.TradePair;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.data.OrderExecutionResult;
 import net.bigtangle.server.service.CacheBlockService;
@@ -39,7 +36,7 @@ public class ServiceOrderExecution extends ServiceBaseConnect {
 
 	}
 
-	private static final Logger log = LoggerFactory.getLogger(ServiceOrderExecution.class);
+	//private static final Logger log = LoggerFactory.getLogger(ServiceOrderExecution.class);
  
 
 	public OrderExecutionResult orderMatching(Block block, Sha256Hash prevHash, Set<Sha256Hash> collectedBlocks,

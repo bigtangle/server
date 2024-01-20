@@ -20,7 +20,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.params.MainNetParams;
 import net.bigtangle.script.Script;
-import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.BriefLogFormatter;
 
@@ -36,7 +36,7 @@ public abstract class AbstractFullPrunedBlockChainTest {
     protected static final NetworkParameters PARAMS = new MainNetParams();
 
     @Autowired
-    protected FullBlockGraph blockgraph;
+    protected FullBlockStoreImpl blockgraph;
     protected FullBlockStore store;
 
     @BeforeEach

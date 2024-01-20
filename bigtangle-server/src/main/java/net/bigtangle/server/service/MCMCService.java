@@ -36,7 +36,7 @@ import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.DepthAndWeight;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.Rating;
-import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
 
 /*
@@ -49,7 +49,7 @@ public class MCMCService {
     private static final Logger log = LoggerFactory.getLogger(MCMCService.class);
 
     @Autowired
-    protected FullBlockGraph blockGraph;
+    protected FullBlockStoreImpl blockGraph;
 
     @Autowired
     private TipsService tipsService;

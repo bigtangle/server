@@ -16,6 +16,7 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeSet;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
@@ -24,6 +25,7 @@ import net.bigtangle.core.Coin;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
+import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancel;
 import net.bigtangle.core.OrderRecord;
 import net.bigtangle.core.OutputsMulti;
@@ -33,7 +35,6 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.UTXO;
-import net.bigtangle.core.UTXOProvider;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.UTXOProviderException;
@@ -52,37 +53,54 @@ import net.bigtangle.server.data.Rating;
 
 /**
  * <p>
- * An implementor of FullBlockStore saves StoredBlock objects to some storage
- * mechanism.
+ * An implementor of FullBlockStore saves Block and persistence objects to some
+ * storage mechanism.
  * </p>
  *
- * 
+ * An implementor of BlockStore saves StoredBlock objects to database. Different
+ * implementations store them in different ways.
  * <p>
- * A FullBlockStore should function well as a standard {@link BlockStore} and
- * then be able to trivially switch to being used as a FullBlockStore.
- * </p>
- *
- * 
- * <p>
- * It must store the {@link Block} of all blocks.
- * </p>
- *
- * <p>
- * A FullBlockStore contains a map of hashes to [Full]StoredBlock. The hash is
- * the double digest of the Bitcoin serialization of the block header,
- * <b>not</b> the header with the extra data as well.
- * </p>
- * 
- * <p>
- * A FullBlockStore also contains a map of hash+index to UTXO. Again, the hash
- * is a standard Bitcoin double-SHA256 hash of the transaction.
- * </p>
- *
- * <p>
- * FullPrunedBlockStores are thread safe.
  * </p>
  */
-public interface FullBlockStore extends BlockStore, UTXOProvider {
+public interface FullBlockStore {
+
+	/**
+	 * Saves the given block header+extra data. The key isn't specified explicitly
+	 * as it can be calculated from the StoredBlock directly. Can throw if there is
+	 * a problem with the underlying storage layer such as running out of disk
+	 * space.
+	 */
+	void put(Block block) throws BlockStoreException;
+
+	/**
+	 * Returns the Block given a hash. The returned values block.getHash() method
+	 * will be equal to the parameter. If no such block is found, returns null.
+	 */
+	Block get(Sha256Hash hash) throws BlockStoreException;
+
+	byte[] getByte(Sha256Hash hash) throws BlockStoreException;
+
+	/** Closes the store. */
+	void close() throws BlockStoreException;
+
+	/**
+	 * Get the {@link net.bigtangle.core.NetworkParameters} of this store.
+	 * 
+	 * @return The network params.
+	 */
+	NetworkParameters getParams();
+
+	boolean existBlock(Sha256Hash hash) throws BlockStoreException;
+
+	List<UTXO> getOpenTransactionOutputs(String address) throws UTXOProviderException;
+
+	List<UTXO> getOpenTransactionOutputs(List<Address> addresses) throws UTXOProviderException;
+
+	List<UTXO> getOpenTransactionOutputs(List<Address> addresses, byte[] tokenid) throws UTXOProviderException;
+
+	List<UTXO> getOpenAllOutputs(String tokenid) throws UTXOProviderException;
+
+	boolean getOutputConfirmation(Sha256Hash blockHash, Sha256Hash hash, long index) throws BlockStoreException;
 
 	/**
 	 * Gets a {@link net.bigtangle.core.UTXO} with the given hash and index, or null
@@ -187,20 +205,28 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 	public void insertOrder(Collection<OrderRecord> records) throws BlockStoreException;
 
 	public void insertCancelOrder(OrderCancel orderCancel) throws BlockStoreException;
+
 	public List<OrderCancel> getOrderCancelConfirmed() throws BlockStoreException;
-	public void updateOrderCancelSpent(Set<Sha256Hash> cancels, Sha256Hash blockhash, Boolean spent) throws BlockStoreException;
+
+	public void updateOrderCancelSpent(Set<Sha256Hash> cancels, Sha256Hash blockhash, Boolean spent)
+			throws BlockStoreException;
+
 	public void updateOrderConfirmed(Sha256Hash blockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
 			throws BlockStoreException;
+
 	public void updateOrderConfirmed(Set<Sha256Hash> hashs, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
 			throws BlockStoreException;
 
 	public void updateOrderConfirmed(Collection<OrderRecord> orderRecords, boolean confirm) throws BlockStoreException;
- 
+
 	public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException;
-	public void updateOrderSpent(Set<Sha256Hash> orderRecords, Sha256Hash blockhash, Boolean spent) throws BlockStoreException;
-	
+
+	public void updateOrderSpent(Set<Sha256Hash> orderRecords, Sha256Hash blockhash, Boolean spent)
+			throws BlockStoreException;
+
 	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
 			throws BlockStoreException;
+
 	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrdersNotSpent(Sha256Hash issuingMatcherBlockHash)
 			throws BlockStoreException;
 
@@ -424,8 +450,7 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
 	List<OrderCancel> getOrderCancelByOrderBlockHash(HashSet<String> orderBlockHashs) throws BlockStoreException;
 
-	List<OrderRecord> getMyClosedOrders(List<String> addresses) throws BlockStoreException;
-
+	 
 	boolean getTokennameAndDomain(String tokenname, String domainpre) throws BlockStoreException;
 
 	List<MatchLastdayResult> getTimeBetweenMatchingEvents(String tokenids, String basetoken, Long startDate,
@@ -476,16 +501,17 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 
 	void insertContractEvent(Collection<ContractEventRecord> records) throws BlockStoreException;
 
-	public ContractEventRecord getContractEvent( Sha256Hash blockhash,   Sha256Hash collectionhash)
+	public ContractEventRecord getContractEvent(Sha256Hash blockhash, Sha256Hash collectionhash)
 			throws BlockStoreException;
-	
+
 	public void updateContractEventSpent(Set<Sha256Hash> contractEventRecords, Sha256Hash spentBlock, boolean spent)
 			throws BlockStoreException;
 
 	public void updateContractEventConfirmed(Collection<Sha256Hash> contracts, boolean confirm)
 			throws BlockStoreException;
 
-	public  Map<Sha256Hash,ContractEventRecord> getContractEventPrev(String contractid, Sha256Hash prevHash) throws BlockStoreException;
+	public Map<Sha256Hash, ContractEventRecord> getContractEventPrev(String contractid, Sha256Hash prevHash)
+			throws BlockStoreException;
 
 	public List<String> getOpenContractid() throws BlockStoreException;
 
@@ -513,16 +539,16 @@ public interface FullBlockStore extends BlockStore, UTXOProvider {
 	public Sha256Hash checkOrderResultSpent(Sha256Hash OrderResultRecords) throws BlockStoreException;
 
 	public boolean checkOrderResultConfirmed(Sha256Hash OrderResultRecords) throws BlockStoreException;
+
 	void insertOrderResult(OrderExecutionResult record) throws BlockStoreException;
+
 	public void updateOrderResultSpent(Sha256Hash result, Sha256Hash spentBlock, boolean spent)
 			throws BlockStoreException;
-	
-	
+
 	public List<Coin> queryAccountCoinList(String address, String tokenid) throws BlockStoreException;
 
 	public List<UTXO> queryAccountUtxoList(String address, String tokenid) throws BlockStoreException;
 
- 
 	public Map<String, Map<String, Coin>> queryOutputsMap(String address, String tokenid) throws BlockStoreException;
 
 	public void addAccountCoinBatch(Map<String, Map<String, Coin>> toaddressMap) throws BlockStoreException;

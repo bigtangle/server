@@ -81,15 +81,13 @@ import net.bigtangle.utils.Gzip;
 
 /**
  * <p>
- * A generic full pruned block store for a relational database. This generic
+ * A generic full block store for a relational database. This generic
  * class requires certain table structures for the block store.
  * </p>
  * 
  */
 public abstract class DatabaseFullBlockStore implements FullBlockStore {
-
-	private static final String OPENORDERHASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
-
+ 
 	private static final String LIMIT_500 = " limit 500 ";
 
 	private static final Logger log = LoggerFactory.getLogger(DatabaseFullBlockStore.class);
@@ -462,13 +460,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 	protected final String SELECT_OPEN_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
 			+ " FROM orders WHERE confirmed=1 AND spent=0 ";
-
-	protected final String SELECT_MY_REMAINING_OPEN_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
-			+ " WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? ";
-	protected final String SELECT_MY_INITIAL_OPEN_ORDERS_SQL = "SELECT " + ORDER_TEMPLATE + " FROM orders "
-			+ " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress=? AND collectinghash=" + OPENORDERHASH
-			+ " AND blockhash IN ( SELECT blockhash FROM orders "
-			+ "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress=? )";
+ 
 	// TODO remove test
 	protected final String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
 			+ "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending,spendpendingtime, minimumsign, time, hash, outputindex, spenderblockhash "
@@ -5742,49 +5734,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 	}
 
-	@Override
-	public List<OrderRecord> getMyClosedOrders(List<String> addresses) throws BlockStoreException {
-		List<OrderRecord> result = new ArrayList<>();
-		if (addresses == null || addresses.isEmpty())
-			return new ArrayList<OrderRecord>();
-
-		maybeConnect();
-		PreparedStatement s = null;
-		try {
-
-			String myaddress = " in (" + buildINList(addresses) + ")";
-
-			String sql = "SELECT " + ORDER_TEMPLATE + " FROM orders "
-					+ " WHERE confirmed=1 AND spent=1 AND beneficiaryaddress" + myaddress + " AND collectinghash="
-					+ OPENORDERHASH + " AND blockhash NOT IN ( SELECT blockhash FROM orders "
-					+ "     WHERE confirmed=1 AND spent=0 AND beneficiaryaddress" + myaddress + ")";
-
-			s = getConnection().prepareStatement(sql);
-			ResultSet resultSet = s.executeQuery();
-			while (resultSet.next()) {
-				OrderRecord order = setOrder(resultSet);
-				result.add(order);
-			}
-			return result;
-		} catch (SQLException ex) {
-			throw new BlockStoreException(ex);
-		} catch (ProtocolException e) {
-			// Corrupted database.
-			throw new BlockStoreException(e);
-		} catch (VerificationException e) {
-			// Should not be able to happen unless the database contains bad
-			// blocks.
-			throw new BlockStoreException(e);
-		} finally {
-			if (s != null) {
-				try {
-					s.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
+ 
 
 	@Override
 	public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException {

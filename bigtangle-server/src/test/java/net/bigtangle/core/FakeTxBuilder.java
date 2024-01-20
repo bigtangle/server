@@ -14,26 +14,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Random;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import net.bigtangle.core.Address;
-import net.bigtangle.core.Block;
-import net.bigtangle.core.Coin;
-import net.bigtangle.core.ECKey;
-import net.bigtangle.core.MessageSerializer;
-import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Sha256Hash;
-import net.bigtangle.core.Transaction;
-import net.bigtangle.core.TransactionInput;
-import net.bigtangle.core.TransactionOutPoint;
-import net.bigtangle.core.TransactionOutput;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.ProtocolException;
 import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.TipsService;
-import net.bigtangle.store.BlockStore;
 
 public class FakeTxBuilder {
 

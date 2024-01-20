@@ -89,7 +89,7 @@ import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.StoreService;
 import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.TipsService;
-import net.bigtangle.store.FullBlockGraph;
+import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
@@ -120,7 +120,7 @@ public abstract class AbstractIntegrationTest {
 	protected final KeyParameter aesKey = null;
 
 	@Autowired
-	protected FullBlockGraph blockGraph;
+	protected FullBlockStoreImpl blockGraph;
 	@Autowired
 	protected BlockService blockService;
 	@Autowired

@@ -17,7 +17,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 
 /**
  * <p>
- * A full pruned block store using the MySQL database engine.
+ * A full block store using the MySQL database engine.
  * </p>
  */
 
