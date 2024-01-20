@@ -37,7 +37,7 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.service.OrderTickerService;
-import net.bigtangle.server.service.ServiceBase;
+import net.bigtangle.server.service.base.ServiceBaseConnect;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MarketOrderItem;
 import net.bigtangle.utils.OkHttp3Util;
@@ -1152,7 +1152,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
 		Block b=	makeBuyOrder(genesisKey, testTokenId, 1000, 75, addedBlocks); 
 
-		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).unconfirm(b.getHash(),
+		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).unconfirm(b.getHash(),
 				new HashSet<>(), store);
 
  

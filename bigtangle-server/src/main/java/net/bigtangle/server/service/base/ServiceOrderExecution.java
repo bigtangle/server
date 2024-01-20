@@ -1,4 +1,4 @@
-package net.bigtangle.server.service;
+package net.bigtangle.server.service.base;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -27,10 +27,11 @@ import net.bigtangle.core.ordermatch.TradePair;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.data.OrderExecutionResult;
+import net.bigtangle.server.service.CacheBlockService;
 import net.bigtangle.server.utils.OrderBook;
 import net.bigtangle.store.FullBlockStore;
 
-public class ServiceOrderExecution extends ServiceBase {
+public class ServiceOrderExecution extends ServiceBaseConnect {
 
 	public ServiceOrderExecution(ServerConfiguration serverConfiguration, NetworkParameters networkParameters,
 			CacheBlockService cacheBlockService) {
@@ -38,7 +39,7 @@ public class ServiceOrderExecution extends ServiceBase {
 
 	}
 
-	private static final Logger log = LoggerFactory.getLogger(ServiceBase.class);
+	private static final Logger log = LoggerFactory.getLogger(ServiceOrderExecution.class);
  
 
 	public OrderExecutionResult orderMatching(Block block, Sha256Hash prevHash, Set<Sha256Hash> collectedBlocks,

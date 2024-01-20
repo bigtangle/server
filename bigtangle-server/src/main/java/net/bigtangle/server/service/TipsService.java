@@ -34,6 +34,7 @@ import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.InfeasiblePrototypeException;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.service.base.ServiceBaseConnect;
 import net.bigtangle.store.FullBlockStore;
 
 @Service
@@ -146,7 +147,7 @@ public class TipsService {
     public Pair<BlockWrap, BlockWrap> getValidatedBlockPairCompatibleWithExisting(Block prototype,
             FullBlockStore store) throws BlockStoreException {
         TXReward maxConfirmedReward = cacheBlockService.getMaxConfirmedReward(store);
-        ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
+        ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService);
 		long cutoffHeight = serviceBase.getCurrentCutoffHeight(maxConfirmedReward, store);
         HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
         if (!serviceBase.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks,
@@ -197,7 +198,7 @@ public class TipsService {
             HashSet<BlockWrap> currentApprovedUnconfirmedBlocks, BlockWrap left, BlockWrap right,
             Sha256Hash prevRewardHash, FullBlockStore store) throws BlockStoreException {
         Stopwatch watch = Stopwatch.createStarted();
-        ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
+        ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService);
         long cutoffHeight = serviceBase.getRewardCutoffHeight(prevRewardHash, store);
         long maxHeight = serviceBase.getRewardMaxHeight(prevRewardHash);
         long prevMilestoneNumber = store.getRewardChainLength(prevRewardHash);
@@ -349,7 +350,7 @@ public class TipsService {
             HashSet<BlockWrap> currentApprovedUnconfirmedBlocks, BlockWrap left, BlockWrap right, FullBlockStore store)
             throws BlockStoreException {
         Stopwatch watch = Stopwatch.createStarted();
-        ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
+        ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService);
         long cutoffHeight = serviceBase.getCurrentCutoffHeight(maxConfirmedReward, store);
         long maxHeight = serviceBase.getCurrentMaxHeight(maxConfirmedReward, store);
 
@@ -430,7 +431,7 @@ public class TipsService {
     private BlockWrap validateOrPerformValidatedStep(BlockWrap fromBlock,
             HashSet<BlockWrap> currentApprovedNonMilestoneBlocks, BlockWrap potentialNextBlock, long cutoffHeight,
             long maxHeight, FullBlockStore store) throws BlockStoreException {
-        if (new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).isEligibleForApprovalSelection(potentialNextBlock, currentApprovedNonMilestoneBlocks,
+        if (new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).isEligibleForApprovalSelection(potentialNextBlock, currentApprovedNonMilestoneBlocks,
                 cutoffHeight, maxHeight, store))
             return potentialNextBlock;
         else
@@ -447,7 +448,7 @@ public class TipsService {
             // Find results until one is valid/eligible
             result = performTransition(fromBlock, candidates);
             candidates.remove(result);
-        } while (!new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).isEligibleForApprovalSelection(result, currentApprovedNonMilestoneBlocks,
+        } while (!new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).isEligibleForApprovalSelection(result, currentApprovedNonMilestoneBlocks,
                 cutoffHeight, maxHeight, store));
         return result;
     }
@@ -520,7 +521,7 @@ public class TipsService {
      */
     private List<BlockWrap> getEntryPoints(int count, long currChainLength, FullBlockStore store)
             throws BlockStoreException {
-        List<BlockWrap> candidates = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).getEntryPointCandidates(currChainLength, store);
+        List<BlockWrap> candidates = new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).getEntryPointCandidates(currChainLength, store);
         if (candidates.isEmpty()) {
             candidates.add(store.getBlockWrap(cacheBlockService.getMaxConfirmedReward(store).getBlockHash()));
         }

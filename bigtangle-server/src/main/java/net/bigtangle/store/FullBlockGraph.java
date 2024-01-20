@@ -46,8 +46,10 @@ import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.data.SolidityState.State;
 import net.bigtangle.server.service.CacheBlockService;
-import net.bigtangle.server.service.ServiceBase;
 import net.bigtangle.server.service.StoreService;
+import net.bigtangle.server.service.base.ServiceBaseCheck;
+import net.bigtangle.server.service.base.ServiceBaseConnect;
+import net.bigtangle.server.service.base.ServiceBaseReward;
 import net.bigtangle.utils.Gzip;
 
 /**
@@ -244,8 +246,8 @@ public class FullBlockGraph {
 			if (block.getLastMiningRewardBlock() == 91040) {
 				log.info("saveChainConnected block 91040");
 			}
-			ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
-			SolidityState solidityState = serviceBase.checkChainSolidity(block, true, store);
+			  
+			SolidityState solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters,cacheBlockService).checkChainSolidity(block, true, store);
 
 			if (solidityState.isDirectlyMissing()) {
 				log.debug("Block isDirectlyMissing. saveChainConnected stop to save." + block.toString());
@@ -302,7 +304,7 @@ public class FullBlockGraph {
 		block.verifyTransactions();
 
 		// allow non chain block predecessors not solid
-		SolidityState solidityState = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).checkSolidity(block,
+		SolidityState solidityState =  new ServiceBaseCheck(serverConfiguration, networkParameters,cacheBlockService).checkSolidity(block,
 				!allowUnsolid, blockStore, false);
 		if (solidityState.isFailState()) {
 			log.debug(solidityState.toString());
@@ -340,7 +342,7 @@ public class FullBlockGraph {
 	public Set<Sha256Hash> checkMissing(Block block, FullBlockStore blockStore) throws BlockStoreException {
 
 		// missing predecessors
-		return new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).getMissingPredecessors(block, blockStore);
+		return new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).getMissingPredecessors(block, blockStore);
 
 	}
 
@@ -357,7 +359,7 @@ public class FullBlockGraph {
 		Block head = store.get(cacheBlockService.getMaxConfirmedReward(store).getBlockHash());
 		if (block.getRewardInfo().getPrevRewardHash().equals(head.getHash())) {
 			connect(block, solidityState, store);
-			new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).buildRewardChain(block, store);
+			new ServiceBaseReward(serverConfiguration, networkParameters,cacheBlockService).buildRewardChain(block, store);
 		} else {
 			// This block connects to somewhere other than the top of the best
 			// known chain. We treat these differently.
@@ -368,7 +370,7 @@ public class FullBlockGraph {
 			if (haveNewBestChain) {
 				log.info("Block is causing a re-organize");
 				connect(block, solidityState, store);
-				new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).handleNewBestChain(block, store);
+				new ServiceBaseReward(serverConfiguration, networkParameters,cacheBlockService).handleNewBestChain(block, store);
 			} else {
 				// parallel chain, save as unconfirmed
 				connect(block, solidityState, store);
@@ -390,7 +392,7 @@ public class FullBlockGraph {
 			throws BlockStoreException, VerificationException {
 		store.put(block);
 		cacheBlockService.cacheBlock(block, store);
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).solidifyBlock(block, solidityState, false, store);
+		new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).solidifyBlock(block, solidityState, false, store);
 	}
 
 
@@ -424,7 +426,7 @@ public class FullBlockGraph {
 		FullBlockStore blockStore = storeService.getStore();
 		try {
 			updateTransactionOutputSpendPending(block, blockStore);
-			new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).calculateAccount(block, blockStore);
+			new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).calculateAccount(block, blockStore);
 			// Initialize MCMC
 			if (blockStore.getMCMC(block.getHash()) == null) {
 				ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
@@ -464,7 +466,7 @@ public class FullBlockGraph {
 		// First remove any blocks that should no longer be in the milestone
 		HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
 		HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
-		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
+		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService);
 		for (BlockEvaluation block : blocksToRemove) {
 
 			try {
@@ -495,7 +497,7 @@ public class FullBlockGraph {
 		for (BlockWrap block : blocksToAdd) {
 			try {
 				blockStore.beginDatabaseBatchWrite();
-				new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).confirm(
+				new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).confirm(
 						block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore, true);
 				blockStore.commitDatabaseBatchWrite();
 			} catch (Exception e) {

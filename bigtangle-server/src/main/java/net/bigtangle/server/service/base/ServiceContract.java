@@ -1,4 +1,4 @@
-package net.bigtangle.server.service;
+package net.bigtangle.server.service.base;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -33,9 +33,10 @@ import net.bigtangle.script.Script;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.ContractResult;
+import net.bigtangle.server.service.CacheBlockService;
 import net.bigtangle.store.FullBlockStore;
 
-public class ServiceContract extends ServiceBase {
+public class ServiceContract extends ServiceBaseConnect {
 
 	public ServiceContract(ServerConfiguration serverConfiguration, NetworkParameters networkParameters,
 			CacheBlockService cacheBlockService) {
@@ -43,7 +44,7 @@ public class ServiceContract extends ServiceBase {
 
 	}
 
-	private static final Logger log = LoggerFactory.getLogger(ServiceBase.class);
+	private static final Logger log = LoggerFactory.getLogger(ServiceContract.class);
 
 	/*
 	 * the ContractEvent received and do next action

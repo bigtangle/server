@@ -47,6 +47,7 @@ import net.bigtangle.kafka.KafkaConfiguration;
 import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.service.base.ServiceBaseConnect;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.DomainValidator;
@@ -80,7 +81,7 @@ public class BlockService {
 	private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
  
 	public Block getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
-		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
+		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService);
 		return serviceBase.getBlock(blockhash,store);
 	}
 
@@ -335,7 +336,7 @@ public class BlockService {
 	}
 
 	public List<BlockWrap> getAllRequirements(Block block, FullBlockStore store) throws BlockStoreException {
-		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters,cacheBlockService);
+		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService);
 		Set<Sha256Hash> allPredecessorBlockHashes = serviceBase.getAllRequiredBlockHashes(block, false);
 		List<BlockWrap> result = new ArrayList<>();
 		for (Sha256Hash pred : allPredecessorBlockHashes)

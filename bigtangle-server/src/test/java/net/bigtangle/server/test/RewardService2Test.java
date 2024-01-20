@@ -50,7 +50,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 	// test payment, buy and sell
 	public Block createReward(List<Block> blocksAddedAll) throws Exception {
 		for (int j = 1; j < 2; j++) {
-			payMoneyToWallet1(j, blocksAddedAll); 
+			payMoneyToWallet1(j, blocksAddedAll);
 			sell(blocksAddedAll);
 			buy(blocksAddedAll);
 		}
@@ -58,7 +58,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		// Generate mining reward block
 		Block next = makeRewardBlock(blocksAddedAll);
 		blocksAddedAll.add(next);
-	 
+
 		return next;
 	}
 
@@ -102,7 +102,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		}
 
 		Sha256Hash hash1 = checkSum();
-	//	assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
+		// assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
 		// replay second and then replay first
 		resetStore();
 		for (Block b : a2) {
@@ -115,9 +115,37 @@ public class RewardService2Test extends AbstractIntegrationTest {
 				blockGraph.add(b, true, true, store);
 		}
 
-	//	assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
+		// assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
 		Sha256Hash hash2 = checkSum();
-	//	assertTrue(hash1.equals(hash2));
+		// assertTrue(hash1.equals(hash2));
+	}
+
+	@Test
+	// the switch to longest chain
+	public void testShuffle() throws Exception {
+
+		List<Block> a2 = new ArrayList<Block>();
+
+		for (int i = 0; i < 5; i++) {
+			createReward(a2);
+		}
+		checkSum();
+
+		Sha256Hash hash = checkpointService.checkToken(store).hash();
+		// replay
+		resetStore();
+
+		// check
+		// replay second chain
+		Collections.shuffle(a2);
+		for (Block b : a2) {
+			if (b != null)
+				blockGraph.add(b, true, true, store);
+
+		}
+
+		checkSum();
+
 	}
 
 	private Sha256Hash checkSum() throws JsonProcessingException, Exception {
@@ -217,7 +245,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 	public void createNonChain(List<Block> blocksAddedAll) throws Exception {
 		for (int j = 1; j < 2; j++) {
 			payMoneyToWallet1(j, blocksAddedAll);
-			makeRewardBlock(blocksAddedAll); 
+			makeRewardBlock(blocksAddedAll);
 			sell(blocksAddedAll);
 			buy(blocksAddedAll);
 		}

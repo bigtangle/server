@@ -32,8 +32,8 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.server.data.ContractResult;
-import net.bigtangle.server.service.ServiceBase;
-import net.bigtangle.server.service.ServiceContract;
+import net.bigtangle.server.service.base.ServiceBaseConnect;
+import net.bigtangle.server.service.base.ServiceContract;
 import net.bigtangle.wallet.Wallet;
 
 public class ContractLotteryTest extends AbstractIntegrationTest {
@@ -198,7 +198,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		assertTrue(endMap.get(winnerAddress.toString()).equals(new BigInteger(winnerAmount)));
 		// unconfirm evnt and will lead to unconfirm result
 
-		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService).unconfirm(events.get(0).getHash(),
+		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).unconfirm(events.get(0).getHash(),
 				new HashSet<>(), store);
 		endMap = new HashMap<>();
 		check(ulist, endMap);
@@ -229,7 +229,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		check(ulist, endMap);
 
 		// Unconfirm
-		new ServiceBase(serverConfiguration, networkParameters, cacheBlockService)
+		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
 				.unconfirmRecursive(resultBlock.getHash(), new HashSet<>(), store);
 
 		Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);

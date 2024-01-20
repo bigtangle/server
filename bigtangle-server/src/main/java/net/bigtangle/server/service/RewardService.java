@@ -5,11 +5,7 @@
 package net.bigtangle.server.service;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -28,7 +24,6 @@ import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.MemoInfo;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
@@ -46,7 +41,8 @@ import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.OrderMatchingResult;
-import net.bigtangle.server.service.ServiceBase.RewardBuilderResult;
+import net.bigtangle.server.service.base.ServiceBaseConnect.RewardBuilderResult;
+import net.bigtangle.server.service.base.ServiceBaseReward;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
 
@@ -194,7 +190,7 @@ public class RewardService {
 				Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
 		if (timeOverride != null)
 			currentTime = timeOverride;
-		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters, cacheBlockService);
+		ServiceBaseReward serviceBase = new ServiceBaseReward(serverConfiguration, networkParameters, cacheBlockService);
 		RewardBuilderResult result = serviceBase.makeReward(prevTrunk, prevBranch, prevRewardHash, currentTime, store);
 
 		Block block = Block.createBlock(networkParameters, r1, r2);

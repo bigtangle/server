@@ -66,7 +66,7 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.service.ServiceBase;
+import net.bigtangle.server.service.base.ServiceBaseConnect;
 import net.bigtangle.utils.Json;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
@@ -181,7 +181,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// After adding the missing dependency, should be solid
 
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
+		new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
 		assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
 		assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
 	}
@@ -203,7 +203,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		blockService.saveBlock(depBlock, store);
 
 		// After adding the missing dependency, should be solid
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
+		new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
 		assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
 		assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
 	}
@@ -227,7 +227,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// After adding the missing dependency, should be solid
 
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
+		new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
 		assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
 		assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
 	}
@@ -278,7 +278,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		blockService.saveBlock(confBlock, store);
 
 		// After adding the missing dependency, should be solid
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
+		new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
 
 		// TODO
 		// assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid()
@@ -369,7 +369,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// After adding the missing dependency, should be solid
 
-		new ServiceBase(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
+		new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
 
 		// There are prev not there TODO
 		// assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid()

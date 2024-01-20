@@ -35,6 +35,8 @@ import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.server.data.LockObject;
+import net.bigtangle.server.service.base.ServiceBaseConnect;
+import net.bigtangle.server.service.base.ServiceContract;
 import net.bigtangle.store.FullBlockGraph;
 import net.bigtangle.store.FullBlockStore;
 
@@ -164,7 +166,7 @@ public class ContractExecutionService {
 		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
 		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EVENT);
 	 
-		ServiceBase serviceBase = new ServiceBase(serverConfiguration, networkParameters, cacheBlockService);
+		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService);
 		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBlockHash(), store), cutoffheight, prevChainLength, true,
 				ordertypes, store);
