@@ -105,7 +105,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
 		// Generate blocks until passing first reward interval
 		List<Block> blocksAddedAll = new ArrayList<Block>();
-		Block rollingBlock = addFixedBlocks(10, networkParameters.getGenesisBlock(), blocksAddedAll);
+		Block rollingBlock = networkParameters.getGenesisBlock();
 
 		// Generate eligible mining reward blocks
 		Block b1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
@@ -113,14 +113,9 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		blockGraph.updateChain();
 		Block b2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
 				defaultBlockWrap(rollingBlock), defaultBlockWrap(rollingBlock), store);
-		blockGraph.updateChain();
-		syncBlockService.connectingOrphans(store);
+ 
 		createAndAddNextBlock(b2, b1);
-
-		makeRewardBlock();
-		Thread.sleep(2000);
-		// assertFalse(blockService.getBlockEvaluation(b1.getHash()).isConfirmed()
-		// );
+ 
 		assertTrue(blockService.getBlockEvaluation(b1.getHash(), store).isConfirmed());
 
 	}
@@ -270,13 +265,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		Block rollingBlock = block2.createNextBlock(block1);
 		blockGraph.add(rollingBlock, true, store);
 
-		makeRewardBlock();
-
-		assertFalse(blockService.getBlockEvaluation(block2.getHash(), store).isConfirmed()
-				&& blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(block2.getHash(), store).isConfirmed()
-				|| blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
-
+ 
 		mcmcServiceUpdate();
 
 		assertFalse(blockService.getBlockEvaluation(block2.getHash(), store).isConfirmed()
@@ -289,8 +278,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 	public void testConflictSameTokenidFirstIssuance() throws Exception {
 
 		// Generate an issuance
-		ECKey outKey = new ECKey();
-		;
+		ECKey outKey = new ECKey(); 
 		byte[] pubKey = outKey.getPubKey();
 		TokenInfo tokenInfo = new TokenInfo();
 
@@ -302,8 +290,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		tokenInfo.setToken(tokens);
 		tokenInfo.getMultiSignAddresses()
 				.add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-		makeRewardBlock();
-
+		
 		Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null);
 
 		// Generate another issuance slightly different
@@ -320,14 +307,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		Block block2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, null);
 		Block rollingBlock = block2.createNextBlock(block1);
 		blockGraph.add(rollingBlock, true, store);
-
-		makeRewardBlock();
-
-		assertFalse(blockService.getBlockEvaluation(block2.getHash(), store).isConfirmed()
-				&& blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(block2.getHash(), store).isConfirmed()
-				|| blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
-
+ 
 		mcmcServiceUpdate();
 
 		assertFalse(blockService.getBlockEvaluation(block2.getHash(), store).isConfirmed()

@@ -25,6 +25,7 @@ select *  FROM blocks, mcmc  WHERE blocks.hash=mcmc.hash and solid=2 AND milesto
 AND confirmed = false   AND mcmc.rating >= 5;
 
 select *  FROM info.blocks where  hash=0x000c1f398adde6b2c31722340987dea675eadff2841cdb7825afc90f1d4c5097;
+select * from outputs where blockhash = 0x000c1f398adde6b2c31722340987dea675eadff2841cdb7825afc90f1d4c5097;
 
 select * from blocks where blocktype=2 order by height desc limit 500
 select * from blocks where milestone=339 and blocktype=3
@@ -44,6 +45,9 @@ select  * FROM blocks WHERE milestone = -1   AND solid = 2
 JOIN blocks on blocks.hash=txreward.blockhash WHERE milestone=339
 
 delete from txreward where chainlength=197088
+select count( *) from txreward
+
+select  * from txreward order by chainlength desc limit 10
 
 select * from blocks where hash = 0x0000000c1c45469ab3bcea91afbf582027800e7280c2dd90e05b5249296ed7f28;
 
@@ -55,7 +59,7 @@ JOIN blocks on blocks.hash=txreward.blockhash WHERE blocks.solid>=1  and
 select  missingdependency, height from unsolidblocks where directlymissing=1
 select * from blocks where hash =373;
 
-select * from blocks where hash=0x000000b8374049724da3bfede9dee27a7b5f310942981028a27e779631fb8657;
+select * from blocks where hash=0x0000101170d93a82285f3ca53bc76c633396e042b70053e6b429b8522efc1185;
 
 select * from blocks join outputs on blocks.hash=outputs.blockhash where blocks.hash= 0x000039b6b149700642826b603800cbbbbe73a8b9af24980b3fb9154c2a0119e8;
 select * from blocks where hash=0x00000075491105d21a1654d8f4566dd819c111b100818c07b66a3ae8a8b4de76 ;
@@ -71,11 +75,11 @@ select * from ordercancel
 update blocks set milestone=0    where height=0
 select count(*) from outputs where confirmed=1 and spent=0 and tokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
 select * from orders where confirmed=1 and spent=0 and offertokenid = "02a717921ede2c066a4da05b9cdce203f1002b7e2abeee7546194498ef2fa9b13a" ;
-select * from outputs where blockhash = 0x006131c37244272ebba62f797a815f3f1f86703a054d015a3e50423e64876f12;
+select * from outputs where blockhash = 0x000011bdbd7f6ad529d8e1d5ef30ea8afd82913ef7f7099e3f1aa2ebc50b1da3;
 
 
 select * from txreward join orders on txreward.blockhash=orders.collectinghash order by toheight desc  ;
-
+select count( *)  from txreward 
 
 select * from blocks where blocktype> 9 and milestone =  37 ;
 OUTPUTS

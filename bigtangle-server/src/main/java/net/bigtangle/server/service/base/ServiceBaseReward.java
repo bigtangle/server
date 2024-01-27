@@ -52,13 +52,13 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 			throw new VerificationException(" checkReferencedBlockRequirements is failed: " + solidityState.toString());
 
 		// Solidify referenced blocks
-		solidifyBlocks(currRewardInfo, store);
+	 	solidifyBlocks(currRewardInfo, store);
 
 		// Ensure the new difficulty and tx is set correctly
 		checkGeneratedReward(newMilestoneBlock, store);
 
 		// Sanity check: No reward blocks are approved
-		checkContainsNoRewardBlocks(newMilestoneBlock, store);
+		 checkContainsNoRewardBlocks(newMilestoneBlock, store);
 
 		// Check: At this point, predecessors must be solid
 		solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
@@ -119,18 +119,17 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 		RewardBuilderResult result = makeReward(newMilestoneBlock.getPrevBlockHash(),
 				newMilestoneBlock.getPrevBranchBlockHash(), currRewardInfo.getPrevRewardHash(),
-				newMilestoneBlock.getTimeSeconds(), store);
+				newMilestoneBlock.getTimeSeconds(), enableFee(newMilestoneBlock), store);
 		if (currRewardInfo.getDifficultyTargetReward() != result.getDifficulty()) {
 			throw new VerificationException("Incorrect difficulty target");
 		}
-		if (!enableOrderContract(newMilestoneBlock)) {
+		if (!enableFee(newMilestoneBlock)) {
 			OrderMatchingResult ordermatchresult = generateOrderMatching(newMilestoneBlock, store);
 
 			// Only check the Hash of OrderMatchingResult
-			if (!currRewardInfo.getOrdermatchingResult().equals(ordermatchresult.getOrderMatchingResultHash())) {
+			if (currRewardInfo.getOrdermatchingResult()==null || !currRewardInfo.getOrdermatchingResult().equals(ordermatchresult.getOrderMatchingResultHash())) {
 				// if(currRewardInfo.getChainlength()!=197096)
-				// throw new VerificationException("OrderMatchingResult transactions output is
-				// wrong.");
+				  throw new VerificationException("OrderMatchingResult transactions output is   wrong.");
 			}
 		}
 		Transaction miningTx = generateVirtualMiningRewardTX(newMilestoneBlock, store);
@@ -153,7 +152,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 			BlockWrap block = store.getBlockWrap(hash);
 			if (block == null)
 				return SolidityState.fromReferenced(hash, true);
-			if (block.getBlock().getHeight() <= cutoffHeight)
+			if (block.getBlock().getHeight() < cutoffHeight)
 				throw new VerificationException("Referenced blocks are below cutoff height.");
 
 			Set<Sha256Hash> requiredBlocks = getAllRequiredBlockHashes(block.getBlock(), false);
@@ -198,27 +197,45 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 	 *         perTxReward)
 	 */
 	public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash,
-			long currentTime, FullBlockStore store) throws BlockStoreException {
+			long currentTime, boolean fee, FullBlockStore store) throws BlockStoreException {
 
 		BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
 		BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
-		return makeReward(prevTrunkBlock, prevBranchBlock, prevRewardHash, currentTime, store);
+		if (fee) {
+			return makeRewardNoOrder(prevTrunkBlock, prevBranchBlock, prevRewardHash, currentTime, store);
+		} else {
+			return makeRewardWithOrder(prevTrunkBlock, prevBranchBlock, prevRewardHash, currentTime, store);
+		}
 	}
 
-	/**
-	 * DOES NOT CHECK FOR SOLIDITY. Computes eligibility of rewards + data tx +
-	 * Pair.of(new difficulty + new perTxReward) here for new reward blocks. This is
-	 * a prototype implementation. In the actual Spark implementation, the
-	 * computational cost is not a problem, since it is instead backpropagated and
-	 * calculated for free with delay. For more info, see notes.
-	 * 
-	 * @param prevTrunk      a predecessor block in the db
-	 * @param prevBranch     a predecessor block in the db
-	 * @param prevRewardHash the predecessor reward
-	 * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
-	 *         perTxReward)
-	 */
-	public RewardBuilderResult makeReward(BlockWrap prevTrunk, BlockWrap prevBranch, Sha256Hash prevRewardHash,
+	public RewardBuilderResult makeRewardWithOrder(BlockWrap prevTrunk, BlockWrap prevBranch, Sha256Hash prevRewardHash,
+			long currentTime, FullBlockStore store) throws BlockStoreException {
+		// Read previous reward block's data
+		long prevChainLength = store.getRewardChainLength(prevRewardHash);
+		// Build transaction for block
+		Transaction tx = new Transaction(networkParameters);
+
+		Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();
+		long cutoffheight = getRewardCutoffHeight(prevRewardHash, store);
+
+		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
+				cacheBlockService);
+		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true, null,
+				store);
+		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true, null,
+				store);
+
+		long difficultyReward = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
+				.calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
+
+		// Build the type-specific tx data
+		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
+		tx.setData(rewardInfo.toByteArray());
+		tx.setMemo(new MemoInfo("Reward"));
+		return new RewardBuilderResult(tx, difficultyReward);
+	}
+
+	public RewardBuilderResult makeRewardNoOrder(BlockWrap prevTrunk, BlockWrap prevBranch, Sha256Hash prevRewardHash,
 			long currentTime, FullBlockStore store) throws BlockStoreException {
 
 		// Read previous reward block's data

@@ -86,7 +86,7 @@ import net.bigtangle.utils.ContextPropagatingThreadFactory;
 import net.bigtangle.utils.DomainValidator;
 import net.bigtangle.utils.Json;
 
-public class ServiceBaseCheck extends ServiceBase{
+public class ServiceBaseCheck extends ServiceBase {
 
 	public ServiceBaseCheck(ServerConfiguration serverConfiguration, NetworkParameters networkParameters,
 			CacheBlockService cacheBlockService) {
@@ -95,7 +95,6 @@ public class ServiceBaseCheck extends ServiceBase{
 	}
 
 	private static final Logger logger = LoggerFactory.getLogger(ServiceBaseCheck.class);
-  
 
 	private void checCoinbaseTransactionalSolidity(Block block, FullBlockStore store) throws BlockStoreException {
 		// only reward block and contract can be set coinbase and check by caculation
@@ -264,8 +263,6 @@ public class ServiceBaseCheck extends ServiceBase{
 
 		return SolidityState.getSuccessState();
 	}
-
-
 
 	private Boolean checkBurnedFromAddress(final Transaction tx, Long chain) {
 		String fromAddress = fromAddress(tx);
@@ -542,8 +539,9 @@ public class ServiceBaseCheck extends ServiceBase{
 						in.getOutpoint().getIndex());
 				if (prevOut == null) {
 					// Cannot happen due to solidity checks before
-					throw new RuntimeException("Block attempts to spend a not yet existent output: "
-							+ in.getOutpoint().toString() + " countBurnedToken block = " + block.toString());
+					throw new RuntimeException("Block attempts to spend a not yet existent output block: "
+							+ getBlock(in.getOutpoint().getBlockHash(), store).toString()
+							+ " \n countBurnedToken block = " + block.toString());
 				}
 
 				if (burnedCoins == null)
@@ -1168,7 +1166,7 @@ public class ServiceBaseCheck extends ServiceBase{
 		}
 
 		// Solidify referenced blocks
-		//solidifyBlocks(block.getRewardInfo(), store);
+		// solidifyBlocks(block.getRewardInfo(), store);
 
 		return SolidityState.getSuccessState();
 	}
@@ -1190,13 +1188,14 @@ public class ServiceBaseCheck extends ServiceBase{
 	}
 
 	public SolidityState checkSolidity(Block block, boolean throwExceptions, FullBlockStore store,
-			boolean predecessorsSolid) throws BlockStoreException {
+			boolean allowMissingPredecessor) throws BlockStoreException {
 		try {
 			// Check formal correctness of the block
 			SolidityState formalSolidityResult = checkFormalBlockSolidity(block, throwExceptions);
 			if (formalSolidityResult.isFailState())
 				return formalSolidityResult;
-			final Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
+			final Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block,
+					!allowMissingPredecessor);
 			List<BlockWrap> allRequirements = getAllBlocks(block, allPredecessorBlockHashes, store);
 			// Predecessors must exist and be ok
 			SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions, allRequirements,
@@ -1207,7 +1206,7 @@ public class ServiceBaseCheck extends ServiceBase{
 
 			// Inherit solidity from predecessors if they are not solid
 			SolidityState minPredecessorSolidity = getMinPredecessorSolidity(block, throwExceptions, allRequirements,
-					store, predecessorsSolid);
+					store, !allowMissingPredecessor);
 
 			// For consensus blocks, it works as follows:
 			// If solid == 1 or solid == 2, we also check for PoW now
@@ -1233,14 +1232,13 @@ public class ServiceBaseCheck extends ServiceBase{
 			}
 
 			// Otherwise, the solidity of the block itself is checked
-			return checkFullBlockSolidity(block, throwExceptions, allRequirements, store);
+			return checkFullBlockSolidity(block, throwExceptions, allRequirements, allowMissingPredecessor, store);
 
 		} catch (IllegalArgumentException e) {
 			throw new VerificationException(e);
 		}
 
 	}
-	
 
 	private SolidityState checkFormalTransactionalSolidity(Block block, boolean throwExceptions)
 			throws BlockStoreException {
@@ -1601,7 +1599,7 @@ public class ServiceBaseCheck extends ServiceBase{
 	 * dependencies.
 	 */
 	private SolidityState checkFullBlockSolidity(Block block, boolean throwExceptions, List<BlockWrap> allPredecessors,
-			FullBlockStore store) {
+			boolean allowMissingPredecessor, FullBlockStore store) {
 		try {
 			BlockWrap storedPrev = store.getBlockWrap(block.getPrevBlockHash());
 			BlockWrap storedPrevBranch = store.getBlockWrap(block.getPrevBranchBlockHash());
@@ -1612,10 +1610,10 @@ public class ServiceBaseCheck extends ServiceBase{
 				return SolidityState.getFailState();
 			}
 			// Check predecessor blocks exist
-			if (storedPrev == null) {
+			if (storedPrev == null && !allowMissingPredecessor) {
 				return SolidityState.from(block.getPrevBlockHash(), true);
 			}
-			if (storedPrevBranch == null) {
+			if (storedPrevBranch == null && !allowMissingPredecessor) {
 				return SolidityState.from(block.getPrevBranchBlockHash(), true);
 			}
 			if (block.getBlockType() == Block.Type.BLOCKTYPE_INITIAL) {
@@ -1625,12 +1623,11 @@ public class ServiceBaseCheck extends ServiceBase{
 			}
 
 			// Check height, all required max +1
-			if (block.getHeight() != calcHeightRequiredBlocks(block, allPredecessors, store)) {
-				if (throwExceptions)
-					throw new VerificationException("Wrong height");
-				return SolidityState.getFailState();
-			}
-
+			/*
+			 * if (block.getHeight() != calcHeightRequiredBlocks(block, allPredecessors,
+			 * store)) { if (throwExceptions) throw new
+			 * VerificationException("Wrong height"); return SolidityState.getFailState(); }
+			 */
 			// Disallow someone burning other people's orders
 			if (block.getBlockType() != Type.BLOCKTYPE_ORDER_OPEN) {
 				for (Transaction tx : block.getTransactions())
@@ -1640,36 +1637,36 @@ public class ServiceBaseCheck extends ServiceBase{
 						return SolidityState.getFailState();
 					}
 			}
+			if (!allowMissingPredecessor) {
+				// Check timestamp: enforce monotone time increase
+				if (block.getTimeSeconds() < storedPrev.getBlock().getTimeSeconds()
+						|| block.getTimeSeconds() < storedPrevBranch.getBlock().getTimeSeconds()) {
+					if (throwExceptions)
+						throw new TimeReversionException();
+					return SolidityState.getFailState();
+				}
 
-			// Check timestamp: enforce monotone time increase
-			if (block.getTimeSeconds() < storedPrev.getBlock().getTimeSeconds()
-					|| block.getTimeSeconds() < storedPrevBranch.getBlock().getTimeSeconds()) {
-				if (throwExceptions)
-					throw new TimeReversionException();
-				return SolidityState.getFailState();
-			}
-
-			// Check difficulty and latest consensus block is passed through
-			// correctly
-			if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD) {
-				if (storedPrev.getBlock().getLastMiningRewardBlock() >= storedPrevBranch.getBlock()
-						.getLastMiningRewardBlock()) {
-					if (block.getLastMiningRewardBlock() != storedPrev.getBlock().getLastMiningRewardBlock()
-							|| block.getDifficultyTarget() != storedPrev.getBlock().getDifficultyTarget()) {
-						if (throwExceptions)
-							throw new DifficultyConsensusInheritanceException();
-						return SolidityState.getFailState();
-					}
-				} else {
-					if (block.getLastMiningRewardBlock() != storedPrevBranch.getBlock().getLastMiningRewardBlock()
-							|| block.getDifficultyTarget() != storedPrevBranch.getBlock().getDifficultyTarget()) {
-						if (throwExceptions)
-							throw new DifficultyConsensusInheritanceException();
-						return SolidityState.getFailState();
+				// Check difficulty and latest consensus block is passed through
+				// correctly
+				if (block.getBlockType() != Block.Type.BLOCKTYPE_REWARD) {
+					if (storedPrev.getBlock().getLastMiningRewardBlock() >= storedPrevBranch.getBlock()
+							.getLastMiningRewardBlock()) {
+						if (block.getLastMiningRewardBlock() != storedPrev.getBlock().getLastMiningRewardBlock()
+								|| block.getDifficultyTarget() != storedPrev.getBlock().getDifficultyTarget()) {
+							if (throwExceptions)
+								throw new DifficultyConsensusInheritanceException();
+							return SolidityState.getFailState();
+						}
+					} else {
+						if (block.getLastMiningRewardBlock() != storedPrevBranch.getBlock().getLastMiningRewardBlock()
+								|| block.getDifficultyTarget() != storedPrevBranch.getBlock().getDifficultyTarget()) {
+							if (throwExceptions)
+								throw new DifficultyConsensusInheritanceException();
+							return SolidityState.getFailState();
+						}
 					}
 				}
 			}
-
 			// Check transactions are solid
 			SolidityState transactionalSolidityState = checkFullTransactionalSolidity(block, block.getHeight(),
 					throwExceptions, store);
@@ -1705,6 +1702,7 @@ public class ServiceBaseCheck extends ServiceBase{
 		return false;
 
 	}
+
 	/*
 	 * Checks if the block is formally correct without relying on predecessors
 	 */
@@ -1772,7 +1770,7 @@ public class ServiceBaseCheck extends ServiceBase{
 		}
 		return SolidityState.getSuccessState();
 	}
-	
+
 	public void checkBlockBeforeSave(Block block, FullBlockStore store) throws BlockStoreException {
 
 		block.verifyHeader();
@@ -1870,6 +1868,7 @@ public class ServiceBaseCheck extends ServiceBase{
 			return null;
 		}
 	}
+
 	public SolidityState checkRewardDifficulty(Block rewardBlock, FullBlockStore store) throws BlockStoreException {
 		RewardInfo rewardInfo = new RewardInfo().parseChecked(rewardBlock.getTransactions().get(0).getData());
 
@@ -1903,7 +1902,6 @@ public class ServiceBaseCheck extends ServiceBase{
 		}
 
 	}
-
 
 	public long calculateNextChainDifficulty(Sha256Hash prevRewardHash, long currChainLength, long currentTime,
 			FullBlockStore store) throws BlockStoreException {
@@ -1946,7 +1944,6 @@ public class ServiceBaseCheck extends ServiceBase{
 
 		return Utils.encodeCompactBits(newTarget);
 	}
-	 
 
 	public SolidityState checkRewardReferencedBlocks(Block rewardBlock, FullBlockStore store)
 			throws BlockStoreException {
@@ -1987,7 +1984,6 @@ public class ServiceBaseCheck extends ServiceBase{
 
 		return SolidityState.getSuccessState();
 	}
-	
 
 	/*
 	 * check only if the blocks in database
@@ -2006,7 +2002,7 @@ public class ServiceBaseCheck extends ServiceBase{
 
 		return SolidityState.getSuccessState();
 	}
-	
+
 	public long calculateNextBlockDifficulty(RewardInfo currRewardInfo) {
 		BigInteger difficultyTargetReward = Utils.decodeCompactBits(currRewardInfo.getDifficultyTargetReward());
 		BigInteger difficultyChain = difficultyTargetReward

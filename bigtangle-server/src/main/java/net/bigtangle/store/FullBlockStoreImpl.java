@@ -28,6 +28,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Transaction;
@@ -54,12 +55,13 @@ import net.bigtangle.utils.Gzip;
 
 /**
  * <p>
- * A FullBlockStoreImpl works in conjunction with a {@link DatabaseFullBlockStore} to verify
- * all the rules of the BigTangle system. Chain block as reward block is added
- * first into ChainBlockQueue as other blocks will be added in parallel. The
- * process of ChainBlockQueue by update chain is locked by database. Chain block
- * will add to chain if there is no exception. if the reward block is unsolid as
- * missing previous block, then it will trigger a sync and be deleted.
+ * A FullBlockStoreImpl works in conjunction with a
+ * {@link DatabaseFullBlockStore} to verify all the rules of the BigTangle
+ * system. Chain block as reward block is added first into ChainBlockQueue as
+ * other blocks will be added in parallel. The process of ChainBlockQueue by
+ * update chain is locked by database. Chain block will add to chain if there is
+ * no exception. if the reward block is unsolid as missing previous block, then
+ * it will trigger a sync and be deleted.
  * 
  * </p>
  */
@@ -76,9 +78,9 @@ public class FullBlockStoreImpl {
 
 	@Autowired
 	private StoreService storeService;
-    @Autowired
-    protected CacheBlockService cacheBlockService;
-    
+	@Autowired
+	protected CacheBlockService cacheBlockService;
+
 	public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
 		boolean added;
 		if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
@@ -103,9 +105,7 @@ public class FullBlockStoreImpl {
 		if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
 			addChain(block, allowUnsolid, true, store);
 		} else {
-
 			addNonChain(block, allowUnsolid, store, true);
-
 		}
 
 	}
@@ -163,7 +163,7 @@ public class FullBlockStoreImpl {
 			}
 			if (canrun) {
 				Stopwatch watch = Stopwatch.createStarted();
-				saveChainConnected(store, false);
+				processChainConnected(store, false,true);
 				store.deleteLockobject(LOCKID);
 				if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
 					log.info("updateChain time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
@@ -201,7 +201,7 @@ public class FullBlockStoreImpl {
 	/*
 	 *  
 	 */
-	public void saveChainConnected(FullBlockStore store, boolean updatelowchain)
+	public void processChainConnected(FullBlockStore store, boolean updatelowchain, boolean throwException)
 			throws VerificationException, BlockStoreException {
 		List<ChainBlockQueue> cbs = store.selectChainblockqueue(false, serverConfiguration.getSyncblocks());
 		if (cbs != null && !cbs.isEmpty()) {
@@ -216,10 +216,20 @@ public class FullBlockStoreImpl {
 				return;
 			}
 			for (ChainBlockQueue chainBlockQueue : cbs) {
-				saveChainConnected(chainBlockQueue, store);
+				if (throwException) {
+					saveChainConnected(chainBlockQueue, store);
+				} else {
+					try {
+						saveChainConnected(chainBlockQueue, store);
+					} catch (Exception e) { 
+						log.info("saveChainConnected failed   " + chainBlockQueue.toString(), e);
+					}
+				}
+
 			}
 			log.info("saveChainConnected time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 		}
+
 	}
 
 	private void saveChainConnected(ChainBlockQueue chainBlockQueue, FullBlockStore store)
@@ -241,11 +251,16 @@ public class FullBlockStoreImpl {
 			// Check the block is partially formally valid and fulfills PoW
 			block.verifyHeader();
 			block.verifyTransactions();
-			if (block.getLastMiningRewardBlock() == 91040) {
-				log.info("saveChainConnected block 91040");
-			}
-			  
-			SolidityState solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters,cacheBlockService).checkChainSolidity(block, true, store);
+
+			// Solidify referenced blocks
+			RewardInfo currRewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
+
+			// Solidify referenced blocks
+			new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+					.solidifyBlocks(currRewardInfo, store);
+
+			SolidityState solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters,
+					cacheBlockService).checkChainSolidity(block, true, store);
 
 			if (solidityState.isDirectlyMissing()) {
 				log.debug("Block isDirectlyMissing. saveChainConnected stop to save." + block.toString());
@@ -271,6 +286,7 @@ public class FullBlockStoreImpl {
 			store.commitDatabaseBatchWrite();
 		} catch (Exception e) {
 			store.abortDatabaseBatchWrite();
+			cacheBlockService.evictBlock(block, store);
 			throw e;
 		} finally {
 
@@ -291,19 +307,15 @@ public class FullBlockStoreImpl {
 
 	public boolean addNonChain(Block block, boolean allowUnsolid, FullBlockStore blockStore,
 			boolean allowMissingPredecessor) throws BlockStoreException {
-		 
-		  // if (block.getBlockType() == Type.BLOCKTYPE_ORDER_EXECUTE) {
-		 //  log.debug(block.toString()); 
-		  // }
-		  
+
 		// Check the block is partially formally valid and fulfills PoW
 
 		block.verifyHeader();
 		block.verifyTransactions();
 
 		// allow non chain block predecessors not solid
-		SolidityState solidityState =  new ServiceBaseCheck(serverConfiguration, networkParameters,cacheBlockService).checkSolidity(block,
-				!allowUnsolid, blockStore, false);
+		SolidityState solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
+				.checkSolidity(block, !allowUnsolid, blockStore, allowMissingPredecessor);
 		if (solidityState.isFailState()) {
 			log.debug(solidityState.toString());
 		}
@@ -329,6 +341,7 @@ public class FullBlockStoreImpl {
 			blockStore.commitDatabaseBatchWrite();
 		} catch (Exception e) {
 			blockStore.abortDatabaseBatchWrite();
+			cacheBlockService.evictBlock(block, blockStore);
 			throw e;
 		} finally {
 			blockStore.defaultDatabaseBatchWrite();
@@ -340,16 +353,14 @@ public class FullBlockStoreImpl {
 	public Set<Sha256Hash> checkMissing(Block block, FullBlockStore blockStore) throws BlockStoreException {
 
 		// missing predecessors
-		return new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).getMissingPredecessors(block, blockStore);
+		return new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+				.getMissingPredecessors(block, blockStore);
 
 	}
 
 	private void connectRewardBlock(final Block block, SolidityState solidityState, FullBlockStore store)
 			throws BlockStoreException, VerificationException {
 
-		if(block.getLastMiningRewardBlock()==6) {
-			log.info("connectRewardBlock  " + block.toString());	
-		}
 		if (solidityState.isFailState()) {
 			connect(block, solidityState, store);
 			return;
@@ -357,7 +368,8 @@ public class FullBlockStoreImpl {
 		Block head = store.get(cacheBlockService.getMaxConfirmedReward(store).getBlockHash());
 		if (block.getRewardInfo().getPrevRewardHash().equals(head.getHash())) {
 			connect(block, solidityState, store);
-			new ServiceBaseReward(serverConfiguration, networkParameters,cacheBlockService).buildRewardChain(block, store);
+			new ServiceBaseReward(serverConfiguration, networkParameters, cacheBlockService).buildRewardChain(block,
+					store);
 		} else {
 			// This block connects to somewhere other than the top of the best
 			// known chain. We treat these differently.
@@ -368,7 +380,8 @@ public class FullBlockStoreImpl {
 			if (haveNewBestChain) {
 				log.info("Block is causing a re-organize");
 				connect(block, solidityState, store);
-				new ServiceBaseReward(serverConfiguration, networkParameters,cacheBlockService).handleNewBestChain(block, store);
+				new ServiceBaseReward(serverConfiguration, networkParameters, cacheBlockService)
+						.handleNewBestChain(block, store);
 			} else {
 				// parallel chain, save as unconfirmed
 				connect(block, solidityState, store);
@@ -390,10 +403,9 @@ public class FullBlockStoreImpl {
 			throws BlockStoreException, VerificationException {
 		store.put(block);
 		cacheBlockService.cacheBlock(block, store);
-		new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).solidifyBlock(block, solidityState, false, store);
+		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).solidifyBlock(block,
+				solidityState, false, store);
 	}
-
-
 
 	// TODO update other output data can be deadlock, as non chain block
 	// run in parallel
@@ -424,7 +436,8 @@ public class FullBlockStoreImpl {
 		FullBlockStore blockStore = storeService.getStore();
 		try {
 			updateTransactionOutputSpendPending(block, blockStore);
-			new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).calculateAccount(block, blockStore);
+			new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).calculateAccount(block,
+					blockStore);
 			// Initialize MCMC
 			if (blockStore.getMCMC(block.getHash()) == null) {
 				ArrayList<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
@@ -464,7 +477,8 @@ public class FullBlockStoreImpl {
 		// First remove any blocks that should no longer be in the milestone
 		HashSet<BlockEvaluation> blocksToRemove = blockStore.getBlocksToUnconfirm();
 		HashSet<Sha256Hash> traversedUnconfirms = new HashSet<>();
-		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService);
+		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
+				cacheBlockService);
 		for (BlockEvaluation block : blocksToRemove) {
 
 			try {
@@ -495,7 +509,7 @@ public class FullBlockStoreImpl {
 		for (BlockWrap block : blocksToAdd) {
 			try {
 				blockStore.beginDatabaseBatchWrite();
-				new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).confirm(
+				new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).confirm(
 						block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore, true);
 				blockStore.commitDatabaseBatchWrite();
 			} catch (Exception e) {

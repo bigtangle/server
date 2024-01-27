@@ -62,7 +62,7 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 	}
 
 	// Test difficulty transition
-	//@Test
+	// @Test
 	public void testDifficultyTransition2() throws Exception {
 		ECKey genesiskey = ECKey.fromPrivate(Utils.HEX.decode(testPriv));
 		long currentTime = networkParameters.getGenesisBlock().getTimeSeconds();
@@ -71,7 +71,7 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 		Block rollingBlock = networkParameters.getGenesisBlock();
 		for (int i = 0; i < NetworkParameters.INTERVAL - 1; i++) {
 			currentTime += NetworkParameters.TARGET_SPACING / 8;
-			
+
 			Block b = payBigTo(genesiskey, BigInteger.valueOf(500000), addedBlocks);
 			rollingBlock = rewardService.createReward(rollingBlock.getHash(), defaultBlockWrap(b), defaultBlockWrap(b),
 					currentTime, store);
@@ -91,14 +91,14 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 			currentTime += NetworkParameters.TARGET_SPACING * 8;
 			Block b = payBigTo(genesiskey, BigInteger.valueOf(500000), addedBlocks);
 			rollingBlock = rewardService.createReward(rollingBlock.getHash(), defaultBlockWrap(b), defaultBlockWrap(b),
-					  currentTime, store);
+					currentTime, store);
 			blockGraph.updateChain();
 		}
 
 		currentTime += NetworkParameters.TARGET_SPACING * 8;
 		Block b = payBigTo(genesiskey, BigInteger.valueOf(500000), addedBlocks);
 		rollingBlock = rewardService.createReward(rollingBlock.getHash(), defaultBlockWrap(b), defaultBlockWrap(b),
-				  currentTime, store);
+				currentTime, store);
 		blockGraph.updateChain();
 		assertEquals(rollingBlock.getRewardInfo().getDifficultyTargetAsInteger().divide(BigInteger.valueOf(4)),
 				highDifficultyBlock.getRewardInfo().getDifficultyTargetAsInteger());
@@ -201,10 +201,10 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 		List<Block> a2 = new ArrayList<Block>();
 		// first chains
 		Block rewardBlock1 = createReward(a1);
-		 resetStore();
+		resetStore();
 		// second chain
 		Block rewardBlock3 = createReward2(a2);
-		 resetStore();
+		resetStore();
 		// replay first chain
 		for (Block b : a1)
 			blockGraph.add(b, true, true, store);
@@ -228,7 +228,7 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 		List<Block> a2 = new ArrayList<Block>();
 
 		Block rewardBlock1 = createReward(a1);
-		 resetStore();
+		resetStore();
 		Block rewardBlock3 = createReward2(a2);
 		store.resetStore();
 		blocksAddedAll.addAll(a1);
@@ -239,7 +239,7 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 			// Check add in random order
 			Collections.shuffle(blocksAddedAll);
 
-			 resetStore();
+			resetStore();
 			// add many times to get chain out of order
 			for (Block b : blocksAddedAll)
 				blockGraph.add(b, true, true, store);
@@ -304,13 +304,10 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 	public void testReorgMiningRewardCutoff() throws Exception {
 
 		List<Block> blocksAddedAll = new ArrayList<Block>();
-		Block rollingBlock = addFixedBlocks(5, networkParameters.getGenesisBlock(), blocksAddedAll);
-
+		addFixedBlocks(5, networkParameters.getGenesisBlock(), blocksAddedAll);
 		// Generate more mining reward blocks
-		Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-				defaultBlockWrap(rollingBlock), defaultBlockWrap(rollingBlock), store);
-		blockGraph.updateChain();
-		blocksAddedAll.add(rewardBlock2);
+		Block rewardBlock2 = makeRewardBlock(blocksAddedAll); 
+		 
 		for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF + 5; i++) {
 			rewardBlock2 = makeRewardBlock(rewardBlock2.getHash());
 		}

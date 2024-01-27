@@ -72,7 +72,7 @@ public class ChainBlockQueue {
 
     @Override
     public String toString() {
-        return "  chainlength= " + chainlength +", hash=" + Utils.HEX.encode(hash )   +   ", orphan=" + orphan  ;
+        return "  chainlength= " + chainlength    +   ", orphan=" + orphan  ;
     }
 
 }

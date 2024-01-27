@@ -234,8 +234,9 @@ public class RewardService2Test extends AbstractIntegrationTest {
 			// sell order and make buy
 			long price = orderRecord.getTargetValue() / orderRecord.getOfferValue();
 
-			blocksAddedAll.add(wallet.buyOrder(null, orderRecord.getOfferTokenid(), price, orderRecord.getOfferValue(),
-					null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, false));
+			Block buyOrder = wallet.buyOrder(null, orderRecord.getOfferTokenid(), price, orderRecord.getOfferValue(),
+					null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, false);
+			blocksAddedAll.add(buyOrder);
 			makeOrderExecutionAndReward(blocksAddedAll);
 
 		}

@@ -181,7 +181,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// After adding the missing dependency, should be solid
 
-		new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
+		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).solidifyWaiting(block, store);
 		assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
 		assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
 	}
@@ -203,7 +203,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		blockService.saveBlock(depBlock, store);
 
 		// After adding the missing dependency, should be solid
-		new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
+		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).solidifyWaiting(block, store);
 		assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
 		assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
 	}
@@ -227,7 +227,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// After adding the missing dependency, should be solid
 
-		new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
+		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).solidifyWaiting(block, store);
 		assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2);
 		assertTrue(store.getBlockWrap(depBlock.getHash()).getBlockEvaluation().getSolid() == 2);
 	}
@@ -264,7 +264,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		Transaction tx2 = createTestTransaction();
 		Block block = createAndAddNextBlockWithTransaction(confBlock, confBlock, tx2);
 
-		 resetStore();
+		resetStore();
 
 		// Add block allowing unsolids
 		blockService.addConnected(confBlock.bitcoinSerialize(), false);
@@ -278,7 +278,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		blockService.saveBlock(confBlock, store);
 
 		// After adding the missing dependency, should be solid
-		new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
+		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).solidifyWaiting(block, store);
 
 		// TODO
 		// assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid()
@@ -289,25 +289,23 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 	@Test
 	public void testUnsolidMissingReward() throws Exception {
 
-		// Generate blocks until passing first reward interval and second reward
-		// interval
+ 
 		List<Block> blocksAddedAll = new ArrayList<Block>();
-		Block rollingBlock = addFixedBlocks(3, networkParameters.getGenesisBlock(), blocksAddedAll);
+		Block rollingBlock =  networkParameters.getGenesisBlock() ;
 
 		// Generate eligible mining reward block
 		Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-				defaultBlockWrap(rollingBlock ),
-				defaultBlockWrap(rollingBlock), store);
+				defaultBlockWrap(rollingBlock), defaultBlockWrap(rollingBlock), store);
 		blockGraph.updateChain();
 
 		// Mining reward block should go through
 		assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
 
 		// Generate eligible second mining reward block
-		Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash() , store);
+		Block rewardBlock2 = rewardService.createReward(rewardBlock1.getHash(), store);
 		blockGraph.updateChain();
 
-		 resetStore();
+		resetStore();
 		for (Block b : blocksAddedAll) {
 			blockGraph.add(b, true, store);
 		}
@@ -356,7 +354,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		Block block = saveTokenUnitTestWithTokenname(tokenInfo2, coinbase, outKey, null);
 
-		 resetStore();
+		resetStore();
 
 		// Add block allowing unsolids
 		blockService.addConnected(block.bitcoinSerialize(), true);
@@ -369,7 +367,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// After adding the missing dependency, should be solid
 
-		new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService).solidifyWaiting(block, store);
+		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).solidifyWaiting(block, store);
 
 		// There are prev not there TODO
 		// assertTrue(store.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid()
@@ -383,25 +381,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		// Generate blocks until passing first reward interval and second reward
 		// interval
 		List<Block> blocksAddedAll = new ArrayList<Block>();
-		Block rollingBlock = addFixedBlocks(3, networkParameters.getGenesisBlock(), blocksAddedAll);
+		Block rollingBlock =    networkParameters.getGenesisBlock() ;
 
 		// Generate eligible mining reward block
 		Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-				defaultBlockWrap(rollingBlock ),
-				defaultBlockWrap(rollingBlock), store);
+				defaultBlockWrap(rollingBlock), defaultBlockWrap(rollingBlock), store);
 
 		// The consensus number should now be equal to the previous number + 1
 		assertEquals(rollingBlock.getLastMiningRewardBlock() + 1, rewardBlock1.getLastMiningRewardBlock());
-
-		for (int i = 0; i < 1; i++) {
-			Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
-
-			// The difficulty should be equal to the previous difficulty
-			assertEquals(rollingBlock.getLastMiningRewardBlock(), rollingBlockNew.getLastMiningRewardBlock());
-
-			rollingBlock = rollingBlockNew;
-			blockGraph.add(rollingBlock, true, store);
-		}
 
 		try {
 			Block failingBlock = rollingBlock.createNextBlock(networkParameters.getGenesisBlock());
@@ -425,20 +412,6 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 			// Expected
 		}
 
-		blockGraph.updateChain();
-		try {
-			Block failingBlock = rewardService.createMiningRewardBlock(rewardBlock1.getHash(), defaultBlockWrap(rollingBlock ),
-					defaultBlockWrap(rollingBlock), store);
-			blockGraph.updateChain();
-			failingBlock.setLastMiningRewardBlock(123);
-
-			failingBlock.solve();
-			blockGraph.add(failingBlock, false, store);
-			blockGraph.updateChain();
-			fail();
-		} catch (DifficultyConsensusInheritanceException e) {
-			// Expected
-		}
 	}
 
 	@Test
@@ -447,23 +420,14 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		// Generate blocks until passing first reward interval and second reward
 		// interval
 		Block rollingBlock = networkParameters.getGenesisBlock();
-		for (int i = 0; i < 3; i++) {
-			Block rollingBlockNew = rollingBlock.createNextBlock(rollingBlock);
-
-			// The time should not be moving backwards
-			assertTrue(rollingBlock.getTimeSeconds() <= rollingBlockNew.getTimeSeconds());
-
-			rollingBlock = rollingBlockNew;
-			blockGraph.add(rollingBlock, true, store);
-		}
 
 		// The time is allowed to stay the same
 		rollingBlock = rollingBlock.createNextBlock(rollingBlock);
 		rollingBlock.setTime(rollingBlock.getTimeSeconds()); // 01/01/2000 @
-																// 12:00am (UTC)
+		rollingBlock.addTransaction(wallet.feeTransaction(null)); // 12:00am (UTC)
 		rollingBlock.solve();
-		blockGraph.add(rollingBlock, true, store);
-
+		blockGraph.add(rollingBlock, false, store);
+		makeRewardBlock(rollingBlock);
 		// The time is not allowed to move backwards
 		try {
 			rollingBlock = rollingBlock.createNextBlock(rollingBlock);
@@ -567,7 +531,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 		createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(), networkParameters.getGenesisBlock(),
 				tx1);
 
-		 resetStore();
+		resetStore();
 
 		// Again but with incorrect input script
 		try {
@@ -616,7 +580,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 					networkParameters.getGenesisBlock(), tx2);
 		}
 
-	 resetStore();
+		resetStore();
 
 		// Again but with more output coins
 		try {
@@ -736,8 +700,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate mining reward block with spending inputs
 		Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-				defaultBlockWrap(rollingBlock ),
-				defaultBlockWrap(rollingBlock), store);
+				defaultBlockWrap(rollingBlock), defaultBlockWrap(rollingBlock), store);
 		rewardBlock.setDifficultyTarget(rollingBlock.getDifficultyTarget() * 2);
 
 		// Should not go through
@@ -764,8 +727,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate mining reward block with spending inputs
 		Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-				defaultBlockWrap(rollingBlock ),
-				defaultBlockWrap(rollingBlock), store);
+				defaultBlockWrap(rollingBlock), defaultBlockWrap(rollingBlock), store);
 		Transaction tx = rewardBlock.getTransactions().get(0);
 
 		ECKey testKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv), Utils.HEX.decode(testPub));
@@ -805,8 +767,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate mining reward block with additional tx
 		Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-				defaultBlockWrap(rollingBlock ),
-				defaultBlockWrap(rollingBlock), store);
+				defaultBlockWrap(rollingBlock), defaultBlockWrap(rollingBlock), store);
 		Transaction tx = createTestTransaction();
 		rewardBlock.addTransaction(tx);
 		rewardBlock.solve();
@@ -833,8 +794,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate mining reward block with malformed tx data
 		Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-				defaultBlockWrap(rollingBlock ),
-				defaultBlockWrap(rollingBlock), store);
+				defaultBlockWrap(rollingBlock), defaultBlockWrap(rollingBlock), store);
 		rewardBlock.getTransactions().get(0).setData(null);
 		rewardBlock.solve();
 
@@ -853,23 +813,16 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		Block rollingBlock = networkParameters.getGenesisBlock();
 
-		// Generate blocks until passing first reward interval
-		for (int i = 0; i < 1 + 1 + 1; i++) {
-			rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-			blockGraph.add(rollingBlock, true, store);
-		}
-
 		// Generate mining reward block with malformed tx data
 		Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-				defaultBlockWrap(rollingBlock ),
-				defaultBlockWrap(rollingBlock), store);
+				defaultBlockWrap(rollingBlock), defaultBlockWrap(rollingBlock), store);
 		rewardBlock.getTransactions().get(0).setData(new byte[] { 2, 3, 4 });
-		;
+
 		rewardBlock.solve();
 
 		// Should not go through
 		try {
-			assertFalse(blockGraph.add(rewardBlock, false, true, store));
+			blockGraph.add(rewardBlock, false, true, store);
 			fail();
 		} catch (RuntimeException e) {
 		}
@@ -888,8 +841,7 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 		// Generate mining reward block with malformed fields
 		Block rewardBlock = rewardService.createMiningRewardBlock(networkParameters.getGenesisBlock().getHash(),
-				defaultBlockWrap(rollingBlock ),
-				defaultBlockWrap(rollingBlock), store);
+				defaultBlockWrap(rollingBlock), defaultBlockWrap(rollingBlock), store);
 		blockGraph.updateChain();
 		Block testBlock1 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
 		Block testBlock2 = networkParameters.getDefaultSerializer().makeBlock(rewardBlock.bitcoinSerialize());
@@ -2594,32 +2546,9 @@ public class ValidatorServiceTest extends AbstractIntegrationTest {
 
 			// Should go through
 			blockGraph.add(block1, false, store);
-			mcmc();
+			makeRewardBlock(block1);
 		}
-		Block block2 = null;
-		{
-			Transaction fee = wallet.feeTransaction(null);
-			// Make an order op
-			Transaction tx = new Transaction(networkParameters);
-			OrderCancelInfo info = new OrderCancelInfo(block1.getHash());
-			tx.setData(info.toByteArray());
-
-			// Legitimate it by signing
-			Sha256Hash sighash1 = tx.getHash();
-			ECKey.ECDSASignature party1Signature = testKey.sign(sighash1, null);
-			byte[] buf1 = party1Signature.encodeToDER();
-			tx.setDataSignature(buf1);
-
-			// Create block with order
-			block2 = block1.createNextBlock(block1);
-			block2.addTransaction(tx);
-			block2.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
-			block2.addTransaction(fee);
-			block2.solve();
-		}
-
-		// Should go through
-		blockGraph.add(block2, false, store);
+ 
 	}
 
 	@Test

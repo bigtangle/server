@@ -93,11 +93,24 @@ public class ServiceContract extends ServiceBaseConnect {
 		String winnerAmount = getValue("winnerAmount", contract.getTokenKeyValues());
 		String amount = getValue("amount", contract.getTokenKeyValues());
 
-		TreeMap<Sha256Hash, ContractEventRecord> usedRecord = new TreeMap<>(Comparator
+		TreeMap<Sha256Hash, ContractEventRecord> usedRecords = new TreeMap<>(Comparator
 				.comparing(blockHash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) blockHash).getBytes(), randomness))));
 
-		if (winnerAmount != null && canTakeWinner(toBeSpent, usedRecord, new BigInteger(winnerAmount))) {
-			return doTakeWinner(block, store, usedRecord, new BigInteger(amount), prevHash, toBeSpent, collectedBlocks);
+		if (winnerAmount != null && canTakeWinner(toBeSpent, usedRecords, new BigInteger(winnerAmount))) {
+			return doTakeWinner(block, store, usedRecords, new BigInteger(amount), prevHash, toBeSpent,
+					collectedBlocks);
+		} else {
+			if (!collectedBlocks.isEmpty()) {
+				//no winner reset used
+				usedRecords = new TreeMap<>(Comparator
+						.comparing(blockHash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) blockHash).getBytes(), randomness))));
+				Transaction tx = new Transaction(networkParameters);
+				return new ContractResult(null, contract.getTokenid(), getContractEventRecordHash(toBeSpent.values()),
+						tx.getHash(), tx, prevHash, new HashSet<>(),
+						getRemainder(toBeSpent.values(), usedRecords.values()), block.getTimeSeconds(),
+						getRemainderContractEventRecord(toBeSpent.values(), usedRecords.values()), collectedBlocks);
+
+			}
 		}
 		return null;
 
@@ -110,15 +123,15 @@ public class ServiceContract extends ServiceBaseConnect {
 			Block b = getBlock(bHash, store);
 			if (b.getBlockType() == Type.BLOCKTYPE_CONTRACT_EVENT) {
 
-				ContractEventRecord order = store.getContractEvent(b.getHash(), Sha256Hash.ZERO_HASH);
+				ContractEventRecord event = store.getContractEvent(b.getHash(), Sha256Hash.ZERO_HASH);
 				// order is null, write it to
-				if (order == null) {
+				if (event == null) {
 					connectUTXOs(b, store);
 					connectTypeSpecificUTXOs(b, store);
-					order = store.getContractEvent(b.getHash(), Sha256Hash.ZERO_HASH);
+					event = store.getContractEvent(b.getHash(), Sha256Hash.ZERO_HASH);
 				}
-				if (order != null) {
-					ContractEventRecord cloneOrderRecord = ContractEventRecord.cloneOrderRecord(order);
+				if (event != null) {
+					ContractEventRecord cloneOrderRecord = ContractEventRecord.cloneOrderRecord(event);
 					news.put(b.getHash(), cloneOrderRecord);
 					spents.put(b.getHash(), cloneOrderRecord);
 				}

@@ -151,8 +151,8 @@ public class UserdataTest extends AbstractIntegrationTest {
         transaction.setDataClassName(DataClassName.CONTACTINFO.name());
         transaction.setData(contactInfo0.toByteArray());
 
-       wallet.saveUserdata(outKey, transaction,false,null);
-        makeRewardBlock();
+       Block b=wallet.saveUserdata(outKey, transaction,false,null);
+        makeRewardBlock(b);
        byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.searchExchangeTokens.name(),
                 Json.jsonmapper().writeValueAsString(requestParam).getBytes());
         GetTokensResponse getTokensResponse = Json.jsonmapper().readValue(response0, GetTokensResponse.class);

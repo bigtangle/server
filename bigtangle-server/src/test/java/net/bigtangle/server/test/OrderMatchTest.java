@@ -845,21 +845,20 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 	@Test
 	public void cancel() throws Exception {
-
-		// ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
-		// Utils.HEX.decode(testPub));
+ 
 		ECKey testKey = new ECKey();
 		List<Block> addedBlocks = new ArrayList<>();
 		// Make test token
 		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-
+		readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
 		// Open sell orders for test tokens
 		Block sell = makeSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-
+		// Verify deterministic overall execution
+		readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
 		// Cancel
 		makeCancelOp(sell, testKey, addedBlocks);
 

@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -40,7 +39,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -93,8 +91,8 @@ import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.StoreService;
 import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.TipsService;
-import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
@@ -183,8 +181,7 @@ public abstract class AbstractIntegrationTest {
 		return rollingBlock1;
 	}
 
-	protected Block addFixedBlocks(int num, Block startBlock, List<Block> blocksAddedAll) throws BlockStoreException,
-			UTXOProviderException, InsufficientMoneyException, IOException, InterruptedException, ExecutionException {
+	protected Block addFixedBlocks(int num, Block startBlock, List<Block> blocksAddedAll) throws Exception {
 // add more blocks follow this startBlock
 		Block rollingBlock1 = startBlock;
 		for (int i = 0; i < num; i++) {
@@ -192,9 +189,19 @@ public abstract class AbstractIntegrationTest {
 			rollingBlock1.addTransaction(wallet.feeTransaction(null));
 			rollingBlock1.solve();
 			blockGraph.add(rollingBlock1, true, store);
-			mcmc();
-			blocksAddedAll.add(rollingBlock1);
+			rewardWithBlock(blocksAddedAll, rollingBlock1);
 		}
+		return rollingBlock1;
+	}
+
+	protected Block addFixedBlocks(Block startBlock, List<Block> blocksAddedAll) throws Exception {
+		// add more blocks follow this startBlock
+		Block rollingBlock1 = startBlock;
+
+		rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
+		rollingBlock1.addTransaction(wallet.feeTransaction(null));
+		rollingBlock1.solve();
+		blockGraph.add(rollingBlock1, true, store); 
 		return rollingBlock1;
 	}
 
@@ -236,7 +243,7 @@ public abstract class AbstractIntegrationTest {
 
 		store.resetStore();
 		CacheBlockService.lastConfirmedChainBlock = null;
-
+		cacheBlockService.evictBlock();
 	}
 
 	protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, BigInteger amount) throws Exception {
@@ -350,8 +357,9 @@ public abstract class AbstractIntegrationTest {
 
 		block = saveTokenUnitTest(tokenInfo, coinbase, testKey, null, addedBlocks);
 		addedBlocks.add(block);
-		// makeRewardBlock(addedBlocks);
-		mcmc();
+
+		rewardWithBlock(addedBlocks, block);
+
 		return block;
 	}
 

@@ -621,7 +621,8 @@ public class ServiceBaseConnect extends ServiceBase {
 		Iterator<BlockWrap> iterator = blocksToAdd.iterator();
 		while (iterator.hasNext()) {
 			BlockWrap b = iterator.next();
-			List<BlockWrap> allRequirements = getAllRequirements(b.getBlock(), store);
+			List<BlockWrap> allRequirements = getAllBlocks(b.getBlock(), getAllRequiredBlockHashes(b.getBlock(), true),
+					store);
 			for (BlockWrap req : allRequirements) {
 				if (!req.getBlockEvaluation().isConfirmed() && !blocksToAdd.contains(req)) {
 					iterator.remove();
@@ -984,11 +985,6 @@ public class ServiceBaseConnect extends ServiceBase {
 		return missingPredecessorBlockHashes;
 	}
 
-	public SolidityState getMinPredecessorSolidity(Block block, boolean throwExceptions, FullBlockStore store)
-			throws BlockStoreException {
-		return getMinPredecessorSolidity(block, throwExceptions, getAllRequirements(block, store), store, true);
-	}
-
 	public GetTXRewardResponse getMaxConfirmedReward(Map<String, Object> request, FullBlockStore store)
 			throws BlockStoreException {
 
@@ -1020,7 +1016,9 @@ public class ServiceBaseConnect extends ServiceBase {
 				.thenComparing((Block b) -> b.getHash());
 		TreeSet<Block> referencedBlocks = new TreeSet<Block>(comparator);
 		for (Sha256Hash hash : currRewardInfo.getBlocks()) {
-			referencedBlocks.add(getBlock(hash, store));
+			Block block = getBlock(hash, store);
+			if(block!=null)
+			referencedBlocks.add(block);
 		}
 		for (Block block : referencedBlocks) {
 			solidifyWaiting(block, store);
@@ -1213,7 +1211,7 @@ public class ServiceBaseConnect extends ServiceBase {
 
 			// Get list of consumed orders, virtual order matching tx and newly
 			// generated remaining order book
-			if (!enableOrderContract(block)) {
+			if (!enableFee(block)) {
 				matchingResult = generateOrderMatching(block, blockStore);
 				tx = matchingResult.getOutputTx();
 				insertVirtualUTXOs(block, tx, blockStore);
@@ -1268,7 +1266,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		case BLOCKTYPE_REWARD:
 			// For rewards, update reward to be confirmed now
 			confirmReward(block, blockStore);
-			if (!enableOrderContract(block.getBlock())) {
+			if (!enableFee(block.getBlock())) {
 				confirmOrderMatching(block, blockStore);
 			}
 			break;
@@ -1741,7 +1739,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			FullBlockStore blockStore) throws BlockStoreException {
 		// Get list of consumed orders, virtual order matching tx and newly
 		// generated remaining order book
-		if (!enableOrderContract(block)) {
+		if (!enableFee(block)) {
 			OrderMatchingResult matchingResult = generateOrderMatching(block, blockStore);
 
 			// Disconnect all virtual transaction output dependents
@@ -1841,7 +1839,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			break;
 		case BLOCKTYPE_REWARD:
 			unconfirmReward(block, blockStore);
-			if (!enableOrderContract(block)) {
+			if (!enableFee(block)) {
 				unconfirmOrderMatching(block, blockStore);
 			}
 			break;
@@ -1875,7 +1873,7 @@ public class ServiceBaseConnect extends ServiceBase {
 	private void unconfirmOrderMatching(Block block, FullBlockStore blockStore) throws BlockStoreException {
 		// Get list of consumed orders, virtual order matching tx and newly
 		// generated remaining order book
-		if (!enableOrderContract(block)) {
+		if (!enableFee(block)) {
 			OrderMatchingResult matchingResult = generateOrderMatching(block, blockStore);
 			unconfirmOrderMatching(block, matchingResult, blockStore);
 		}
@@ -1963,9 +1961,10 @@ public class ServiceBaseConnect extends ServiceBase {
 
 	public void solidifyBlock(Block block, SolidityState solidityState, boolean setMilestoneSuccess,
 			FullBlockStore blockStore) throws BlockStoreException {
-		// if (block.getBlockType() == Type.BLOCKTYPE_ORDER_EXECUTE) {
-		// logger.debug(block.toString());
-		// }
+		  if (block.getBlockType() == Type.BLOCKTYPE_ORDER_EXECUTE) {
+		  logger.debug(block.toString());
+		  }
+
 		switch (solidityState.getState()) {
 		case MissingCalculation:
 			blockStore.updateBlockEvaluationSolid(block.getHash(), 1);
@@ -2697,7 +2696,7 @@ public class ServiceBaseConnect extends ServiceBase {
 	//
 	public Transaction generateVirtualMiningRewardTX(Block block, FullBlockStore blockStore)
 			throws BlockStoreException {
-		if (enableOrderContract(block)) {
+		if (enableFee(block)) {
 			return generateVirtualMiningRewardTXFeeBased(block, blockStore);
 		} else {
 			return generateVirtualMiningRewardTX1(block, blockStore);

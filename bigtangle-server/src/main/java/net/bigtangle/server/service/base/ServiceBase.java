@@ -38,7 +38,7 @@ public class ServiceBase {
 	protected ServerConfiguration serverConfiguration;
 	protected NetworkParameters networkParameters;
 	protected CacheBlockService cacheBlockService;
-	 
+
 	public ServiceBase(ServerConfiguration serverConfiguration, NetworkParameters networkParameters,
 			CacheBlockService cacheBlockService) {
 		super();
@@ -46,18 +46,14 @@ public class ServiceBase {
 		this.networkParameters = networkParameters;
 		this.cacheBlockService = cacheBlockService;
 	}
-	
-	protected boolean enableFee(Block block) {
+
+	public boolean enableFee(Block block) {
 		return (block.getLastMiningRewardBlock() > 1283681
 				&& networkParameters.getId().equals(NetworkParameters.ID_MAINNET))
 				|| networkParameters.getId().equals(NetworkParameters.ID_UNITTESTNET);
 	}
 
-	public boolean enableOrderContract(Block block) {
-		return enableFee(block);
-	}
-	
-
+ 
 	/**
 	 * get domainname token multi sign address
 	 * 
@@ -87,11 +83,6 @@ public class ServiceBase {
 			return multiSignAddresses;
 		}
 	}
-	
-
-	public List<BlockWrap> getAllRequirements(Block block, FullBlockStore store) throws BlockStoreException {
-		return getAllBlocks(block, getAllRequiredBlockHashes(block, false), store);
-	}
 
 	public List<BlockWrap> getAllBlocks(Block block, Set<Sha256Hash> allBlockHashes, FullBlockStore store)
 			throws BlockStoreException {
@@ -100,23 +91,24 @@ public class ServiceBase {
 			result.add(store.getBlockWrap(pred));
 		return result;
 	}
+
 	/**
 	 * Returns all blocks that must be confirmed if this block is confirmed. All
-	 * transactions related to this block must be confirmed before this block The
-	 * edge is does not reuired the two getPrevBlockHash and getPrevBranchBlockHash
-	 * checked
+	 * transactions related to this block are include as required includePredecessor
+	 * is false = not required the two getPrevBlockHash and getPrevBranchBlockHash
+	 * The sync may does not check this two Predecessors
 	 */
 
-	public Set<Sha256Hash> getAllRequiredBlockHashes(Block block, boolean edge) {
-		Set<Sha256Hash> predecessors = new HashSet<>();
-		if (!edge) {
-			predecessors.add(block.getPrevBlockHash());
-			predecessors.add(block.getPrevBranchBlockHash());
+	public Set<Sha256Hash> getAllRequiredBlockHashes(Block block, boolean includePredecessor) {
+		Set<Sha256Hash> allrequireds = new HashSet<>();
+		if (includePredecessor) {
+			allrequireds.add(block.getPrevBlockHash());
+			allrequireds.add(block.getPrevBranchBlockHash());
 		}
 		// contract execution add all referenced blocks
 		if (Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(block.getBlockType())
 				|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(block.getBlockType())) {
-			predecessors.addAll(getReferrencedBlockHashes(block));
+			allrequireds.addAll(getReferrencedBlockHashes(block));
 		}
 		// All used transaction outputs
 
@@ -127,7 +119,7 @@ public class ServiceBase {
 				for (int index = 0; index < tx.getInputs().size(); index++) {
 					TransactionInput in = tx.getInputs().get(index);
 					// due to virtual txs from order/reward
-					predecessors.add(in.getOutpoint().getBlockHash());
+					allrequireds.add(in.getOutpoint().getBlockHash());
 				}
 			}
 
@@ -143,13 +135,13 @@ public class ServiceBase {
 			break;
 		case BLOCKTYPE_REWARD:
 			RewardInfo rewardInfo = new RewardInfo().parseChecked(transactions.get(0).getData());
-			predecessors.add(rewardInfo.getPrevRewardHash());
+			allrequireds.add(rewardInfo.getPrevRewardHash());
 			break;
 		case BLOCKTYPE_TOKEN_CREATION:
 			TokenInfo currentToken = new TokenInfo().parseChecked(transactions.get(0).getData());
-			predecessors.add(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()));
+			allrequireds.add(Sha256Hash.wrap(currentToken.getToken().getDomainNameBlockHash()));
 			if (currentToken.getToken().getPrevblockhash() != null)
-				predecessors.add(currentToken.getToken().getPrevblockhash());
+				allrequireds.add(currentToken.getToken().getPrevblockhash());
 			break;
 		case BLOCKTYPE_TRANSFER:
 			break;
@@ -169,8 +161,9 @@ public class ServiceBase {
 			throw new RuntimeException("No Implementation");
 		}
 
-		return predecessors;
+		return allrequireds;
 	}
+
 	public Set<Sha256Hash> getReferrencedBlockHashes(Block block) {
 		if (block.getBlockType().equals(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE)) {
 			return new ContractResult().parseChecked(block.getTransactions().get(0).getData()).getReferencedBlocks();
@@ -181,6 +174,7 @@ public class ServiceBase {
 		}
 		return new HashSet<Sha256Hash>();
 	}
+
 	public Block getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
 
 		byte[] re = cacheBlockService.getBlock(blockhash, store);
@@ -225,6 +219,7 @@ public class ServiceBase {
 	public long getTimeSeconds(int days) {
 		return System.currentTimeMillis() / 1000 - (long) days * 60 * 24 * 60;
 	}
+
 	public void batchBlock(Block block, FullBlockStore store) throws BlockStoreException {
 
 		store.insertBatchBlock(block);
@@ -251,6 +246,7 @@ public class ServiceBase {
 
 		return GetBlockListResponse.create(store.blocksFromChainLength(start, end));
 	}
+
 	public long getRewardMaxHeight(Sha256Hash prevRewardHash) {
 		return Long.MAX_VALUE;
 		// Block rewardBlock = store.get(prevRewardHash);
@@ -298,10 +294,6 @@ public class ServiceBase {
 				missingCalculation = SolidityState.fromMissingCalculation(predecessor.getBlockHash());
 			} else if (predecessor.getBlockEvaluation().getSolid() == 0 && predecessorsSolid) {
 				missingDependency = SolidityState.from(predecessor.getBlockHash(), false);
-			} else if (predecessor.getBlockEvaluation().getSolid() == -1 && predecessorsSolid) {
-				if (throwExceptions)
-					throw new VerificationException("The used blocks are invalid. getSolid() == -1");
-				return SolidityState.getFailState();
 			} else {
 				// TODO check logger.warn("predecessor.getBlockEvaluation().getSolid() = "
 				// + predecessor.getBlockEvaluation().getSolid() + " " + block.toString());

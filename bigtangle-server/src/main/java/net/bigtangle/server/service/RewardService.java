@@ -182,23 +182,30 @@ public class RewardService {
 			Long timeOverride, FullBlockStore store)
 			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
 		Stopwatch watch = Stopwatch.createStarted();
+		ServiceBaseReward serviceBase = new ServiceBaseReward(serverConfiguration, networkParameters,
+				cacheBlockService);
 
 		Block r1 = prevTrunk.getBlock();
 		Block r2 = prevBranch.getBlock();
-
+		Block prevRewardBlock = serviceBase.getBlock(prevRewardHash, store);
 		long currentTime = Math.max(System.currentTimeMillis() / 1000,
-				Math.max(r1.getTimeSeconds(), r2.getTimeSeconds()));
+				Math.max(prevRewardBlock.getTimeSeconds(), Math.max(r1.getTimeSeconds(), r2.getTimeSeconds())));
 		if (timeOverride != null)
 			currentTime = timeOverride;
-		ServiceBaseReward serviceBase = new ServiceBaseReward(serverConfiguration, networkParameters, cacheBlockService);
-		RewardBuilderResult result = serviceBase.makeReward(prevTrunk, prevBranch, prevRewardHash, currentTime, store);
 
 		Block block = Block.createBlock(networkParameters, r1, r2);
 
 		block.setBlockType(Block.Type.BLOCKTYPE_REWARD);
-		block.setHeight(Math.max(r1.getHeight(), r2.getHeight()) + 1);
+		block.setHeight(Math.max(prevRewardBlock.getHeight(), Math.max(r1.getHeight(), r2.getHeight())) + 1);
 		block.setMinerAddress(
 				Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
+
+		RewardBuilderResult result;
+		if (serviceBase.enableFee(block)) {
+			result = serviceBase.makeRewardNoOrder(prevTrunk, prevBranch, prevRewardHash, currentTime, store);
+		} else {
+			result = serviceBase.makeRewardWithOrder(prevTrunk, prevBranch, prevRewardHash, currentTime, store);
+		}
 
 		Transaction tx = result.getTx();
 		RewardInfo currRewardInfo = new RewardInfo().parseChecked(tx.getData());
@@ -213,7 +220,7 @@ public class RewardService {
 		}
 
 		block.addTransaction(tx);
-		if (!serviceBase.enableOrderContract(block)) {
+		if (!serviceBase.enableFee(block)) {
 			OrderMatchingResult ordermatchresult = serviceBase.generateOrderMatching(block, currRewardInfo, store);
 			currRewardInfo.setOrdermatchingResult(ordermatchresult.getOrderMatchingResultHash());
 			tx.setData(currRewardInfo.toByteArray());

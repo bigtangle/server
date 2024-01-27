@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,7 @@ import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Utils;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
@@ -79,8 +81,8 @@ public class SyncBlockService {
 
 	@Autowired
 	private ScheduleConfiguration scheduleConfiguration;
-    @Autowired
-    protected CacheBlockService cacheBlockService;
+	@Autowired
+	protected CacheBlockService cacheBlockService;
 	@Autowired
 	private StoreService storeService;
 	@Autowired
@@ -244,29 +246,17 @@ public class SyncBlockService {
 		return data;
 	}
 
-	public void requestBlocks(Block rewardBlock, FullBlockStore store) {
-		RewardInfo rewardInfo = new RewardInfo().parseChecked(rewardBlock.getTransactions().get(0).getData());
-
-		String[] re = serverConfiguration.getRequester().split(",");
-		List<String> badserver = new ArrayList<String>();
-		for (String s : re) {
-			if (s != null && !"".equals(s.trim()) && !badserver(badserver, s)) {
-				try {
-					requestBlocks(rewardInfo.getChainlength() - 2, rewardInfo.getChainlength(), s, store);
-				} catch (Exception e) {
-					log.debug(s, e);
-					badserver.add(s);
-				}
-			}
+	public boolean anyMatchConfirmedReward(Block block, List<TXReward> remotes) {
+		if (block.getBlockType() == Type.BLOCKTYPE_REWARD) {
+			return remotes.stream().anyMatch(s -> s.getBlockHash().equals(block.getHash()));
+		} else {
+			return true;
 		}
+
 	}
 
-	public void requestBlocks(long chainlength, String s, FullBlockStore store)
-			throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
-		requestBlocks(chainlength, chainlength, s, store);
-	}
-
-	public void requestBlocks(long chainlengthstart, long chainlengthend, String s, FullBlockStore store)
+	public void requestBlocks(long chainlengthstart, long chainlengthend, String s, List<TXReward> remotes,
+			FullBlockStore store)
 			throws JsonProcessingException, IOException, ProtocolException, BlockStoreException, NoBlockException {
 
 		HashMap<String, String> requestParam = new HashMap<String, String>();
@@ -294,7 +284,9 @@ public class SyncBlockService {
 //				for (Sha256Hash hash : missing) {
 //					requestBlock(hash, store);
 //				}
-				blockgraph.addFromSync(block, true, store);
+		//		if (anyMatchConfirmedReward(block, remotes)) {
+					blockgraph.addFromSync(block, true, store);
+		//		}
 			}
 		}
 
@@ -434,7 +426,10 @@ public class SyncBlockService {
 
 		if (aMaxConfirmedReward.aTXReward.getChainLength() > my.getChainLength()) {
 
-			List<TXReward> remotes = getAllConfirmedReward(aMaxConfirmedReward.server);
+			List<TXReward> remotes = getAllConfirmedReward(aMaxConfirmedReward.server).stream()
+					.filter(a -> a.getSpenderBlockHash() != null).collect(Collectors.toList());
+			log.debug("  remote chain  size  " + remotes.size());
+
 			Collections.sort(remotes, new SortbyChain());
 			List<TXReward> mylist = new ArrayList<TXReward>();
 
@@ -457,14 +452,16 @@ public class SyncBlockService {
 			for (long i = re.getChainLength(); i <= aMaxConfirmedReward.aTXReward
 					.getChainLength(); i += serverConfiguration.getSyncblocks()) {
 				Stopwatch watch = Stopwatch.createStarted();
-				requestBlocks(i, i + serverConfiguration.getSyncblocks() - 1, aMaxConfirmedReward.server, store);
+				requestBlocks(i, i + serverConfiguration.getSyncblocks() - 1, aMaxConfirmedReward.server, remotes,
+						store);
 				if (initsync) {
 					// log.debug(" updateChain " );
-					blockgraph.saveChainConnected(store, true);
+
+					blockgraph.processChainConnected(store, true, false);
 
 				}
 				log.debug(" synced second=" + watch.elapsed(TimeUnit.SECONDS));
-			//	checkPointDatabase(i);
+				// checkPointDatabase(i);
 			}
 
 		}

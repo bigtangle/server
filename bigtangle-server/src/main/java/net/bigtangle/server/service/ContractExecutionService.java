@@ -145,16 +145,19 @@ public class ContractExecutionService {
 
 	public Block createContractExecution(Block block, String contractid, FullBlockStore store)
 			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
+		// calculate prev
+		Sha256Hash prevHash = store.getLastContractResultBlockHash(contractid);
+		if (prevHash == null) {
+			prevHash = Sha256Hash.ZERO_HASH;
+		}
+		return createContractExecution(block, contractid, prevHash, store);
+	}
+	public Block createContractExecution(Block block, String contractid,Sha256Hash prevHash, FullBlockStore store)
+			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
 		block.setBlockType(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
 		// Build transaction for block
 		Transaction tx = new Transaction(networkParameters);
-		block.addTransaction(tx);
-		Sha256Hash prevHash = Sha256Hash.ZERO_HASH;
-		// calculate prev
-		Sha256Hash prev = store.getLastContractResultBlockHash(contractid);
-		if (prev != null) {
-			prevHash = prev;
-		}
+		block.addTransaction(tx); 
 		// collect the order block as reference
 		// Read previous reward block's data
 		Sha256Hash prevRewardHash = cacheBlockService.getMaxConfirmedReward(store).getBlockHash();

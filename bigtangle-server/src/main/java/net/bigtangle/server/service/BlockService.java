@@ -73,16 +73,17 @@ public class BlockService {
 
 	@Autowired
 	protected ServerConfiguration serverConfiguration;
-	
+
 	@Autowired
 	protected TipsService tipService;
-    @Autowired
-    protected CacheBlockService cacheBlockService;
+	@Autowired
+	protected CacheBlockService cacheBlockService;
 	private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
- 
+
 	public Block getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
-		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService);
-		return serviceBase.getBlock(blockhash,store);
+		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
+				cacheBlockService);
+		return serviceBase.getBlock(blockhash, store);
 	}
 
 	public BlockWrap getBlockWrap(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
@@ -202,7 +203,7 @@ public class BlockService {
 	}
 
 	private Block getNewBlockPrototype(FullBlockStore store) throws BlockStoreException {
-		Pair<BlockWrap, BlockWrap> tipsToApprove = getValidatedBlockPair(store); 
+		Pair<BlockWrap, BlockWrap> tipsToApprove = getValidatedBlockPair(store);
 		Block b = Block.createBlock(networkParameters, tipsToApprove.getLeft().getBlock(),
 				tipsToApprove.getRight().getBlock());
 		b.setMinerAddress(Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
@@ -327,21 +328,19 @@ public class BlockService {
 	}
 
 	public long calcHeightRequiredBlocks(Block block, FullBlockStore store) throws BlockStoreException {
-		List<BlockWrap> requires = getAllRequirements(block, store);
+
+		Set<Sha256Hash> allrequireds = new HashSet<>();
+		List<Block> result = new ArrayList<>();
+		allrequireds.add(block.getPrevBlockHash());
+		allrequireds.add(block.getPrevBranchBlockHash());
+		for (Sha256Hash pred : allrequireds)
+			result.add(store.get(pred));
+
 		long height = 0;
-		for (BlockWrap b : requires) {
-			height = Math.max(height, b.getBlock().getHeight());
+		for (Block b : result) {
+			height = Math.max(height, b.getHeight());
 		}
 		return height + 1;
-	}
-
-	public List<BlockWrap> getAllRequirements(Block block, FullBlockStore store) throws BlockStoreException {
-		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,cacheBlockService);
-		Set<Sha256Hash> allPredecessorBlockHashes = serviceBase.getAllRequiredBlockHashes(block, false);
-		List<BlockWrap> result = new ArrayList<>();
-		for (Sha256Hash pred : allPredecessorBlockHashes)
-			result.add(store.getBlockWrap(pred));
-		return result;
 	}
 
 	public long getCurrentMaxHeight(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
@@ -385,7 +384,6 @@ public class BlockService {
 		return store.get(currPrevRewardHash).getHeight();
 	}
 
- 
 	/*
 	 * failed blocks without conflict for retry
 	 */

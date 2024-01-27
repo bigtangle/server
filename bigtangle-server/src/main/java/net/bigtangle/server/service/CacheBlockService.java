@@ -2,6 +2,7 @@ package net.bigtangle.server.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -27,8 +28,18 @@ public class CacheBlockService {
 
 	@CachePut(value = "blocksCache", key = "#block.hash")
 	public byte[] cacheBlock(final Block block, FullBlockStore store) throws BlockStoreException {
-		// logger.debug("cachePut {} ", block.getHash());
+		 logger.debug("cachePut {} ", block.getHeight());
 		return Gzip.compress(block.unsafeBitcoinSerialize());
+	}
+
+	@CacheEvict(value = "blocksCache", key = "#block.hash")
+	public void evictBlock(final Block block, FullBlockStore store) throws BlockStoreException {
+		logger.debug("evictBlock {}" ,block.toString() );
+	}
+
+	@CacheEvict(value = "blocksCache", allEntries=true)
+	public void evictBlock() throws BlockStoreException {
+		logger.debug("evictBlock" );
 	}
 
 	public TXReward getMaxConfirmedReward(FullBlockStore store) throws BlockStoreException {

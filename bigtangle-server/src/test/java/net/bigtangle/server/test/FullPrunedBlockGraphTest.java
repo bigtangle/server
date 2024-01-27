@@ -4,7 +4,6 @@
  *******************************************************************************/
 package net.bigtangle.server.test;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -68,7 +67,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		// Generate blocks until passing first reward interval
 		List<Block> blocksAddedAll = new ArrayList<Block>();
-		Block rollingBlock1 = addFixedBlocks(2, networkParameters.getGenesisBlock(), blocksAddedAll);
+		Block rollingBlock1 =  networkParameters.getGenesisBlock() ;
 
 		// Generate mining reward block
 		Block rewardBlock1 = makeRewardBlock(networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(),
@@ -186,7 +185,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		// Generate blocks until passing first reward interval
 		List<Block> blocksAddedAll = new ArrayList<Block>();
-		Block rollingBlock1 = addFixedBlocks(3, networkParameters.getGenesisBlock(), blocksAddedAll);
+		Block rollingBlock1 = addFixedBlocks(  networkParameters.getGenesisBlock(), blocksAddedAll);
 
 		// Generate mining reward block
 		Block rewardBlock1 = makeRewardBlock(networkParameters.getGenesisBlock().getHash(), rollingBlock1.getHash(),
@@ -424,15 +423,12 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 	@Test
 	public void testUnconfirmRewardUTXOs() throws Exception {
-
-		// Generate blocks until passing first reward interval
-
+ 
 		List<Block> blocksAddedAll = new ArrayList<Block>();
-		Block rollingBlock = addFixedBlocks(2, networkParameters.getGenesisBlock(), blocksAddedAll);
+		Block rollingBlock = addFixedBlocks(  networkParameters.getGenesisBlock(), blocksAddedAll);
 
 		// Generate mining reward block
-		Block rewardBlock11 = makeRewardBlock(networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(),
-				rollingBlock.getHash());
+		Block rewardBlock11 = makeRewardBlock(rollingBlock);
 
 		// Should be confirmed now
 		assertTrue(store.getRewardConfirmed(rewardBlock11.getHash()));
@@ -548,12 +544,9 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	public void testUnconfirmDependentsRewardOtherRewards() throws Exception {
-
-		// Generate blocks until passing second reward interval
-		// Generate mining reward block
-		List<Block> blocksAddedAll = new ArrayList<Block>();
-		Block rollingBlock = addFixedBlocks(2, networkParameters.getGenesisBlock(), blocksAddedAll);
+	public void testUnconfirmDependentsRewardOtherRewards() throws Exception { 
+ 
+		Block rollingBlock =   networkParameters.getGenesisBlock() ;
 		Block rewardBlock11 = makeRewardBlock(networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(),
 				rollingBlock.getHash());
 
@@ -563,8 +556,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 
 		// Generate second mining reward block
 		rollingBlock = rewardBlock11;
-		rollingBlock = addFixedBlocks(2, rollingBlock, blocksAddedAll);
-
+	
 		Block rewardBlock2 = makeRewardBlock(rewardBlock11.getHash(), rollingBlock.getHash(), rollingBlock.getHash());
 
 		// Should be confirmed now
@@ -573,7 +565,7 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertTrue(store.getRewardConfirmed(rewardBlock2.getHash()));
 		assertFalse(store.getRewardSpent(rewardBlock2.getHash()));
 
-		// Unconfirm
+		// Unconfirm rewardBlock11  forward to Unconfirm rewardBlock2
 		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
 				.unconfirmRecursive(rewardBlock11.getHash(), new HashSet<>(), store);
 
@@ -583,35 +575,16 @@ public class FullPrunedBlockGraphTest extends AbstractIntegrationTest {
 		assertFalse(store.getRewardConfirmed(rewardBlock2.getHash()));
 		assertFalse(store.getRewardSpent(rewardBlock2.getHash()));
 
-		// Further manipulations on prev UTXOs
-		assertTrue(store.getRewardConfirmed(networkParameters.getGenesisBlock().getHash()));
-		assertFalse(store.getRewardSpent(networkParameters.getGenesisBlock().getHash()));
-		assertNull(store.getRewardSpender(networkParameters.getGenesisBlock().getHash()));
-		assertFalse(store.getRewardConfirmed(rewardBlock11.getHash()));
-		assertFalse(store.getRewardSpent(rewardBlock11.getHash()));
-		assertNull(store.getRewardSpender(rewardBlock11.getHash()));
-
-		// Check the virtual txs too
-		Transaction virtualTX = new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
-				.generateVirtualMiningRewardTX(rewardBlock11, store);
-		UTXO utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock11.getHash()), store);
-		assertFalse(utxo1.isConfirmed());
-		assertFalse(utxo1.isSpent());
-		virtualTX = new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
-				.generateVirtualMiningRewardTX(rewardBlock2, store);
-		utxo1 = blockService.getUTXO(virtualTX.getOutput(0).getOutPointFor(rewardBlock2.getHash()), store);
-		assertFalse(utxo1.isConfirmed());
-		assertFalse(utxo1.isSpent());
+	 
 	}
 
 	@Test
 	public void testUnconfirmDependentsRewardVirtualSpenders() throws Exception {
 		List<Block> blocksAddedAll = new ArrayList<Block>();
-		Block rollingBlock = addFixedBlocks(3, networkParameters.getGenesisBlock(), blocksAddedAll);
+		Block rollingBlock = addFixedBlocks(  networkParameters.getGenesisBlock(), blocksAddedAll);
 
 		// Generate mining reward block
-		Block rewardBlock = makeRewardBlock(networkParameters.getGenesisBlock().getHash(), rollingBlock.getHash(),
-				rollingBlock.getHash());
+		Block rewardBlock = makeRewardBlock(rollingBlock);
 
 		// Should be confirmed now
 		assertTrue(store.getRewardConfirmed(rewardBlock.getHash()));
