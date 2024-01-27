@@ -89,8 +89,8 @@ import net.bigtangle.server.service.RewardService;
 import net.bigtangle.server.service.StoreService;
 import net.bigtangle.server.service.SyncBlockService;
 import net.bigtangle.server.service.TipsService;
-import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.MonetaryFormat;
 import net.bigtangle.utils.OkHttp3Util;
@@ -602,30 +602,8 @@ public abstract class AbstractIntegrationTest {
 
 	}
 
-	protected void readdConfirmedBlocksAndAssertDeterministicExecution(List<Block> addedBlocks)
-			throws BlockStoreException, JsonParseException, JsonMappingException, IOException, InterruptedException,
-			ExecutionException {
-		// Snapshot current state
-
-		List<OrderRecord> allOrdersSorted = store.getAllOpenOrdersSorted(null, null);
-		List<UTXO> allUTXOsSorted = store.getAllAvailableUTXOsSorted();
-		Map<Block, Boolean> blockConfirmed = new HashMap<>();
-		for (Block b : addedBlocks) {
-			blockConfirmed.put(b, blockService.getBlockEvaluation(b.getHash(), store).isConfirmed());
-		}
-
-		// Redo and assert snapshot equal to new state
-		 resetStore();
-		for (Block b : addedBlocks) {
-			blockGraph.add(b, true, true, store);
-		}
-
-		List<OrderRecord> allOrdersSorted2 = store.getAllOpenOrdersSorted(null, null);
-		List<UTXO> allUTXOsSorted2 = store.getAllAvailableUTXOsSorted();
-		assertEquals(allOrdersSorted.toString(), allOrdersSorted2.toString());
-		assertEquals(allUTXOsSorted.toString(), allUTXOsSorted2.toString());
-	}
-
+	 
+ 
 	protected Sha256Hash getRandomSha256Hash() {
 		byte[] rawHashBytes = new byte[32];
 		new Random().nextBytes(rawHashBytes);

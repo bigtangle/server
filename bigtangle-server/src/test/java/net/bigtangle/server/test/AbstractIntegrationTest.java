@@ -1445,4 +1445,8 @@ public abstract class AbstractIntegrationTest {
 	public BlockWrap defaultBlockWrap(Block block) throws Exception {
 		return new BlockWrap(block, BlockEvaluation.buildInitial(block), null, networkParameters);
 	}
+	
+	public BlockEvaluation getBlockEvaluation(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
+		return store.getBlockWrap(hash).getBlockEvaluation();
+	}
 }

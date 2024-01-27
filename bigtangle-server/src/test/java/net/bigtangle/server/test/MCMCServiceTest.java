@@ -46,15 +46,15 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
 		// MCMC should not update this far out
 		makeRewardBlock();
-		assertFalse(blockService.getBlockEvaluation(rollingBlock1.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockMCMC(rollingBlock1.getHash(), store).getRating() == 0);
+		assertFalse(getBlockEvaluation(rollingBlock1.getHash(), store).isConfirmed());
+		assertTrue(  store.getBlockWrap(rollingBlock1.getHash()).getMcmc().getRating() == 0);
 
 		// Reward block should include it
 		Pair<BlockWrap, BlockWrap> validatedRewardBlockPair = tipsService
 				.getValidatedRewardBlockPair(networkParameters.getGenesisBlock().getHash(), store);
 		rewardService.createReward(networkParameters.getGenesisBlock().getHash(), validatedRewardBlockPair.getLeft(),
 				validatedRewardBlockPair.getRight(), store);
-		assertTrue(blockService.getBlockEvaluation(rollingBlock1.getHash(), store).getMilestone() == 1);
+		assertTrue(getBlockEvaluation(rollingBlock1.getHash(), store).getMilestone() == 1);
 	}
 
 	@Test
@@ -87,17 +87,17 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
 		makeRewardBlock();
 
-		assertFalse(blockService.getBlockEvaluation(b1.getHash(), store).isConfirmed()
-				&& blockService.getBlockEvaluation(b2.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(b1.getHash(), store).isConfirmed()
-				|| blockService.getBlockEvaluation(b2.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(b1.getHash(), store).isConfirmed()
+				&& getBlockEvaluation(b2.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(b1.getHash(), store).isConfirmed()
+				|| getBlockEvaluation(b2.getHash(), store).isConfirmed());
 
 		makeRewardBlock();
 
-		assertFalse(blockService.getBlockEvaluation(b1.getHash(), store).isConfirmed()
-				&& blockService.getBlockEvaluation(b2.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(b1.getHash(), store).isConfirmed()
-				|| blockService.getBlockEvaluation(b2.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(b1.getHash(), store).isConfirmed()
+				&& getBlockEvaluation(b2.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(b1.getHash(), store).isConfirmed()
+				|| getBlockEvaluation(b2.getHash(), store).isConfirmed());
 	}
 
 	@Test
@@ -113,10 +113,10 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		blockGraph.updateChain();
 		Block b2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
 				defaultBlockWrap(rollingBlock), defaultBlockWrap(rollingBlock), store);
- 
+
 		createAndAddNextBlock(b2, b1);
- 
-		assertTrue(blockService.getBlockEvaluation(b1.getHash(), store).isConfirmed());
+
+		assertTrue(getBlockEvaluation(b1.getHash(), store).isConfirmed());
 
 	}
 
@@ -165,24 +165,24 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 			conflictBlock2 = saveTokenUnitTestWithTokenname(tokenInfo2, coinbase2, outKey, null);
 		}
 
-		BlockEvaluation blockEvaluation = blockService.getBlockEvaluation(conflictBlock1.getHash(), store);
-		BlockEvaluation blockEvaluation2 = blockService.getBlockEvaluation(conflictBlock2.getHash(), store);
+		BlockEvaluation blockEvaluation = getBlockEvaluation(conflictBlock1.getHash(), store);
+		BlockEvaluation blockEvaluation2 = getBlockEvaluation(conflictBlock2.getHash(), store);
 
 		assertFalse(blockEvaluation.isConfirmed() && blockEvaluation2.isConfirmed());
 		assertTrue(blockEvaluation.isConfirmed() || blockEvaluation2.isConfirmed());
 
 		makeRewardBlock();
 
-		blockEvaluation = blockService.getBlockEvaluation(conflictBlock1.getHash(), store);
-		blockEvaluation2 = blockService.getBlockEvaluation(conflictBlock2.getHash(), store);
+		blockEvaluation = getBlockEvaluation(conflictBlock1.getHash(), store);
+		blockEvaluation2 = getBlockEvaluation(conflictBlock2.getHash(), store);
 
 		assertFalse(blockEvaluation.isConfirmed() && blockEvaluation2.isConfirmed());
 		assertTrue(blockEvaluation.isConfirmed() || blockEvaluation2.isConfirmed());
 
 		mcmcServiceUpdate();
 
-		blockEvaluation = blockService.getBlockEvaluation(conflictBlock1.getHash(), store);
-		blockEvaluation2 = blockService.getBlockEvaluation(conflictBlock2.getHash(), store);
+		blockEvaluation = getBlockEvaluation(conflictBlock1.getHash(), store);
+		blockEvaluation2 = getBlockEvaluation(conflictBlock2.getHash(), store);
 
 		assertFalse(blockEvaluation.isConfirmed() && blockEvaluation2.isConfirmed());
 		assertTrue(blockEvaluation.isConfirmed() || blockEvaluation2.isConfirmed());
@@ -234,8 +234,8 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
 		makeRewardBlock();
 
-		assertFalse(blockService.getBlockEvaluation(conflictBlock1.getHash(), store).isConfirmed()
-				&& blockService.getBlockEvaluation(conflictBlock2.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(conflictBlock1.getHash(), store).isConfirmed()
+				&& getBlockEvaluation(conflictBlock2.getHash(), store).isConfirmed());
 
 	}
 
@@ -265,20 +265,19 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		Block rollingBlock = block2.createNextBlock(block1);
 		blockGraph.add(rollingBlock, true, store);
 
- 
 		mcmcServiceUpdate();
 
-		assertFalse(blockService.getBlockEvaluation(block2.getHash(), store).isConfirmed()
-				&& blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(block2.getHash(), store).isConfirmed()
-				|| blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(block2.getHash(), store).isConfirmed()
+				&& getBlockEvaluation(block1.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(block2.getHash(), store).isConfirmed()
+				|| getBlockEvaluation(block1.getHash(), store).isConfirmed());
 	}
 
 	@Test
 	public void testConflictSameTokenidFirstIssuance() throws Exception {
 
 		// Generate an issuance
-		ECKey outKey = new ECKey(); 
+		ECKey outKey = new ECKey();
 		byte[] pubKey = outKey.getPubKey();
 		TokenInfo tokenInfo = new TokenInfo();
 
@@ -290,7 +289,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		tokenInfo.setToken(tokens);
 		tokenInfo.getMultiSignAddresses()
 				.add(new MultiSignAddress(tokens.getTokenid(), "", outKey.getPublicKeyAsHex()));
-		
+
 		Block block1 = saveTokenUnitTest(tokenInfo, coinbase, outKey, null, null);
 
 		// Generate another issuance slightly different
@@ -307,13 +306,13 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		Block block2 = saveTokenUnitTest(tokenInfo2, coinbase2, outKey, null, null);
 		Block rollingBlock = block2.createNextBlock(block1);
 		blockGraph.add(rollingBlock, true, store);
- 
+
 		mcmcServiceUpdate();
 
-		assertFalse(blockService.getBlockEvaluation(block2.getHash(), store).isConfirmed()
-				&& blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(block2.getHash(), store).isConfirmed()
-				|| blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(block2.getHash(), store).isConfirmed()
+				&& getBlockEvaluation(block1.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(block2.getHash(), store).isConfirmed()
+				|| getBlockEvaluation(block1.getHash(), store).isConfirmed());
 	}
 
 	@Test
@@ -341,7 +340,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 				networkParameters.getGenesisBlock(), doublespendTX);
 		makeRewardBlock();
 
-		assertTrue(blockService.getBlockEvaluation(b1.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(b1.getHash(), store).isConfirmed());
 		Block b2 = createAndAddNextBlockWithTransaction(networkParameters.getGenesisBlock(),
 				networkParameters.getGenesisBlock(), doublespendTX);
 		Block b3 = createAndAddNextBlock(b1, b2);
@@ -352,8 +351,8 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
 		mcmcServiceUpdate();
 
-		assertTrue(blockService.getBlockEvaluation(b1.getHash(), store).isConfirmed());
-		assertFalse(blockService.getBlockEvaluation(b2.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(b1.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(b2.getHash(), store).isConfirmed());
 	}
 
 	@Test
@@ -387,8 +386,8 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		// Let block 1 win
 		makeRewardBlock(block1);
 
-		assertTrue(blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
-		assertFalse(blockService.getBlockEvaluation(block2.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(block1.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(block2.getHash(), store).isConfirmed());
 
 		// No reorg
 		rollingBlock = block2;
@@ -399,8 +398,8 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
 		mcmcServiceUpdate();
 
-		assertTrue(blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
-		assertFalse(blockService.getBlockEvaluation(block2.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(block1.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(block2.getHash(), store).isConfirmed());
 	}
 
 	@Test
@@ -425,7 +424,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		// One of them shall win
 		makeRewardBlock();
 
-		assertFalse(blockService.getBlockEvaluation(invalidBlock.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(invalidBlock.getHash(), store).isConfirmed());
 	}
 
 	public BlockWrap defaultBlockWrap(Block block) throws Exception {
@@ -475,29 +474,28 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		mcmcServiceUpdate();
 
 		// Check heights (handmade tests)
-		assertEquals(0,
-				blockService.getBlockEvaluation(networkParameters.getGenesisBlock().getHash(), store).getHeight());
-		assertEquals(1, blockService.getBlockEvaluation(b1.getHash(), store).getHeight());
-		assertEquals(1, blockService.getBlockEvaluation(b2.getHash(), store).getHeight());
-		assertEquals(2, blockService.getBlockEvaluation(b3.getHash(), store).getHeight());
-		assertEquals(3, blockService.getBlockEvaluation(b5.getHash(), store).getHeight());
-		assertEquals(4, blockService.getBlockEvaluation(b5link.getHash(), store).getHeight());
-		assertEquals(3, blockService.getBlockEvaluation(b6.getHash(), store).getHeight());
-		assertEquals(3, blockService.getBlockEvaluation(b7.getHash(), store).getHeight());
-		assertEquals(4, blockService.getBlockEvaluation(b8.getHash(), store).getHeight());
-		assertEquals(5, blockService.getBlockEvaluation(b8link.getHash(), store).getHeight());
-		assertEquals(5, blockService.getBlockEvaluation(b9.getHash(), store).getHeight());
-		assertEquals(6, blockService.getBlockEvaluation(b10.getHash(), store).getHeight());
-		assertEquals(6, blockService.getBlockEvaluation(b11.getHash(), store).getHeight());
-		assertEquals(6, blockService.getBlockEvaluation(b12.getHash(), store).getHeight());
-		assertEquals(6, blockService.getBlockEvaluation(b13.getHash(), store).getHeight());
-		assertEquals(6, blockService.getBlockEvaluation(b14.getHash(), store).getHeight());
-		assertEquals(2, blockService.getBlockEvaluation(bOrphan1.getHash(), store).getHeight());
-		assertEquals(5, blockService.getBlockEvaluation(bOrphan5.getHash(), store).getHeight());
-		assertEquals(6, blockService.getBlockEvaluation(b8weight1.getHash(), store).getHeight());
-		assertEquals(6, blockService.getBlockEvaluation(b8weight2.getHash(), store).getHeight());
-		assertEquals(6, blockService.getBlockEvaluation(b8weight3.getHash(), store).getHeight());
-		assertEquals(6, blockService.getBlockEvaluation(b8weight4.getHash(), store).getHeight());
+		assertEquals(0, getBlockEvaluation(networkParameters.getGenesisBlock().getHash(), store).getHeight());
+		assertEquals(1, getBlockEvaluation(b1.getHash(), store).getHeight());
+		assertEquals(1, getBlockEvaluation(b2.getHash(), store).getHeight());
+		assertEquals(2, getBlockEvaluation(b3.getHash(), store).getHeight());
+		assertEquals(3, getBlockEvaluation(b5.getHash(), store).getHeight());
+		assertEquals(4, getBlockEvaluation(b5link.getHash(), store).getHeight());
+		assertEquals(3, getBlockEvaluation(b6.getHash(), store).getHeight());
+		assertEquals(3, getBlockEvaluation(b7.getHash(), store).getHeight());
+		assertEquals(4, getBlockEvaluation(b8.getHash(), store).getHeight());
+		assertEquals(5, getBlockEvaluation(b8link.getHash(), store).getHeight());
+		assertEquals(5, getBlockEvaluation(b9.getHash(), store).getHeight());
+		assertEquals(6, getBlockEvaluation(b10.getHash(), store).getHeight());
+		assertEquals(6, getBlockEvaluation(b11.getHash(), store).getHeight());
+		assertEquals(6, getBlockEvaluation(b12.getHash(), store).getHeight());
+		assertEquals(6, getBlockEvaluation(b13.getHash(), store).getHeight());
+		assertEquals(6, getBlockEvaluation(b14.getHash(), store).getHeight());
+		assertEquals(2, getBlockEvaluation(bOrphan1.getHash(), store).getHeight());
+		assertEquals(5, getBlockEvaluation(bOrphan5.getHash(), store).getHeight());
+		assertEquals(6, getBlockEvaluation(b8weight1.getHash(), store).getHeight());
+		assertEquals(6, getBlockEvaluation(b8weight2.getHash(), store).getHeight());
+		assertEquals(6, getBlockEvaluation(b8weight3.getHash(), store).getHeight());
+		assertEquals(6, getBlockEvaluation(b8weight4.getHash(), store).getHeight());
 
 		// Check depths (handmade tests)
 		// assertEquals(5, blockService.getBlockMCMC(b1.getHash(), store).getDepth());
@@ -570,9 +568,9 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 
 		makeRewardBlock();
 
-		assertFalse(blockService.getBlockEvaluation(b5.getHash(), store).isConfirmed()
-				&& blockService.getBlockEvaluation(b8.getHash(), store).isConfirmed());
-		// assertFalse(blockService.getBlockEvaluation(b5link.getHash(),
+		assertFalse(getBlockEvaluation(b5.getHash(), store).isConfirmed()
+				&& getBlockEvaluation(b8.getHash(), store).isConfirmed());
+		// assertFalse(getBlockEvaluation(b5link.getHash(),
 		// store).isConfirmed());
 
 	}
@@ -600,7 +598,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		makeRewardBlock();
 
 		// Should go through
-		assertTrue(blockService.getBlockEvaluation(block1.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(block1.getHash(), store).isConfirmed());
 		Transaction tx1 = block1.getTransactions().get(0);
 		assertTrue(store.getTransactionOutput(block1.getHash(), tx1.getHash(), 0).isConfirmed());
 		assertTrue(store.getTokenConfirmed(block1.getHash()));
@@ -615,7 +613,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		}
 
 		// TODO mcmc deterministic Should be out
-		// assertFalse(blockService.getBlockEvaluation(block1.getHash(),
+		// assertFalse(getBlockEvaluation(block1.getHash(),
 		// store).isConfirmed());
 		// assertFalse(store.getTransactionOutput(block1.getHash(),
 		// tx1.getHash(), 0).isConfirmed());

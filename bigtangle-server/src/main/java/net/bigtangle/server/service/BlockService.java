@@ -106,14 +106,7 @@ public class BlockService {
 		return blocks;
 	}
 
-	public BlockEvaluation getBlockEvaluation(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
-		return store.getBlockWrap(hash).getBlockEvaluation();
-	}
-
-	public BlockMCMC getBlockMCMC(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
-		return store.getBlockWrap(hash).getMcmc();
-	}
-
+ 
 	public void saveBlock(Block block, FullBlockStore store) throws Exception {
 		blockgraph.add(block, false, store);
 		// no broadcastBlock, if there is error of blockgraph.add

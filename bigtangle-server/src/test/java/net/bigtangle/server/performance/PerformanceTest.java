@@ -39,9 +39,9 @@ public class PerformanceTest extends AbstractIntegrationTest {
 				.getValidatedRewardBlockPair(networkParameters.getGenesisBlock().getHash(), store);
 		Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
 				validatedRewardBlockPair.getLeft(), validatedRewardBlockPair.getRight(), store);
-		assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash(), store).getMilestone() == 1);
-		assertTrue(blockService.getBlockEvaluation(rollingBlock1.getHash(), store).getMilestone() == -1);
+		assertTrue(getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock2.getHash(), store).getMilestone() == 1);
+		assertTrue(getBlockEvaluation(rollingBlock1.getHash(), store).getMilestone() == -1);
 	}
 
 	@Test
@@ -75,7 +75,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
 
 		// Mining reward block should go through
 		mcmcServiceUpdate();
-		assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
 
 		// Generate more mining reward blocks
 		Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
@@ -85,14 +85,14 @@ public class PerformanceTest extends AbstractIntegrationTest {
 		mcmcServiceUpdate();
 
 		// No change
-		assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-		assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
-		assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
 		mcmcServiceUpdate();
 
-		assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-		assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
-		assertFalse(blockService.getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
 
 		// Third mining reward block should now instead go through since longer
 		rollingBlock = rewardBlock3;
@@ -105,9 +105,9 @@ public class PerformanceTest extends AbstractIntegrationTest {
 				defaultBlockWrap(rollingBlock), store);
 		mcmcServiceUpdate();
 
-		assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-		assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
 
 		// Check that not both mining blocks get approved
 		for (int i = 1; i < 10; i++) {
@@ -119,9 +119,9 @@ public class PerformanceTest extends AbstractIntegrationTest {
 		}
 		mcmcServiceUpdate();
 
-		assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-		assertFalse(blockService.getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
+		assertFalse(getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
 	}
 
 	@Test

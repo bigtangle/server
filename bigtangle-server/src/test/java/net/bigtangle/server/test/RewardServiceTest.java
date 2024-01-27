@@ -164,8 +164,8 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 		blockGraph.updateChain();
 		blocksAddedAll.add(rewardBlock1);
 
-		assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).getMilestone() == 1);
+		assertTrue(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock1.getHash(), store).getMilestone() == 1);
 
 		// Generate more mining reward blocks
 		rewardService.createReward(networkParameters.getGenesisBlock().getHash(), defaultBlockWrap(rollingBlock1),
@@ -187,10 +187,10 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 		Block rewardBlock3 = makeRewardBlock(rewardBlock2.getHash());
 
 		blocksAddedAll.add(rewardBlock3);
-		assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash(), store).getMilestone() == 1);
-		assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash(), store).getMilestone() == 2);
+		assertTrue(getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock2.getHash(), store).getMilestone() == 1);
+		assertTrue(getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock3.getHash(), store).getMilestone() == 2);
 		return rewardBlock3;
 	}
 
@@ -212,11 +212,11 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 		for (Block b : a2)
 			blockGraph.add(b, true, true, store);
 
-		// assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).getMilestone() == -1);
+		// assertFalse(getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock1.getHash(), store).getMilestone() == -1);
 
-		assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash(), store).getMilestone() == 2);
-		assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock3.getHash(), store).getMilestone() == 2);
+		assertTrue(getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
 
 	}
 
@@ -260,17 +260,17 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 				blockGraph.add(b, true, true, store);
 			syncBlockService.connectingOrphans(store);
 
-			assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-			assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).getMilestone() == -1);
+			assertFalse(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
+			assertTrue(getBlockEvaluation(rewardBlock1.getHash(), store).getMilestone() == -1);
 
-			assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash(), store).getMilestone() == 2);
-			assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
+			assertTrue(getBlockEvaluation(rewardBlock3.getHash(), store).getMilestone() == 2);
+			assertTrue(getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
 
 			// mcmc can not change the status of chain
 			mcmcServiceUpdate();
 
-			assertFalse(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-			assertTrue(blockService.getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
+			assertFalse(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
+			assertTrue(getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
 		}
 	}
 
@@ -282,8 +282,8 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 		List<Block> blocksAddedAll = new ArrayList<Block>();
 		Block rewardBlock1 = createReward(blocksAddedAll);
 		blockGraph.updateChain();
-		assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash(), store).getMilestone() == 1);
+		assertTrue(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock1.getHash(), store).getMilestone() == 1);
 
 		// Block rollingBlock1 = addFixedBlocks(5, networkParameters.getGenesisBlock(),
 		// blocksAddedAll);
@@ -294,8 +294,8 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 		blockGraph.updateChain();
 		blocksAddedAll.add(rewardBlock2);
 
-		// assertTrue(blockService.getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash(), store).getMilestone() == 2);
+		// assertTrue(getBlockEvaluation(rewardBlock1.getHash()).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock2.getHash(), store).getMilestone() == 2);
 
 	}
 
@@ -325,8 +325,8 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 			// TODO: handle exception
 		}
 
-		assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
-		assertTrue(blockService.getBlockEvaluation(rewardBlock2.getHash(), store).getMilestone() >= 0);
+		assertTrue(getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
+		assertTrue(getBlockEvaluation(rewardBlock2.getHash(), store).getMilestone() >= 0);
 
 	}
 
