@@ -23,6 +23,7 @@ docker run -d  -t --net=bigtangle-bridged-network  \
 -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \
 -e MYSQL_DATABASE=info  --name=$DBHOST  -h $DBHOST   mysql:8.0.23 
 
+sleep 30
 
 docker rm -f $SERVERHOST 
 docker  run -d -t --net=bigtangle-bridged-network   --link $DBHOST \
