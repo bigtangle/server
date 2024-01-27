@@ -28,7 +28,7 @@ public class CacheBlockService {
 
 	@CachePut(value = "blocksCache", key = "#block.hash")
 	public byte[] cacheBlock(final Block block, FullBlockStore store) throws BlockStoreException {
-		 logger.debug("cachePut {} ", block.getHeight());
+		// logger.debug("cachePut {} ", block.getHeight());
 		return Gzip.compress(block.unsafeBitcoinSerialize());
 	}
 

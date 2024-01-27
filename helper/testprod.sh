@@ -18,7 +18,7 @@ export SERVICE_MINING_RATE=36000
 export SERVICE_INITSYNC=true
 docker rm -f $DBHOST   
 rm -fr /data/vm/$DBHOST/*
-docker run -d  -t --net=bigtangle-bridged-network   -p 3306:3306  \
+docker run -d  -t --net=bigtangle-bridged-network  \
 -v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql   \
 -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \
 -e MYSQL_DATABASE=info  --name=$DBHOST  -h $DBHOST   mysql:8.0.23 
