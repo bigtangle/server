@@ -208,7 +208,8 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 					assertTrue(endMap.get(winnerAddress.toString()) != null);
 					assertTrue(endMap.get(winnerAddress.toString()).equals(new BigInteger(winnerAmount)));
 
-					// create conflict
+
+					// unconfirm evnt and will lead to unconfirm result 
 
 					new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
 							.unconfirm(event.getHash(), new HashSet<>(), store);
@@ -218,8 +219,6 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 				}
 			}
 		}
-
-		// unconfirm evnt and will lead to unconfirm result
 
 	}
 

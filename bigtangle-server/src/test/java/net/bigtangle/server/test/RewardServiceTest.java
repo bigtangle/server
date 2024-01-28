@@ -300,21 +300,24 @@ public class RewardServiceTest extends AbstractIntegrationTest {
 	}
 
 	// test cutoff chains, reward should not take blocks behind the cutoff chain
+	/*
+	 * the last block of the chain should not have referenced block behind the the
+	 * cutoff height
+	 */
 	@Test
 	public void testReorgMiningRewardCutoff() throws Exception {
 
 		List<Block> blocksAddedAll = new ArrayList<Block>();
-		addFixedBlocks(5, networkParameters.getGenesisBlock(), blocksAddedAll);
-		// Generate more mining reward blocks
-		Block rewardBlock2 = makeRewardBlock(blocksAddedAll); 
-		 
+
+		Block rewardBlock2 = makeRewardBlock(blocksAddedAll);
+
 		for (int i = 0; i < NetworkParameters.MILESTONE_CUTOFF + 5; i++) {
 			rewardBlock2 = makeRewardBlock(rewardBlock2.getHash());
 		}
-		// create a long block graph
-		Block rollingBlock2 = addFixedBlocks(200, networkParameters.getGenesisBlock(), blocksAddedAll,
+	
+		Block rollingBlock2 = addFixedBlocks(1, networkParameters.getGenesisBlock(), blocksAddedAll,
 				wallet.feeTransaction(null));
-
+	 
 		// rewardBlock3 takes the long block graph behind cutoff
 		try {
 			rewardService.createReward(rewardBlock2.getHash(), defaultBlockWrap(rollingBlock2),
