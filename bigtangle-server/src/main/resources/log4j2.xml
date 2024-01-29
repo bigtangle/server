@@ -23,7 +23,7 @@
 
 	<Loggers>
 		<!-- LOG everything at INFO level -->
-		<Root level="info">
+		<Root level="warn">
 			<AppenderRef ref="Console" />
 			<AppenderRef ref="RollingFile" />
 		</Root>

@@ -163,7 +163,7 @@ public class FullBlockStoreImpl {
 			}
 			if (canrun) {
 				Stopwatch watch = Stopwatch.createStarted();
-				processChainConnected(store, false,true);
+				processChainConnected(store, false, true);
 				store.deleteLockobject(LOCKID);
 				if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000) {
 					log.info("updateChain time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
@@ -221,7 +221,7 @@ public class FullBlockStoreImpl {
 				} else {
 					try {
 						saveChainConnected(chainBlockQueue, store);
-					} catch (Exception e) { 
+					} catch (Exception e) {
 						log.info("saveChainConnected failed   " + chainBlockQueue.toString(), e);
 					}
 				}
@@ -436,7 +436,7 @@ public class FullBlockStoreImpl {
 		FullBlockStore blockStore = storeService.getStore();
 		try {
 			updateTransactionOutputSpendPending(block, blockStore);
-			new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).calculateAccount(block,
+			new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).evicAccountbalance(block,
 					blockStore);
 			// Initialize MCMC
 			if (blockStore.getMCMC(block.getHash()) == null) {
@@ -509,8 +509,8 @@ public class FullBlockStoreImpl {
 		for (BlockWrap block : blocksToAdd) {
 			try {
 				blockStore.beginDatabaseBatchWrite();
-				new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).confirm(
-						block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore, true);
+				new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+						.confirm(block.getBlockEvaluation().getBlockHash(), traversedConfirms, (long) -1, blockStore);
 				blockStore.commitDatabaseBatchWrite();
 			} catch (Exception e) {
 				blockStore.abortDatabaseBatchWrite();

@@ -281,11 +281,7 @@ public class DispatcherController {
 				this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
 			}
 				break;
-			case fixAccountBalance: {
-				walletService.fixAccount(store);
-				this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch, reqCmd);
-			}
-				break;
+
 			case getAccountBalances: {
 				if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
 					logger.debug("getOutputs getBalances " + remoteAddr(httprequest) + " " + reqCmd);
@@ -301,22 +297,7 @@ public class DispatcherController {
 				this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
 			}
 				break;
-			case getAccountBalancesUtxo: {
-				if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
-					logger.debug("getOutputs getBalances " + remoteAddr(httprequest) + " " + reqCmd);
-					return;
-				}
-				String reqStr = new String(bodyByte, "UTF-8");
-				List<String> keyStrHex000 = Json.jsonmapper().readValue(reqStr, List.class);
-				Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
-				for (String keyStrHex : keyStrHex000) {
-					pubKeyHashs.add(Utils.HEX.decode(keyStrHex));
-				}
-				AbstractResponse response = walletService.getAccountBalanceInfoWithUtxoFromAccount(pubKeyHashs, null,
-						store);
-				this.outPrintJSONString(httpServletResponse, response, watch, reqCmd);
-			}
-				break;
+
 			case findBlockEvaluation: {
 				String reqStr = new String(bodyByte, "UTF-8");
 				Map<String, Object> request = Json.jsonmapper().readValue(reqStr, Map.class);

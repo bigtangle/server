@@ -17,18 +17,18 @@ export SERVERPORT=18090
 export SERVICE_MINING_RATE=36000
 export SERVICE_INITSYNC=true
 docker rm -f $DBHOST   
-rm -fr /data/vm/$DBHOST/*
-docker run -d  -t --net=bigtangle-bridged-network  \
+#rm -fr /data/vm/$DBHOST/*
+docker run -d  -t --net=bigtangle-bridged-network   -p 3308:3306 \
 -v /data/vm/$DBHOST/var/lib/mysql:/var/lib/mysql   \
 -e MYSQL_ROOT_PASSWORD=$DB_PASSWORD   \
 -e MYSQL_DATABASE=info  --name=$DBHOST  -h $DBHOST   mysql:8.0.23 
 
 sleep 30
 
-docker rm -f $SERVERHOST 
+#docker rm -f $SERVERHOST 
 docker  run -d -t --net=bigtangle-bridged-network   --link $DBHOST \
 -p $SERVERPORT:8088 --name  $SERVERHOST   \
--e JAVA_OPTS="-Ddebug  -Xmx5028m --add-exports java.base/sun.nio.ch=ALL-UNNAMED -Dfile.encoding=UTF-8" \
+-e JAVA_OPTS="-Ddebug  -Xmx8028m --add-exports java.base/sun.nio.ch=ALL-UNNAMED -Dfile.encoding=UTF-8" \
 -e DB_PASSWORD=$DB_PASSWORD -e SERVER_PORT=$SERVERPORT  -e DB_NAME=info \
 -e DB_HOSTNAME=$DBHOST  -e SERVICE_MCMC_RATE=1000 \
 -e SERVER_MINERADDRESS=$SERVER_MINERADDRESS -e SERVERMODE= \

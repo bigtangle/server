@@ -1017,8 +1017,8 @@ public class ServiceBaseConnect extends ServiceBase {
 		TreeSet<Block> referencedBlocks = new TreeSet<Block>(comparator);
 		for (Sha256Hash hash : currRewardInfo.getBlocks()) {
 			Block block = getBlock(hash, store);
-			if(block!=null)
-			referencedBlocks.add(block);
+			if (block != null)
+				referencedBlocks.add(block);
 		}
 		for (Block block : referencedBlocks) {
 			solidifyWaiting(block, store);
@@ -1151,13 +1151,9 @@ public class ServiceBaseConnect extends ServiceBase {
 	 * @param milestoneNumber
 	 * @throws BlockStoreException
 	 */
+ 
 	public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber,
-			FullBlockStore blockStore) throws BlockStoreException {
-		confirm(blockHash, traversedBlockHashes, milestoneNumber, blockStore, true);
-	}
-
-	public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber,
-			FullBlockStore blockStore, Boolean accountBalance) throws BlockStoreException {
+			FullBlockStore blockStore ) throws BlockStoreException {
 		// If already confirmed, return
 		if (traversedBlockHashes.contains(blockHash))
 			return;
@@ -1176,7 +1172,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), milestoneNumber);
 
 		// Confirm the block
-		confirmBlock(blockWrap, blockStore, accountBalance);
+		confirmBlock(blockWrap, blockStore );
 
 		// Keep track of confirmed blocks
 		traversedBlockHashes.add(blockHash);
@@ -1243,15 +1239,15 @@ public class ServiceBaseConnect extends ServiceBase {
 		return Optional.ofNullable(matchingResult);
 	}
 
-	private void confirmBlock(BlockWrap block, FullBlockStore blockStore, Boolean accountBalance)
+	private void confirmBlock(BlockWrap block, FullBlockStore blockStore)
 			throws BlockStoreException {
 
 		// Update block's transactions in db
 		for (final Transaction tx : block.getBlock().getTransactions()) {
 			confirmTransaction(block.getBlock(), tx, blockStore);
 		}
-		if (accountBalance)
-			calculateAccount(block.getBlock(), blockStore);
+
+		evicAccountbalance(block.getBlock(), blockStore);
 
 		// type-specific updates
 		switch (block.getBlock().getBlockType()) {
@@ -1589,26 +1585,19 @@ public class ServiceBaseConnect extends ServiceBase {
 		}
 	}
 
-	public void calculateAccount(Block block, FullBlockStore blockStore) throws BlockStoreException {
-		List<UTXO> utxos = new ArrayList<UTXO>();
+	public void evicAccountbalance(Block block, FullBlockStore blockStore) throws BlockStoreException {
+
 		for (final Transaction tx : block.getTransactions()) {
 			boolean isCoinBase = tx.isCoinBase();
 			for (TransactionOutput out : tx.getOutputs()) {
 				Script script = getScript(out.getScriptBytes());
 				String fromAddress = fromAddress(tx, isCoinBase);
-				int minsignnumber = 1;
-
-				UTXO newOut = new UTXO(tx.getHash(), out.getIndex(), out.getValue(), isCoinBase, script,
-						getScriptAddress(script), block.getHash(), fromAddress, tx.getMemo(),
-						Utils.HEX.encode(out.getValue().getTokenid()), false, false, false, minsignnumber, 0,
-						block.getTimeSeconds(), null);
-				utxos.add(newOut);
-
+				cacheBlockService.evictAccountBalance(getScriptAddress(script), blockStore);
+				cacheBlockService.evictAccountBalance(fromAddress, blockStore);
 			}
 
 		}
-		// calculate balance
-		blockStore.calculateAccount(utxos);
+
 	}
 
 	private void confirmVirtualCoinbaseTransaction(Block block, FullBlockStore blockStore) throws BlockStoreException {
@@ -1825,8 +1814,8 @@ public class ServiceBaseConnect extends ServiceBase {
 		for (Transaction tx : block.getTransactions()) {
 			unconfirmTransaction(tx, block, blockStore);
 		}
-		if (accountBalance)
-			calculateAccount(block, blockStore);
+
+		evicAccountbalance(block, blockStore);
 		// Then unconfirm type-specific stuff
 		switch (block.getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
@@ -1961,9 +1950,9 @@ public class ServiceBaseConnect extends ServiceBase {
 
 	public void solidifyBlock(Block block, SolidityState solidityState, boolean setMilestoneSuccess,
 			FullBlockStore blockStore) throws BlockStoreException {
-		  if (block.getBlockType() == Type.BLOCKTYPE_ORDER_EXECUTE) {
-		  logger.debug(block.toString());
-		  }
+		if (block.getBlockType() == Type.BLOCKTYPE_ORDER_EXECUTE) {
+			logger.debug(block.toString());
+		}
 
 		switch (solidityState.getState()) {
 		case MissingCalculation:

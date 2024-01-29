@@ -450,7 +450,6 @@ public interface FullBlockStore {
 
 	List<OrderCancel> getOrderCancelByOrderBlockHash(HashSet<String> orderBlockHashs) throws BlockStoreException;
 
-	 
 	boolean getTokennameAndDomain(String tokenname, String domainpre) throws BlockStoreException;
 
 	List<MatchLastdayResult> getTimeBetweenMatchingEvents(String tokenids, String basetoken, Long startDate,
@@ -545,17 +544,7 @@ public interface FullBlockStore {
 	public void updateOrderResultSpent(Sha256Hash result, Sha256Hash spentBlock, boolean spent)
 			throws BlockStoreException;
 
-	public List<Coin> queryAccountCoinList(String address, String tokenid) throws BlockStoreException;
+	public List<Coin> getAccountBalance(String address, String tokenid) throws BlockStoreException;
 
-	public List<UTXO> queryAccountUtxoList(String address, String tokenid) throws BlockStoreException;
-
-	public Map<String, Map<String, Coin>> queryOutputsMap(String address, String tokenid) throws BlockStoreException;
-
-	public void addAccountCoinBatch(Map<String, Map<String, Coin>> toaddressMap) throws BlockStoreException;
-
-	public void updateAccountCoinBatch(Map<String, Map<String, Coin>> fromaddressMap) throws BlockStoreException;
-
-	public void deleteAccountCoin(String address, String tokenid) throws BlockStoreException;
-
-	public void calculateAccount(List<UTXO> utxos) throws BlockStoreException;
+	public void calculateAccount(String address, String tokenid) throws BlockStoreException;
 }

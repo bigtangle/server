@@ -1,5 +1,8 @@
 package net.bigtangle.server.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
@@ -8,6 +11,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Coin;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
 import net.bigtangle.core.exception.BlockStoreException;
@@ -34,12 +38,12 @@ public class CacheBlockService {
 
 	@CacheEvict(value = "blocksCache", key = "#block.hash")
 	public void evictBlock(final Block block, FullBlockStore store) throws BlockStoreException {
-		logger.debug("evictBlock {}" ,block.toString() );
+		logger.debug("evictBlock {}", block.toString());
 	}
 
-	@CacheEvict(value = "blocksCache", allEntries=true)
+	@CacheEvict(value = "blocksCache", allEntries = true)
 	public void evictBlock() throws BlockStoreException {
-		logger.debug("evictBlock" );
+		logger.debug("evictBlock");
 	}
 
 	public TXReward getMaxConfirmedReward(FullBlockStore store) throws BlockStoreException {
@@ -54,6 +58,22 @@ public class CacheBlockService {
 	public synchronized void resetMaxConfirmedReward(Block aChainBlock, Boolean confirmed, FullBlockStore store)
 			throws BlockStoreException {
 		lastConfirmedChainBlock = null;
+	}
+
+	@Cacheable(value = "accountBalance", key = "#address")
+	public List<Coin> getAccountBalance(String address, FullBlockStore store) throws BlockStoreException {
+		logger.debug("getAccountBalance from database and no cache for: " + address);
+		store.calculateAccount(address, null);
+		List<Coin> accountBalance = store.getAccountBalance(address, null);
+		if( accountBalance ==null)
+			return new ArrayList<Coin>();
+		 return accountBalance;
+
+	}
+
+	@Cacheable(value = "accountBalance", key = "#address")
+	public void evictAccountBalance(String address, FullBlockStore store) throws BlockStoreException {
+		//logger.debug("evictAccountBalance {}", address);
 	}
 
 }

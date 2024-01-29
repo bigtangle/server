@@ -81,13 +81,13 @@ import net.bigtangle.utils.Gzip;
 
 /**
  * <p>
- * A generic full block store for a relational database. This generic
- * class requires certain table structures for the block store.
+ * A generic full block store for a relational database. This generic class
+ * requires certain table structures for the block store.
  * </p>
  * 
  */
 public abstract class DatabaseFullBlockStore implements FullBlockStore {
- 
+
 	private static final String LIMIT_500 = " limit 500 ";
 
 	private static final Logger log = LoggerFactory.getLogger(DatabaseFullBlockStore.class);
@@ -460,7 +460,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 	protected final String SELECT_OPEN_ORDERS_SORTED_SQL = "SELECT " + ORDER_TEMPLATE
 			+ " FROM orders WHERE confirmed=1 AND spent=0 ";
- 
+
 	// TODO remove test
 	protected final String SELECT_AVAILABLE_UTXOS_SORTED_SQL = "SELECT coinvalue, scriptbytes, coinbase, toaddress, "
 			+ "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending,spendpendingtime, minimumsign, time, hash, outputindex, spenderblockhash "
@@ -855,7 +855,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			addUnspentTransactionOutput(newOut);
 			List<UTXO> gen = new ArrayList<>();
 			gen.add(newOut);
-			calculateAccount(gen);
 			if (script.isSentToMultiSig()) {
 
 				for (ECKey ecKey : script.getPubKeys()) {
@@ -1302,27 +1301,12 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	 * address2 and 70 address1 from =address1 List
 	 */
 	@Override
-	public void calculateAccount(List<UTXO> utxos) throws BlockStoreException {
+	public void calculateAccount(String address, String tokenid) throws BlockStoreException {
 		// collect all different address and tokenid as list and calculate the account
 
-		for (UTXO utxo : utxos) {
-			deleteAccountCoin(utxo.getAddress(), utxo.getTokenId());
-			Map<String, Map<String, Coin>> toAddressMap = queryOutputsMap(utxo.getAddress(), utxo.getTokenId());
-			addAccountCoinBatch(toAddressMap);
-			deleteAccountCoin(utxo.getFromaddress(), utxo.getTokenId());
-			Map<String, Map<String, Coin>> fromAddressMap = queryOutputsMap(utxo.getFromaddress(), utxo.getTokenId());
-			addAccountCoinBatch(fromAddressMap);
-		}
-
-	}
-
-	public boolean findDiffUtxo(UTXO utxo, List<UTXO> diff) throws BlockStoreException {
-		for (UTXO u : diff) {
-			if (u.getAddress().equals(utxo.getAddress()) && u.getTokenId().equals(utxo.getTokenId())) {
-				return true;
-			}
-		}
-		return false;
+		deleteAccountCoin(address, tokenid);
+		Map<String, Map<String, Coin>> toAddressMap = queryOutputsMap(address, tokenid);
+		addAccountCoinBatch(toAddressMap);
 	}
 
 	@Override
@@ -5146,7 +5130,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			preparedStatement.setBytes(1, blockhash.getBytes());
 			preparedStatement.setBytes(2, collectinghash.getBytes());
 			ResultSet resultSet = preparedStatement.executeQuery();
-			Map<Sha256Hash, ContractEventRecord> list = new HashMap<>();
+	 
 			while (resultSet.next()) {
 				return setContractEventRecord(resultSet);
 			}
@@ -5733,8 +5717,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 				resultSet.getString("beneficiaryaddress"));
 
 	}
-
- 
 
 	@Override
 	public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException {
@@ -7114,7 +7096,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 		}
 	}
 
-	public List<Coin> queryAccountCoinList(String address, String tokenid) throws BlockStoreException {
+	@Override
+	public List<Coin> getAccountBalance(String address, String tokenid) throws BlockStoreException {
 		PreparedStatement preparedStatement = null;
 		List<Coin> list = new ArrayList<>();
 		try {
@@ -7156,138 +7139,6 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 
 	}
 
-	public List<UTXO> queryAccountUtxoList(String address, String tokenid) throws BlockStoreException {
-		PreparedStatement preparedStatement = null;
-		List<UTXO> list = new ArrayList<>();
-		try {
-			String sql = " select address, tokenid,coinvalue from accountBalance  where 1=1 ";
-
-			if (address != null && !address.trim().isEmpty()) {
-				sql += " and address = ?";
-			}
-			if (tokenid != null && !tokenid.trim().isEmpty()) {
-				sql += " and tokenid = ?";
-			}
-			preparedStatement = getConnection().prepareStatement(sql);
-			int i = 1;
-
-			if (address != null && !address.trim().isEmpty()) {
-				preparedStatement.setString(i++, address);
-			}
-			if (tokenid != null && !tokenid.trim().isEmpty()) {
-				preparedStatement.setString(i++, tokenid);
-			}
-
-			ResultSet resultSet = preparedStatement.executeQuery();
-			if (resultSet.next()) {
-				Coin coin = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), resultSet.getString("tokenid"));
-				UTXO utxo = new UTXO();
-				utxo.setValue(coin);
-				utxo.setAddress(resultSet.getString("address"));
-				list.add(utxo);
-			}
-			return list;
-		} catch (SQLException e) {
-			throw new BlockStoreException(e);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-
-	}
-
-	public Coin queryAccountCoin(String address, String tokenid) throws BlockStoreException {
-		PreparedStatement preparedStatement = null;
-		Coin coin = null;
-		try {
-			String sql = " select address, tokenid,coinvalue from accountBalance  where address = ? and tokenid = ?";
-
-			preparedStatement = getConnection().prepareStatement(sql);
-
-			preparedStatement.setString(1, address);
-
-			preparedStatement.setString(2, tokenid);
-
-			ResultSet resultSet = preparedStatement.executeQuery();
-			if (resultSet.next()) {
-				coin = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), tokenid);
-			}
-			return coin;
-		} catch (SQLException e) {
-			throw new BlockStoreException(e);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-
-	}
-
-	public void addAccountCoin(String address, String tokenid, Coin coin, Sha256Hash hash) throws BlockStoreException {
-		maybeConnect();
-		PreparedStatement s = null;
-		try {
-			s = getConnection().prepareStatement(
-					"insert into accountBalance (address, tokenid,coinvalue,lastblockhash) values(?,?,?,?)");
-			s.setString(1, address);
-			s.setString(2, tokenid);
-			s.setBytes(3, coin.getValue().toByteArray());
-			s.setBytes(4, hash.getBytes());
-			s.executeUpdate();
-			s.close();
-		} catch (SQLException e) {
-			if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
-				throw new BlockStoreException(e);
-		} finally {
-			if (s != null) {
-				try {
-					if (s.getConnection() != null)
-						s.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException(e);
-				}
-			}
-		}
-	}
-
-	public void updateAccountCoin(String address, String tokenid, Coin coin, Sha256Hash hash)
-			throws BlockStoreException {
-		maybeConnect();
-		PreparedStatement s = null;
-		try {
-			s = getConnection().prepareStatement(
-					"update accountBalance set coinvalue=?,lastblockhash=? where address=? and tokenid=?");
-			s.setBytes(1, coin.getValue().toByteArray());
-			s.setBytes(2, hash.getBytes());
-			s.setString(3, address);
-			s.setString(4, tokenid);
-
-			s.executeUpdate();
-			s.close();
-		} catch (SQLException e) {
-			if (!(getDuplicateKeyErrorCode().equals(e.getSQLState())))
-				throw new BlockStoreException(e);
-		} finally {
-			if (s != null) {
-				try {
-					if (s.getConnection() != null)
-						s.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException(e);
-				}
-			}
-		}
-	}
-
 	public Map<String, Map<String, Coin>> queryOutputsMap(String address, String tokenid) throws BlockStoreException {
 		PreparedStatement preparedStatement = null;
 		Map<String, Map<String, Coin>> map = new HashMap<>();
@@ -7318,7 +7169,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 					map.put(tempAddress, tokenMap);
 				}
 				Map<String, Coin> tempMap = map.get(tempAddress);
-				Coin amount = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), tokenid);
+				Coin amount = new Coin(new BigInteger(resultSet.getBytes("coinvalue")), tempTokenid);
 				if (tempMap.containsKey(tempTokenid)) {
 					amount = amount.add(tempMap.get(tempTokenid));
 				}

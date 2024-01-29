@@ -42,6 +42,8 @@ public class OutputService {
 
 	@Autowired
 	private NetworkParameters networkParameters;
+	@Autowired
+	protected CacheBlockService cacheBlockService;
 
 	public AbstractResponse getAccountBalanceInfo(Set<byte[]> pubKeyHashs, FullBlockStore store)
 			throws BlockStoreException {
@@ -70,13 +72,6 @@ public class OutputService {
 		return GetBalancesResponse.create(tokens, filterToken(outputs), getTokename(outputs, store));
 	}
 
-	public void fixAccount(FullBlockStore blockStore) throws BlockStoreException {
-		blockStore.deleteAccountCoin(null, null);
-		Map<String, Map<String, Coin>> toAddressMap = blockStore.queryOutputsMap("", "");
-
-		blockStore.addAccountCoinBatch(toAddressMap);
-	}
-
 	public AbstractResponse getAccountBalanceInfoFromAccount(Set<byte[]> pubKeyHashs, List<String> tokenidList,
 			FullBlockStore store) throws BlockStoreException {
 
@@ -84,21 +79,11 @@ public class OutputService {
 
 		for (byte[] key : pubKeyHashs) {
 			Address address = new Address(networkParameters, key);
-			tokens.addAll(store.queryAccountCoinList(address.toString(), null));
+	 		List<Coin> accountBalance = cacheBlockService.getAccountBalance(address.toString(), store);
+	 		if(accountBalance !=null)
+			tokens.addAll(accountBalance);
 		}
 		return GetBalancesResponse.create(tokens, null, getTokenameByCoin(tokens, store));
-	}
-
-	public AbstractResponse getAccountBalanceInfoWithUtxoFromAccount(Set<byte[]> pubKeyHashs, List<String> tokenidList,
-			FullBlockStore store) throws BlockStoreException {
-
-		List<UTXO> tokens = new ArrayList<>();
-
-		for (byte[] key : pubKeyHashs) {
-			Address address = new Address(networkParameters, key);
-			tokens.addAll(store.queryAccountUtxoList(address.toString(), null));
-		}
-		return GetBalancesResponse.create(null, tokens, getTokename(tokens, store));
 	}
 
 	public List<UTXO> filterToken(List<UTXO> outputs) {
