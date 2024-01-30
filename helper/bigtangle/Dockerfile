@@ -3,8 +3,9 @@
 FROM ubuntu:22.04 AS builder
 
 
-ARG gitsourceurl 
-ENV BIGTANGLEVERSION 0.3.6
+ARG gitsourceurl
+ARG branch  
+ARG BIGTANGLEVERSION
 
 RUN apt-get update
 
@@ -28,7 +29,7 @@ RUN cd secp256k1/ && git checkout jni && ./autogen.sh \
 
 RUN git config --global http.sslVerify false
 RUN  git clone $gitsourceurl  /root/bignetcoin
-RUN cd /root/bignetcoin && git checkout ordermatch && mvn  -DskipTests=true clean install
+RUN cd /root/bignetcoin && git checkout $branch && mvn  -DskipTests=true clean install
 
 
 
