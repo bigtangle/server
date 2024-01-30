@@ -2449,6 +2449,8 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			preparedStatement.setString(20, domainNameBlockHash);
 			preparedStatement.executeUpdate();
 		} catch (SQLException e) {
+			// It is possible we try to add a duplicate Block  
+			if (!(e.getSQLState().equals(getDuplicateKeyErrorCode()))) 
 			throw new BlockStoreException(e);
 		} finally {
 			if (preparedStatement != null) {

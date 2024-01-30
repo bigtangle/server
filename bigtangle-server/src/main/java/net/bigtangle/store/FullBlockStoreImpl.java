@@ -256,8 +256,8 @@ public class FullBlockStoreImpl {
 			RewardInfo currRewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
 
 			// Solidify referenced blocks
-			new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
-					.solidifyBlocks(currRewardInfo, store);
+		//	new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+		//			.solidifyBlocks(currRewardInfo, store);
 
 			SolidityState solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters,
 					cacheBlockService).checkChainSolidity(block, true, store);
