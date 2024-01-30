@@ -25,7 +25,7 @@ docker run -d  -t --net=bigtangle-bridged-network   -p 3308:3306 \
 
 sleep 30
 
-#docker rm -f $SERVERHOST 
+docker rm -f $SERVERHOST 
 docker  run -d -t --net=bigtangle-bridged-network   --link $DBHOST \
 -p $SERVERPORT:8088 --name  $SERVERHOST   \
 -e JAVA_OPTS="-Ddebug  -Xmx8028m --add-exports java.base/sun.nio.ch=ALL-UNNAMED -Dfile.encoding=UTF-8" \
