@@ -20,6 +20,7 @@
 package net.bigtangle.core;
 
 import java.beans.Transient;
+import java.io.Serializable;
 import java.util.Locale;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -31,9 +32,10 @@ import net.bigtangle.script.Script;
  * A UTXO message contains the information necessary to check a spending
  * transaction.
  */
-public class UTXO extends SpentBlock {
+public class UTXO extends SpentBlock implements  Serializable {
 
-    private Coin value;
+    private static final long serialVersionUID = 1L;
+	private Coin value;
     @JsonIgnore
     private Script script;
     private Sha256Hash hash;

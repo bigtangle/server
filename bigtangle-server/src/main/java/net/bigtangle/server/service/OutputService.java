@@ -5,6 +5,7 @@
 
 package net.bigtangle.server.service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,6 +17,9 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
 import com.google.common.collect.Lists;
 
 import net.bigtangle.core.Address;
@@ -35,6 +39,7 @@ import net.bigtangle.core.response.GetOutputsResponse;
 import net.bigtangle.core.response.OutputsDetailsResponse;
 import net.bigtangle.server.config.FilterToken;
 import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.utils.Json;
 import net.bigtangle.wallet.FreeStandingTransactionOutput;
 
 @Service
@@ -46,7 +51,7 @@ public class OutputService {
 	protected CacheBlockService cacheBlockService;
 
 	public AbstractResponse getAccountBalanceInfo(Set<byte[]> pubKeyHashs, FullBlockStore store)
-			throws BlockStoreException {
+			throws BlockStoreException, StreamReadException, DatabindException, JsonProcessingException, IOException {
 		List<UTXO> outputs = new ArrayList<UTXO>();
 		List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
 				false, store);
@@ -79,9 +84,9 @@ public class OutputService {
 
 		for (byte[] key : pubKeyHashs) {
 			Address address = new Address(networkParameters, key);
-	 		List<Coin> accountBalance = cacheBlockService.getAccountBalance(address.toString(), store);
-	 		if(accountBalance !=null)
-			tokens.addAll(accountBalance);
+			List<Coin> accountBalance = cacheBlockService.getAccountBalance(address.toString(), store);
+			if (accountBalance != null)
+				tokens.addAll(accountBalance);
 		}
 		return GetBalancesResponse.create(tokens, null, getTokenameByCoin(tokens, store));
 	}
@@ -97,7 +102,7 @@ public class OutputService {
 	}
 
 	public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(Set<byte[]> pubKeyHashs,
-			boolean excludeImmatureCoinbases, FullBlockStore store) {
+			boolean excludeImmatureCoinbases, FullBlockStore store) throws StreamReadException, DatabindException, JsonProcessingException, IOException {
 		LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
 		try {
 
@@ -142,7 +147,7 @@ public class OutputService {
 	}
 
 	private List<UTXO> getStoredOutputsFromUTXOProvider(Set<byte[]> pubKeyHashs, FullBlockStore store)
-			throws UTXOProviderException {
+			throws UTXOProviderException, StreamReadException, DatabindException, JsonProcessingException, IOException {
 		List<UTXO> list = new ArrayList<UTXO>();
 		for (byte[] key : pubKeyHashs) {
 			Address address = new Address(networkParameters, key);
@@ -152,9 +157,12 @@ public class OutputService {
 		return list;
 	}
 
-	public List<UTXO> getOpenTransactionOutputs(String address, FullBlockStore store) throws UTXOProviderException {
-		return store.getOpenTransactionOutputs(address);
-
+	public List<UTXO> getOpenTransactionOutputs(String address, FullBlockStore store) throws UTXOProviderException, StreamReadException, DatabindException, JsonProcessingException, IOException {
+		List<UTXO> re = new ArrayList<>();
+		for (byte[] d : cacheBlockService.getOpenTransactionOutputs(address, store)) {
+			re.add(  Json.jsonmapper().readValue(d, UTXO.class));
+		} 
+		return re;
 	}
 
 	public List<UTXO> getOpenAllOutputs(String tokenid, FullBlockStore store) throws UTXOProviderException {
@@ -169,7 +177,7 @@ public class OutputService {
 	}
 
 	public GetOutputsResponse getAccountOutputs(Set<byte[]> pubKeyHashs, FullBlockStore store)
-			throws BlockStoreException {
+			throws BlockStoreException, StreamReadException, DatabindException, JsonProcessingException, IOException {
 		List<UTXO> outputs = new ArrayList<UTXO>();
 		List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
 				false, store);

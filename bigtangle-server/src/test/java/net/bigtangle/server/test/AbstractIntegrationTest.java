@@ -241,9 +241,11 @@ public abstract class AbstractIntegrationTest {
 	 */
 	public void resetStore() throws BlockStoreException {
 
-		store.resetStore();
-		CacheBlockService.lastConfirmedChainBlock = null;
-		cacheBlockService.evictBlock();
+		store.resetStore(); 
+		cacheBlockService.evictOutputs();
+		cacheBlockService.evictBlock(); 
+		cacheBlockService.evictAccountBalance(); 
+		CacheBlockService.lastConfirmedChainBlock=null;
 	}
 
 	protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, BigInteger amount) throws Exception {

@@ -101,7 +101,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		List<UTXO> utxos = getBalance(false, ulist);
 		List<UTXO> ylist = utxos.stream().filter(u -> u.getTokenId().equals(yuanTokenPub)).collect(Collectors.toList());
 		for (UTXO u : ylist) {
-			log.debug(u.toString());
+		//	log.debug(u.toString());
 			BigInteger p = map.get(u.getAddress());
 			if (p != null) {
 				map.put(u.getAddress(), p.add(u.getValue().getValue()));
@@ -196,7 +196,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 						.executeContract(resultBlock, store, result.getContracttokenid(), result.getPrevblockhash(),
 								result.getReferencedBlocks());
 				blockService.saveBlock(resultBlock, store);
-				makeRewardBlock(resultBlock);
+				Block reward=	makeRewardBlock(resultBlock);
 				assertTrue(resultBlock != null);
 				if (!check.getOutputTx().getOutputs().isEmpty()) {
 					Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey()
@@ -209,13 +209,17 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 					assertTrue(endMap.get(winnerAddress.toString()).equals(new BigInteger(winnerAmount)));
 
 
-					// unconfirm evnt and will lead to unconfirm result 
+					// unconfirm an event will not lead to unconfirm execution result 
 
 					new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
-							.unconfirm(event.getHash(), new HashSet<>(), store);
+							.unconfirmRecursive(event.getHash(), new HashSet<>(), store);
 					endMap = new HashMap<>();
 					check(ulist, endMap);
-					assertTrue(endMap.get(winnerAddress.toString()) == null);
+			 
+					assertTrue(endMap.get(winnerAddress.toString() ) ==null);
+
+					
+
 				}
 			}
 		}

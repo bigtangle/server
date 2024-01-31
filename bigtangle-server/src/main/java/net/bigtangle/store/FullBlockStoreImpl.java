@@ -256,8 +256,8 @@ public class FullBlockStoreImpl {
 			RewardInfo currRewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
 
 			// Solidify referenced blocks
-		 	new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
-		 			.solidifyBlocks(currRewardInfo, store);
+			new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+					.solidifyBlocks(currRewardInfo, store);
 
 			SolidityState solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters,
 					cacheBlockService).checkChainSolidity(block, true, store);
@@ -317,7 +317,7 @@ public class FullBlockStoreImpl {
 		SolidityState solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
 				.checkSolidity(block, !allowUnsolid, blockStore, allowMissingPredecessor);
 		if (solidityState.isFailState()) {
-			log.debug(solidityState.toString());
+			log.debug(solidityState.toString() + " block " + block.toString());
 		}
 		// If explicitly wanted (e.g. new block from local clients), this
 		// block must strictly be solid now.
@@ -436,7 +436,7 @@ public class FullBlockStoreImpl {
 		FullBlockStore blockStore = storeService.getStore();
 		try {
 			updateTransactionOutputSpendPending(block, blockStore);
-			new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).evicAccountbalance(block,
+			new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).evictTransactions(block,
 					blockStore);
 			// Initialize MCMC
 			if (blockStore.getMCMC(block.getHash()) == null) {

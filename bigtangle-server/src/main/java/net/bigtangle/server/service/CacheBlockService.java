@@ -10,13 +10,18 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
+import net.bigtangle.core.UTXO;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Gzip;
+import net.bigtangle.utils.Json;
 
 @Service
 public class CacheBlockService {
@@ -41,11 +46,6 @@ public class CacheBlockService {
 		logger.debug("evictBlock {}", block.toString());
 	}
 
-	@CacheEvict(value = "blocksCache", allEntries = true)
-	public void evictBlock() throws BlockStoreException {
-		logger.debug("evictBlock");
-	}
-
 	public TXReward getMaxConfirmedReward(FullBlockStore store) throws BlockStoreException {
 
 		if (lastConfirmedChainBlock == null) {
@@ -65,15 +65,50 @@ public class CacheBlockService {
 		logger.debug("getAccountBalance from database and no cache for: " + address);
 		store.calculateAccount(address, null);
 		List<Coin> accountBalance = store.getAccountBalance(address, null);
-		if( accountBalance ==null)
+		if (accountBalance == null)
 			return new ArrayList<Coin>();
-		 return accountBalance;
+		return accountBalance;
 
 	}
 
-	@Cacheable(value = "accountBalance", key = "#address")
+	@CacheEvict(value = "accountBalance", key = "#address")
 	public void evictAccountBalance(String address, FullBlockStore store) throws BlockStoreException {
-		//logger.debug("evictAccountBalance {}", address);
+		// logger.debug("evictAccountBalance {}", address);
 	}
+
+	@Cacheable(value = "outputs", key = "#address")
+	public List<byte[]> getOpenTransactionOutputs(String address, FullBlockStore store)
+			throws UTXOProviderException, JsonProcessingException {
+
+		List<UTXO> utxos = store.getOpenTransactionOutputs(address);
+		List<byte[]> re = new ArrayList<>();
+		for (UTXO u : utxos) {
+			re.add(Json.jsonmapper().writeValueAsBytes(u));
+		}
+		logger.debug("getOpenTransactionOutputs from database and no cache for: " + address + " size " + re.size());
+		return re;
+	}
+
+	@CacheEvict(value = "outputs", key = "#address")
+	public void evictOutputs(String address, FullBlockStore store) throws BlockStoreException {
+		// logger.debug("evictAccountBalance {}", address);
+	}
+
+	@CacheEvict(value = "blocksCache", allEntries = true)
+	public void evictBlock() throws BlockStoreException {
+		logger.debug("evictBlock");
+	}
+
+	@CacheEvict(value = "accountBalance", allEntries = true)
+	public void evictAccountBalance() throws BlockStoreException {
+		logger.debug("evictAccountBalance");
+	}
+
+	@CacheEvict(value = "outputs", allEntries = true)
+	public void evictOutputs() throws BlockStoreException {
+		logger.debug("evictOutputs");
+	}
+
+	 
 
 }

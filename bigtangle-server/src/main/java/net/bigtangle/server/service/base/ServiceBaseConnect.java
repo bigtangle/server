@@ -1247,7 +1247,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			confirmTransaction(block.getBlock(), tx, blockStore);
 		}
 
-		evicAccountbalance(block.getBlock(), blockStore);
+		evictTransactions(block.getBlock(), blockStore);
 
 		// type-specific updates
 		switch (block.getBlock().getBlockType()) {
@@ -1585,7 +1585,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		}
 	}
 
-	public void evicAccountbalance(Block block, FullBlockStore blockStore) throws BlockStoreException {
+	public void evictTransactions(Block block, FullBlockStore blockStore) throws BlockStoreException {
 
 		for (final Transaction tx : block.getTransactions()) {
 			boolean isCoinBase = tx.isCoinBase();
@@ -1594,6 +1594,8 @@ public class ServiceBaseConnect extends ServiceBase {
 				String fromAddress = fromAddress(tx, isCoinBase);
 				cacheBlockService.evictAccountBalance(getScriptAddress(script), blockStore);
 				cacheBlockService.evictAccountBalance(fromAddress, blockStore);
+				cacheBlockService.evictOutputs(getScriptAddress(script), blockStore);
+				cacheBlockService.evictOutputs(fromAddress, blockStore);
 			}
 
 		}
@@ -1815,7 +1817,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			unconfirmTransaction(tx, block, blockStore);
 		}
 
-		evicAccountbalance(block, blockStore);
+		evictTransactions(block, blockStore);
 		// Then unconfirm type-specific stuff
 		switch (block.getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
