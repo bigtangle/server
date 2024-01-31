@@ -1,5 +1,6 @@
 package net.bigtangle.subtangle.service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -11,6 +12,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -126,7 +131,7 @@ public class SubtangleService {
     }
 
     private List<UTXO> getBalancesUTOXList(boolean withZero, ECKey signKey, byte[] tokenid, FullBlockStore store)
-            throws BlockStoreException {
+            throws BlockStoreException, StreamReadException, DatabindException, JsonProcessingException, IOException {
         Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
         pubKeyHashs.add(signKey.toAddress(this.networkParameters).getHash160());
         GetBalancesResponse getBalancesResponse = (GetBalancesResponse) walletService.getAccountBalanceInfo(pubKeyHashs,
