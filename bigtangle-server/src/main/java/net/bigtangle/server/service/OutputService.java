@@ -51,7 +51,7 @@ public class OutputService {
 	protected CacheBlockService cacheBlockService;
 
 	public AbstractResponse getAccountBalanceInfo(Set<byte[]> pubKeyHashs, FullBlockStore store)
-			throws BlockStoreException, StreamReadException, DatabindException, JsonProcessingException, IOException {
+			throws BlockStoreException, DatabindException, JsonProcessingException, IOException {
 		List<UTXO> outputs = new ArrayList<UTXO>();
 		List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
 				false, store);
@@ -102,7 +102,7 @@ public class OutputService {
 	}
 
 	public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(Set<byte[]> pubKeyHashs,
-			boolean excludeImmatureCoinbases, FullBlockStore store) throws StreamReadException, DatabindException, JsonProcessingException, IOException {
+			boolean excludeImmatureCoinbases, FullBlockStore store) {
 		LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
 		try {
 
@@ -112,7 +112,7 @@ public class OutputService {
 				candidates.add(new FreeStandingTransactionOutput(networkParameters, output));
 
 			}
-		} catch (UTXOProviderException e) {
+		} catch (Exception e) {
 			throw new RuntimeException("UTXO provider error", e);
 		}
 		return candidates;
@@ -157,11 +157,12 @@ public class OutputService {
 		return list;
 	}
 
-	public List<UTXO> getOpenTransactionOutputs(String address, FullBlockStore store) throws UTXOProviderException, StreamReadException, DatabindException, JsonProcessingException, IOException {
+	public List<UTXO> getOpenTransactionOutputs(String address, FullBlockStore store)
+			throws UTXOProviderException, StreamReadException, DatabindException, JsonProcessingException, IOException {
 		List<UTXO> re = new ArrayList<>();
 		for (byte[] d : cacheBlockService.getOpenTransactionOutputs(address, store)) {
-			re.add(  Json.jsonmapper().readValue(d, UTXO.class));
-		} 
+			re.add(Json.jsonmapper().readValue(d, UTXO.class));
+		}
 		return re;
 	}
 

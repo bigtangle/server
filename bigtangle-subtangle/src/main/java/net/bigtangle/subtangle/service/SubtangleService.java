@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
 
 import net.bigtangle.core.Address;
@@ -131,7 +130,7 @@ public class SubtangleService {
     }
 
     private List<UTXO> getBalancesUTOXList(boolean withZero, ECKey signKey, byte[] tokenid, FullBlockStore store)
-            throws BlockStoreException, StreamReadException, DatabindException, JsonProcessingException, IOException {
+            throws BlockStoreException,  DatabindException, JsonProcessingException, IOException {
         Set<byte[]> pubKeyHashs = new HashSet<byte[]>();
         pubKeyHashs.add(signKey.toAddress(this.networkParameters).getHash160());
         GetBalancesResponse getBalancesResponse = (GetBalancesResponse) walletService.getAccountBalanceInfo(pubKeyHashs,

@@ -1,4 +1,4 @@
 export version=0.3.6
 
-sudo docker build  --build-arg gitsourceurl=https://github.com/bigtangle/server.git  --build-arg branch=ordermatch  --build-arg BIGTANGLEVERSION=$version  -t j0904cui/bigtangle:$version   .
-#!  --no-cache sudo docker  push  j0904cui/bigtangle:$version
+sudo docker build  --no-cache  --build-arg gitsourceurl=https://github.com/bigtangle/server.git  --build-arg branch=ordermatch  --build-arg BIGTANGLEVERSION=$version  -t j0904cui/bigtangle:$version   .
+#!  sudo docker  push  j0904cui/bigtangle:$version
