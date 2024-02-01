@@ -18,7 +18,7 @@ public enum ReqCmd {
 	// Block Order
 	getOrders, getOrdersTicker,
 	// Outputs
-	getOutputByKey, getOutputs, getOutputsHistory, outputsOfTokenid, getBalances,outputsByBlockhash,getAccountBalances,fixAccountBalance,getAccountBalancesUtxo,
+	getOutputByKey, getOutputs, getOutputsHistory, outputsOfTokenid, getBalances,outputsByBlockhash,getAccountBalances,
 
 	// payment
 	launchPayMultiSign, payMultiSign,
@@ -31,8 +31,6 @@ public enum ReqCmd {
 	regSubtangle, updateSubtangle, getSessionRandomNum,
 	// permissioned
 	addAccessGrant, deleteAccessGrant,
-	// Smart Contract
-	getContractEvents,
     // check point value
     getCheckPoint,
     serverinfolist;

@@ -1694,8 +1694,8 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 				calculateAllSpendCandidates(aesKey, false), 3, 60000);
 	}
 
-	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult, String memo,
-			byte[] tokenid) throws JsonProcessingException, IOException, InsufficientMoneyException {
+	public Block payMoneyToECKeyList(KeyParameter aesKey, HashMap<String, BigInteger> giveMoneyResult,
+			byte[] tokenid, String memo) throws JsonProcessingException, IOException, InsufficientMoneyException {
 
 		return payMoneyToECKeyList(aesKey, giveMoneyResult, tokenid, memo, calculateAllSpendCandidates(aesKey, false),
 				3, 60000);
@@ -2459,7 +2459,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 	public List<Block> pay(KeyParameter aesKey, String destination, Coin amount, MemoInfo memo)
 			throws JsonProcessingException, IOException, InsufficientMoneyException {
 
-		return payFromList(aesKey, destination.toString(), amount, memo);
+		return payFromList(aesKey, destination, amount, memo);
 	}
 
 	public Transaction createTransaction(KeyParameter aesKey, String destination, Coin amount, MemoInfo memo)

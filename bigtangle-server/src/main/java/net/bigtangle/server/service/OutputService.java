@@ -54,7 +54,7 @@ public class OutputService {
 			throws BlockStoreException, DatabindException, JsonProcessingException, IOException {
 		List<UTXO> outputs = new ArrayList<UTXO>();
 		List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
-				false, store);
+				 store);
 		Map<String, Coin> values = new HashMap<String, Coin>();
 
 		for (TransactionOutput transactionOutput : transactionOutputs) {
@@ -102,7 +102,7 @@ public class OutputService {
 	}
 
 	public LinkedList<TransactionOutput> calculateAllSpendCandidatesFromUTXOProvider(Set<byte[]> pubKeyHashs,
-			boolean excludeImmatureCoinbases, FullBlockStore store) {
+		 FullBlockStore store) {
 		LinkedList<TransactionOutput> candidates = Lists.newLinkedList();
 		try {
 
@@ -181,7 +181,7 @@ public class OutputService {
 			throws BlockStoreException, StreamReadException, DatabindException, JsonProcessingException, IOException {
 		List<UTXO> outputs = new ArrayList<UTXO>();
 		List<TransactionOutput> transactionOutputs = this.calculateAllSpendCandidatesFromUTXOProvider(pubKeyHashs,
-				false, store);
+				store);
 		for (TransactionOutput transactionOutput : transactionOutputs) {
 			FreeStandingTransactionOutput freeStandingTransactionOutput = (FreeStandingTransactionOutput) transactionOutput;
 			outputs.add(freeStandingTransactionOutput.getUTXO());
