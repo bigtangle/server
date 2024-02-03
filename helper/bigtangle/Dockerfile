@@ -36,7 +36,7 @@ RUN cd /root/bignetcoin && git checkout $branch && mvn  -DskipTests=true clean i
 ## runtime
 FROM   docker.io/openjdk:17-jdk-slim
  
-ENV BIGTANGLEVERSION 0.3.6
+ARG BIGTANGLEVERSION
 RUN ulimit -n 65536
 RUN mkdir -p /app/bigtangle-server/
 COPY   ca.pkcs12   /app/bigtangle-server/

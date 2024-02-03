@@ -12,9 +12,9 @@ mkdir /var/lib/mysql/backup
 mysqldump -u root -ptest1234 --databases info | gzip -c > /var/lib/mysql/$(date +"%Y-%b-%d")_info-backup.sql.gz
 
 
-sudo  rsync -avz -e "ssh -i /data/git/sshkeys/cui/id_rsa  "  \
-  root@bigtangle.de:/data/vm/test-sync-mysql/var/lib/mysql/$(date +"%Y-%b-%d")_info-backup.sql.gz \
- /data/vm/bigtangle-mysql/var/lib/mysql/
+sudo  rsync -avz -e "ssh -i /home/cui/git/sshkeys/cui/id_rsa  "  \
+  root@bigtangle.de:/data/vm/testprod-bigtangle-mysql/ \
+ /data/vm/
   
   cd /var/lib/mysql/
   gzip -d  $(date +"%Y-%b-%d")_info-backup.sql.gz 
