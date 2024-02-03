@@ -368,6 +368,14 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    CONSTRAINT contractevent_pk PRIMARY KEY (blockhash, collectinghash) "
             + " USING HASH \n" + ") ENGINE=InnoDB \n";
 
+    private static final String CREATE_CONTRACTEVENT_CANCEL_TABLE = "CREATE TABLE contracteventcancel (\n"
+            + "   blockhash binary(32) NOT NULL,\n" 
+            + "   eventblockhash binary(32) NOT NULL,\n"
+            + "   confirmed boolean NOT NULL,\n" 
+            + "   spent boolean NOT NULL,\n"
+            + "   spenderblockhash binary(32),\n" 
+            + "   time bigint NOT NULL,\n"
+            + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
 
     // the contract execution result
     private static final String CREATE_CONTRACT_RESULT_TABLE = "CREATE TABLE contractresult (\n"
@@ -478,6 +486,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_ACCESS_PERMISSION_TABLE);
         sqlStatements.add(CREATE_ACCESS_GRANT_TABLE);
         sqlStatements.add(CREATE_CONTRACT_EVENT_TABLE);
+        sqlStatements.add(CREATE_CONTRACTEVENT_CANCEL_TABLE);
         sqlStatements.add(CREATE_CONTRACT_RESULT_TABLE); 
         sqlStatements.add(CREATE_ORDER_RESULT_TABLE); 
         sqlStatements.add(CREATE_CHAINBLOCKQUEUE_TABLE);

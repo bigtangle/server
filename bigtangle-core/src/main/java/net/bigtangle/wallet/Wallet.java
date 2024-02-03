@@ -64,6 +64,7 @@ import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.ContractEventCancelInfo;
 import net.bigtangle.core.ContractEventInfo;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
@@ -2314,6 +2315,37 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
 		block.addTransaction(tx);
 		block.setBlockType(Type.BLOCKTYPE_ORDER_CANCEL);
+		if (getFee())
+			block.addTransaction(feeTransaction(aesKey, calculateAllSpendCandidates(aesKey, false)));
+		return solveAndPost(block);
+
+	}
+
+	public Block contractEventCancel(Sha256Hash eventblockhash, KeyParameter aesKey, String address)
+			throws JsonProcessingException, IOException, InsufficientMoneyException {
+		ECKey legitimatingKey = null;
+		for (ECKey ecKey : walletKeys(aesKey)) {
+			if (address.equals(ecKey.toAddress(params).toString())) {
+				legitimatingKey = ecKey;
+				break;
+			}
+		}
+
+		// Make an order op
+		Transaction tx = new Transaction(params);
+		ContractEventCancelInfo info = new ContractEventCancelInfo(eventblockhash);
+		tx.setData(info.toByteArray());
+
+		// Legitimate it by signing
+		Sha256Hash sighash1 = tx.getHash();
+		ECKey.ECDSASignature party1Signature = legitimatingKey.sign(sighash1, null);
+		byte[] buf1 = party1Signature.encodeToDER();
+		tx.setDataSignature(buf1);
+
+		Block block = getTip();
+
+		block.addTransaction(tx);
+		block.setBlockType(Type.BLOCKTYPE_CONTRACTEVENT_CANCEL);
 		if (getFee())
 			block.addTransaction(feeTransaction(aesKey, calculateAllSpendCandidates(aesKey, false)));
 		return solveAndPost(block);

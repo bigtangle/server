@@ -53,7 +53,6 @@ public class ServiceBase {
 				|| networkParameters.getId().equals(NetworkParameters.ID_UNITTESTNET);
 	}
 
- 
 	/**
 	 * get domainname token multi sign address
 	 * 
@@ -156,6 +155,8 @@ public class ServiceBase {
 		case BLOCKTYPE_ORDER_OPEN:
 			break;
 		case BLOCKTYPE_ORDER_CANCEL:
+			break;
+		case BLOCKTYPE_CONTRACTEVENT_CANCEL:
 			break;
 		default:
 			throw new RuntimeException("No Implementation");
@@ -291,7 +292,11 @@ public class ServiceBase {
 			if (predecessor.getBlockEvaluation().getSolid() == 2) {
 				continue;
 			} else if (predecessor.getBlockEvaluation().getSolid() == 1 && predecessorsSolid) {
-				missingCalculation = SolidityState.fromMissingCalculation(predecessor.getBlockHash());
+				SolidityState solidityState = SolidityState.getSuccessState();
+				new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+						.solidifyBlock(predecessor.getBlock(), solidityState, true, store);
+				//missingCalculation = SolidityState.fromMissingCalculation(predecessor.getBlockHash());
+	 
 			} else if (predecessor.getBlockEvaluation().getSolid() == 0 && predecessorsSolid) {
 				missingDependency = SolidityState.from(predecessor.getBlockHash(), false);
 			} else {

@@ -52,17 +52,18 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 			throw new VerificationException(" checkReferencedBlockRequirements is failed: " + solidityState.toString());
 
 		// Solidify referenced blocks
-	 	solidifyBlocks(currRewardInfo, store);
+		solidifyBlocks(currRewardInfo, store);
 
 		// Ensure the new difficulty and tx is set correctly
 		checkGeneratedReward(newMilestoneBlock, store);
 
 		// Sanity check: No reward blocks are approved
-		 checkContainsNoRewardBlocks(newMilestoneBlock, store);
+		checkContainsNoRewardBlocks(newMilestoneBlock, store);
 
 		// Check: At this point, predecessors must be solid
 		solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
 				.checkSolidity(newMilestoneBlock, false, store, false);
+
 		if (!solidityState.isSuccessState())
 			throw new VerificationException(" .checkSolidity is failed: " + solidityState.toString()
 					+ "\n with block = " + newMilestoneBlock.toString());
@@ -127,9 +128,10 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 			OrderMatchingResult ordermatchresult = generateOrderMatching(newMilestoneBlock, store);
 
 			// Only check the Hash of OrderMatchingResult
-			if (currRewardInfo.getOrdermatchingResult()==null || !currRewardInfo.getOrdermatchingResult().equals(ordermatchresult.getOrderMatchingResultHash())) {
+			if (currRewardInfo.getOrdermatchingResult() == null
+					|| !currRewardInfo.getOrdermatchingResult().equals(ordermatchresult.getOrderMatchingResultHash())) {
 				// if(currRewardInfo.getChainlength()!=197096)
-				  throw new VerificationException("OrderMatchingResult transactions output is   wrong.");
+				throw new VerificationException("OrderMatchingResult transactions output is   wrong.");
 			}
 		}
 		Transaction miningTx = generateVirtualMiningRewardTX(newMilestoneBlock, store);

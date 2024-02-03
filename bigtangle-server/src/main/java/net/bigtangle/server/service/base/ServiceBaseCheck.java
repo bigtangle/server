@@ -396,6 +396,8 @@ public class ServiceBaseCheck extends ServiceBase {
 				return check;
 			}
 			break;
+		case BLOCKTYPE_CONTRACTEVENT_CANCEL:
+			break;
 		default:
 			throw new RuntimeException("No Implementation");
 		}
@@ -1331,6 +1333,8 @@ public class ServiceBaseCheck extends ServiceBase {
 			}
 			break;
 		case BLOCKTYPE_CONTRACT_EVENT:
+			break;
+		case BLOCKTYPE_CONTRACTEVENT_CANCEL:
 			break;
 		default:
 			throw new RuntimeException("No Implementation");

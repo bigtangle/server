@@ -42,6 +42,8 @@ import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.ContractEventCancel;
+import net.bigtangle.core.ContractEventCancelInfo;
 import net.bigtangle.core.ContractEventInfo;
 import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
@@ -1230,6 +1232,8 @@ public class ServiceBaseConnect extends ServiceBase {
 			break;
 		case BLOCKTYPE_ORDER_CANCEL:
 			break;
+		case BLOCKTYPE_CONTRACTEVENT_CANCEL:
+			break;
 		default:
 			throw new RuntimeException("Not Implemented");
 
@@ -1288,6 +1292,8 @@ public class ServiceBaseConnect extends ServiceBase {
 			confirmOrderOpen(block, blockStore);
 			break;
 		case BLOCKTYPE_ORDER_CANCEL:
+			break;
+		case BLOCKTYPE_CONTRACTEVENT_CANCEL:
 			break;
 		default:
 			throw new RuntimeException("Not Implemented");
@@ -1720,6 +1726,8 @@ public class ServiceBaseConnect extends ServiceBase {
 			break;
 		case BLOCKTYPE_ORDER_CANCEL:
 			break;
+		case BLOCKTYPE_CONTRACTEVENT_CANCEL:
+			break;
 		default:
 			throw new RuntimeException("Not Implemented");
 
@@ -1854,6 +1862,8 @@ public class ServiceBaseConnect extends ServiceBase {
 			unconfirmOrderOpen(block, blockStore);
 			break;
 		case BLOCKTYPE_ORDER_CANCEL:
+			break;
+		case BLOCKTYPE_CONTRACTEVENT_CANCEL:
 			break;
 		default:
 			throw new RuntimeException("Not Implemented");
@@ -2111,6 +2121,9 @@ public class ServiceBaseConnect extends ServiceBase {
 		case BLOCKTYPE_ORDER_CANCEL:
 			connectCancelOrder(block, blockStore);
 			break;
+		case BLOCKTYPE_CONTRACTEVENT_CANCEL:
+			connectContractEventCancel(block, blockStore);
+			break;
 		case BLOCKTYPE_CONTRACT_EVENT:
 			connectContractEvent(block, blockStore);
 		default:
@@ -2130,6 +2143,17 @@ public class ServiceBaseConnect extends ServiceBase {
 		}
 	}
 
+	private void connectContractEventCancel(Block block, FullBlockStore blockStore) throws BlockStoreException {
+		try {
+			ContractEventCancelInfo info = new ContractEventCancelInfo().parse(block.getTransactions().get(0).getData());
+			ContractEventCancel record = new ContractEventCancel(info.getBlockHash());
+			record.setBlockHash(block.getHash());
+			blockStore.insertContractEventCancel(record);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
 	public void connectOrder(Block block, FullBlockStore blockStore) throws BlockStoreException {
 		try {
 			OrderOpenInfo reqInfo = new OrderOpenInfo().parse(block.getTransactions().get(0).getData());
@@ -2626,15 +2650,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			}
 		}
 	}
-
-	private void orderstoCancelled(List<OrderCancel> cancels, HashMap<Sha256Hash, OrderRecord> remainingOrders,
-			Set<OrderRecord> cancelledOrders) {
-		for (OrderCancel c : cancels) {
-			if (remainingOrders.containsKey(c.getOrderBlockHash())) {
-				cancelledOrders.add(remainingOrders.get(c.getOrderBlockHash()));
-			}
-		}
-	}
+ 
 
 	protected void setIssuingBlockHash(Block block, HashMap<Sha256Hash, OrderRecord> remainingOrders) {
 		Iterator<Entry<Sha256Hash, OrderRecord>> it = remainingOrders.entrySet().iterator();

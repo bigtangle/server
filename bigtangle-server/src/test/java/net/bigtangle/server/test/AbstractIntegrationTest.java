@@ -46,6 +46,7 @@ import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.ContractEventCancelInfo;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.MemoInfo;
@@ -544,6 +545,32 @@ public abstract class AbstractIntegrationTest {
 		return block;
 	}
 
+	protected Block makeContractEventCancel(Block order, ECKey legitimatingKey, List<Block> addedBlocks, Block predecessor)
+			throws Exception {
+		// Make an order op
+		Transaction tx = new Transaction(networkParameters);
+		ContractEventCancelInfo info = new ContractEventCancelInfo(order.getHash());
+		tx.setData(info.toByteArray());
+
+		// Legitimate it by signing
+		Sha256Hash sighash1 = tx.getHash();
+		ECKey.ECDSASignature party1Signature = legitimatingKey.sign(sighash1, null);
+		byte[] buf1 = party1Signature.encodeToDER();
+		tx.setDataSignature(buf1);
+
+		// Create block with order
+		Block block = predecessor.createNextBlock(predecessor);
+		block.addTransaction(tx);
+		block.addTransaction(wallet.feeTransaction(null));
+		block.setBlockType(Type.BLOCKTYPE_CONTRACTEVENT_CANCEL);
+		block = adjustSolve(block);
+
+		this.blockGraph.add(block, true, store);
+		addedBlocks.add(block);
+
+		makeOrderExecutionAndReward(addedBlocks);
+		return block;
+	}
 	protected Block makeRewardBlock() throws Exception {
 		Block predecessor = tipsService.getValidatedBlockPair(store).getLeft().getBlock();
 		return makeRewardBlock(predecessor);

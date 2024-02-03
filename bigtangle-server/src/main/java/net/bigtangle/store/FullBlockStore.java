@@ -22,6 +22,7 @@ import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.BlockMCMC;
 import net.bigtangle.core.Coin;
+import net.bigtangle.core.ContractEventCancel;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
@@ -547,4 +548,12 @@ public interface FullBlockStore {
 	public List<Coin> getAccountBalance(String address, String tokenid) throws BlockStoreException;
 
 	public void calculateAccount(String address, String tokenid) throws BlockStoreException;
+	
+	public void insertContractEventCancel(ContractEventCancel contractEventCancel) throws BlockStoreException;
+
+	public List<ContractEventCancel> getContractEventCancelConfirmed() throws BlockStoreException;
+	public void updateContractEventCancelSpent(Set<Sha256Hash> cancels, Sha256Hash blockhash, Boolean spent)
+			throws BlockStoreException;
+	List<ContractEventCancel> getContractEventCancelByBlockHash(HashSet<String> blockHashs) throws BlockStoreException;
+
 }

@@ -157,6 +157,8 @@ public class BlockWrap {
 			break;
 		case BLOCKTYPE_ORDER_CANCEL:
 			break;
+		case BLOCKTYPE_CONTRACTEVENT_CANCEL:
+			break;
 
 		default:
 			throw new RuntimeException("Blocktype not implemented!");
