@@ -246,7 +246,7 @@ public abstract class AbstractIntegrationTest {
 		cacheBlockService.evictOutputs();
 		cacheBlockService.evictBlock(); 
 		cacheBlockService.evictAccountBalance(); 
-		CacheBlockService.lastConfirmedChainBlock=null;
+		cacheBlockService.evictMaxConfirmedReward(); 
 	}
 
 	protected void payTestTokenTo(ECKey beneficiary, ECKey testKey, BigInteger amount) throws Exception {

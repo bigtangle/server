@@ -1,5 +1,6 @@
 package net.bigtangle.server.service;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +27,7 @@ import net.bigtangle.utils.Json;
 @Service
 public class CacheBlockService {
 	private static final Logger logger = LoggerFactory.getLogger(CacheBlockService.class);
-	public static TXReward lastConfirmedChainBlock;
+	public static String cachenamereward = "reward";
 
 	@Cacheable(value = "blocksCache", key = "#blockhash")
 	public byte[] getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
@@ -46,18 +47,24 @@ public class CacheBlockService {
 		logger.debug("evictBlock {}", block.toString());
 	}
 
-	public TXReward getMaxConfirmedReward(FullBlockStore store) throws BlockStoreException {
+	public TXReward getMaxConfirmedReward(FullBlockStore store) throws   BlockStoreException {
 
-		if (lastConfirmedChainBlock == null) {
-			lastConfirmedChainBlock = store.getMaxConfirmedReward();
+		try {
+			return new TXReward().parse(getMaxConfirmedRewardByte(store));
+		} catch (IOException | BlockStoreException e) {
+			 throw new BlockStoreException(e);
 		}
-		return lastConfirmedChainBlock;
+
 	}
 
-	// reset the lastConfirmedChainBlock = null, for new calculation
-	public synchronized void resetMaxConfirmedReward(Block aChainBlock, Boolean confirmed, FullBlockStore store)
-			throws BlockStoreException {
-		lastConfirmedChainBlock = null;
+	@Cacheable(value = "reward", key = "#store.getParams.getId")
+	public byte[] getMaxConfirmedRewardByte(FullBlockStore store) throws BlockStoreException {
+		// store.getParams().getId()
+		return store.getMaxConfirmedReward().toByteArray();
+	}
+
+	@CacheEvict(value = "reward", allEntries = true)
+	public synchronized void evictMaxConfirmedReward() {
 	}
 
 	@Cacheable(value = "accountBalance", key = "#address")
@@ -108,7 +115,5 @@ public class CacheBlockService {
 	public void evictOutputs() throws BlockStoreException {
 		logger.debug("evictOutputs");
 	}
-
-	 
 
 }

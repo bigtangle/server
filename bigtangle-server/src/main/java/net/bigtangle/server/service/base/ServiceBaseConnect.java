@@ -1514,7 +1514,7 @@ public class ServiceBaseConnect extends ServiceBase {
 
 		// Set own output confirmed
 		blockStore.updateRewardConfirmed(block.getBlock().getHash(), true);
-		cacheBlockService.resetMaxConfirmedReward(block.getBlock(), true, blockStore);
+		cacheBlockService.evictMaxConfirmedReward( );
 	}
 
 	private void insertVirtualOrderRecords(Block block, Collection<OrderRecord> orders, FullBlockStore blockStore) {
@@ -1939,7 +1939,7 @@ public class ServiceBaseConnect extends ServiceBase {
 
 		// Set own output unconfirmed
 		blockStore.updateRewardConfirmed(block.getHash(), false);
-		cacheBlockService.resetMaxConfirmedReward(block, false, blockStore);
+		cacheBlockService.evictMaxConfirmedReward( );
 	}
 
 	private void unconfirmToken(Block block, FullBlockStore blockStore) throws BlockStoreException {

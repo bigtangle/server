@@ -45,9 +45,8 @@ public class SpentBlock extends DataClass {
 		try {
 			DataOutputStream dos = new DataOutputStream(baos);
 			dos.write(super.toByteArray());
-			Utils.writeNBytes(dos,
-					blockHash == null ? Sha256Hash.ZERO_HASH.getBytes() : blockHash.getBytes());
-		
+			Utils.writeNBytes(dos, blockHash == null ? Sha256Hash.ZERO_HASH.getBytes() : blockHash.getBytes());
+
 			dos.writeBoolean(confirmed);
 			dos.writeBoolean(spent);
 			Utils.writeNBytes(dos,
@@ -63,17 +62,10 @@ public class SpentBlock extends DataClass {
 	@Override
 	public SpentBlock parseDIS(DataInputStream dis) throws IOException {
 		super.parseDIS(dis);
-
 		blockHash = Sha256Hash.wrap(Utils.readNBytes(dis));
-		if (Sha256Hash.ZERO_HASH.equals(blockHash)) {
-			blockHash = null;
-		}
 		confirmed = dis.readBoolean();
 		confirmed = dis.readBoolean();
 		spenderBlockHash = Sha256Hash.wrap(Utils.readNBytes(dis));
-		if (Sha256Hash.ZERO_HASH.equals(spenderBlockHash)) {
-			spenderBlockHash = null;
-		}
 		time = dis.readLong();
 		return this;
 	}

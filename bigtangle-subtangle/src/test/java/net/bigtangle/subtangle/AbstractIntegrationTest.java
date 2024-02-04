@@ -229,7 +229,10 @@ public abstract class AbstractIntegrationTest {
 	public void resetStore() throws BlockStoreException {
 	 
 		store.resetStore();
-		CacheBlockService.lastConfirmedChainBlock=null;
+		cacheBlockService.evictOutputs();
+		cacheBlockService.evictBlock(); 
+		cacheBlockService.evictAccountBalance(); 
+		cacheBlockService.evictMaxConfirmedReward(); 
 		 
 	}
 
