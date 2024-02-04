@@ -475,7 +475,7 @@ public interface FullBlockStore {
 
 	void insertChainBlockQueue(ChainBlockQueue chainBlockQueue) throws BlockStoreException;
 
-	List<UTXO> getOpenOutputsByBlockhash(String blockhash) throws UTXOProviderException;
+	List<UTXO> getOpenOutputsByBlockhash(Sha256Hash blockhash) throws UTXOProviderException;
 
 	List<ChainBlockQueue> selectChainblockqueue(boolean orphan, int limit) throws BlockStoreException;
 

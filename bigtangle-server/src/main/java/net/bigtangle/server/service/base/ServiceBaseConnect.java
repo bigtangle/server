@@ -70,6 +70,7 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
+import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.CutoffException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
@@ -1175,6 +1176,7 @@ public class ServiceBaseConnect extends ServiceBase {
 
 		// Confirm the block
 		confirmBlock(blockWrap, blockStore );
+		evictTransactions(blockWrap.getBlock(), blockStore);
 
 		// Keep track of confirmed blocks
 		traversedBlockHashes.add(blockHash);
@@ -1251,8 +1253,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			confirmTransaction(block.getBlock(), tx, blockStore);
 		}
 
-		evictTransactions(block.getBlock(), blockStore);
-
+	
 		// type-specific updates
 		switch (block.getBlock().getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:
@@ -1423,8 +1424,9 @@ public class ServiceBaseConnect extends ServiceBase {
 				blockStore.updateOrderConfirmed(check.getRemainderRecords(), block.getHash(), true);
 				blockStore.updateOrderCancelSpent(check.getCancelRecords(), block.getHash(), true);
 				blockStore.updateOrderResultConfirmed(block.getHash(), true);
-
 				confirmTransaction(block, check.getOutputTx(), blockStore);
+				//
+				evictTransactions(block.getHash() , blockStore);
 				// Update the matching
 				addMatchingEventsOrderExecution(check, check.getOutputTx().getHashAsString(), block.getTimeSeconds(),
 						blockStore);
@@ -1457,7 +1459,9 @@ public class ServiceBaseConnect extends ServiceBase {
 				blockStore.updateContractResultConfirmed(block.getHash(), true);
 				blockStore.updateContractResultSpent(result.getPrevblockhash(), block.getHash(), true);
 				confirmTransaction(block, check.getOutputTx(), blockStore);
-				// Set virtual outputs confirmed
+				// reset cache
+				evictTransactions(block.getHash(), blockStore);
+				
 			}
 			// blockStore.updateContractEvent( );
 		} catch (IOException e) {
@@ -1473,7 +1477,8 @@ public class ServiceBaseConnect extends ServiceBase {
 			blockStore.updateContractResultConfirmed(block.getHash(), false);
 			blockStore.updateContractEventSpent(result.getAllRecords(), block.getHash(), false);
 			blockStore.updateTransactionOutputConfirmed(block.getHash(), result.getOutputTxHash(), 0, false);
-
+			evictTransactions(block.getHash() , blockStore);
+			
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -1487,7 +1492,8 @@ public class ServiceBaseConnect extends ServiceBase {
 			blockStore.updateOrderResultConfirmed(block.getHash(), false);
 			blockStore.updateOrderSpent(result.getAllRecords(), block.getHash(), false);
 			blockStore.updateTransactionOutputConfirmed(block.getHash(), result.getOutputTxHash(), 0, false);
-
+			evictTransactions(block.getHash() , blockStore);
+			
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -1608,6 +1614,19 @@ public class ServiceBaseConnect extends ServiceBase {
 
 	}
 
+	public void evictTransactions(Sha256Hash blockHash , FullBlockStore blockStore)  {
+ 
+		try {
+			List<UTXO> utxos=	blockStore.getOpenOutputsByBlockhash(blockHash); 
+			for( UTXO u: utxos) {
+				cacheBlockService.evictOutputs(u.getAddress(), blockStore);
+				cacheBlockService.evictOutputs(u.getFromaddress(), blockStore);
+			}
+		} catch ( Exception e) {
+			 
+		}
+	}
+	
 	private void confirmVirtualCoinbaseTransaction(Block block, FullBlockStore blockStore) throws BlockStoreException {
 		// Set own outputs confirmed
 		blockStore.updateAllTransactionOutputsConfirmed(block.getHash(), true);
@@ -1633,12 +1652,13 @@ public class ServiceBaseConnect extends ServiceBase {
 			return;
 
 		// Then unconfirm the block outputs
-		unconfirmBlockOutputs(block, blockStore, accountBalance);
+		unconfirmBlockOutputs(block, blockStore );
 
 		// Set unconfirmed
 		blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), false);
 		blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), -1);
 
+		evictTransactions(block, blockStore);
 		// Keep track of unconfirmed blocks
 		traversedBlockHashes.add(blockHash);
 	}
@@ -1661,8 +1681,9 @@ public class ServiceBaseConnect extends ServiceBase {
 		unconfirmDependents(block, traversedBlockHashes, blockStore);
 
 		// Then unconfirm the block itself
-		unconfirmBlockOutputs(block, blockStore, true);
+		unconfirmBlockOutputs(block, blockStore);
 
+		evictTransactions(block, blockStore);
 		// Set unconfirmed
 		blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), false);
 		blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), -1);
@@ -1818,14 +1839,13 @@ public class ServiceBaseConnect extends ServiceBase {
 	 * @throws BlockStoreException if the block store had an underlying error or
 	 *                             block does not exist in the block store at all.
 	 */
-	private void unconfirmBlockOutputs(Block block, FullBlockStore blockStore, Boolean accountBalance)
+	private void unconfirmBlockOutputs(Block block, FullBlockStore blockStore)
 			throws BlockStoreException {
 		// Unconfirm all transactions of the block
 		for (Transaction tx : block.getTransactions()) {
 			unconfirmTransaction(tx, block, blockStore);
 		}
 
-		evictTransactions(block, blockStore);
 		// Then unconfirm type-specific stuff
 		switch (block.getBlockType()) {
 		case BLOCKTYPE_CROSSTANGLE:

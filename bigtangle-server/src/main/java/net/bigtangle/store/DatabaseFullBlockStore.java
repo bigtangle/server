@@ -1461,7 +1461,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 	}
 
 	@Override
-	public List<UTXO> getOpenOutputsByBlockhash(String blockhash) throws UTXOProviderException {
+	public List<UTXO> getOpenOutputsByBlockhash(Sha256Hash blockhash) throws UTXOProviderException {
 
 		PreparedStatement s = null;
 		List<UTXO> outputs = new ArrayList<UTXO>();
@@ -1469,7 +1469,7 @@ public abstract class DatabaseFullBlockStore implements FullBlockStore {
 			maybeConnect();
 			// Must be sorted for hash checkpoint
 			s = getConnection().prepareStatement(SELECT_TRANSACTION_OUTPUTS_SQL_BASE + "  where blockhash =?");
-			s.setString(1, blockhash);
+			s.setBytes(1, blockhash.getBytes());
 			ResultSet results = s.executeQuery();
 			while (results.next()) {
 				outputs.add(

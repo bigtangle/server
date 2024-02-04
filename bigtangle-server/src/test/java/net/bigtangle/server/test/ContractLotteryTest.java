@@ -83,8 +83,6 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 			if (!check.getOutputTx().getOutputs().isEmpty()) {
 				Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey()
 						.getToAddress(networkParameters);
-
-				makeRewardBlock(resultBlock);
 				// check one of user get the winnerAmount
 				Map<String, BigInteger> endMap = new HashMap<>();
 				check(ulist, endMap);
@@ -196,7 +194,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 						.executeContract(resultBlock, store, result.getContracttokenid(), result.getPrevblockhash(),
 								result.getReferencedBlocks());
 				blockService.saveBlock(resultBlock, store);
-				Block reward = makeRewardBlock(resultBlock);
+				makeRewardBlock(resultBlock);
 				assertTrue(resultBlock != null);
 				if (!check.getOutputTx().getOutputs().isEmpty()) {
 					Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey()
@@ -208,10 +206,10 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 					assertTrue(endMap.get(winnerAddress.toString()) != null);
 					assertTrue(endMap.get(winnerAddress.toString()).equals(new BigInteger(winnerAmount)));
 
-					// unconfirm an event will not lead to unconfirm execution result
-
+					// unconfirm an execution will not lead to unconfirm execution result
 					new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
-							.unconfirmRecursive(event.getHash(), new HashSet<>(), store);
+							.unconfirm(resultBlock.getHash(), new HashSet<>(), store);
+				 
 					endMap = new HashMap<>();
 					check(ulist, endMap);
 
@@ -269,45 +267,23 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 
 		prepare();
 
-		ECKey key = ulist.get(0);
-		Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
+		Wallet w = Wallet.fromKeys(networkParameters, ulist.get(0), contextRoot);
 		Block event = w.payContract(null, yuanTokenPub, payContractAmount, null, null, contractKey.getPublicKeyAsHex());
-		Sha256Hash prev = store.getLastContractResultBlockHash(contractKey.getPublicKeyAsHex());
-		if (prev == null) {
-			prev = Sha256Hash.ZERO_HASH;
-		}
+
 		Block resultBlock = contractExecutionService.createContractExecution(contractKey.getPublicKeyAsHex(), store);
+		blockService.saveBlock(resultBlock, store);
+		makeRewardBlock(resultBlock);
+		ContractResult result = new ContractResult().parse(resultBlock.getTransactions().get(0).getData());
+		assertTrue(result.getAllRecords().size() == 1);
+		assertTrue(result.getCancelRecords().size() == 0);
+		Block predecessor = tipsService.getValidatedBlockPair(store).getLeft().getBlock();
+		makeContractEventCancel(event, ulist.get(0), new ArrayList<>(), predecessor);
 
-		if (resultBlock != null) {
-			ContractResult result = new ContractResult().parse(resultBlock.getTransactions().get(0).getData());
-
-			ContractResult check = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
-					.executeContract(resultBlock, store, result.getContracttokenid(), result.getPrevblockhash(),
-							result.getReferencedBlocks());
-			blockService.saveBlock(resultBlock, store);
-			Block reward = makeRewardBlock(resultBlock);
-			assertTrue(resultBlock != null);
-			if (!check.getOutputTx().getOutputs().isEmpty()) {
-				Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey()
-						.getToAddress(networkParameters);
-				// check one of user get the winnerAmount
-				Map<String, BigInteger> endMap = new HashMap<>();
-				check(ulist, endMap);
-				// List<UTXO> utxos = getBalance(false, ulist);
-				assertTrue(endMap.get(winnerAddress.toString()) != null);
-				assertTrue(endMap.get(winnerAddress.toString()).equals(new BigInteger(winnerAmount)));
-
-				// unconfirm an event will not lead to unconfirm execution result
-
-				new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
-						.unconfirmRecursive(event.getHash(), new HashSet<>(), store);
-				endMap = new HashMap<>();
-				check(ulist, endMap);
-
-				assertTrue(endMap.get(winnerAddress.toString()) == null);
-
-			}
-		}
+		resultBlock = contractExecutionService.createContractExecution(contractKey.getPublicKeyAsHex(), store);
+		blockService.saveBlock(resultBlock, store);
+		result = new ContractResult().parse(resultBlock.getTransactions().get(0).getData());
+		assertTrue(result.getAllRecords().size() == 0);
+		assertTrue(result.getCancelRecords().size() == 1);
 
 	}
 

@@ -114,15 +114,15 @@ public class ServiceContract extends ServiceBaseConnect {
 
 		if (winnerAmount != null && canTakeWinner(toBeSpent, usedRecords, new BigInteger(winnerAmount))) {
 			return doTakeWinner(block, store, usedRecords, new BigInteger(amount), prevHash, toBeSpent, collectedBlocks,
-					payouts);
+					payouts,getContractEventRecordHash(cancelledContractEventRecord));
 		} else {
 			if (!collectedBlocks.isEmpty()) {
 				// no winner reset used
 				usedRecords = new TreeMap<>(Comparator.comparing(
 						blockHash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) blockHash).getBytes(), randomness))));
-				Transaction tx = new Transaction(networkParameters);
+				Transaction tx = createPayoutTransaction(block, payouts);
 				return new ContractResult(null, contract.getTokenid(), getContractEventRecordHash(toBeSpent.values()),
-						tx.getHash(), tx, prevHash, new HashSet<>(),
+						tx.getHash(), tx, prevHash,  getContractEventRecordHash(cancelledContractEventRecord) ,
 						getRemainder(toBeSpent.values(), usedRecords.values()), block.getTimeSeconds(),
 						getRemainderContractEventRecord(toBeSpent.values(), usedRecords.values()), collectedBlocks);
 
@@ -197,7 +197,7 @@ public class ServiceContract extends ServiceBaseConnect {
 	private ContractResult doTakeWinner(Block winnerBlock, FullBlockStore blockStore,
 			TreeMap<Sha256Hash, ContractEventRecord> usedRecords, BigInteger amount, Sha256Hash prevHash,
 			TreeMap<Sha256Hash, ContractEventRecord> allRecords, Set<Sha256Hash> collectedBlocks,
-			TreeMap<String, TreeMap<String, BigInteger>> payouts) {
+			TreeMap<String, TreeMap<String, BigInteger>> payouts,   Set<Sha256Hash> cancels) {
 		// for the check the new ContractEventRecord is from the collectedBlocks
 		// old ContractEventRecord are from the prevHash from the ContractEventRecord
 
@@ -210,10 +210,10 @@ public class ServiceContract extends ServiceBaseConnect {
 		log.debug("randomn win = " + randomWin + " userlist size =" + userlist.size());
 		ContractEventRecord winner = findList(usedRecords.values(), userlist.get(randomWin));
 		log.debug("winner = " + winner.toString());
-		payout(payouts, winner.getBeneficiaryAddress(), winner.getContractTokenid(), sum(usedRecords.values()));
+		payout(payouts, winner.getBeneficiaryAddress(), winner.getTargetTokenid(), sum(usedRecords.values()));
 		Transaction tx = createPayoutTransaction(winnerBlock, payouts);
 		return new ContractResult(null, winner.getContractTokenid(), getContractEventRecordHash(allRecords.values()),
-				tx.getHash(), tx, prevHash, new HashSet<>(), getRemainder(allRecords.values(), usedRecords.values()),
+				tx.getHash(), tx, prevHash, cancels, getRemainder(allRecords.values(), usedRecords.values()),
 				winnerBlock.getTimeSeconds(),
 				getRemainderContractEventRecord(allRecords.values(), usedRecords.values()), collectedBlocks);
 	}
@@ -226,6 +226,13 @@ public class ServiceContract extends ServiceBaseConnect {
 		return hashs;
 	}
 
+	public Set<Sha256Hash> getContractEventCancel(Collection<ContractEventRecord> orders) {
+		Set<Sha256Hash> hashs = new HashSet<>();
+		for (ContractEventRecord o : orders) {
+			hashs.add(o.getBlockHash());
+		}
+		return hashs;
+	}
 	public Set<Sha256Hash> getRemainder(Collection<ContractEventRecord> all, Collection<ContractEventRecord> used) {
 		Set<Sha256Hash> hashs = new HashSet<>();
 		for (ContractEventRecord o : all) {

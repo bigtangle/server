@@ -567,8 +567,7 @@ public abstract class AbstractIntegrationTest {
 
 		this.blockGraph.add(block, true, store);
 		addedBlocks.add(block);
-
-		makeOrderExecutionAndReward(addedBlocks);
+ 
 		return block;
 	}
 	protected Block makeRewardBlock() throws Exception {

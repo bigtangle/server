@@ -168,7 +168,7 @@ public class ContractExecutionService {
 	 
 		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
 		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EVENT);
-	 
+		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACTEVENT_CANCEL);
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService);
 		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBlockHash(), store), cutoffheight, prevChainLength, true,
