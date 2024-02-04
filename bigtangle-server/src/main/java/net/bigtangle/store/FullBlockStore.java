@@ -440,9 +440,7 @@ public interface FullBlockStore {
 	public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException;
 
 	List<Sha256Hash> getWhereConfirmedNotMilestone() throws BlockStoreException;
-
-	long getHeightTransactions(List<Sha256Hash> txHashs) throws BlockStoreException;
-
+ 
 	TXReward getRewardConfirmedAtHeight(long chainlength) throws BlockStoreException;
 
 	List<BlockWrap> getBlocksInMilestoneInterval(long minMilestone, long maxMilestone) throws BlockStoreException;

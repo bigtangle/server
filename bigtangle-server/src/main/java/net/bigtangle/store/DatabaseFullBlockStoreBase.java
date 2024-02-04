@@ -1982,36 +1982,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 			}
 		}
 	}
-
-	public long getHeightTransactions(List<Sha256Hash> txHashs) throws BlockStoreException {
-
-		PreparedStatement s = null;
-		
-		long re = 0l;
-		try {
-			s = getConnection().prepareStatement(SELECT_BLOCKS_SQL);
-			for (Sha256Hash hash : txHashs) {
-				s.setBytes(1, hash.getBytes());
-
-				ResultSet results = s.executeQuery();
-				if (results.next()) {
-
-					re = Math.max(re, results.getLong("height"));
-				}
-			}
-			return re;
-		} catch (SQLException e) {
-			throw new BlockStoreException(e);
-		} finally {
-			if (s != null) {
-				try {
-					s.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
+ 
 
 	@Override
 	public BlockEvaluation getTransactionOutputSpender(Sha256Hash blockHash, Sha256Hash hash, long index)
