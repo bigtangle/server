@@ -27,8 +27,7 @@ import net.bigtangle.utils.Json;
 @Service
 public class CacheBlockService {
 	private static final Logger logger = LoggerFactory.getLogger(CacheBlockService.class);
-	public static String cachenamereward = "reward";
-
+ 
 	@Cacheable(value = "blocksCache", key = "#blockhash")
 	public byte[] getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
 		logger.debug("read from database and no cache for: " + blockhash);
@@ -116,4 +115,15 @@ public class CacheBlockService {
 		logger.debug("evictOutputs");
 	}
 
+	@Cacheable(value = "BlockPrototype", key = "#store.getParams.getId")
+	public byte[] getBlockPrototypeByte(FullBlockStore store) throws BlockStoreException {
+		// store.getParams().getId()
+		return store.getMaxConfirmedReward().toByteArray();
+	}
+
+	@CacheEvict(value = "BlockPrototype", allEntries = true)
+	public synchronized void evictBlockPrototypeByte() {
+	}
+
+ 
 }

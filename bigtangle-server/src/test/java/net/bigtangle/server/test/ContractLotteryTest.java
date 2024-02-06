@@ -77,7 +77,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 			ContractResult check = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
 					.executeContract(resultBlock, store, result.getContracttokenid(), result.getPrevblockhash(),
 							result.getReferencedBlocks());
-			blockService.saveBlock(resultBlock, store);
+			blockSaveService.saveBlock(resultBlock, store);
 			makeRewardBlock(resultBlock);
 			assertTrue(resultBlock != null);
 			if (!check.getOutputTx().getOutputs().isEmpty()) {
@@ -133,10 +133,10 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 			if (win) {
 				// create conflict
 				Block conflictBlock = contractExecutionService.createContractExecution(
-						blockService.getBlockPrototype(store), contractKey.getPublicKeyAsHex(), prevbeforeConflict,
+						cacheBlockPrototypeService.getBlockPrototype(store), contractKey.getPublicKeyAsHex(), prevbeforeConflict,
 						store);
 				if (conflictBlock != null) {
-					blockService.saveBlock(conflictBlock, store);
+					blockSaveService.saveBlock(conflictBlock, store);
 					makeRewardBlock(conflictBlock);
 				}
 			}
@@ -151,7 +151,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 				ContractResult check = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
 						.executeContract(resultBlock, store, result.getContracttokenid(), result.getPrevblockhash(),
 								result.getReferencedBlocks());
-				blockService.saveBlock(resultBlock, store);
+				blockSaveService.saveBlock(resultBlock, store);
 				makeRewardBlock(resultBlock);
 				assertTrue(resultBlock != null);
 				if (!check.getOutputTx().getOutputs().isEmpty()) {
@@ -193,7 +193,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 				ContractResult check = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
 						.executeContract(resultBlock, store, result.getContracttokenid(), result.getPrevblockhash(),
 								result.getReferencedBlocks());
-				blockService.saveBlock(resultBlock, store);
+				blockSaveService.saveBlock(resultBlock, store);
 				makeRewardBlock(resultBlock);
 				assertTrue(resultBlock != null);
 				if (!check.getOutputTx().getOutputs().isEmpty()) {
@@ -234,7 +234,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 			ContractResult check = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
 					.executeContract(resultBlock, store, result.getContracttokenid(), result.getPrevblockhash(),
 							result.getReferencedBlocks());
-			blockService.saveBlock(resultBlock, store);
+			blockSaveService.saveBlock(resultBlock, store);
 			makeRewardBlock(resultBlock);
 			assertTrue(resultBlock != null);
 			if (!check.getOutputTx().getOutputs().isEmpty()) {
@@ -271,7 +271,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		Block event = w.payContract(null, yuanTokenPub, payContractAmount, null, null, contractKey.getPublicKeyAsHex());
 
 		Block resultBlock = contractExecutionService.createContractExecution(contractKey.getPublicKeyAsHex(), store);
-		blockService.saveBlock(resultBlock, store);
+		blockSaveService.saveBlock(resultBlock, store);
 		makeRewardBlock(resultBlock);
 		ContractResult result = new ContractResult().parse(resultBlock.getTransactions().get(0).getData());
 		assertTrue(result.getAllRecords().size() == 1);
@@ -280,7 +280,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		makeContractEventCancel(event, ulist.get(0), new ArrayList<>(), predecessor);
 
 		resultBlock = contractExecutionService.createContractExecution(contractKey.getPublicKeyAsHex(), store);
-		blockService.saveBlock(resultBlock, store);
+		blockSaveService.saveBlock(resultBlock, store);
 		result = new ContractResult().parse(resultBlock.getTransactions().get(0).getData());
 		assertTrue(result.getAllRecords().size() == 0);
 		assertTrue(result.getCancelRecords().size() == 1);

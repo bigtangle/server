@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.service.ContractExecutionService;
 import net.bigtangle.server.service.RewardService;
 
 @Component
@@ -25,20 +26,20 @@ public class ScheduleContractService {
     private ScheduleConfiguration scheduleConfiguration;
 
     @Autowired
-    private RewardService rewardService;
+    private ContractExecutionService contractExecutionService;
 
     @Autowired
     ServerConfiguration serverConfiguration;
     
     @Async
-    @Scheduled(fixedDelayString = "${service.schedule.miningrate:50000}")
-    public void updateReward() {
-        if (scheduleConfiguration.isMining() && serverConfiguration.checkService()) {
+    @Scheduled(fixedDelayString = "${service.schedule.mcmcrate:500}")
+    public void contractExecutionService() {
+    	  if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
-                logger.debug(" Start schedule updateReward: ");
-                rewardService.startSingleProcess();
+                logger.debug(" Start schedule contractExecutionService: ");
+                contractExecutionService.startSingleProcess();
             } catch (Exception e) {
-                logger.warn("performRewardVoting ", e);
+                logger.warn("contractExecutionService ", e);
             }
         }
     }

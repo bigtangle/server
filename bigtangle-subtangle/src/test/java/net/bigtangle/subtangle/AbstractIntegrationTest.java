@@ -81,6 +81,7 @@ import net.bigtangle.script.ScriptBuilder;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.service.BlockSaveService;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.CacheBlockService;
 import net.bigtangle.server.service.ContractExecutionService;
@@ -148,7 +149,8 @@ public abstract class AbstractIntegrationTest {
     protected CacheBlockService cacheBlockService;
 	@Autowired
 	private ScheduleConfiguration scheduleConfiguration;
-	
+	 @Autowired
+	    private BlockSaveService blockSaveService;
 	@Autowired
 	protected void prepareContextRoot(@Value("${local.server.port}") int port) {
 		contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
@@ -1235,7 +1237,7 @@ public abstract class AbstractIntegrationTest {
 		Block block = rewardService.createMiningRewardBlock(prevHash, blockService.getBlockWrap(prevTrunk, store),
 				blockService.getBlockWrap(prevBranch, store), store);
 		if (block != null) {
-			blockService.saveBlock(block, store);
+			blockSaveService.saveBlock(block, store);
 			blockGraph.updateChain();
 		}
 		return block;

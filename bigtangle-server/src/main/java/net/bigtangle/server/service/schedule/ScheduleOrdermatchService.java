@@ -14,30 +14,33 @@ import org.springframework.stereotype.Component;
 
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
-import net.bigtangle.store.FullBlockStoreImpl;
+import net.bigtangle.server.service.OrderExecutionService;
 
 @Component
 @EnableAsync
-public class UpdateChainService {
-    private static final Logger logger = LoggerFactory.getLogger(UpdateChainService.class);
-    
-     
-    @Autowired
-    ServerConfiguration serverConfiguration;
-    @Autowired
-    protected FullBlockStoreImpl blockGraph;
+public class ScheduleOrdermatchService {
+    private static final Logger logger = LoggerFactory.getLogger(ScheduleOrdermatchService.class);
+
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
+
+    @Autowired
+    private OrderExecutionService orderExecutionService;
+
+    @Autowired
+    ServerConfiguration serverConfiguration;
+    
     @Async
-    @Scheduled(fixedDelayString = "10000")
-    public void updateChain() {
-        if (scheduleConfiguration.isMilestone_active() &&  serverConfiguration.checkService()) {
-            try { 
-                blockGraph.updateChain(); 
+    @Scheduled(fixedDelayString = "${service.schedule.mcmcrate:500}")
+    public void orderExecutionService() {
+    	  if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
+            try {
+                logger.debug(" Start schedule orderExecutionService: ");
+                orderExecutionService.startSingleProcess();
             } catch (Exception e) {
-                logger.warn("updateConfirmService ", e);
+                logger.warn("orderExecutionService ", e);
             }
         }
     }
- 
+
 }

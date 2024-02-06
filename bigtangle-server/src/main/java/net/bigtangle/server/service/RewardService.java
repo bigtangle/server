@@ -72,7 +72,8 @@ public class RewardService {
 
 	@Autowired
 	protected CacheBlockService cacheBlockService;
-
+	@Autowired
+	private BlockSaveService blockSaveService;
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	private final String LOCKID = this.getClass().getName();
@@ -166,7 +167,7 @@ public class RewardService {
 			if (latest.getChainLength() >= block.getLastMiningRewardBlock()) {
 				log.debug("resolved Reward is out of date.");
 			} else {
-				blockService.saveBlock(block, store);
+				blockSaveService.saveBlock(block, store);
 			}
 		}
 		return block;

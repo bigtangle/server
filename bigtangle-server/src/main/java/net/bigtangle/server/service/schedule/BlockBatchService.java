@@ -21,7 +21,9 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.data.BatchBlock;
+import net.bigtangle.server.service.BlockSaveService;
 import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.CacheBlockPrototypeService;
 import net.bigtangle.server.service.StoreService;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Threading;
@@ -43,10 +45,12 @@ public class BlockBatchService {
 
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
-
+	@Autowired
+	private BlockSaveService blockSaveService;
     @Autowired
     ServerConfiguration serverConfiguration;
-
+	@Autowired
+	protected CacheBlockPrototypeService cacheBlockPrototypeService;
     /*
      * create solved block from other not resolved blocks together as service
      */
@@ -84,7 +88,7 @@ public class BlockBatchService {
             if (batchBlocks.isEmpty()) {
                 return;
             }
-            Block block = blockService.getBlockPrototype(store);
+            Block block = cacheBlockPrototypeService.getBlockPrototype(store);
             for (BatchBlock batchBlock : batchBlocks) {
                 byte[] payloadBytes = batchBlock.getBlock();
                 Block putBlock = this.networkParameters.getDefaultSerializer().makeBlock(payloadBytes);
@@ -96,7 +100,7 @@ public class BlockBatchService {
                 return;
             }
             block.solve();
-            blockService.saveBlock(block, store);
+            blockSaveService.saveBlock(block, store);
             for (BatchBlock batchBlock : batchBlocks) {
                 store.deleteBatchBlock(batchBlock.getHash());
             }

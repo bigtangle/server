@@ -48,7 +48,7 @@ public class ServiceBase {
 	}
 
 	public boolean enableFee(Block block) {
-		return (block.getLastMiningRewardBlock() > 1500000
+		return (block.getLastMiningRewardBlock() > 1424626
 				&& networkParameters.getId().equals(NetworkParameters.ID_MAINNET))
 				|| networkParameters.getId().equals(NetworkParameters.ID_UNITTESTNET);
 	}

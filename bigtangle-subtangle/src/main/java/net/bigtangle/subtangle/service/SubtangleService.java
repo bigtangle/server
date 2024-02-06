@@ -34,6 +34,7 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.server.service.BlockSaveService;
 import net.bigtangle.server.service.BlockService;
 import net.bigtangle.server.service.OutputService;
 import net.bigtangle.store.FullBlockStore;
@@ -68,10 +69,10 @@ public class SubtangleService {
                 }
                 Coin coinbase = output.getValue();
 
-                Block b = blockService.getBlockPrototype(store);
+                Block b = blockService.getNewBlockPrototype(store);
                 b.setBlockType(Block.Type.BLOCKTYPE_CROSSTANGLE);
                 b.addCoinbaseTransaction(signKey.getPubKey(), coinbase, null, new MemoInfo("SubtangleService"));
-                blockService.saveBlock(b, store);
+                blockSaveService.saveBlock(b, store);
 
                 Address address = new Address(this.networkParameters, toAddressInSubtangle);
                 this.giveMoney(signKey, address, coinbase, store);
@@ -99,10 +100,10 @@ public class SubtangleService {
         Script inputScript = ScriptBuilder.createInputScript(tsrecsig);
         input.setScriptSig(inputScript);
 
-        Block b = blockService.getBlockPrototype(store);
+        Block b = blockService.getNewBlockPrototype(store);
         b.addTransaction(transaction);
         b.solve();
-        this.blockService.saveBlock(b, store);
+        this.blockSaveService.saveBlock(b, store);
     }
 
     public void giveMoney(ECKey signKey, Address address, Coin amount, FullBlockStore store) throws Exception {
@@ -123,10 +124,10 @@ public class SubtangleService {
         transaction.addOutput(spendableOutput.getValue().subtract(amount), signKey);
         wallet.signTransaction(transaction, null);
 
-        Block b = blockService.getBlockPrototype(store);
+        Block b = blockService.getNewBlockPrototype(store);
         b.addTransaction(transaction);
         b.solve();
-        this.blockService.saveBlock(b, store);
+        this.blockSaveService.saveBlock(b, store);
     }
 
     private List<UTXO> getBalancesUTOXList(boolean withZero, ECKey signKey, byte[] tokenid, FullBlockStore store)
@@ -157,7 +158,9 @@ public class SubtangleService {
 
     @Autowired
     private BlockService blockService;
-
+    @Autowired
+    private BlockSaveService blockSaveService;
+    
     public List<UTXO> getRemoteBalances(boolean withZero, List<ECKey> keys) throws Exception {
         List<UTXO> listUTXO = new ArrayList<UTXO>();
         List<String> keyStrHex000 = new ArrayList<String>();

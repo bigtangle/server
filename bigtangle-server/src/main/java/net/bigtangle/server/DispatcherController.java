@@ -58,7 +58,9 @@ import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.service.AccessGrantService;
 import net.bigtangle.server.service.AccessPermissionedService;
+import net.bigtangle.server.service.BlockSaveService;
 import net.bigtangle.server.service.BlockService;
+import net.bigtangle.server.service.CacheBlockPrototypeService;
 import net.bigtangle.server.service.MultiSignService;
 import net.bigtangle.server.service.OrderTickerService;
 import net.bigtangle.server.service.OrderdataService;
@@ -89,6 +91,8 @@ public class DispatcherController {
 	@Autowired
 	private BlockService blockService;
 	@Autowired
+	private BlockSaveService blockSaveService;
+	@Autowired
 	private TokensService tokensService;
 	@Autowired
 	private MultiSignService multiSignService;
@@ -113,7 +117,8 @@ public class DispatcherController {
 	private AccessPermissionedService accessPermissionedService;
 	@Autowired
 	private AccessGrantService accessGrantService;
- 
+	@Autowired
+	protected CacheBlockPrototypeService cacheBlockPrototypeService;
 
 	@SuppressWarnings("unchecked")
 	@RequestMapping(value = "{reqCmd}", method = { RequestMethod.POST, RequestMethod.GET })
@@ -174,7 +179,7 @@ public class DispatcherController {
 			}
 			switch (reqCmd0000) {
 			case getTip: {
-				Block rollingBlock = blockService.getBlockPrototype(store);
+				Block rollingBlock = cacheBlockPrototypeService.getBlockPrototype(store);
 				if (!userDataService.ipCheck(reqCmd, contentBytes, httpServletResponse, httprequest)) {
 					// return bomb
 					logger.debug("bomb getDifficultyTarget " + remoteAddr(httprequest) + " " + reqCmd);
@@ -710,14 +715,14 @@ public class DispatcherController {
 				this.outPrintJSONString(httpServletResponse, resp, watch, "saveBlock");
 			} else {
 				blockService.checkBlockBeforeSave(block, store);
-				blockService.saveBlock(block, store);
+				blockSaveService.saveBlock(block, store);
 				deleteRegisterBlock(block, store);
 				this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch, "saveBlock");
 
 			}
 		} else {
 			blockService.checkBlockBeforeSave(block, store);
-			blockService.saveBlock(block, store);
+			blockSaveService.saveBlock(block, store);
 			deleteRegisterBlock(block, store);
 			this.outPrintJSONString(httpServletResponse, OkResponse.create(), watch, "saveBlock");
 		}

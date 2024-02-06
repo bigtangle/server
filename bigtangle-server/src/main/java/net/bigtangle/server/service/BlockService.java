@@ -14,7 +14,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Address;
@@ -22,7 +21,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
-import net.bigtangle.core.BlockMCMC;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
@@ -48,8 +46,8 @@ import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.base.ServiceBaseConnect;
-import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.utils.DomainValidator;
 import net.bigtangle.utils.Gzip;
 
@@ -78,6 +76,7 @@ public class BlockService {
 	protected TipsService tipService;
 	@Autowired
 	protected CacheBlockService cacheBlockService;
+	
 	private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
 	public Block getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
@@ -106,14 +105,7 @@ public class BlockService {
 		return blocks;
 	}
 
- 
-	public void saveBlock(Block block, FullBlockStore store) throws Exception {
-		blockgraph.add(block, false, store);
-		// no broadcastBlock, if there is error of blockgraph.add
-		broadcastBlock(block);
-		// removeBlockPrototype(block, store);
-
-	}
+  
 
 	public long getTimeSeconds(int days) {
 		return System.currentTimeMillis() / 1000 - (long) days * 60 * 24 * 60;
@@ -142,19 +134,7 @@ public class BlockService {
 			throws BlockStoreException {
 		return store.getEntryPoints(currChainLength);
 	}
-
-	public void broadcastBlock(Block block) {
-		try {
-			if ("".equalsIgnoreCase(kafkaConfiguration.getBootstrapServers()))
-				return;
-			KafkaMessageProducer kafkaMessageProducer = new KafkaMessageProducer(kafkaConfiguration);
-
-			kafkaMessageProducer.sendMessage(block.bitcoinSerialize(), serverConfiguration.getMineraddress());
-		} catch (InterruptedException | ExecutionException | IOException e) {
-			logger.warn(block.toString(), e);
-		}
-	}
-
+ 
 	public void batchBlock(Block block, FullBlockStore store) throws BlockStoreException {
 
 		store.insertBatchBlock(block);
@@ -190,12 +170,8 @@ public class BlockService {
 		return GetBlockListResponse.create(store.blocksFromNonChainHeigth(Math.max(cutoffHeight, my)));
 	}
 
-	public Block getBlockPrototype(FullBlockStore store) throws BlockStoreException, NoBlockException {
 
-		return getNewBlockPrototype(store);
-	}
-
-	private Block getNewBlockPrototype(FullBlockStore store) throws BlockStoreException {
+	public Block getNewBlockPrototype(FullBlockStore store) throws BlockStoreException {
 		Pair<BlockWrap, BlockWrap> tipsToApprove = getValidatedBlockPair(store);
 		Block b = Block.createBlock(networkParameters, tipsToApprove.getLeft().getBlock(),
 				tipsToApprove.getRight().getBlock());
@@ -311,7 +287,7 @@ public class BlockService {
 
 		if (block.getTimeSeconds() < System.currentTimeMillis() / 1000 - delaySeconds) {
 			logger.debug("adjustPrototype " + block);
-			Block newblock = getBlockPrototype(store);
+			Block newblock = getNewBlockPrototype(store);
 			for (Transaction transaction : block.getTransactions()) {
 				newblock.addTransaction(transaction);
 			}

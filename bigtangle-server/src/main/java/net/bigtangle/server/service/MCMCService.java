@@ -59,6 +59,9 @@ public class MCMCService {
     @Autowired
     protected CacheBlockService cacheBlockService;
     @Autowired
+    protected CacheBlockPrototypeService cacheBlockPrototypeService;
+ 
+    @Autowired
     private StoreService storeService;
     @Autowired
     private ScheduleConfiguration scheduleConfiguration;
@@ -104,7 +107,7 @@ public class MCMCService {
                 store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
                 canrun = true;
             } else {
-                log.info("mcmcService running  at start = " + Utils.dateTimeFormat(lock.getLocktime()));
+             //   log.info("mcmcService running  at start = " + Utils.dateTimeFormat(lock.getLocktime()));
             }
             if (canrun) {
                 Stopwatch watch = Stopwatch.createStarted();
@@ -134,6 +137,7 @@ public class MCMCService {
             updateWeightAndDepth(maxConfirmedReward, cutoffHeight, maxHeight, store);
             updateRating(maxConfirmedReward, cutoffHeight, maxHeight, store);
             deleteMCMC(maxConfirmedReward, store);
+            cacheBlockPrototypeService.evictBlockPrototypeByte();
         } catch (Exception e) {
             log.debug("update  ", e);
         }

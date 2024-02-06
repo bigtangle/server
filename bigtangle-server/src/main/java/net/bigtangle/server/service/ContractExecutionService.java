@@ -66,6 +66,10 @@ public class ContractExecutionService {
 	private ScheduleConfiguration scheduleConfiguration;
 	@Autowired
 	protected CacheBlockService cacheBlockService;
+	@Autowired
+	protected CacheBlockPrototypeService cacheBlockPrototypeService;
+	@Autowired
+	private BlockSaveService blockSaveService;
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	private final String LOCKID = this.getClass().getName();
@@ -95,7 +99,7 @@ public class ContractExecutionService {
 				store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
 				canrun = true;
 			} else {
-				log.info("ContractExecution running return:  " + Utils.dateTimeFormat(lock.getLocktime()));
+			//	log.info("ContractExecution running return:  " + Utils.dateTimeFormat(lock.getLocktime()));
 			}
 			if (canrun) {
 				createContractExecution(store);
@@ -118,7 +122,7 @@ public class ContractExecutionService {
 			Block contractExecution = createContractExecution(contractid, store);
 			if (contractExecution != null) {
 				log.debug(" contractExecution block is created: " + contractExecution);
-				blockService.saveBlock(contractExecution, store);
+				blockSaveService.saveBlock(contractExecution, store);
 			}
 		}
 
@@ -136,8 +140,8 @@ public class ContractExecutionService {
 	public Block createContractExecution(String contractid, FullBlockStore store) throws Exception {
 
 		Stopwatch watch = Stopwatch.createStarted();
-		Block b = blockService.getBlockPrototype(store);
-		log.debug("  getValidatedContractExecutionBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		Block b = cacheBlockPrototypeService.getBlockPrototype(store);
+	//	log.debug("  getValidatedContractExecutionBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
 		return createContractExecution(b, contractid, store);
 

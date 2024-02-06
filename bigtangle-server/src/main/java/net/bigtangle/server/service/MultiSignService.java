@@ -54,10 +54,12 @@ public class MultiSignService {
 	private BlockService blockService;
 	@Autowired
 	protected CacheBlockService cacheBlockService;
-
+	@Autowired
+	protected CacheBlockPrototypeService cacheBlockPrototypeService;
 	@Autowired
 	protected ServerConfiguration serverConfiguration;
-
+	@Autowired
+	private BlockSaveService blockSaveService;
 	public AbstractResponse getMultiSignListWithAddress(final String tokenid, String address, FullBlockStore store)
 			throws BlockStoreException {
 		if (Utils.isBlank(tokenid)) {
@@ -206,7 +208,7 @@ public class MultiSignService {
 				this.saveMultiSign(block, store);
 				// check the block prototype and may do update
 
-				blockService.saveBlock(checkBlockPrototype(block, store), store);
+				blockSaveService.saveBlock(checkBlockPrototype(block, store), store);
 				deleteMultiSign(block, store);
 			} else {
 				// data save only on this server for multi signs, not in block.
@@ -223,7 +225,7 @@ public class MultiSignService {
 
 		int time = 60 * 60 * 8;
 		if (System.currentTimeMillis() / 1000 - oldBlock.getTimeSeconds() > time) {
-			Block block = blockService.getBlockPrototype(store);
+			Block block = cacheBlockPrototypeService.getBlockPrototype(store);
 			block.setBlockType(oldBlock.getBlockType());
 			for (Transaction transaction : oldBlock.getTransactions()) {
 				block.addTransaction(transaction);

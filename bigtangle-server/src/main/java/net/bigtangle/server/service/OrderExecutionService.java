@@ -66,6 +66,11 @@ public class OrderExecutionService {
 	private ScheduleConfiguration scheduleConfiguration;
 	@Autowired
 	protected CacheBlockService cacheBlockService;
+	@Autowired
+	protected CacheBlockPrototypeService cacheBlockPrototypeService;
+	@Autowired
+	private BlockSaveService blockSaveService;
+	
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	private final String LOCKID = this.getClass().getName();
@@ -95,7 +100,7 @@ public class OrderExecutionService {
 				store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
 				canrun = true;
 			} else {
-				log.info("OrderExecution running return:  " + Utils.dateTimeFormat(lock.getLocktime()));
+		//		log.info("OrderExecution running return:  " + Utils.dateTimeFormat(lock.getLocktime()));
 			}
 			if (canrun) {
 				createOrderExecution(store);
@@ -115,7 +120,7 @@ public class OrderExecutionService {
 		Block contractExecution = createOrderExecutionDo(store);
 		if (contractExecution != null) {
 			// log.debug(" createOrder block is created: " + contractExecution);
-			blockService.saveBlock(contractExecution, store);
+			blockSaveService.saveBlock(contractExecution, store);
 			return contractExecution;
 		}
 		return null;
@@ -131,8 +136,8 @@ public class OrderExecutionService {
 	public Block createOrderExecutionDo(FullBlockStore store) throws Exception {
 
 		Stopwatch watch = Stopwatch.createStarted();
-		Block b = blockService.getBlockPrototype(store);
-		log.debug("  getValidatedOrderExecutionBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		Block b = cacheBlockPrototypeService.getBlockPrototype(store);
+	//	log.debug("  getValidatedOrderExecutionBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 
 		return createOrderExecution(b, store);
 

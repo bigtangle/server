@@ -46,6 +46,7 @@ import net.bigtangle.server.data.DepthAndWeight;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.data.SolidityState.State;
+import net.bigtangle.server.service.CacheBlockPrototypeService;
 import net.bigtangle.server.service.CacheBlockService;
 import net.bigtangle.server.service.StoreService;
 import net.bigtangle.server.service.base.ServiceBaseCheck;
@@ -80,6 +81,7 @@ public class FullBlockStoreImpl {
 	private StoreService storeService;
 	@Autowired
 	protected CacheBlockService cacheBlockService;
+
 
 	public boolean add(Block block, boolean allowUnsolid, FullBlockStore store) throws BlockStoreException {
 		boolean added;
@@ -157,8 +159,9 @@ public class FullBlockStoreImpl {
 					store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
 					canrun = true;
 				} else {
-					if (lock.getLocktime() < System.currentTimeMillis() - 10000)
-						log.info("updateChain running start = " + Utils.dateTimeFormat(lock.getLocktime()));
+					// if (lock.getLocktime() < System.currentTimeMillis() - 10000)
+					// log.info("updateChain running start = " +
+					// Utils.dateTimeFormat(lock.getLocktime()));
 				}
 			}
 			if (canrun) {
@@ -225,7 +228,7 @@ public class FullBlockStoreImpl {
 						log.info("saveChainConnected failed   " + chainBlockQueue.toString(), e);
 					}
 				}
-
+			
 			}
 			log.info("saveChainConnected time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
 		}
