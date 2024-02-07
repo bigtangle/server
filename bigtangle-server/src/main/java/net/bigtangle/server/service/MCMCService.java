@@ -138,6 +138,7 @@ public class MCMCService {
             updateRating(maxConfirmedReward, cutoffHeight, maxHeight, store);
             deleteMCMC(maxConfirmedReward, store);
             cacheBlockPrototypeService.evictBlockPrototypeByte();
+            cacheBlockService.evictBlockMCMC();
         } catch (Exception e) {
             log.debug("update  ", e);
         }

@@ -24,7 +24,6 @@ import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
@@ -33,6 +32,7 @@ import net.bigtangle.server.data.OrderExecutionResult;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.service.CacheBlockService;
 import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.utils.Json;
 
 public class ServiceBase {
 	protected ServerConfiguration serverConfiguration;
@@ -189,43 +189,35 @@ public class ServiceBase {
 		}
 	}
 
-	public BlockWrap getBlockWrap(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
-		return store.getBlockWrap(blockhash);
-	}
-
-	public List<Block> getBlocks(List<Sha256Hash> hashes, FullBlockStore store) throws BlockStoreException {
-		List<Block> blocks = new ArrayList<>();
-		for (Sha256Hash hash : hashes) {
-			blocks.add(getBlock(hash, store));
+	public BlockWrap getBlockWrap(Sha256Hash blockhash, FullBlockStore store)
+			throws BlockStoreException {
+		try {
+		byte[] be = cacheBlockService.getBlockEvaluation(blockhash, store);
+		BlockEvaluation v= new BlockEvaluation();
+		if(be!=null)   v=Json.jsonmapper().readValue(be,
+				BlockEvaluation.class);
+		return new BlockWrap(getBlock(blockhash, store),
+				v,
+				Json.jsonmapper().readValue(cacheBlockService.getBlockMCMC(blockhash, store), BlockMCMC.class),
+				networkParameters);
+		}catch (Exception e) {
+			throw new BlockStoreException(e);
 		}
-		return blocks;
 	}
 
-	public List<BlockWrap> getBlockWraps(List<Sha256Hash> hashes, FullBlockStore store) throws BlockStoreException {
-		List<BlockWrap> blocks = new ArrayList<>();
-		for (Sha256Hash hash : hashes) {
-			blocks.add(getBlockWrap(hash, store));
-		}
-		return blocks;
+	public List<Sha256Hash> getEntryPointCandidates(long currChainLength, FullBlockStore store)
+			throws BlockStoreException {
+		long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF); 
+		 return getBlocksInMilestoneInterval(minChainLength, currChainLength, store);
 	}
-
-	public BlockEvaluation getBlockEvaluation(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
-		return store.getBlockWrap(hash).getBlockEvaluation();
+	
+	public List<Sha256Hash> getBlocksInMilestoneInterval(long minChainLength, long currChainLength, FullBlockStore store)
+			throws BlockStoreException {
+		//long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF);
+		 return store.getBlocksInMilestoneInterval(minChainLength,currChainLength);
+		 
 	}
-
-	public BlockMCMC getBlockMCMC(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
-		return store.getBlockWrap(hash).getMcmc();
-	}
-
-	public long getTimeSeconds(int days) {
-		return System.currentTimeMillis() / 1000 - (long) days * 60 * 24 * 60;
-	}
-
-	public void batchBlock(Block block, FullBlockStore store) throws BlockStoreException {
-
-		store.insertBatchBlock(block);
-	}
-
+	
 	public void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime, FullBlockStore store)
 			throws BlockStoreException {
 
@@ -286,7 +278,7 @@ public class ServiceBase {
 			List<BlockWrap> allPredecessors, FullBlockStore store, boolean predecessorsSolid)
 			throws BlockStoreException {
 		// final List<BlockWrap> allPredecessors = getAllRequirements(block, store);
-		SolidityState missingCalculation = null;
+		// SolidityState missingCalculation = null;
 		SolidityState missingDependency = null;
 		for (BlockWrap predecessor : allPredecessors) {
 			if (predecessor.getBlockEvaluation().getSolid() == 2) {
@@ -295,8 +287,9 @@ public class ServiceBase {
 				SolidityState solidityState = SolidityState.getSuccessState();
 				new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
 						.solidifyBlock(predecessor.getBlock(), solidityState, true, store);
-				//missingCalculation = SolidityState.fromMissingCalculation(predecessor.getBlockHash());
-	 
+				// missingCalculation =
+				// SolidityState.fromMissingCalculation(predecessor.getBlockHash());
+
 			} else if (predecessor.getBlockEvaluation().getSolid() == 0 && predecessorsSolid) {
 				missingDependency = SolidityState.from(predecessor.getBlockHash(), false);
 			} else {
@@ -308,11 +301,9 @@ public class ServiceBase {
 		}
 
 		if (missingDependency == null) {
-			if (missingCalculation == null) {
-				return SolidityState.getSuccessState();
-			} else {
-				return missingCalculation;
-			}
+
+			return SolidityState.getSuccessState();
+
 		} else {
 			return missingDependency;
 		}

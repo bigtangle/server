@@ -313,6 +313,9 @@ public interface FullBlockStore {
 	public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs)
 			throws BlockStoreException;
 
+	public  BlockEvaluation getBlockEvaluationsByhashs(Sha256Hash blockhashs)
+			throws BlockStoreException;
+	
 	public List<byte[]> blocksFromChainLength(long start, long end) throws BlockStoreException;
 
 	public List<byte[]> blocksFromNonChainHeigth(long heigth) throws BlockStoreException;
@@ -442,10 +445,8 @@ public interface FullBlockStore {
 	List<Sha256Hash> getWhereConfirmedNotMilestone() throws BlockStoreException;
  
 	TXReward getRewardConfirmedAtHeight(long chainlength) throws BlockStoreException;
-
-	List<BlockWrap> getBlocksInMilestoneInterval(long minMilestone, long maxMilestone) throws BlockStoreException;
-
-	List<BlockWrap> getEntryPoints(long currChainLength) throws BlockStoreException;
+ 
+	List<Sha256Hash> getBlocksInMilestoneInterval(long minMilestone, long maxMilestone) throws BlockStoreException;
 
 	List<OrderCancel> getOrderCancelByOrderBlockHash(HashSet<String> orderBlockHashs) throws BlockStoreException;
 

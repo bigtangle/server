@@ -317,11 +317,11 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 			if (!oldBlock.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
 				// Unset the milestone (Chain length) of this one
 				long milestoneNumber = oldBlock.getRewardInfo().getChainlength();
-				List<BlockWrap> blocksInMilestoneInterval = store.getBlocksInMilestoneInterval(milestoneNumber,
-						milestoneNumber);
+				List<Sha256Hash> blocksInMilestoneInterval =  getBlocksInMilestoneInterval(milestoneNumber,
+						milestoneNumber,store);
 				// Unconfirm anything not in milestone
-				for (BlockWrap wipeBlock : blocksInMilestoneInterval)
-					unconfirm(wipeBlock.getBlockHash(), new HashSet<>(), store);
+				for (Sha256Hash wipeBlock : blocksInMilestoneInterval)
+					unconfirm(wipeBlock , new HashSet<>(), store);
 			}
 		}
 		Block cursor;

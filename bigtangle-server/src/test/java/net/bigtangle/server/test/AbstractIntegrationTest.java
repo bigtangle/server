@@ -252,6 +252,8 @@ public abstract class AbstractIntegrationTest {
 		cacheBlockService.evictBlock(); 
 		cacheBlockService.evictAccountBalance(); 
 		cacheBlockService.evictMaxConfirmedReward(); 
+		cacheBlockService.evictBlockMCMC(); 
+		cacheBlockService.evictBlockEvaluation();; 
 		cacheBlockPrototypeService.evictBlockPrototypeByte();
 	}
 
@@ -597,6 +599,7 @@ public abstract class AbstractIntegrationTest {
 	}
 
 	protected Block makeOrderExecutionAndReward(List<Block> addedBlocks) throws Exception {
+		mcmcServiceUpdate();
 		Block b = orderExecutionService.createOrderExecution(store);
 		return rewardWithBlock(addedBlocks, b);
 

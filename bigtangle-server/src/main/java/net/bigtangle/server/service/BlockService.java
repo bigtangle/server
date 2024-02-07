@@ -1,6 +1,5 @@
 package net.bigtangle.server.service;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -8,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -21,6 +19,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockEvaluationDisplay;
+import net.bigtangle.core.BlockMCMC;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
@@ -42,7 +41,6 @@ import net.bigtangle.core.response.AbstractResponse;
 import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.kafka.KafkaConfiguration;
-import net.bigtangle.kafka.KafkaMessageProducer;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.service.base.ServiceBaseConnect;
@@ -50,6 +48,7 @@ import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.utils.DomainValidator;
 import net.bigtangle.utils.Gzip;
+import net.bigtangle.utils.Json;
 
 /**
  * <p>
@@ -76,7 +75,7 @@ public class BlockService {
 	protected TipsService tipService;
 	@Autowired
 	protected CacheBlockService cacheBlockService;
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(BlockService.class);
 
 	public Block getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
@@ -85,30 +84,10 @@ public class BlockService {
 		return serviceBase.getBlock(blockhash, store);
 	}
 
-	public BlockWrap getBlockWrap(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
-		return store.getBlockWrap(blockhash);
-	}
-
-	public List<Block> getBlocks(List<Sha256Hash> hashes, FullBlockStore store) throws BlockStoreException {
-		List<Block> blocks = new ArrayList<>();
-		for (Sha256Hash hash : hashes) {
-			blocks.add(getBlock(hash, store));
-		}
-		return blocks;
-	}
-
-	public List<BlockWrap> getBlockWraps(List<Sha256Hash> hashes, FullBlockStore store) throws BlockStoreException {
-		List<BlockWrap> blocks = new ArrayList<>();
-		for (Sha256Hash hash : hashes) {
-			blocks.add(getBlockWrap(hash, store));
-		}
-		return blocks;
-	}
-
-  
-
-	public long getTimeSeconds(int days) {
-		return System.currentTimeMillis() / 1000 - (long) days * 60 * 24 * 60;
+	public BlockWrap getBlockWrap(Sha256Hash blockhash, FullBlockStore store)
+			throws BlockStoreException {
+		return new ServiceBaseConnect(serverConfiguration, networkParameters,
+				cacheBlockService).getBlockWrap(blockhash, store);
 	}
 
 	public AbstractResponse searchBlock(Map<String, Object> request, FullBlockStore store) throws BlockStoreException {
@@ -130,11 +109,6 @@ public class BlockService {
 		return GetBlockEvaluationsResponse.create(evaluations);
 	}
 
-	public List<BlockWrap> getEntryPointCandidates(long currChainLength, FullBlockStore store)
-			throws BlockStoreException {
-		return store.getEntryPoints(currChainLength);
-	}
- 
 	public void batchBlock(Block block, FullBlockStore store) throws BlockStoreException {
 
 		store.insertBatchBlock(block);
@@ -169,7 +143,6 @@ public class BlockService {
 		long my = getCurrentCutoffHeight(maxConfirmedReward, store);
 		return GetBlockListResponse.create(store.blocksFromNonChainHeigth(Math.max(cutoffHeight, my)));
 	}
-
 
 	public Block getNewBlockPrototype(FullBlockStore store) throws BlockStoreException {
 		Pair<BlockWrap, BlockWrap> tipsToApprove = getValidatedBlockPair(store);

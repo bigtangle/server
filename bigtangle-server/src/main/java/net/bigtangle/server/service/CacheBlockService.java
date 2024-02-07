@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TXReward;
@@ -27,7 +28,7 @@ import net.bigtangle.utils.Json;
 @Service
 public class CacheBlockService {
 	private static final Logger logger = LoggerFactory.getLogger(CacheBlockService.class);
- 
+
 	@Cacheable(value = "blocksCache", key = "#blockhash")
 	public byte[] getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
 		logger.debug("read from database and no cache for: " + blockhash);
@@ -46,12 +47,12 @@ public class CacheBlockService {
 		logger.debug("evictBlock {}", block.toString());
 	}
 
-	public TXReward getMaxConfirmedReward(FullBlockStore store) throws   BlockStoreException {
+	public TXReward getMaxConfirmedReward(FullBlockStore store) throws BlockStoreException {
 
 		try {
 			return new TXReward().parse(getMaxConfirmedRewardByte(store));
 		} catch (IOException | BlockStoreException e) {
-			 throw new BlockStoreException(e);
+			throw new BlockStoreException(e);
 		}
 
 	}
@@ -115,15 +116,32 @@ public class CacheBlockService {
 		logger.debug("evictOutputs");
 	}
 
-	@Cacheable(value = "BlockPrototype", key = "#store.getParams.getId")
-	public byte[] getBlockPrototypeByte(FullBlockStore store) throws BlockStoreException {
+	@Cacheable(value = "BlockMCMC", key = "#blockhash")
+	public byte[] getBlockMCMC(Sha256Hash blockhash, FullBlockStore store)
+			throws BlockStoreException, JsonProcessingException {
 		// store.getParams().getId()
-		return store.getMaxConfirmedReward().toByteArray();
+		return Json.jsonmapper().writeValueAsBytes(store.getMCMC(blockhash));
 	}
 
-	@CacheEvict(value = "BlockPrototype", allEntries = true)
-	public synchronized void evictBlockPrototypeByte() {
+	@CacheEvict(value = "BlockMCMC", allEntries = true)
+	public synchronized void evictBlockMCMC() {
 	}
 
- 
+	@Cacheable(value = "BlockEvaluation", key = "#blockhash")
+	public byte[] getBlockEvaluation(Sha256Hash blockhash, FullBlockStore store)
+			throws BlockStoreException, JsonProcessingException { 
+		BlockEvaluation value = store.getBlockEvaluationsByhashs(blockhash);
+	 
+		return Json.jsonmapper().writeValueAsBytes(value);
+	}
+
+	@CacheEvict(value = "BlockEvaluation", key = "#blockhash")
+	public void evictBlockEvaluation(Sha256Hash blockhash) throws BlockStoreException {
+
+	}
+
+	@CacheEvict(value = "BlockEvaluation", allEntries = true)
+	public synchronized void evictBlockEvaluation() {
+	}
+
 }

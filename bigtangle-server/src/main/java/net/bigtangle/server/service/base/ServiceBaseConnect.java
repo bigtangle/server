@@ -70,7 +70,6 @@ import net.bigtangle.core.UTXO;
 import net.bigtangle.core.UserData;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
-import net.bigtangle.core.exception.UTXOProviderException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.CutoffException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
@@ -325,10 +324,6 @@ public class ServiceBaseConnect extends ServiceBase {
 		return GetBlockEvaluationsResponse.create(evaluations);
 	}
 
-	public List<BlockWrap> getEntryPointCandidates(long currChainLength, FullBlockStore store)
-			throws BlockStoreException {
-		return store.getEntryPoints(currChainLength);
-	}
 
 	public boolean getUTXOSpent(TransactionOutPoint txout, FullBlockStore store) throws BlockStoreException {
 		UTXO a = store.getTransactionOutput(txout.getBlockHash(), txout.getTxHash(), txout.getIndex());
@@ -1177,7 +1172,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		// Confirm the block
 		confirmBlock(blockWrap, blockStore );
 		evictTransactions(blockWrap.getBlock(), blockStore);
-
+ 
 		// Keep track of confirmed blocks
 		traversedBlockHashes.add(blockHash);
 	}
@@ -1611,7 +1606,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			}
 
 		}
-
+		cacheBlockService.evictBlockEvaluation(block.getHash());
 	}
 
 	public void evictTransactions(Sha256Hash blockHash , FullBlockStore blockStore)  {
@@ -1659,6 +1654,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), -1);
 
 		evictTransactions(block, blockStore);
+		 
 		// Keep track of unconfirmed blocks
 		traversedBlockHashes.add(blockHash);
 	}
@@ -1687,7 +1683,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		// Set unconfirmed
 		blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), false);
 		blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), -1);
-
+		evictTransactions(block, blockStore);
 		// Keep track of unconfirmed blocks
 		traversedBlockHashes.add(blockHash);
 	}
@@ -2040,6 +2036,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			blockStore.updateBlockEvaluationSolid(block.getHash(), -1);
 			break;
 		}
+		cacheBlockService.evictBlockEvaluation(block.getHash());
 	}
 
 	protected void connectUTXOs(Block block, FullBlockStore blockStore)

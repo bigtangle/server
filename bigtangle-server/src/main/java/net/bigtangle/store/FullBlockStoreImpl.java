@@ -381,7 +381,7 @@ public class FullBlockStoreImpl {
 			// TODO check this
 			// block.getRewardInfo().moreWorkThan(head.getRewardInfo());
 			if (haveNewBestChain) {
-				log.info("Block is causing a re-organize");
+				log.info("Block is causing a re-organize");		
 				connect(block, solidityState, store);
 				new ServiceBaseReward(serverConfiguration, networkParameters, cacheBlockService)
 						.handleNewBestChain(block, store);

@@ -79,51 +79,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		 super(params, conn);
 	}
 
-	@Override
-	public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs)
-			throws BlockStoreException {
-
-		List<BlockEvaluationDisplay> result = new ArrayList<BlockEvaluationDisplay>();
-		if (blockhashs == null || blockhashs.isEmpty()) {
-			return result;
-		}
-		String sql = "";
-
-		sql += "SELECT hash,  " + " height, milestone, milestonelastupdate,  inserttime,  blocktype, solid, confirmed "
-				+ "  FROM  blocks WHERE hash = ? ";
-
-		
-		TXReward maxConfirmedReward = getMaxConfirmedReward();
-		PreparedStatement preparedStatement = null;
-		try {
-
-			for (String hash : blockhashs) {
-				preparedStatement = getConnection().prepareStatement(sql);
-				preparedStatement.setBytes(1, Utils.HEX.decode(hash));
-				ResultSet resultSet = preparedStatement.executeQuery();
-				while (resultSet.next()) {
-					BlockEvaluationDisplay blockEvaluation = BlockEvaluationDisplay.build(
-							Sha256Hash.wrap(resultSet.getBytes("hash")), resultSet.getLong("height"),
-							resultSet.getLong("milestone"), resultSet.getLong("milestonelastupdate"),
-							resultSet.getLong("inserttime"), resultSet.getInt("blocktype"), resultSet.getLong("solid"),
-							resultSet.getBoolean("confirmed"), maxConfirmedReward.getChainLength());
-					blockEvaluation.setMcmcWithDefault(getMCMC(blockEvaluation.getBlockHash()));
-					result.add(blockEvaluation);
-				}
-			}
-			return result;
-		} catch (SQLException ex) {
-			throw new BlockStoreException(ex);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
+	 
 
 	@Override
 	public List<MultiSignAddress> getMultiSignAddressListByTokenidAndBlockHashHex(String tokenid,

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.core.exception.ProtocolException;
@@ -25,7 +26,7 @@ public class CacheBlockPrototypeService {
 
 	@Cacheable(value = "BlockPrototype", key = "#store.getParams.getId")
 	public byte[] getBlockPrototypeByte(FullBlockStore store) throws BlockStoreException, NoBlockException {
-		// store.getParams().getId()
+		logger.debug("blockService.getNewBlockPrototype(store  " ) ;
 		return blockService.getNewBlockPrototype(store).unsafeBitcoinSerialize();
 
 	}
@@ -39,4 +40,8 @@ public class CacheBlockPrototypeService {
 		return networkParameters.getDefaultSerializer().makeBlock(getBlockPrototypeByte(store));
 	}
 
+	@CacheEvict(value = "BlockEvaluation", key = "#blockhash")
+	public void evictBlockEvaluation(Sha256Hash blockhash) throws BlockStoreException {
+
+	}
 }

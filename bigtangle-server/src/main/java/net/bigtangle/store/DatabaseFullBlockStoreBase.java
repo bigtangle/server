@@ -186,7 +186,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 			+ "  FROM blocks , mcmc WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = true AND mcmc.rating < "
 			+ NetworkParameters.CONFIRMATION_LOWER_THRESHOLD + afterSelect();
 
-	protected final String SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL = "SELECT" + SELECT_BLOCKS_TEMPLATE
+	protected final String SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL = "SELECT hash "  
 			+ "  FROM blocks WHERE milestone >= ? AND milestone <= ?" + afterSelect();
 
 	protected final String SELECT_SOLID_BLOCKS_IN_INTERVAL_SQL = "SELECT   " + SELECT_BLOCKS_TEMPLATE
@@ -1705,45 +1705,12 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 			}
 		}
 	}
-
+ 
 	@Override
-	public List<BlockWrap> getBlocksInMilestoneInterval(long minMilestone, long maxMilestone)
-			throws BlockStoreException {
-		List<BlockWrap> storedBlockHashes = new ArrayList<>();
-		
-		PreparedStatement preparedStatement = null;
-		try {
-			preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_IN_MILESTONE_INTERVAL_SQL);
-			preparedStatement.setLong(1, minMilestone);
-			preparedStatement.setLong(2, maxMilestone);
-			ResultSet resultSet = preparedStatement.executeQuery();
-			while (resultSet.next()) {
-				BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
-
-				Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-				if (verifyHeader(block))
-					storedBlockHashes.add(
-							new BlockWrap(block, blockEvaluation, getMCMC(blockEvaluation.getBlockHash()), params));
-			}
-			return storedBlockHashes;
-		} catch (Exception ex) {
-			throw new BlockStoreException(ex);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
-	@Override
-	public List<BlockWrap> getEntryPoints(long currChainLength) throws BlockStoreException {
+	public List<Sha256Hash> getBlocksInMilestoneInterval(long minChainLength, long currChainLength) throws BlockStoreException {
 		// long currChainLength = getMaxConfirmedReward().getChainLength();
-		long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF);
-		List<BlockWrap> resultQueue = new ArrayList<BlockWrap>();
+	//	long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF);
+		List<Sha256Hash> resultQueue = new ArrayList<>();
 		
 		PreparedStatement preparedStatement = null;
 		try {
@@ -1752,13 +1719,8 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 			preparedStatement.setLong(2, currChainLength);
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
-				BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
-
-				Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-				if (verifyHeader(block))
-					resultQueue.add(
-							new BlockWrap(block, blockEvaluation, getMCMC(blockEvaluation.getBlockHash()), params));
-			}
+				resultQueue.add(Sha256Hash.wrap(resultSet.getBytes(1))); 
+			 		}
 			return resultQueue;
 		} catch (Exception ex) {
 			throw new BlockStoreException(ex);
@@ -2725,6 +2687,40 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 		}
 	}
 
+	@Override
+	public  BlockEvaluation getBlockEvaluationsByhashs(Sha256Hash hash)
+			throws BlockStoreException {
+ 
+		PreparedStatement preparedStatement = null;
+		try {
+
+		 
+				preparedStatement = getConnection().prepareStatement( "SELECT hash,  " + " height, milestone, milestonelastupdate,  inserttime,  blocktype, solid, confirmed "
+						+ "  FROM  blocks WHERE hash = ? ");
+				preparedStatement.setBytes(1,  hash.getBytes());
+				ResultSet resultSet = preparedStatement.executeQuery();
+				if (resultSet.next()) {
+					 return BlockEvaluation.build(
+							hash, resultSet.getLong("height"),
+							resultSet.getLong("milestone"), resultSet.getLong("milestonelastupdate"),
+							resultSet.getLong("inserttime"),  resultSet.getLong("solid"),
+							resultSet.getBoolean("confirmed"));
+				
+				}
+	 
+			return null;
+		} catch (SQLException ex) {
+			throw new BlockStoreException(ex);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
 	@Override
 	public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs)
 			throws BlockStoreException {
