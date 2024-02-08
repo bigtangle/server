@@ -32,13 +32,16 @@ public class CacheBlockService {
 	@Cacheable(value = "blocksCache", key = "#blockhash")
 	public byte[] getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
 		logger.debug("read from database and no cache for: " + blockhash);
-		return store.getByte(blockhash);
-
+		 byte[] block = store.getByte(blockhash);
+		 if(block==null ) {
+				logger.debug("block==null  " + blockhash);
+		 }
+		 return block;
 	}
 
 	@CachePut(value = "blocksCache", key = "#block.hash")
 	public byte[] cacheBlock(final Block block, FullBlockStore store) throws BlockStoreException {
-		// logger.debug("cachePut {} ", block.getHeight());
+		logger.debug("CachePut " + block.toString());
 		return Gzip.compress(block.unsafeBitcoinSerialize());
 	}
 

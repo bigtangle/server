@@ -317,8 +317,14 @@ public class FullBlockStoreImpl {
 		block.verifyTransactions();
 
 		// allow non chain block predecessors not solid
-		SolidityState solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
+		SolidityState solidityState=new SolidityState(State.MissingPredecessor, null, false);
+		try {
+		  solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
 				.checkSolidity(block, !allowUnsolid, blockStore, allowMissingPredecessor);
+		}catch (Exception e) {
+			if (!allowUnsolid)
+				throw e;
+		}
 		if (solidityState.isFailState()) {
 			log.debug(solidityState.toString() + " block " + block.toString());
 		}

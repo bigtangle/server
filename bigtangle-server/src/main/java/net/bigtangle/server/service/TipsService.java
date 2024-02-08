@@ -145,7 +145,7 @@ public class TipsService {
 		long cutoffHeight = serviceBase.getCurrentCutoffHeight(maxConfirmedReward, store);
 		HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
 		if (!serviceBase.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks,
-				store.getBlockWrap(prototype.getHash()), cutoffHeight, store))
+				serviceBase.getBlockWrap(prototype.getHash(),store), cutoffHeight, store))
 			throw new InfeasiblePrototypeException("The given prototype is insolid");
 		return getValidatedBlockPair(maxConfirmedReward, currentApprovedNonMilestoneBlocks, store);
 	}

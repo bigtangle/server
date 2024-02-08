@@ -113,7 +113,7 @@ public class MCMCServiceTest extends AbstractIntegrationTest {
 		blockGraph.updateChain();
 		Block b2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
 				defaultBlockWrap(rollingBlock), defaultBlockWrap(rollingBlock), store);
-
+		blockGraph.updateChain();
 		createAndAddNextBlock(b2, b1);
 
 		assertTrue(getBlockEvaluation(b1.getHash(), store).isConfirmed());

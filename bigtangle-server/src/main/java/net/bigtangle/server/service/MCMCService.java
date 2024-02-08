@@ -32,10 +32,12 @@ import net.bigtangle.core.TXReward;
 import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.server.config.ScheduleConfiguration;
+import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.DepthAndWeight;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.Rating;
+import net.bigtangle.server.service.base.ServiceBaseConnect;
 import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
 
@@ -60,6 +62,11 @@ public class MCMCService {
     protected CacheBlockService cacheBlockService;
     @Autowired
     protected CacheBlockPrototypeService cacheBlockPrototypeService;
+	@Autowired
+	private ServerConfiguration serverConfiguration;
+
+	@Autowired
+	protected NetworkParameters networkParameters;
  
     @Autowired
     private StoreService storeService;
@@ -209,7 +216,8 @@ public class MCMCService {
         Long currentDepth = depths.get(currentBlockHash);
         HashSet<Sha256Hash> currentApprovers = approvers.get(currentBlockHash);
         if (!approvers.containsKey(approvedBlockHash)) {
-            BlockWrap prevBlock = store.getBlockWrap(approvedBlockHash);
+            BlockWrap prevBlock = new ServiceBaseConnect(serverConfiguration, networkParameters,
+					cacheBlockService) .getBlockWrap(approvedBlockHash,store);
             if (prevBlock != null) {
                 blockQueue.add(prevBlock);
                 approvers.put(approvedBlockHash, new HashSet<>(currentApprovers));
@@ -297,7 +305,8 @@ public class MCMCService {
     private void subUpdateRating(PriorityQueue<BlockWrap> blockQueue, HashMap<Sha256Hash, HashSet<UUID>> approvers,
             BlockWrap currentBlock, Sha256Hash prevTrunk, FullBlockStore store) throws BlockStoreException {
         if (!approvers.containsKey(prevTrunk)) {
-            BlockWrap prevBlock = store.getBlockWrap(prevTrunk);
+            BlockWrap prevBlock =   new ServiceBaseConnect(serverConfiguration, networkParameters,
+					cacheBlockService) .getBlockWrap(prevTrunk,store);
             if (prevBlock != null) {
                 blockQueue.add(prevBlock);
                 approvers.put(prevBlock.getBlockHash(), new HashSet<>(approvers.get(currentBlock.getBlockHash())));

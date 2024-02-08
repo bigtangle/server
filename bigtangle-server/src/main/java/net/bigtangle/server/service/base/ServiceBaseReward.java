@@ -77,8 +77,8 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		// Find conflicts in the dependency set
 		HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
 		for (Sha256Hash hash : milestoneSet)
-			allApprovedNewBlocks.add(store.getBlockWrap(hash));
-		allApprovedNewBlocks.add(store.getBlockWrap(newMilestoneBlock.getHash()));
+			allApprovedNewBlocks.add(getBlockWrap(hash,store));
+		allApprovedNewBlocks.add(getBlockWrap(newMilestoneBlock.getHash(),store));
 
 		// If anything is already spent, no-go
 		boolean anySpentInputs = hasSpentInputs(allApprovedNewBlocks, store);
@@ -151,7 +151,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
 
 		for (Sha256Hash hash : currRewardInfo.getBlocks()) {
-			BlockWrap block = store.getBlockWrap(hash);
+			BlockWrap block = getBlockWrap(hash,store);
 			if (block == null)
 				return SolidityState.fromReferenced(hash, true);
 			if (block.getBlock().getHeight() < cutoffHeight)
@@ -159,7 +159,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 			Set<Sha256Hash> requiredBlocks = getAllRequiredBlockHashes(block.getBlock(), false);
 			for (Sha256Hash reqHash : requiredBlocks) {
-				BlockWrap req = store.getBlockWrap(reqHash);
+				BlockWrap req = getBlockWrap(reqHash,store);
 				if (req == null)
 					return SolidityState.from(reqHash, true);
 
@@ -179,7 +179,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 		RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
 		for (Sha256Hash hash : currRewardInfo.getBlocks()) {
-			BlockWrap block = store.getBlockWrap(hash);
+			BlockWrap block = getBlockWrap(hash,store);
 			if (block.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD)
 				throw new VerificationException("Reward block approves other reward blocks");
 		}
@@ -201,8 +201,8 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 	public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash,
 			long currentTime, boolean fee, FullBlockStore store) throws BlockStoreException {
 
-		BlockWrap prevTrunkBlock = store.getBlockWrap(prevTrunk);
-		BlockWrap prevBranchBlock = store.getBlockWrap(prevBranch);
+		BlockWrap prevTrunkBlock = getBlockWrap(prevTrunk,store);
+		BlockWrap prevBranchBlock =  getBlockWrap(prevBranch,store);
 		if (fee) {
 			return makeRewardNoOrder(prevTrunkBlock, prevBranchBlock, prevRewardHash, currentTime, store);
 		} else {

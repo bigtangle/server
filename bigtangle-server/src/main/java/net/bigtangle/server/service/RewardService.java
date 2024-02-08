@@ -164,7 +164,7 @@ public class RewardService {
 		if (block != null) {
 			// check, if the reward block is too old to avoid conflict.
 			TXReward latest = cacheBlockService.getMaxConfirmedReward(store);
-			if (latest.getChainLength() >= block.getLastMiningRewardBlock()) {
+			if (latest.getChainLength() > block.getLastMiningRewardBlock()) {
 				log.debug("resolved Reward is out of date.");
 			} else {
 				blockSaveService.saveBlock(block, store);

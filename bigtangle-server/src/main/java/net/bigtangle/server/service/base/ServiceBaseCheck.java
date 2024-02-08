@@ -706,7 +706,8 @@ public class ServiceBaseCheck extends ServiceBase {
 
 		// Ensure dependency (prev reward hash) exists
 		Sha256Hash prevRewardHash = rewardInfo.getPrevRewardHash();
-		BlockWrap dependency = store.getBlockWrap(prevRewardHash);
+		BlockWrap dependency = new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+				.getBlockWrap(prevRewardHash, store);
 		if (dependency == null)
 			return SolidityState.fromPrevReward(prevRewardHash, true);
 
@@ -1138,9 +1139,10 @@ public class ServiceBaseCheck extends ServiceBase {
 
 		// Check the chain block formally valid
 		checkFormalBlockSolidity(block, true);
-
-		BlockWrap prevTrunkBlock = store.getBlockWrap(block.getPrevBlockHash());
-		BlockWrap prevBranchBlock = store.getBlockWrap(block.getPrevBranchBlockHash());
+		ServiceBaseConnect servicebase = new ServiceBaseConnect(serverConfiguration, networkParameters,
+				cacheBlockService);
+		BlockWrap prevTrunkBlock = servicebase.getBlockWrap(block.getPrevBlockHash(), store);
+		BlockWrap prevBranchBlock = servicebase.getBlockWrap(block.getPrevBranchBlockHash(), store);
 		if (prevTrunkBlock == null)
 			SolidityState.from(block.getPrevBlockHash(), true);
 		if (prevBranchBlock == null)
@@ -1605,8 +1607,10 @@ public class ServiceBaseCheck extends ServiceBase {
 	private SolidityState checkFullBlockSolidity(Block block, boolean throwExceptions, List<BlockWrap> allPredecessors,
 			boolean allowMissingPredecessor, FullBlockStore store) {
 		try {
-			BlockWrap storedPrev = store.getBlockWrap(block.getPrevBlockHash());
-			BlockWrap storedPrevBranch = store.getBlockWrap(block.getPrevBranchBlockHash());
+			ServiceBaseConnect servicebase = new ServiceBaseConnect(serverConfiguration, networkParameters,
+					cacheBlockService);
+			BlockWrap storedPrev = servicebase.getBlockWrap(block.getPrevBlockHash(), store);
+			BlockWrap storedPrevBranch = servicebase.getBlockWrap(block.getPrevBranchBlockHash(), store);
 
 			if (block.getHash() == Sha256Hash.ZERO_HASH) {
 				if (throwExceptions)
@@ -1970,7 +1974,8 @@ public class ServiceBaseCheck extends ServiceBase {
 			long cutoffHeight = getRewardCutoffHeight(prevRewardHash, store);
 
 			for (Sha256Hash hash : rewardInfo.getBlocks()) {
-				BlockWrap block = store.getBlockWrap(hash);
+				BlockWrap block = new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+						.getBlockWrap(hash, store);
 				if (block == null)
 					return SolidityState.fromReferenced(hash, true);
 				if (block.getBlock().getHeight() <= cutoffHeight && cutoffHeight > 0)
@@ -1996,7 +2001,8 @@ public class ServiceBaseCheck extends ServiceBase {
 			throws BlockStoreException {
 		Set<Sha256Hash> requiredBlocks = getAllRequiredBlockHashes(block.getBlock(), false);
 		for (Sha256Hash reqHash : requiredBlocks) {
-			BlockWrap req = store.getBlockWrap(reqHash);
+			BlockWrap req = new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+					.getBlockWrap(reqHash, store);
 			// the required block must be in this referenced blocks or in
 			// milestone
 			if (req == null) {

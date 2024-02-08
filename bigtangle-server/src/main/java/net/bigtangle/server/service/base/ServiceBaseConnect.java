@@ -134,7 +134,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			// Queue all of its approver blocks if not already queued.
 			for (Sha256Hash req : store.getSolidApproverBlockHashes(block.getBlockHash())) {
 				if (!blockQueueSet.contains(req)) {
-					BlockWrap pred = store.getBlockWrap(req);
+					BlockWrap pred =  getBlockWrap(req,store);
 					blockQueueSet.add(req);
 					blockQueue.add(pred);
 				}
@@ -169,7 +169,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			// Queue all of its confirmed approver blocks if not already queued.
 			for (Sha256Hash req : store.getSolidApproverBlockHashes(block.getBlockHash())) {
 				if (!blockQueueSet.contains(req)) {
-					BlockWrap pred = store.getBlockWrap(req);
+					BlockWrap pred = getBlockWrap(req,store);
 					blockQueueSet.add(req);
 					blockQueue.add(pred);
 				}
@@ -238,7 +238,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			// Queue all of its required blocks if not already queued.
 			for (Sha256Hash req : getAllRequiredBlockHashes(block.getBlock(), false)) {
 				if (!blockQueueSet.contains(req)) {
-					BlockWrap pred = store.getBlockWrap(req);
+					BlockWrap pred =  getBlockWrap(req,store);
 					if (pred == null) {
 						notMissingAnything = false;
 						continue;
@@ -290,7 +290,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			// Queue all of its required blocks if not already queued.
 			for (Sha256Hash req : getAllRequiredBlockHashes(block.getBlock(), false)) {
 				if (!blockQueueSet.contains(req)) {
-					BlockWrap pred = store.getBlockWrap(req);
+					BlockWrap pred =  getBlockWrap(req,store);
 					if (pred == null) {
 						notMissingAnything = false;
 						continue;
@@ -923,7 +923,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			final BlockEvaluation utxoSpender = getUTXOSpender(c.getConflictPoint().getConnectedOutpoint(), store);
 			if (utxoSpender == null)
 				return null;
-			return store.getBlockWrap(utxoSpender.getBlockHash());
+			return getBlockWrap(utxoSpender.getBlockHash(),store);
 		case TOKENISSUANCE:
 			final Token connectedToken = c.getConflictPoint().getConnectedToken();
 
@@ -935,7 +935,7 @@ public class ServiceBaseConnect extends ServiceBase {
 					.getRewardSpender(c.getConflictPoint().getConnectedReward().getPrevRewardHash());
 			if (txRewardSpender == null)
 				return null;
-			return store.getBlockWrap(txRewardSpender);
+			return  getBlockWrap(txRewardSpender,store);
 		case DOMAINISSUANCE:
 			final Token connectedDomainToken = c.getConflictPoint().getConnectedDomainToken();
 
@@ -948,13 +948,13 @@ public class ServiceBaseConnect extends ServiceBase {
 			Sha256Hash t = connectedContracExecute.getSpenderBlockHash();
 			if (t == null)
 				return null;
-			return store.getBlockWrap(t);
+			return  getBlockWrap(t,store);
 		case ORDEREXECUTE:
 			final OrderExecutionResult connectedOrderExecute = c.getConflictPoint().getConnectedOrderExecute();
 			Sha256Hash spent = connectedOrderExecute.getSpenderBlockHash();
 			if (spent == null)
 				return null;
-			return store.getBlockWrap(spent);
+			return  getBlockWrap(spent,store);
 		default:
 			throw new RuntimeException("No Implementation");
 		}
@@ -975,7 +975,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		Set<Sha256Hash> missingPredecessorBlockHashes = new HashSet<>();
 		final Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block, false);
 		for (Sha256Hash predecessorReq : allPredecessorBlockHashes) {
-			BlockWrap pred = store.getBlockWrap(predecessorReq);
+			Block pred = getBlock(predecessorReq,store);
 			if (pred == null)
 				missingPredecessorBlockHashes.add(predecessorReq);
 
@@ -1151,12 +1151,12 @@ public class ServiceBaseConnect extends ServiceBase {
 	 */
  
 	public void confirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, long milestoneNumber,
-			FullBlockStore blockStore ) throws BlockStoreException {
+			FullBlockStore store ) throws BlockStoreException {
 		// If already confirmed, return
 		if (traversedBlockHashes.contains(blockHash))
 			return;
 
-		BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
+		BlockWrap blockWrap =  getBlockWrap(blockHash,store);
 		BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
 
 		// If already confirmed, return
@@ -1165,13 +1165,13 @@ public class ServiceBaseConnect extends ServiceBase {
 
 		// Set confirmed, only if it is not confirmed
 		if (!blockEvaluation.isConfirmed()) {
-			blockStore.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), true);
+			store.updateBlockEvaluationConfirmed(blockEvaluation.getBlockHash(), true);
 		}
-		blockStore.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), milestoneNumber);
+		store.updateBlockEvaluationMilestone(blockEvaluation.getBlockHash(), milestoneNumber);
 
 		// Confirm the block
-		confirmBlock(blockWrap, blockStore );
-		evictTransactions(blockWrap.getBlock(), blockStore);
+		confirmBlock(blockWrap, store );
+		evictTransactions(blockWrap.getBlock(), store);
  
 		// Keep track of confirmed blocks
 		traversedBlockHashes.add(blockHash);
@@ -1638,7 +1638,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		if (traversedBlockHashes.contains(blockHash))
 			return;
 
-		BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
+		BlockWrap blockWrap = getBlockWrap(blockHash,blockStore);
 		BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
 		Block block = blockWrap.getBlock();
 
@@ -1665,7 +1665,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		if (traversedBlockHashes.contains(blockHash))
 			return;
 
-		BlockWrap blockWrap = blockStore.getBlockWrap(blockHash);
+		BlockWrap blockWrap = getBlockWrap(blockHash,blockStore);
 		BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
 		Block block = blockWrap.getBlock();
 
@@ -1997,7 +1997,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			break;
 		case MissingPredecessor:
 			if (block.getBlockType() == Type.BLOCKTYPE_INITIAL
-					&& blockStore.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() > 0) {
+					&& getBlockWrap(block.getHash(),blockStore).getBlockEvaluation().getSolid() > 0) {
 				throw new RuntimeException("Should not happen");
 			}
 
@@ -2008,7 +2008,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			break;
 		case Success:
 			// If already set, nothing to do here...
-			if (blockStore.getBlockWrap(block.getHash()).getBlockEvaluation().getSolid() == 2)
+			if ( getBlockWrap(block.getHash(),blockStore).getBlockEvaluation().getSolid() == 2)
 				return;
 
 			// TODO don't calculate again, it may already have been calculated
@@ -2393,7 +2393,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		// Get previous order matching block
 		Sha256Hash prevHash = rewardInfo.getPrevRewardHash();
 		Set<Sha256Hash> collectedBlocks = rewardInfo.getBlocks();
-		final Block prevMatchingBlock = blockStore.getBlockWrap(prevHash).getBlock();
+		final Block prevMatchingBlock =  getBlock(prevHash,blockStore) ;
 
 		// Deterministic randomization
 		byte[] randomness = Utils.xor(block.getPrevBlockHash().getBytes(), block.getPrevBranchBlockHash().getBytes());
@@ -2693,7 +2693,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			Map<Sha256Hash, OrderRecord> newOrders, Set<OrderRecord> spentOrders, FullBlockStore blockStore)
 			throws BlockStoreException {
 		for (Sha256Hash bHash : collectedBlocks) {
-			BlockWrap b = blockStore.getBlockWrap(bHash);
+			BlockWrap b =  getBlockWrap(bHash,blockStore);
 			if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
 
 				OrderRecord order = blockStore.getOrder(b.getBlock().getHash(), Sha256Hash.ZERO_HASH);
@@ -2761,7 +2761,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		Queue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
 				Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
 		for (Sha256Hash bHash : candidateBlocks) {
-			blockQueue.add(blockStore.getBlockWrap(bHash));
+			blockQueue.add(getBlockWrap(bHash,blockStore));
 		}
 
 		// Initialize

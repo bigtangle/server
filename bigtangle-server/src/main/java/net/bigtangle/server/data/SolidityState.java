@@ -16,7 +16,7 @@ public class SolidityState {
     private Sha256Hash missingDependency;
     private boolean directlyMissing;
 
-    private SolidityState(State state, Sha256Hash missingDependency, boolean directlyMissing) {
+    public SolidityState(State state, Sha256Hash missingDependency, boolean directlyMissing) {
         super();
         this.state = state;
         this.missingDependency = missingDependency;

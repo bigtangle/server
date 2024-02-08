@@ -87,7 +87,8 @@ public class ServiceBase {
 			throws BlockStoreException {
 		List<BlockWrap> result = new ArrayList<>();
 		for (Sha256Hash pred : allBlockHashes)
-			result.add(store.getBlockWrap(pred));
+			result.add(new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+					.getBlockWrap(pred, store));
 		return result;
 	}
 
@@ -189,35 +190,37 @@ public class ServiceBase {
 		}
 	}
 
-	public BlockWrap getBlockWrap(Sha256Hash blockhash, FullBlockStore store)
-			throws BlockStoreException {
+	public BlockWrap getBlockWrap(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
 		try {
-		byte[] be = cacheBlockService.getBlockEvaluation(blockhash, store);
-		BlockEvaluation v= new BlockEvaluation();
-		if(be!=null)   v=Json.jsonmapper().readValue(be,
-				BlockEvaluation.class);
-		return new BlockWrap(getBlock(blockhash, store),
-				v,
-				Json.jsonmapper().readValue(cacheBlockService.getBlockMCMC(blockhash, store), BlockMCMC.class),
-				networkParameters);
-		}catch (Exception e) {
+			Block block = getBlock(blockhash, store);
+			if(block==null) return null;
+			byte[] be = cacheBlockService.getBlockEvaluation(blockhash, store);
+			BlockEvaluation v = BlockEvaluation.buildInitial(block) ;
+			if (be != null)
+				v = Json.jsonmapper().readValue(be, BlockEvaluation.class);
+			if(v==null) v = BlockEvaluation.buildInitial(block);
+			byte[] blockMCMC = cacheBlockService.getBlockMCMC(blockhash, store);
+
+			return new BlockWrap(block, v, Json.jsonmapper().readValue(blockMCMC, BlockMCMC.class), networkParameters);
+		} catch (Exception e) {
 			throw new BlockStoreException(e);
 		}
 	}
 
 	public List<Sha256Hash> getEntryPointCandidates(long currChainLength, FullBlockStore store)
 			throws BlockStoreException {
-		long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF); 
-		 return getBlocksInMilestoneInterval(minChainLength, currChainLength, store);
+		long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF);
+		return getBlocksInMilestoneInterval(minChainLength, currChainLength, store);
 	}
-	
-	public List<Sha256Hash> getBlocksInMilestoneInterval(long minChainLength, long currChainLength, FullBlockStore store)
-			throws BlockStoreException {
-		//long minChainLength = Math.max(0, currChainLength - NetworkParameters.MILESTONE_CUTOFF);
-		 return store.getBlocksInMilestoneInterval(minChainLength,currChainLength);
-		 
+
+	public List<Sha256Hash> getBlocksInMilestoneInterval(long minChainLength, long currChainLength,
+			FullBlockStore store) throws BlockStoreException {
+		// long minChainLength = Math.max(0, currChainLength -
+		// NetworkParameters.MILESTONE_CUTOFF);
+		return store.getBlocksInMilestoneInterval(minChainLength, currChainLength);
+
 	}
-	
+
 	public void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime, FullBlockStore store)
 			throws BlockStoreException {
 
