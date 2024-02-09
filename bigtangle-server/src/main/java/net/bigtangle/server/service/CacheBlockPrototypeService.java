@@ -26,13 +26,14 @@ public class CacheBlockPrototypeService {
 
 	@Cacheable(value = "BlockPrototype", key = "#store.getParams.getId")
 	public byte[] getBlockPrototypeByte(FullBlockStore store) throws BlockStoreException, NoBlockException {
-	//	logger.debug("blockService.getNewBlockPrototype(store  " ) ;
+		// logger.debug("blockService.getNewBlockPrototype(store " ) ;
 		return blockService.getNewBlockPrototype(store).unsafeBitcoinSerialize();
 
 	}
 
 	@CacheEvict(value = "BlockPrototype", allEntries = true)
 	public synchronized void evictBlockPrototypeByte() {
+		 logger.debug("evictBlockPrototypeByte" ) ;
 	}
 
 	public Block getBlockPrototype(FullBlockStore store)
@@ -40,8 +41,4 @@ public class CacheBlockPrototypeService {
 		return networkParameters.getDefaultSerializer().makeBlock(getBlockPrototypeByte(store));
 	}
 
-	@CacheEvict(value = "BlockEvaluation", key = "#blockhash")
-	public void evictBlockEvaluation(Sha256Hash blockhash) throws BlockStoreException {
-
-	}
 }

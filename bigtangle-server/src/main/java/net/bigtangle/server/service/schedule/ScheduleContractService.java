@@ -36,7 +36,7 @@ public class ScheduleContractService {
     public void contractExecutionService() {
     	  if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
-                logger.debug(" Start schedule contractExecutionService: ");
+             //   logger.debug(" Start schedule contractExecutionService: ");
                 contractExecutionService.startSingleProcess();
             } catch (Exception e) {
                 logger.warn("contractExecutionService ", e);

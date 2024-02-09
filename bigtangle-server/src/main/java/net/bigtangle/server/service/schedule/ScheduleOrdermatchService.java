@@ -35,7 +35,7 @@ public class ScheduleOrdermatchService {
     public void orderExecutionService() {
     	  if (scheduleConfiguration.isMilestone_active() && serverConfiguration.checkService()) {
             try {
-                logger.debug(" Start schedule orderExecutionService: ");
+             //   logger.debug(" Start schedule orderExecutionService: ");
                 orderExecutionService.startSingleProcess();
             } catch (Exception e) {
                 logger.warn("orderExecutionService ", e);
