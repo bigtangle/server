@@ -1070,40 +1070,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 			}
 		}
 	}
-
-	public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException {
-		List<BlockWrap> storedBlocks = new ArrayList<BlockWrap>();
-		
-		PreparedStatement s = null;
-		try {
-			s = getConnection().prepareStatement(SELECT_SOLID_APPROVER_BLOCKS_SQL);
-			s.setBytes(1, hash.getBytes());
-			s.setBytes(2, hash.getBytes());
-			ResultSet resultSet = s.executeQuery();
-			while (resultSet.next()) {
-				BlockEvaluation blockEvaluation = setBlockEvaluation(resultSet);
-				BlockMCMC mcmc = setBlockMCMC(resultSet);
-				Block block = params.getDefaultSerializer().makeZippedBlock(resultSet.getBytes("block"));
-				if (verifyHeader(block))
-					storedBlocks.add(new BlockWrap(block, blockEvaluation, mcmc, params));
-			}
-			return storedBlocks;
-		} catch (SQLException ex) {
-			throw new BlockStoreException(ex);
-		} catch (Exception e) {
-			// Corrupted database.
-			throw new BlockStoreException(e);
-		} finally {
-			if (s != null) {
-				try {
-					s.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
+ 
 	public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException {
 		List<Sha256Hash> storedBlockHash = new ArrayList<Sha256Hash>();
 		

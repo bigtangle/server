@@ -26,7 +26,7 @@ public class CacheBlockPrototypeService {
 
 	@Cacheable(value = "BlockPrototype", key = "#store.getParams.getId")
 	public byte[] getBlockPrototypeByte(FullBlockStore store) throws BlockStoreException, NoBlockException {
-		logger.debug("blockService.getNewBlockPrototype(store  " ) ;
+	//	logger.debug("blockService.getNewBlockPrototype(store  " ) ;
 		return blockService.getNewBlockPrototype(store).unsafeBitcoinSerialize();
 
 	}

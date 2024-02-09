@@ -31,17 +31,17 @@ public class CacheBlockService {
 
 	@Cacheable(value = "blocksCache", key = "#blockhash")
 	public byte[] getBlock(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
-		logger.debug("read from database and no cache for: " + blockhash);
-		 byte[] block = store.getByte(blockhash);
-		 if(block==null ) {
-				logger.debug("block==null  " + blockhash);
-		 }
-		 return block;
+		// logger.debug("read from database and no cache for: " + blockhash);
+		byte[] block = store.getByte(blockhash);
+//		 if(block==null ) {
+//				logger.debug("block==null  " + blockhash);
+//		 }
+		return block;
 	}
 
 	@CachePut(value = "blocksCache", key = "#block.hash")
 	public byte[] cacheBlock(final Block block, FullBlockStore store) throws BlockStoreException {
-		logger.debug("CachePut " + block.toString());
+		// logger.debug("CachePut " + block.toString());
 		return Gzip.compress(block.unsafeBitcoinSerialize());
 	}
 
@@ -95,7 +95,8 @@ public class CacheBlockService {
 		for (UTXO u : utxos) {
 			re.add(Json.jsonmapper().writeValueAsBytes(u));
 		}
-		logger.debug("getOpenTransactionOutputs from database and no cache for: " + address + " size " + re.size());
+		// logger.debug("getOpenTransactionOutputs from database and no cache for: " +
+		// address + " size " + re.size());
 		return re;
 	}
 
@@ -132,9 +133,9 @@ public class CacheBlockService {
 
 	@Cacheable(value = "BlockEvaluation", key = "#blockhash")
 	public byte[] getBlockEvaluation(Sha256Hash blockhash, FullBlockStore store)
-			throws BlockStoreException, JsonProcessingException { 
+			throws BlockStoreException, JsonProcessingException {
 		BlockEvaluation value = store.getBlockEvaluationsByhashs(blockhash);
-	 
+
 		return Json.jsonmapper().writeValueAsBytes(value);
 	}
 

@@ -149,10 +149,8 @@ public interface FullBlockStore {
 	public void create() throws BlockStoreException;
 
 	/* Blocks */
-	public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
-
-	public List<BlockWrap> getSolidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
-
+	public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException; 
+	
 	public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException;
 
 	public BlockWrap getBlockWrap(Sha256Hash hash) throws BlockStoreException;

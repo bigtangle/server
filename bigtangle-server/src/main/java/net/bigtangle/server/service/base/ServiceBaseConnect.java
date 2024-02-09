@@ -2806,7 +2806,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			currentHeightBlocks.add(currentBlock);
 
 			// Continue with both approved blocks
-			approvedBlock = blockStore.getBlockWrap(currentBlock.getBlock().getPrevBlockHash());
+			approvedBlock = getBlockWrap(currentBlock.getBlock().getPrevBlockHash(),blockStore);
 			if (!blockQueue.contains(approvedBlock)) {
 				if (approvedBlock != null) {
 					blockQueue.add(approvedBlock);
@@ -2815,7 +2815,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			} else {
 				snapshotWeights.get(approvedBlock).add(currentBlock.getBlockHash());
 			}
-			approvedBlock = blockStore.getBlockWrap(currentBlock.getBlock().getPrevBranchBlockHash());
+			approvedBlock = getBlockWrap(currentBlock.getBlock().getPrevBranchBlockHash(),blockStore);
 			if (!blockQueue.contains(approvedBlock)) {
 				if (approvedBlock != null) {
 					blockQueue.add(approvedBlock);

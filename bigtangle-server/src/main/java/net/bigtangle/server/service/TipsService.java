@@ -145,7 +145,7 @@ public class TipsService {
 		long cutoffHeight = serviceBase.getCurrentCutoffHeight(maxConfirmedReward, store);
 		HashSet<BlockWrap> currentApprovedNonMilestoneBlocks = new HashSet<>();
 		if (!serviceBase.addRequiredUnconfirmedBlocksTo(currentApprovedNonMilestoneBlocks,
-				serviceBase.getBlockWrap(prototype.getHash(),store), cutoffHeight, store))
+				serviceBase.getBlockWrap(prototype.getHash(), store), cutoffHeight, store))
 			throw new InfeasiblePrototypeException("The given prototype is insolid");
 		return getValidatedBlockPair(maxConfirmedReward, currentApprovedNonMilestoneBlocks, store);
 	}
@@ -440,7 +440,12 @@ public class TipsService {
 	// blocks
 	private BlockWrap performValidatedStep(BlockWrap fromBlock, HashSet<BlockWrap> currentApprovedNonMilestoneBlocks,
 			long cutoffHeight, long maxHeight, FullBlockStore store) throws BlockStoreException {
-		List<BlockWrap> candidates = store.getSolidApproverBlocks(fromBlock.getBlock().getHash());
+		List<BlockWrap> candidates = new ArrayList<>();
+		for (Sha256Hash req : store.getSolidApproverBlockHashes(fromBlock.getBlockHash())) { 
+			candidates.add(new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+					.getBlockWrap(req, store));
+		}
+
 		BlockWrap result;
 		do {
 			// Find results until one is valid/eligible
