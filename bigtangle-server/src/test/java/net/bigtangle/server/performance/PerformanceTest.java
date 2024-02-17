@@ -4,133 +4,190 @@
  *******************************************************************************/
 package net.bigtangle.server.performance;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import java.io.StringWriter;
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import org.apache.commons.lang3.tuple.Pair;
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.google.common.math.LongMath;
+
 import net.bigtangle.core.Block;
+import net.bigtangle.core.ECKey;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.UTXO;
+import net.bigtangle.core.Utils;
+import net.bigtangle.core.exception.InsufficientMoneyException;
+import net.bigtangle.core.response.AbstractResponse;
+import net.bigtangle.core.response.ErrorResponse;
+import net.bigtangle.core.response.GetBalancesResponse;
+import net.bigtangle.core.response.OrderdataResponse;
+import net.bigtangle.params.ReqCmd;
 import net.bigtangle.server.test.AbstractIntegrationTest;
+import net.bigtangle.utils.Json;
+import net.bigtangle.utils.OkHttp3Util;
+import net.bigtangle.wallet.Wallet;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class PerformanceTest extends AbstractIntegrationTest {
 
-	// Test limit of blocks in reward chain
-//    @Test
-	public void testMiningRewardTooLarge() throws Exception {
-
-		List<Block> blocksAddedAll = new ArrayList<Block>();
-		Block rollingBlock1 = addFixedBlocks(NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD + 10,
-				networkParameters.getGenesisBlock(), blocksAddedAll);
-
-		// Generate more mining reward blocks
-		final Pair<BlockWrap, BlockWrap> validatedRewardBlockPair = tipsService
-				.getValidatedRewardBlockPair(networkParameters.getGenesisBlock().getHash(), store);
-		Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-				validatedRewardBlockPair.getLeft(), validatedRewardBlockPair.getRight(), store);
-		assertTrue(getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
-		assertTrue(getBlockEvaluation(rewardBlock2.getHash(), store).getMilestone() == 1);
-		assertTrue(getBlockEvaluation(rollingBlock1.getHash(), store).getMilestone() == -1);
+	@BeforeEach
+	public void setUp() throws Exception {
+		contextRoot="http://localhost:8088/";
+		wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)), contextRoot);
+		store = storeService.getStore();
 	}
 
+ 
 	@Test
-	public void testReorgMiningRewardLong() throws Exception {
-		 resetStore();
+	public void testStartProcess() throws Exception {
+		List<Block> a1 = new ArrayList<Block>();
+	  
+		testToken(a1);
 
-		// Generate blocks until passing first reward interval
-		Block rollingBlock = networkParameters.getGenesisBlock().createNextBlock(networkParameters.getGenesisBlock());
-		blockGraph.add(rollingBlock, true, store);
+	 
 
-		Block rollingBlock1 = rollingBlock;
-		long blocksPerChain = 2000;
-		for (int i = 0; i < blocksPerChain; i++) {
-			rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
-			blockGraph.add(rollingBlock1, true, store);
-		}
-
-		Block rollingBlock2 = rollingBlock;
-		for (int i = 0; i < blocksPerChain; i++) {
-			rollingBlock2 = rollingBlock2.createNextBlock(rollingBlock2);
-			blockGraph.add(rollingBlock2, true, store);
-		}
-
-		Block fusingBlock = rollingBlock1.createNextBlock(rollingBlock2);
-		blockGraph.add(fusingBlock, true, store);
-
-		// Generate mining reward block
-		Block rewardBlock1 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-				defaultBlockWrap(rollingBlock1), defaultBlockWrap(rollingBlock1), store);
-		mcmcServiceUpdate();
-
-		// Mining reward block should go through
-		mcmcServiceUpdate();
-		assertTrue(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-
-		// Generate more mining reward blocks
-		Block rewardBlock2 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-				defaultBlockWrap(fusingBlock), defaultBlockWrap(rollingBlock1), store);
-		Block rewardBlock3 = rewardService.createReward(networkParameters.getGenesisBlock().getHash(),
-				defaultBlockWrap(fusingBlock), defaultBlockWrap(rollingBlock1), store);
-		mcmcServiceUpdate();
-
-		// No change
-		assertTrue(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-		assertFalse(getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
-		assertFalse(getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
-		mcmcServiceUpdate();
-
-		assertTrue(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-		assertFalse(getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
-		assertFalse(getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
-
-		// Third mining reward block should now instead go through since longer
-		rollingBlock = rewardBlock3;
-		for (int i = 1; i < blocksPerChain; i++) {
-			rollingBlock = rollingBlock.createNextBlock(rollingBlock);
-			blockGraph.add(rollingBlock, true, store);
-		}
-		// syncBlockService. reCheckUnsolidBlock();
-		rewardService.createReward(rewardBlock3.getHash(), defaultBlockWrap(rollingBlock),
-				defaultBlockWrap(rollingBlock), store);
-		mcmcServiceUpdate();
-
-		assertFalse(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-		assertFalse(getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
-		assertTrue(getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
-
-		// Check that not both mining blocks get approved
-		for (int i = 1; i < 10; i++) {
-			Pair<BlockWrap, BlockWrap> tipsToApprove = tipsService.getValidatedBlockPair(store);
-			Block r1 = tipsToApprove.getLeft().getBlock();
-			Block r2 = tipsToApprove.getRight().getBlock();
-			Block b = r2.createNextBlock(r1);
-			blockGraph.add(b, true, store);
-		}
-		mcmcServiceUpdate();
-
-		assertFalse(getBlockEvaluation(rewardBlock1.getHash(), store).isConfirmed());
-		assertFalse(getBlockEvaluation(rewardBlock2.getHash(), store).isConfirmed());
-		assertTrue(getBlockEvaluation(rewardBlock3.getHash(), store).isConfirmed());
 	}
-
 	@Test
-	@Disabled
-	// must fix for testnet and mainnet
-	public void testGenesisBlockHash() throws Exception {
-		assertTrue(networkParameters.getGenesisBlock().getHash().toString()
-				.equals("f3f9fbb12f3a24e82f04ed3f8afe1dac7136830cd953bd96b25b1371cd11215c"));
+	public void testProcess() throws Exception {
+		List<Block> a1 = new ArrayList<Block>();
+	  
+		//testToken(a1);
+
+		for (int i = 0; i < 3000; i++) {
+			process(a1);
+		}
 
 	}
+
+	public void process(List<Block> blocksAddedAll) throws Exception {
+
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		@SuppressWarnings("rawtypes")
+		final Future<String> handler = executor.submit(new Callable() {
+			@Override
+			public String call() throws Exception {
+				payMoneyToWallet1( blocksAddedAll);
+				sell(blocksAddedAll);
+				buy(blocksAddedAll);
+				return "";
+			}
+		});
+		try {
+			handler.get(30, TimeUnit.MINUTES);
+		} catch (TimeoutException e) {
+		//	logger.debug(" process  Timeout  ");
+			handler.cancel(true);
+			AbstractResponse resp = ErrorResponse.create(100);
+			StringWriter sw = new StringWriter();
+			resp.setMessage(sw.toString());
+
+		} finally {
+			executor.shutdownNow();
+		}
+
+	}
+
+	public void testToken(List<Block> blocksAddedAll) throws Exception {
+
+		testCreateToken(wallet.walletKeys().get(0), "test", blocksAddedAll);
+		makeRewardBlock(blocksAddedAll);
+
+	}
+
+	public void sell(List<Block> blocksAddedAll) throws Exception {
+
+		List<String> keyStrHex000 = new ArrayList<String>();
+
+		for (ECKey ecKey : wallet.walletKeys()) {
+			keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+		}
+
+		byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+				Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+
+		GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+		List<UTXO> utxos = getBalancesResponse.getOutputs();
+		Collections.shuffle(utxos);
+		long q = 8;
+		for (UTXO utxo : utxos) {
+			if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())) {
+				wallet.setServerURL(contextRoot);
+				try {
+					Block sellOrder = wallet.sellOrder(null, utxo.getTokenId(), 10000000,
+							utxo.getValue().getValue().longValue(), null, null,
+							NetworkParameters.BIGTANGLE_TOKENID_STRING, true);
+					blocksAddedAll.add(sellOrder);
+					makeOrderExecutionAndReward(blocksAddedAll);
+				} catch (InsufficientMoneyException e) {
+					// ignore: handle exception
+				}
+			}
+		}
+	}
+
+	public void payMoneyToWallet1( List<Block> blocksAddedAll) throws Exception {
+
+		HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
+
+		for (int i = 0; i < 10; i++) {
+			giveMoneyResult.put(new ECKey().toAddress(networkParameters).toString(),
+					BigInteger.valueOf(3333000000l / LongMath.pow(2, 1)));
+		}
+
+		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
+		blocksAddedAll.add(b);
+		makeRewardBlock(blocksAddedAll);
+	}
+
+	public void buy(List<Block> blocksAddedAll) throws Exception {
+
+		HashMap<String, Object> requestParam = new HashMap<String, Object>();
+		byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+				Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+		OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+
+		for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+			try {
+				buy(orderRecord, blocksAddedAll);
+			} catch (InsufficientMoneyException e) {
+				Thread.sleep(4000);
+			} catch (Exception e) {
+				log.debug("", e);
+			}
+		}
+	}
+
+	public void buy(OrderRecord orderRecord, List<Block> blocksAddedAll) throws Exception {
+
+		if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
+			// sell order and make buy
+			long price = orderRecord.getTargetValue() / orderRecord.getOfferValue();
+
+			Block buyOrder = wallet.buyOrder(null, orderRecord.getOfferTokenid(), price, orderRecord.getOfferValue(),
+					null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, false);
+			blocksAddedAll.add(buyOrder);
+			makeOrderExecutionAndReward(blocksAddedAll);
+
+		}
+
+	}
+ 
 
 }

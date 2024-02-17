@@ -199,7 +199,7 @@ public class TipsService {
 		long cutoffHeight = serviceBase.getRewardCutoffHeight(prevRewardHash, store);
 		long maxHeight = serviceBase.getRewardMaxHeight(prevRewardHash);
 		long prevMilestoneNumber = store.getRewardChainLength(prevRewardHash);
-		HashSet<Sha256Hash> currentNewMilestoneBlocks = new HashSet<Sha256Hash>();
+		HashSet<BlockWrap> currentNewMilestoneBlocks = new HashSet< >();
 
 		// Initialize approved blocks
 		if (!serviceBase.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, left, cutoffHeight, store))
@@ -230,7 +230,7 @@ public class TipsService {
 			if (nextLeft.getMcmc().getRating() > nextRight.getMcmc().getRating()) {
 				// Terminate if next left approves too many new milestone blocks
 				@SuppressWarnings("unchecked")
-				HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
+				HashSet<BlockWrap> nextNewMilestoneBlocks = (HashSet< BlockWrap>) currentNewMilestoneBlocks.clone();
 				if (!serviceBase.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, cutoffHeight,
 						prevMilestoneNumber, false, null, store))
 					throw new InfeasiblePrototypeException(
@@ -256,7 +256,7 @@ public class TipsService {
 				// Terminate if next right approves too many new milestone
 				// blocks
 				@SuppressWarnings("unchecked")
-				HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
+				HashSet<BlockWrap> nextNewMilestoneBlocks = (HashSet<BlockWrap>) currentNewMilestoneBlocks.clone();
 				if (!serviceBase.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight, cutoffHeight,
 						prevMilestoneNumber, false, null, store))
 					throw new InfeasiblePrototypeException(
@@ -286,7 +286,7 @@ public class TipsService {
 		while (nextLeft != left) {
 			// Terminate if next left approves too many new milestone blocks
 			@SuppressWarnings("unchecked")
-			HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
+			HashSet<BlockWrap> nextNewMilestoneBlocks = (HashSet<BlockWrap>) currentNewMilestoneBlocks.clone();
 			if (!serviceBase.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, cutoffHeight,
 					prevMilestoneNumber, false, null, store))
 				throw new InfeasiblePrototypeException(
@@ -308,7 +308,7 @@ public class TipsService {
 		while (nextRight != right) {
 			// Terminate if next right approves too many new milestone blocks
 			@SuppressWarnings("unchecked")
-			HashSet<Sha256Hash> nextNewMilestoneBlocks = (HashSet<Sha256Hash>) currentNewMilestoneBlocks.clone();
+			HashSet<BlockWrap> nextNewMilestoneBlocks = (HashSet<BlockWrap>) currentNewMilestoneBlocks.clone();
 			if (!serviceBase.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight, cutoffHeight,
 					prevMilestoneNumber, false, null, store))
 				throw new InfeasiblePrototypeException(

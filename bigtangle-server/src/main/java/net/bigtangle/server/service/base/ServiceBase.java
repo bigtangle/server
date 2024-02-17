@@ -5,6 +5,7 @@
 package net.bigtangle.server.service.base;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -27,6 +28,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.server.data.OrderExecutionResult;
 import net.bigtangle.server.data.SolidityState;
@@ -166,6 +168,14 @@ public class ServiceBase {
 		return allrequireds;
 	}
 
+	public Set<BlockWrap> getReferrencedBlockWrap(Block block, FullBlockStore store) throws BlockStoreException {
+		Set<BlockWrap> wraps = new HashSet<>();
+		for (Sha256Hash hash : getReferrencedBlockHashes(block)) {
+			wraps.add(getBlockWrap(hash, store));
+		}
+		return wraps;
+	}
+
 	public Set<Sha256Hash> getReferrencedBlockHashes(Block block) {
 		if (block.getBlockType().equals(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE)) {
 			return new ContractResult().parseChecked(block.getTransactions().get(0).getData()).getReferencedBlocks();
@@ -193,12 +203,14 @@ public class ServiceBase {
 	public BlockWrap getBlockWrap(Sha256Hash blockhash, FullBlockStore store) throws BlockStoreException {
 		try {
 			Block block = getBlock(blockhash, store);
-			if(block==null) return null;
+			if (block == null)
+				return null;
 			byte[] be = cacheBlockService.getBlockEvaluation(blockhash, store);
-			BlockEvaluation v = BlockEvaluation.buildInitial(block) ;
+			BlockEvaluation v = BlockEvaluation.buildInitial(block);
 			if (be != null)
 				v = Json.jsonmapper().readValue(be, BlockEvaluation.class);
-			if(v==null) v = BlockEvaluation.buildInitial(block);
+			if (v == null)
+				v = BlockEvaluation.buildInitial(block);
 			byte[] blockMCMC = cacheBlockService.getBlockMCMC(blockhash, store);
 
 			return new BlockWrap(block, v, Json.jsonmapper().readValue(blockMCMC, BlockMCMC.class), networkParameters);
@@ -310,6 +322,14 @@ public class ServiceBase {
 		} else {
 			return missingDependency;
 		}
+	}
+
+	public Set<Sha256Hash> getHashSet(Set<BlockWrap> alist) {
+		Set<Sha256Hash> hashs = new HashSet<>();
+		for (BlockWrap o : alist) {
+			hashs.add(o.getBlockHash());
+		}
+		return hashs;
 	}
 
 }

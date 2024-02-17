@@ -217,7 +217,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		// Build transaction for block
 		Transaction tx = new Transaction(networkParameters);
 
-		Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();
+		Set<BlockWrap> blocks = new HashSet< >();
 		long cutoffheight = getRewardCutoffHeight(prevRewardHash, store);
 
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
@@ -231,7 +231,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 				.calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
 
 		// Build the type-specific tx data
-		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
+		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward,serviceBase.getHashSet(blocks) , prevChainLength + 1);
 		tx.setData(rewardInfo.toByteArray());
 		tx.setMemo(new MemoInfo("Reward"));
 		return new RewardBuilderResult(tx, difficultyReward);
@@ -246,7 +246,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		// Build transaction for block
 		Transaction tx = new Transaction(networkParameters);
 
-		Set<Sha256Hash> blocks = new HashSet<Sha256Hash>();
+		Set<BlockWrap> blocks = new HashSet< >();
 		long cutoffheight = getRewardCutoffHeight(prevRewardHash, store);
 
 		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
@@ -263,7 +263,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		// exclude the contract event and order open , cancel
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);
-		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true,
+		serviceBase.addRequiredNonContainedBlockHashesTo( blocks, prevBranch, cutoffheight, prevChainLength, true,
 				ordertypes, store);
 		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true,
 				ordertypes, store);
@@ -272,7 +272,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 				.calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
 
 		// Build the type-specific tx data
-		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, blocks, prevChainLength + 1);
+		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, serviceBase.getHashSet(blocks), prevChainLength + 1);
 		tx.setData(rewardInfo.toByteArray());
 		tx.setMemo(new MemoInfo("Reward"));
 		return new RewardBuilderResult(tx, difficultyReward);

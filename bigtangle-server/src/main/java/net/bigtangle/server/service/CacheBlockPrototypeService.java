@@ -32,8 +32,8 @@ public class CacheBlockPrototypeService {
 	}
 
 	@CacheEvict(value = "BlockPrototype", allEntries = true)
-	public synchronized void evictBlockPrototypeByte() {
-		 logger.debug("evictBlockPrototypeByte" ) ;
+	public  void evictBlockPrototypeByte() {
+		// logger.debug("evictBlockPrototypeByte" ) ;
 	}
 
 	public Block getBlockPrototype(FullBlockStore store)

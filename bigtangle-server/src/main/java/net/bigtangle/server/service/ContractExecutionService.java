@@ -33,12 +33,13 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
+import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.ContractResult;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.service.base.ServiceBaseConnect;
 import net.bigtangle.server.service.base.ServiceContract;
-import net.bigtangle.store.FullBlockStoreImpl;
 import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.store.FullBlockStoreImpl;
 
 /**
  * <p>
@@ -166,7 +167,7 @@ public class ContractExecutionService {
 		// Read previous reward block's data
 		Sha256Hash prevRewardHash = cacheBlockService.getMaxConfirmedReward(store).getBlockHash();
 		long prevChainLength = block.getLastMiningRewardBlock();
-		Set<Sha256Hash> referencedblocks = new HashSet<Sha256Hash>();
+		Set<BlockWrap> referencedblocks = new HashSet<>();
 		long cutoffheight = blockService.getRewardCutoffHeight(prevRewardHash, store);
 
 	 
@@ -183,7 +184,7 @@ public class ContractExecutionService {
  
 
 		ContractResult result = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
-				.executeContract(block, store, contractid, prevHash, referencedblocks);
+				.executeContract(block, store, contractid, prevHash, serviceBase.getHashSet(referencedblocks));
 		// do not create the execution block, if there is no new referencedblocks and no match 
 		if (result == null || (result.getOutputTx().getOutputs().isEmpty()
 			 && referencedblocks.isEmpty()) )

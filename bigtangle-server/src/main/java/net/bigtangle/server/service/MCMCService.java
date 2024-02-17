@@ -87,10 +87,12 @@ public class MCMCService {
             }
         });
         try {
-            handler.get(scheduleConfiguration.getMcmcrate(), TimeUnit.MILLISECONDS);
+            handler.get(scheduleConfiguration.getMcmcrate()*5, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            log.debug(" mcmcService  Timeout  ");
+         //   log.debug(" mcmcService  Timeout  ");
             handler.cancel(true);
+        }catch (InterruptedException e) {
+         //   log.debug(" mcmcService     ", e);
         } catch (Exception e) {
             log.debug(" mcmcService     ", e);
         } finally {
@@ -121,7 +123,7 @@ public class MCMCService {
                 update(store);
                 store.deleteLockobject(LOCKID);
                 // if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
-                log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+           //     log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
                 watch.stop();
             }
         } catch (Exception e) {

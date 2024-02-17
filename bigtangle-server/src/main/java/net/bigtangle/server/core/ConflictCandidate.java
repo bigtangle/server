@@ -71,7 +71,15 @@ public class ConflictCandidate {
         return block.equals(other.block) && conflictPoint.equals(other.conflictPoint);
     }
 
-    @Override
+    public void setBlock(BlockWrap block) {
+		this.block = block;
+	}
+
+	public void setConflictPoint(ConflictPoint conflictPoint) {
+		this.conflictPoint = conflictPoint;
+	}
+
+	@Override
     public int hashCode() {
         return Objects.hashCode(block, conflictPoint);
     }
