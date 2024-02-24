@@ -311,13 +311,16 @@ public class FullBlockStoreImpl {
 	public boolean addNonChain(Block block, boolean allowUnsolid, FullBlockStore blockStore,
 			boolean allowMissingPredecessor) throws BlockStoreException {
 
+//		if( block.getHeight()==9) {
+//	 		log.debug(block.toString());
+//		}
 		// Check the block is partially formally valid and fulfills PoW
 
 		block.verifyHeader();
 		block.verifyTransactions();
 
 		// allow non chain block predecessors not solid
-		SolidityState solidityState=new SolidityState(State.MissingPredecessor, null, false);
+		SolidityState solidityState=new SolidityState(State.Success, null, false);
 		try {
 		  solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
 				.checkSolidity(block, !allowUnsolid, blockStore, allowMissingPredecessor);

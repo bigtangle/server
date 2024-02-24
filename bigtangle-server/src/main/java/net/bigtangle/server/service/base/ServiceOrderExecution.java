@@ -16,6 +16,7 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancelInfo;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.Orderresult;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
@@ -36,10 +37,10 @@ public class ServiceOrderExecution extends ServiceBaseConnect {
 
 	}
 
-	//private static final Logger log = LoggerFactory.getLogger(ServiceOrderExecution.class);
- 
+	// private static final Logger log =
+	// LoggerFactory.getLogger(ServiceOrderExecution.class);
 
-	public OrderExecutionResult orderMatching(Block block, Sha256Hash prevHash, Set<Sha256Hash> collectedBlocks,
+	public OrderExecutionResult orderMatching(Block block, Orderresult prev, Set<Sha256Hash> collectedBlocks,
 			FullBlockStore blockStore) throws BlockStoreException {
 		TreeMap<ByteBuffer, TreeMap<String, BigInteger>> payouts = new TreeMap<>();
 
@@ -52,10 +53,10 @@ public class ServiceOrderExecution extends ServiceBaseConnect {
 				Comparator.comparing(hash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) hash).getBytes(), randomness))));
 
 		HashMap<Sha256Hash, OrderRecord> remainingOrders = new HashMap<Sha256Hash, OrderRecord>();
-		if (!Sha256Hash.ZERO_HASH.equals(prevHash)) {
+		if (!Sha256Hash.ZERO_HASH.equals(prev.getBlockHash())) {
 			// new order must be from collectedBlocks, not this write as
 			// Sha256Hash.ZERO_HASH in orders
-			remainingOrders = blockStore.getOrderMatchingIssuedOrders(prevHash);
+			remainingOrders = blockStore.getOrderMatchingIssuedOrders(prev.getBlockHash());
 		}
 
 		Set<OrderRecord> toBeSpentOrders = new HashSet<>();
@@ -122,8 +123,9 @@ public class ServiceOrderExecution extends ServiceBaseConnect {
 		Transaction tx = createOrderPayoutTransaction(block, payouts);
 
 		return new OrderExecutionResult(block.getHash(), getOrderRecordHash(toBeSpentOrders), tx.getHash(), tx,
-				prevHash, getOrderRecordHash(cancelledOrders), remainingOrders.keySet(), block.getTimeSeconds(),
-				remainingOrders.values(), toBeSpentOrders,collectedBlocks,tokenId2Events);
+				prev.getBlockHash(), prev.getOrderchainLength() + 1, getOrderRecordHash(cancelledOrders),
+				remainingOrders.keySet(), block.getTimeSeconds(), remainingOrders.values(), toBeSpentOrders,
+				collectedBlocks, tokenId2Events);
 
 	}
 

@@ -37,38 +37,36 @@ import net.bigtangle.core.response.ErrorResponse;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.server.test.AbstractIntegrationTest;
+import net.bigtangle.server.test.ContractLotteryTest;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class PerformanceTest extends AbstractIntegrationTest {
+public class PerformanceTest extends ContractLotteryTest {
 
 	@BeforeEach
 	public void setUp() throws Exception {
-		contextRoot="http://localhost:8088/";
+		contextRoot = "http://localhost:8088/";
 		wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)), contextRoot);
 		store = storeService.getStore();
 	}
 
- 
 	@Test
 	public void testStartProcess() throws Exception {
 		List<Block> a1 = new ArrayList<Block>();
-	  
+
 		testToken(a1);
-
-	 
-
+		wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
+		testTokens();
+		testContractTokens();
+		wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)), contextRoot);
 	}
+
 	@Test
 	public void testProcess() throws Exception {
 		List<Block> a1 = new ArrayList<Block>();
-	  
-		//testToken(a1);
-
 		for (int i = 0; i < 3000; i++) {
 			process(a1);
 		}
@@ -82,21 +80,24 @@ public class PerformanceTest extends AbstractIntegrationTest {
 		final Future<String> handler = executor.submit(new Callable() {
 			@Override
 			public String call() throws Exception {
-				payMoneyToWallet1( blocksAddedAll);
+				payMoneyToWallet1(blocksAddedAll);
 				sell(blocksAddedAll);
 				buy(blocksAddedAll);
+				ulist = createUserkey();
+				payUserKeys(ulist);
+				payBigUserKeys(ulist);
+				payContract();
 				return "";
 			}
 		});
 		try {
 			handler.get(30, TimeUnit.MINUTES);
-		} catch (TimeoutException e) {
-		//	logger.debug(" process  Timeout  ");
+		} catch (Exception e) {
+			// logger.debug(" process Timeout ");
 			handler.cancel(true);
 			AbstractResponse resp = ErrorResponse.create(100);
 			StringWriter sw = new StringWriter();
 			resp.setMessage(sw.toString());
-
 		} finally {
 			executor.shutdownNow();
 		}
@@ -107,6 +108,15 @@ public class PerformanceTest extends AbstractIntegrationTest {
 
 		testCreateToken(wallet.walletKeys().get(0), "test", blocksAddedAll);
 		makeRewardBlock(blocksAddedAll);
+
+	}
+
+	public void payContract() throws Exception {
+
+		for (ECKey key : ulist) {
+			Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
+			w.payContract(null, yuanTokenPub, payContractAmount, null, null, contractKey.getPublicKeyAsHex());
+		}
 
 	}
 
@@ -124,7 +134,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
 		GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
 		List<UTXO> utxos = getBalancesResponse.getOutputs();
 		Collections.shuffle(utxos);
-		long q = 8;
+		// long q = 8;
 		for (UTXO utxo : utxos) {
 			if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())) {
 				wallet.setServerURL(contextRoot);
@@ -133,7 +143,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
 							utxo.getValue().getValue().longValue(), null, null,
 							NetworkParameters.BIGTANGLE_TOKENID_STRING, true);
 					blocksAddedAll.add(sellOrder);
-					makeOrderExecutionAndReward(blocksAddedAll);
+				//	makeOrderExecutionAndReward(blocksAddedAll);
 				} catch (InsufficientMoneyException e) {
 					// ignore: handle exception
 				}
@@ -141,7 +151,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
 		}
 	}
 
-	public void payMoneyToWallet1( List<Block> blocksAddedAll) throws Exception {
+	public void payMoneyToWallet1(List<Block> blocksAddedAll) throws Exception {
 
 		HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
 
@@ -152,7 +162,7 @@ public class PerformanceTest extends AbstractIntegrationTest {
 
 		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
 		blocksAddedAll.add(b);
-		makeRewardBlock(blocksAddedAll);
+	//	makeRewardBlock(blocksAddedAll);
 	}
 
 	public void buy(List<Block> blocksAddedAll) throws Exception {
@@ -183,11 +193,10 @@ public class PerformanceTest extends AbstractIntegrationTest {
 			Block buyOrder = wallet.buyOrder(null, orderRecord.getOfferTokenid(), price, orderRecord.getOfferValue(),
 					null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, false);
 			blocksAddedAll.add(buyOrder);
-			makeOrderExecutionAndReward(blocksAddedAll);
+		//	makeOrderExecutionAndReward(blocksAddedAll);
 
 		}
 
 	}
- 
 
 }

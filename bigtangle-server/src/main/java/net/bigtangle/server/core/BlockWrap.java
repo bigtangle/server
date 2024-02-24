@@ -15,7 +15,7 @@ import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.TokenInfo;
-import net.bigtangle.server.data.ContractResult;
+import net.bigtangle.server.data.ContractExecutionResult;
 import net.bigtangle.server.data.OrderExecutionResult;
 
 /**
@@ -135,7 +135,7 @@ public class BlockWrap {
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
 			try {
-				ContractResult result = new ContractResult().parse(block.getTransactions().get(0).getData());
+				ContractExecutionResult result = new ContractExecutionResult().parse(block.getTransactions().get(0).getData());
 				blockConflicts.add(ConflictCandidate.fromContractExecute(this, result));
 
 			} catch (IOException e) {

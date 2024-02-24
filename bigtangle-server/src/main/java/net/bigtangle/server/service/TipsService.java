@@ -207,10 +207,10 @@ public class TipsService {
 		if (!serviceBase.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight, store))
 			throw new InfeasiblePrototypeException("The given starting points are insolid");
 		if (!serviceBase.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, left, cutoffHeight,
-				prevMilestoneNumber, true, null, store))
+				prevMilestoneNumber, true, null,false, store))
 			throw new InfeasiblePrototypeException("The given starting points are insolid");
 		if (!serviceBase.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, right, cutoffHeight,
-				prevMilestoneNumber, true, null, store))
+				prevMilestoneNumber, true, null,false, store))
 			throw new InfeasiblePrototypeException("The given starting points are insolid");
 
 		// Necessary: Initial test if the prototype's
@@ -232,7 +232,7 @@ public class TipsService {
 				@SuppressWarnings("unchecked")
 				HashSet<BlockWrap> nextNewMilestoneBlocks = (HashSet< BlockWrap>) currentNewMilestoneBlocks.clone();
 				if (!serviceBase.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, cutoffHeight,
-						prevMilestoneNumber, false, null, store))
+						prevMilestoneNumber, false, null,false, store))
 					throw new InfeasiblePrototypeException(
 							"Shouldn't happen: block is missing predecessors but was approved.");
 				if (nextNewMilestoneBlocks.size() > NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD) {
@@ -258,7 +258,7 @@ public class TipsService {
 				@SuppressWarnings("unchecked")
 				HashSet<BlockWrap> nextNewMilestoneBlocks = (HashSet<BlockWrap>) currentNewMilestoneBlocks.clone();
 				if (!serviceBase.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight, cutoffHeight,
-						prevMilestoneNumber, false, null, store))
+						prevMilestoneNumber, false, null,false, store))
 					throw new InfeasiblePrototypeException(
 							"Shouldn't happen: block is missing predecessors but was approved.");
 				if (nextNewMilestoneBlocks.size() > NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD) {
@@ -288,7 +288,7 @@ public class TipsService {
 			@SuppressWarnings("unchecked")
 			HashSet<BlockWrap> nextNewMilestoneBlocks = (HashSet<BlockWrap>) currentNewMilestoneBlocks.clone();
 			if (!serviceBase.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, cutoffHeight,
-					prevMilestoneNumber, false, null, store))
+					prevMilestoneNumber, false, null,false, store))
 				throw new InfeasiblePrototypeException(
 						"Shouldn't happen: block is missing predecessors but was approved.");
 			if (nextNewMilestoneBlocks.size() > NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD) {
@@ -310,7 +310,7 @@ public class TipsService {
 			@SuppressWarnings("unchecked")
 			HashSet<BlockWrap> nextNewMilestoneBlocks = (HashSet<BlockWrap>) currentNewMilestoneBlocks.clone();
 			if (!serviceBase.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight, cutoffHeight,
-					prevMilestoneNumber, false, null, store))
+					prevMilestoneNumber, false, null, false, store))
 				throw new InfeasiblePrototypeException(
 						"Shouldn't happen: block is missing predecessors but was approved.");
 			if (nextNewMilestoneBlocks.size() > NetworkParameters.TARGET_MAX_BLOCKS_IN_REWARD) {

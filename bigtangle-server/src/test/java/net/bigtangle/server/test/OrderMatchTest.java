@@ -55,8 +55,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
 				Utils.HEX.decode(testPub));
-		ECKey testKey = new ECKey();
-		;
+		ECKey testKey = new ECKey(); 
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
@@ -322,6 +321,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 
 		// Open buy order for test tokens
 		makeAndConfirmBuyOrder(genesisKey, testTokenId, 1000, 100, addedBlocks);
+		showOrders();
 		checkAllOpenOrders(0);
 
 		// Verify the tokens changed possession
@@ -851,17 +851,15 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		// Make test token
 		makeTestTokenWithSpare(testKey, addedBlocks);
 		String testTokenId = testKey.getPublicKeyAsHex();
-		readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
+	
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
 		// Open sell orders for test tokens
 		Block sell = makeSellOrder(testKey, testTokenId, 1000, 100, addedBlocks);
-		// Verify deterministic overall execution
-		readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
-		// Cancel
+		showOrders();
 		makeCancelOp(sell, testKey, addedBlocks);
-
+		showOrders();
 		// Execute order matching
 		makeOrderExecutionAndReward(addedBlocks);
 

@@ -382,7 +382,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "   blockhash binary(32) NOT NULL,\n"  
             + "   contracttokenid varchar(255)  NOT NULL,\n" 
             + "   contractresult mediumblob NOT NULL,\n" 
-            //prev contract execution blockhash 
+            + "   contractchainlength bigint NOT NULL,\n" 
             + "   prevblockhash binary(32) NOT NULL,\n" 
             + "   confirmed boolean NOT NULL,\n" 
             + "   spent boolean NOT NULL,\n"
@@ -394,7 +394,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
     private static final String CREATE_ORDER_RESULT_TABLE = "CREATE TABLE orderresult (\n"
             + "   blockhash binary(32) NOT NULL,\n"  
             + "   orderresult mediumblob NOT NULL,\n" 
-            //prev order execution blockhash 
+            + "   orderchainlength bigint NOT NULL,\n"    
             + "   prevblockhash binary(32) NOT NULL,\n" 
             + "   confirmed boolean NOT NULL,\n" 
             + "   spent boolean NOT NULL,\n"

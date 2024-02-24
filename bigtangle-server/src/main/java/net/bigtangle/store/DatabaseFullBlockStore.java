@@ -26,9 +26,9 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.BlockEvaluationDisplay;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ContractEventCancel;
+import net.bigtangle.core.Contractresult;
 import net.bigtangle.core.Exchange;
 import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.MultiSign;
@@ -36,6 +36,7 @@ import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.OrderCancel;
 import net.bigtangle.core.OrderRecord;
+import net.bigtangle.core.Orderresult;
 import net.bigtangle.core.OutputsMulti;
 import net.bigtangle.core.PayMultiSign;
 import net.bigtangle.core.PayMultiSignAddress;
@@ -55,7 +56,7 @@ import net.bigtangle.script.Script;
 import net.bigtangle.server.data.BatchBlock;
 import net.bigtangle.server.data.ChainBlockQueue;
 import net.bigtangle.server.data.ContractEventRecord;
-import net.bigtangle.server.data.ContractResult;
+import net.bigtangle.server.data.ContractExecutionResult;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.OrderExecutionResult;
 import net.bigtangle.utils.Gzip;
@@ -76,15 +77,13 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	 * </p>
 	 */
 	public DatabaseFullBlockStore(NetworkParameters params, Connection conn) {
-		 super(params, conn);
+		super(params, conn);
 	}
-
-	 
 
 	@Override
 	public List<MultiSignAddress> getMultiSignAddressListByTokenidAndBlockHashHex(String tokenid,
 			Sha256Hash prevblockhash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		List<MultiSignAddress> list = new ArrayList<MultiSignAddress>();
 		try {
@@ -120,7 +119,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void insertMultiSignAddress(MultiSignAddress multiSignAddress) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(INSERT_MULTISIGNADDRESS_SQL);
@@ -147,7 +146,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void deleteMultiSignAddress(String tokenid, String address) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(DELETE_MULTISIGNADDRESS_SQL);
@@ -169,7 +168,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public int getCountMultiSignAddress(String tokenid) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(COUNT_MULTISIGNADDRESS_SQL);
@@ -194,7 +193,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public Token getCalMaxTokenIndex(String tokenid) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(COUNT_TOKENSINDEX_SQL);
@@ -225,7 +224,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public Token getTokenByBlockHash(Sha256Hash blockhash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 
@@ -254,7 +253,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public List<Token> getTokenID(Set<String> tokenids) throws BlockStoreException {
 		List<Token> list = new ArrayList<Token>();
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(
@@ -286,7 +285,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public List<Token> getTokenID(String tokenid) throws BlockStoreException {
 		List<Token> list = new ArrayList<Token>();
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_TOKENID_SQL);
@@ -317,7 +316,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public int getCountMultiSignByTokenIndexAndAddress(String tokenid, long tokenindex, String address)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_MULTISIGNBY_SQL);
@@ -345,7 +344,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public List<MultiSign> getMultiSignListByAddress(String address) throws BlockStoreException {
 		List<MultiSign> list = new ArrayList<MultiSign>();
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_MULTISIGN_ADDRESS_SQL);
@@ -390,7 +389,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	public List<MultiSign> getMultiSignListByTokenidAndAddress(final String tokenid, String address)
 			throws BlockStoreException {
 		List<MultiSign> list = new ArrayList<MultiSign>();
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_MULTISIGN_TOKENID_ADDRESS_SQL);
@@ -419,7 +418,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	public List<MultiSign> getMultiSignListByTokenid(String tokenid, int tokenindex, Set<String> addresses,
 			boolean isSign) throws BlockStoreException {
 		List<MultiSign> list = new ArrayList<MultiSign>();
-		
+
 		PreparedStatement preparedStatement = null;
 		String sql = "SELECT id, tokenid, tokenindex, address, blockhash, sign FROM multisign WHERE 1 = 1 ";
 		if (addresses != null && !addresses.isEmpty()) {
@@ -463,10 +462,9 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		}
 	}
 
-
 	@Override
 	public int getCountMultiSignAlready(String tokenid, long tokenindex, String address) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_COUNT_MULTISIGN_SQL);
@@ -492,7 +490,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	}
 
 	public int countMultiSign(String tokenid, long tokenindex, int sign) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_COUNT_ALL_MULTISIGN_SQL);
@@ -524,7 +522,6 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 			return;
 		}
 
-		
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(INSERT_MULTISIGN_SQL);
@@ -551,7 +548,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updateMultiSign(String tokenid, long tokenIndex, String address, byte[] blockhash, int sign)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_MULTISIGN_SQL);
@@ -577,7 +574,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public List<MultiSign> getMultiSignListByTokenid(String tokenid, long tokenindex) throws BlockStoreException {
 		List<MultiSign> list = new ArrayList<MultiSign>();
-		
+
 		PreparedStatement preparedStatement = null;
 		String sql = SELECT_MULTISIGN_ADDRESS_ALL_SQL + " AND tokenid=? AND tokenindex = ?";
 		try {
@@ -604,7 +601,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void deleteMultiSign(String tokenid) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(DELETE_MULTISIGN_SQL);
@@ -625,7 +622,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public boolean getRewardSpent(Sha256Hash hash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_SPENT_SQL);
@@ -648,7 +645,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public Sha256Hash getRewardSpender(Sha256Hash hash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_SPENDER_SQL);
@@ -673,7 +670,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public Sha256Hash getRewardPrevBlockHash(Sha256Hash blockHash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_PREVBLOCKHASH_SQL);
@@ -696,7 +693,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public long getRewardDifficulty(Sha256Hash blockHash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_DIFFICULTY_SQL);
@@ -719,7 +716,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public long getRewardChainLength(Sha256Hash blockHash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_CHAINLENGTH_SQL);
@@ -746,7 +743,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public boolean getRewardConfirmed(Sha256Hash hash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_CONFIRMED_SQL);
@@ -770,7 +767,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void insertReward(Sha256Hash hash, Sha256Hash prevBlockHash, long difficulty, long chainLength)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(INSERT_TX_REWARD_SQL);
@@ -798,7 +795,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void updateRewardConfirmed(Sha256Hash hash, boolean b) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_TX_REWARD_CONFIRMED_SQL);
@@ -821,7 +818,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updateRewardSpent(Sha256Hash hash, boolean b, @Nullable Sha256Hash spenderBlockHash)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_TX_REWARD_SPENT_SQL);
@@ -844,7 +841,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public TXReward getRewardConfirmedAtHeight(long chainlength) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_CONFIRMED_AT_HEIGHT_REWARD_SQL);
@@ -870,7 +867,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public TXReward getMaxConfirmedReward() throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_MAX_CONFIRMED_REWARD_SQL);
@@ -896,7 +893,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public List<TXReward> getAllConfirmedReward() throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_TX_REWARD_ALL_CONFIRMED_REWARD_SQL);
@@ -929,7 +926,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public List<Sha256Hash> getRewardBlocksWithPrevHash(Sha256Hash hash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_REWARD_WHERE_PREV_HASH_SQL);
@@ -956,7 +953,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updateMultiSignBlockBitcoinSerialize(String tokenid, long tokenindex, byte[] bytes)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_MULTISIGN1_SQL);
@@ -979,7 +976,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void insertOutputsMulti(OutputsMulti outputsMulti) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(INSERT_OUTPUTSMULTI_SQL);
@@ -1003,7 +1000,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	}
 
 	public List<OutputsMulti> queryOutputsMultiByHashAndIndex(byte[] hash, long index) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		List<OutputsMulti> list = new ArrayList<OutputsMulti>();
 		try {
@@ -1037,7 +1034,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public UserData queryUserDataWithPubKeyAndDataclassname(String dataclassname, String pubKey)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_USERDATA_SQL);
@@ -1072,7 +1069,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void insertUserData(UserData userData) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(INSERT_USERDATA_SQL);
@@ -1101,7 +1098,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		if (pubKeyList.isEmpty()) {
 			return new ArrayList<UserData>();
 		}
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			String sql = "select blockhash, dataclassname, data, pubKey, blocktype from userdata where blocktype = ? and pubKey in ";
@@ -1142,7 +1139,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void updateUserData(UserData userData) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_USERDATA_SQL);
@@ -1168,7 +1165,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	public void insertPayPayMultiSign(PayMultiSign payMultiSign) throws BlockStoreException {
 		String sql = "insert into paymultisign (orderid, tokenid, toaddress, blockhash, amount, minsignnumber,"
 				+ " outputHashHex,  outputindex) values (?, ?, ?, ?, ?, ?, ?,?)";
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -1197,7 +1194,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void insertPayMultiSignAddress(PayMultiSignAddress payMultiSignAddress) throws BlockStoreException {
 		String sql = "insert into paymultisignaddress (orderid, pubKey, sign, signInputData, signIndex) values (?, ?, ?, ?, ?)";
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -1224,7 +1221,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	public void updatePayMultiSignAddressSign(String orderid, String pubKey, int sign, byte[] signInputData)
 			throws BlockStoreException {
 		String sql = "update paymultisignaddress set sign = ?, signInputData = ? where orderid = ? and pubKey = ?";
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -1249,7 +1246,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public int getMaxPayMultiSignAddressSignIndex(String orderid) throws BlockStoreException {
 		String sql = "SELECT MAX(signIndex) AS signIndex FROM paymultisignaddress WHERE orderid = ?";
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -1273,7 +1270,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public PayMultiSign getPayMultiSignWithOrderid(String orderid) throws BlockStoreException {
 		String sql = "select orderid, tokenid, toaddress, blockhash, amount, minsignnumber, outputHashHex, outputindex from paymultisign where orderid = ?";
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -1309,7 +1306,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public List<PayMultiSignAddress> getPayMultiSignAddressWithOrderid(String orderid) throws BlockStoreException {
 		String sql = "select orderid, pubKey, sign, signInputData, signIndex from paymultisignaddress where orderid = ? ORDER BY signIndex ASC";
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -1342,7 +1339,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updatePayMultiSignBlockhash(String orderid, byte[] blockhash) throws BlockStoreException {
 		String sql = "update paymultisign set blockhash = ? where orderid = ?";
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -1375,7 +1372,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		for (String pubKey : pubKeys)
 			stringBuffer.append(",'").append(pubKey).append("'");
 		sql += " in (" + stringBuffer.substring(1) + ")";
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -1412,7 +1409,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public int getCountPayMultiSignAddressStatus(String orderid) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(
@@ -1442,7 +1439,6 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 				+ " addresstargetable, blockhash, tokenid, fromaddress, memo, minimumsign, time, spent, confirmed, "
 				+ " spendpending, spendpendingtime FROM outputs WHERE hash = ? and outputindex = ?";
 
-		
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -1488,7 +1484,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public byte[] getSettingValue(String name) throws BlockStoreException {
 		PreparedStatement preparedStatement = null;
-		
+
 		try {
 			preparedStatement = getConnection().prepareStatement(getSelectSettingsSQL());
 			preparedStatement.setString(1, name);
@@ -1512,7 +1508,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void insertBatchBlock(Block block) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(INSERT_BATCHBLOCK_SQL);
@@ -1535,7 +1531,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void deleteBatchBlock(Sha256Hash hash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(DELETE_BATCHBLOCK_SQL);
@@ -1556,7 +1552,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public List<BatchBlock> getBatchBlockList() throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_BATCHBLOCK_SQL);
@@ -1586,7 +1582,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void insertSubtanglePermission(String pubkey, String userdatapubkey, String status)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(INSERT_SUBTANGLE_PERMISSION_SQL);
@@ -1609,7 +1605,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void deleteSubtanglePermission(String pubkey) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(DELETE_SUBTANGLE_PERMISSION_SQL);
@@ -1631,7 +1627,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updateSubtanglePermission(String pubkey, String userdataPubkey, String status)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPATE_ALL_SUBTANGLE_PERMISSION_SQL);
@@ -1654,7 +1650,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public List<Map<String, String>> getAllSubtanglePermissionList() throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		List<Map<String, String>> list = new ArrayList<Map<String, String>>();
 		try {
@@ -1684,7 +1680,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public List<Map<String, String>> getSubtanglePermissionListByPubkey(String pubkey) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		List<Map<String, String>> list = new ArrayList<Map<String, String>>();
 		try {
@@ -1720,7 +1716,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		for (String pubKey : pubkeys)
 			stringBuffer.append(",'").append(pubKey).append("'");
 		sql += " in (" + stringBuffer.substring(1) + ")";
-		
+
 		PreparedStatement preparedStatement = null;
 		List<Map<String, String>> list = new ArrayList<Map<String, String>>();
 		try {
@@ -1749,7 +1745,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public boolean getOrderConfirmed(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_ORDER_CONFIRMED_SQL);
@@ -1774,7 +1770,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public Sha256Hash getOrderSpender(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_ORDER_SPENDER_SQL);
@@ -1798,7 +1794,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public boolean getOrderSpent(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_ORDER_SPENT_SQL);
@@ -1823,7 +1819,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		HashMap<Sha256Hash, OrderRecord> result = new HashMap<>();
 		try {
@@ -1850,7 +1846,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrdersNotSpent(Sha256Hash issuingMatcherBlockHash)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		HashMap<Sha256Hash, OrderRecord> result = new HashMap<>();
 		try {
@@ -1876,7 +1872,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public OrderRecord getOrder(Sha256Hash txHash, Sha256Hash issuingMatcherBlockHash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_ORDER_SQL);
@@ -1902,7 +1898,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void insertCancelOrder(OrderCancel orderCancel) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			// "blockhash, orderblockhash, confirmed, spent, spenderblockhash,time";
@@ -1933,7 +1929,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updateContractEventCancelSpent(Set<Sha256Hash> cancels, Sha256Hash blockhash, Boolean spent)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(CONTRACTEVENTCANCEL_UPDATE_SPENT_SQL);
@@ -1962,7 +1958,6 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		if (records == null)
 			return;
 
-		
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(INSERT_ORDER_SQL);
@@ -2007,7 +2002,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updateOrderConfirmed(Sha256Hash initialBlockHash, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_CONFIRMED_SQL);
@@ -2031,7 +2026,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updateOrderConfirmed(Set<Sha256Hash> hashs, Sha256Hash issuingMatcherBlockHash, boolean confirmed)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_CONFIRMED_SQL);
@@ -2058,7 +2053,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void updateOrderConfirmed(Collection<OrderRecord> orderRecords, boolean confirm) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_CONFIRMED_SQL);
@@ -2085,7 +2080,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updateOrderSpent(Set<Sha256Hash> orderRecords, Sha256Hash blockhash, Boolean spent)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_SPENT_SQL);
@@ -2112,7 +2107,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_SPENT_SQL);
@@ -2143,7 +2138,6 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		if (records == null)
 			return;
 
-		
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(INSERT_CONTRACT_EVENT_SQL);
@@ -2181,7 +2175,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updateContractEventSpent(Set<Sha256Hash> contractEventRecords, Sha256Hash spentBlock, boolean spent)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(
@@ -2210,7 +2204,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public Sha256Hash getContractEventSpent(Sha256Hash contractevent) throws BlockStoreException {
 		// one of the block is spent then, return Sha256Hash, otherwise null
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection()
@@ -2241,7 +2235,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public boolean checkContractEventConfirmed(List<Sha256Hash> contractEventRecords) throws BlockStoreException {
 		// one of the block is spent then, return true
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection()
@@ -2271,7 +2265,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updateContractEventConfirmed(Collection<Sha256Hash> records, boolean confirm)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_CONTRACT_EVENT_CONFIRMED_SQL);
@@ -2296,7 +2290,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public List<String> getOpenContractid() throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_OPEN_CONTRACTID_CONTRACT_SQL);
@@ -2323,7 +2317,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public Map<Sha256Hash, ContractEventRecord> getContractEventPrev(String contractid, Sha256Hash prevHash)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_PREV_CONTRACT_SQL);
@@ -2353,14 +2347,14 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public ContractEventRecord getContractEvent(Sha256Hash blockhash, Sha256Hash collectinghash)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_CONTRACT_SQL);
 			preparedStatement.setBytes(1, blockhash.getBytes());
 			preparedStatement.setBytes(2, collectinghash.getBytes());
 			ResultSet resultSet = preparedStatement.executeQuery();
-	 
+
 			while (resultSet.next()) {
 				return setContractEventRecord(resultSet);
 			}
@@ -2380,44 +2374,15 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	}
 
 	@Override
-	public Sha256Hash getLastContractResultBlockHash(String contractid) throws BlockStoreException {
-		
-		PreparedStatement preparedStatement = null;
-		try {
-			preparedStatement = getConnection().prepareStatement(SELECT_CONTRACTRESULT_LAST__SQL);
-			preparedStatement.setString(1, contractid);
-			ResultSet resultSet = preparedStatement.executeQuery();
-			if (resultSet.next()) {
-				return Sha256Hash.wrap(resultSet.getBytes("blockhash"));
-
-			}
-			return null;
-
-		} catch (Exception e) {
-			throw new BlockStoreException(e);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
-	@Override
-	public void insertContractResult(ContractResult record) throws BlockStoreException {
+	public void insertContractResult(ContractExecutionResult record) throws BlockStoreException {
 		if (record == null)
 			return;
 
-		
 		PreparedStatement preparedStatement = null;
 
 		try {
 			preparedStatement = getConnection().prepareStatement(INSERT_CONTRACT_RESULT_SQL);
 			preparedStatement.setBytes(1, record.getBlockHash().getBytes());
-			preparedStatement.setString(2, record.getContracttokenid());
 			preparedStatement.setString(2, record.getContracttokenid());
 			preparedStatement.setBoolean(3, record.isConfirmed());
 			preparedStatement.setBoolean(4, record.isSpent());
@@ -2427,6 +2392,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 			preparedStatement.setBytes(7,
 					record.getPrevblockhash() != null ? record.getPrevblockhash().getBytes() : null);
 			preparedStatement.setLong(8, record.getTime());
+			preparedStatement.setLong(9, record.getContractchainlength());
 			preparedStatement.executeUpdate();
 
 		} catch (SQLException e) {
@@ -2447,7 +2413,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updateContractResultSpent(Sha256Hash contractResult, Sha256Hash spentBlock, boolean spent)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(
@@ -2474,7 +2440,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public Sha256Hash checkContractResultSpent(Sha256Hash o) throws BlockStoreException {
 		// one of the block is spent then, return Sha256Hash, otherwise null
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection()
@@ -2505,7 +2471,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public boolean checkContractResultConfirmed(Sha256Hash o) throws BlockStoreException {
 		// one of the block is spent then, return true
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection()
@@ -2534,7 +2500,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void updateContractResultConfirmed(Sha256Hash record, boolean confirm) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_CONTRACTRESULT_CONFIRMED_SQL);
@@ -2555,19 +2521,71 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 			}
 		}
 	}
-
-	@Override
-	public Sha256Hash getLastOrderResultBlockHash() throws BlockStoreException {
-		
-		PreparedStatement preparedStatement = null;
+	@Override 
+	public Contractresult getContractresult(Sha256Hash blockhash) throws BlockStoreException {
+		PreparedStatement preparedStatement = null; 
 		try {
-			preparedStatement = getConnection().prepareStatement(SELECT_ORDERRESULT_LAST__SQL);
+			preparedStatement = getConnection().prepareStatement(SELECT_CONTRACTRESULT_HASH_SQL);
+			preparedStatement.setBytes(1, blockhash.getBytes());
 			ResultSet resultSet = preparedStatement.executeQuery();
-			if (resultSet.next()) {
-				return Sha256Hash.wrap(resultSet.getBytes("blockhash"));
+			while (resultSet.next()) {
+				return setContractresult(resultSet);
 
 			}
-			return null;
+			return Contractresult.zeroContractresult();
+
+		} catch (Exception e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+	
+	@Override 
+	public Orderresult getOrderResult(Sha256Hash blockhash) throws BlockStoreException {
+		PreparedStatement preparedStatement = null; 
+		try {
+			preparedStatement = getConnection().prepareStatement(SELECT_ORDERRESULT_HASH_SQL);
+			preparedStatement.setBytes(1, blockhash.getBytes());
+			ResultSet resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+				return setOrderresult(resultSet);
+
+			}
+			return Orderresult.zeroOrderresult();
+
+		} catch (Exception e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+	
+	@Override
+	public List<Orderresult> getOrderResultUnspent() throws BlockStoreException {
+
+		PreparedStatement preparedStatement = null;
+		List<Orderresult> re = new ArrayList<>();
+		try {
+			preparedStatement = getConnection().prepareStatement(SELECT_ORDERRESULT_SQL);
+			ResultSet resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+				re.add(setOrderresult(resultSet));
+
+			}
+			return re;
 
 		} catch (Exception e) {
 			throw new BlockStoreException(e);
@@ -2583,11 +2601,53 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	}
 
 	@Override
+	public List<Contractresult> getContractresultUnspent(String contractid) throws BlockStoreException {
+
+		PreparedStatement preparedStatement = null;
+		List<Contractresult> re = new ArrayList<>();
+		try {
+			preparedStatement = getConnection().prepareStatement(SELECT_CONTRACTRESULT_SQL);
+			preparedStatement.setString(1, contractid);
+			ResultSet resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+				re.add(setContractresult(resultSet));
+			}
+			return re;
+
+		} catch (Exception e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+
+	private Orderresult setOrderresult(ResultSet resultSet) throws SQLException {
+		return new Orderresult(Sha256Hash.wrap(resultSet.getBytes("blockhash")), resultSet.getBoolean("confirmed"),
+				resultSet.getBoolean("spent"), Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),
+				Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")), resultSet.getBytes("orderresult"),
+				resultSet.getLong("orderchainlength"), resultSet.getLong("inserttime"));
+
+	}
+
+	private Contractresult setContractresult(ResultSet resultSet) throws SQLException {
+		return new Contractresult(Sha256Hash.wrap(resultSet.getBytes("blockhash")), resultSet.getBoolean("confirmed"),
+				resultSet.getBoolean("spent"), Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),
+				Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")), resultSet.getBytes("contractresult"),
+				resultSet.getLong("inserttime"), resultSet.getLong("contractchainlength"));
+
+	}
+
+	@Override
 	public void insertOrderResult(OrderExecutionResult record) throws BlockStoreException {
 		if (record == null)
 			return;
 
-		
 		PreparedStatement preparedStatement = null;
 
 		try {
@@ -2602,6 +2662,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 			preparedStatement.setBytes(6,
 					record.getPrevblockhash() != null ? record.getPrevblockhash().getBytes() : null);
 			preparedStatement.setLong(7, record.getTime());
+			preparedStatement.setLong(8, record.getOrderchainlength());
 			preparedStatement.executeUpdate();
 
 		} catch (SQLException e) {
@@ -2620,9 +2681,9 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	}
 
 	@Override
-	public void updateOrderResultSpent(Sha256Hash orderResult, Sha256Hash spentBlock, boolean spent)
+	public void updateOrderResultSpent(Sha256Hash blockhash, Sha256Hash spentBlock, boolean spent)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(
@@ -2630,7 +2691,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 			preparedStatement.setBoolean(1, spent);
 			preparedStatement.setBytes(2, spentBlock != null ? spentBlock.getBytes() : null);
-			preparedStatement.setBytes(3, orderResult.getBytes());
+			preparedStatement.setBytes(3, blockhash.getBytes());
 			preparedStatement.executeUpdate();
 
 		} catch (SQLException e) {
@@ -2649,11 +2710,11 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public Sha256Hash checkOrderResultSpent(Sha256Hash o) throws BlockStoreException {
 		// one of the block is spent then, return Sha256Hash, otherwise null
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection()
-					.prepareStatement(" select spenderblockhash  from orderresul " + " WHERE blockhash = ? ");
+					.prepareStatement(" select spenderblockhash  from orderresult " + " WHERE blockhash = ? ");
 
 			preparedStatement.setBytes(1, o.getBytes());
 			ResultSet resultSet = preparedStatement.executeQuery();
@@ -2680,7 +2741,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public boolean checkOrderResultConfirmed(Sha256Hash o) throws BlockStoreException {
 		// one of the block is spent then, return true
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection()
@@ -2709,7 +2770,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void updateOrderResultConfirmed(Sha256Hash record, boolean confirm) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(UPDATE_ORDERRESULT_CONFIRMED_SQL);
@@ -2737,7 +2798,6 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void prunedClosedOrders(Long beforetime) throws BlockStoreException {
 
-		
 		PreparedStatement deleteStatement = null;
 
 		try {
@@ -2769,7 +2829,6 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void prunedBlocks(Long height, Long chain) throws BlockStoreException {
 
-		
 		PreparedStatement deleteStatement = null;
 		PreparedStatement preparedStatement = null;
 		try {
@@ -2817,7 +2876,6 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void prunedHistoryUTXO(Long maxRewardblock) throws BlockStoreException {
 
-		
 		PreparedStatement deleteStatement = null;
 		try {
 			deleteStatement = getConnection().prepareStatement(" delete FROM outputs WHERE  spent=1 AND "
@@ -2845,7 +2903,6 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void prunedPriceTicker(Long beforetime) throws BlockStoreException {
 
-		
 		PreparedStatement deleteStatement = null;
 		try {
 
@@ -2874,7 +2931,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public List<OrderRecord> getAllOpenOrdersSorted(List<String> addresses, String tokenid) throws BlockStoreException {
 		List<OrderRecord> result = new ArrayList<>();
-		
+
 		String sql = SELECT_OPEN_ORDERS_SORTED_SQL;
 		String orderby = " ORDER BY blockhash, collectinghash";
 
@@ -2951,7 +3008,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public List<UTXO> getAllAvailableUTXOsSorted() throws BlockStoreException {
 		List<UTXO> result = new ArrayList<>();
-		
+
 		PreparedStatement s = null;
 		try {
 			s = getConnection().prepareStatement(SELECT_AVAILABLE_UTXOS_SORTED_SQL);
@@ -3002,7 +3059,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void insertMyserverblocks(Sha256Hash prevhash, Sha256Hash hash, Long inserttime) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection()
@@ -3028,7 +3085,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void deleteMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {
 		// delete only one, but anyone
-		
+
 		PreparedStatement preparedStatement = null;
 		PreparedStatement p2 = null;
 		try {
@@ -3066,7 +3123,6 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public boolean existBlock(Sha256Hash hash) throws BlockStoreException {
 
-		
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(" select hash from blocks where hash = ?");
@@ -3090,7 +3146,6 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public boolean existMyserverblocks(Sha256Hash prevhash) throws BlockStoreException {
 
-		
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(" select hash from myserverblocks where prevhash = ?");
@@ -3113,7 +3168,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void insertMatchingEvent(List<MatchResult> matchs) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		// log.debug("insertMatchingEvent: " + matchs.size());
 		try {
@@ -3144,7 +3199,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	}
 
 	public void insertMatchingEventLast(List<MatchResult> matchs) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		PreparedStatement deleteStatement = null;
 		try {
@@ -3205,7 +3260,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public List<MatchLastdayResult> getLastMatchingEvents(Set<String> tokenIds, String basetoken)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			String sql = "SELECT  ml.txhash txhash,ml.tokenid tokenid ,ml.basetokenid basetokenid,  ml.price price, ml.executedQuantity executedQuantity,ml.inserttime inserttime, "
@@ -3240,7 +3295,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void deleteMatchingEvents(String hash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(DELETE_MATCHING_EVENT_BY_HASH);
@@ -3261,7 +3316,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public Token queryDomainnameToken(Sha256Hash domainNameBlockHash) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_TOKENS_BY_DOMAINNAME_SQL);
@@ -3289,7 +3344,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public Token getTokensByDomainname(String domainname) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_TOKENS_BY_DOMAINNAME_SQL0);
@@ -3317,7 +3372,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		PreparedStatement sub_preparedStatement = null;
 		String sql = "SELECT orderid,pubkey,sign,signInputData FROM exchange_multisign WHERE orderid=?";
@@ -3371,7 +3426,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			String sql = "";
@@ -3399,7 +3454,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public List<Exchange> getExchangeListWithAddressA(String address) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		List<Exchange> list = new ArrayList<Exchange>();
 		String sql = SELECT_EXCHANGE_SQL_A;
@@ -3443,7 +3498,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void saveExchange(Exchange exchange) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(INSERT_EXCHANGE_SQL);
@@ -3477,7 +3532,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void deleteExchange(String orderid) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(DELETE_EXCHANGE_SQL);
@@ -3498,7 +3553,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			String sql = "UPDATE exchange SET toSign = 1, signInputData = ? WHERE orderid = ?";
@@ -3523,7 +3578,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public List<Sha256Hash> getWhereConfirmedNotMilestone() throws BlockStoreException {
 		List<Sha256Hash> storedBlockHashes = new ArrayList<Sha256Hash>();
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_CONFIRMED_AND_NOT_MILESTONE_SQL);
@@ -3552,7 +3607,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 			return new ArrayList<OrderCancel>();
 		}
 		List<OrderCancel> orderCancels = new ArrayList<OrderCancel>();
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			StringBuffer sql = new StringBuffer();
@@ -3590,7 +3645,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	public List<OrderCancel> getOrderCancelConfirmed() throws BlockStoreException {
 
 		List<OrderCancel> orderCancels = new ArrayList<OrderCancel>();
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(ORDERCANCEL_CONFIRMED_SQL);
@@ -3621,7 +3676,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void insertContractEventCancel(ContractEventCancel orderCancel) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			// "blockhash, orderblockhash, confirmed, spent, spenderblockhash,time";
@@ -3652,7 +3707,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void updateOrderCancelSpent(Set<Sha256Hash> cancels, Sha256Hash blockhash, Boolean spent)
 			throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(ORDERCANCEL_UPDATE_SPENT_SQL);
@@ -3683,15 +3738,15 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 			return new ArrayList<ContractEventCancel>();
 		}
 		List<ContractEventCancel> ContractEventCancels = new ArrayList<ContractEventCancel>();
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			StringBuffer sql = new StringBuffer();
 			for (String s : blockHashs) {
 				sql.append(",'").append(s).append("'");
 			}
-			preparedStatement = getConnection()
-					.prepareStatement(SELECT_CONTRACTEVENTCANCEL_SQL + " AND eventblockhash IN (" + sql.substring(1) + ")");
+			preparedStatement = getConnection().prepareStatement(
+					SELECT_CONTRACTEVENTCANCEL_SQL + " AND eventblockhash IN (" + sql.substring(1) + ")");
 			ResultSet resultSet = preparedStatement.executeQuery();
 			while (resultSet.next()) {
 				ContractEventCancel contractEventCancel = new ContractEventCancel();
@@ -3721,7 +3776,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	public List<ContractEventCancel> getContractEventCancelConfirmed() throws BlockStoreException {
 
 		List<ContractEventCancel> contractEventCancels = new ArrayList<ContractEventCancel>();
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(CONTRACTEVENTCANCEL_CONFIRMED_SQL);
@@ -3750,11 +3805,10 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		}
 	}
 
-	
 	@Override
 	public List<MatchLastdayResult> getTimeBetweenMatchingEvents(String tokenid, String basetoken, Long startDate,
 			Long endDate, int count) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			String sql = SELECT_MATCHING_EVENT + " where  basetokenid = ? and  tokenid = ? ";
@@ -3790,7 +3844,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public List<MatchLastdayResult> getTimeAVGBetweenMatchingEvents(String tokenid, String basetoken, Long startDate,
 			Long endDate, int count) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			String SELECT_AVG = "select tokenid,basetokenid,  avgprice, totalQuantity,matchday "
@@ -3829,7 +3883,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	public void insertAccessPermission(String pubKey, String accessToken) throws BlockStoreException {
 		String sql = "insert into access_permission (pubKey, accessToken, refreshTime) value (?,?,?)";
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -3852,7 +3906,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public int getCountAccessPermissionByPubKey(String pubKey, String accessToken) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(
@@ -3880,7 +3934,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void insertAccessGrant(String address) throws BlockStoreException {
 		String sql = "insert into access_grant (address, createTime) value (?,?)";
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -3903,7 +3957,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	@Override
 	public void deleteAccessGrant(String address) throws BlockStoreException {
 		String sql = "delete from access_grant where address = ?";
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -3924,7 +3978,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public int getCountAccessGrantByAddress(String address) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection()
@@ -3956,7 +4010,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		sql += " where solid=true and confirmed=false and height >= " + minHeigth;
 		sql += " ORDER BY insertTime desc ";
 		List<Block> result = new ArrayList<Block>();
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(sql);
@@ -3983,7 +4037,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 
 	@Override
 	public void insertChainBlockQueue(ChainBlockQueue chainBlockQueue) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(INSERT_CHAINBLOCKQUEUE);
@@ -4554,7 +4608,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	}
 
 	public void addAccountCoinBatch(Map<String, Map<String, Coin>> toAddressMap) throws BlockStoreException {
-		
+
 		PreparedStatement s = null;
 		try {
 			s = getConnection().prepareStatement(
@@ -4590,7 +4644,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	}
 
 	public void updateAccountCoinBatch(Map<String, Map<String, Coin>> fromaddressMap) throws BlockStoreException {
-		
+
 		PreparedStatement s = null;
 		try {
 			s = getConnection().prepareStatement("update accountBalance set coinvalue=? where address=? and tokenid=?");
@@ -4625,7 +4679,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	}
 
 	public void deleteAccountCoin(String address, String tokenid) throws BlockStoreException {
-		
+
 		PreparedStatement preparedStatement = null;
 		try {
 			String sql = " delete  from accountBalance  where 1=1 ";
@@ -4661,6 +4715,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 			}
 		}
 	}
+
 	/*
 	 * UTXO 100 output record -> pay 30 -> update 100, address1 spent, add new 30
 	 * address2 and 70 address1 from =address1 List

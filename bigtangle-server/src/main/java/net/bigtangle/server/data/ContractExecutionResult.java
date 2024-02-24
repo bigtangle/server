@@ -18,11 +18,13 @@ import net.bigtangle.core.Utils;
  * It must be check on every node and should be the same result.
  * The data is saved in table ContractResult mainly as byte.
  */
-public class ContractResult extends SpentBlock {
-	 
+public class ContractExecutionResult extends SpentBlock {
+
 	String contracttokenid;
 	// reference the previous ContractResult block, it forms a chain
 	Sha256Hash prevblockhash;
+	// reference the previous ContractResult block, it forms a chain
+	long contractchainlength;
 	// referenced new order blocks
 	Set<Sha256Hash> referencedBlocks = new HashSet<>();;
 
@@ -43,14 +45,14 @@ public class ContractResult extends SpentBlock {
 
 	Set<ContractEventRecord> remainderContractEventRecord;
 
-	public ContractResult() {
+	public ContractExecutionResult() {
 
 	}
 
-	public ContractResult(Sha256Hash blockhash, String contractid, Set<Sha256Hash> toBeSpent, Sha256Hash outputTxHash,
-			Transaction outputTx, Sha256Hash prevblockhash, Set<Sha256Hash> cancelRecords,
-			Set<Sha256Hash> remainderRecords, long inserttime, Set<ContractEventRecord> remainderContractEventRecord,
-			Set<Sha256Hash> referencedOrderBlocks) {
+	public ContractExecutionResult(Sha256Hash blockhash, String contractid, Set<Sha256Hash> toBeSpent,
+			Sha256Hash outputTxHash, Transaction outputTx, Sha256Hash prevblockhash, long contractchainlength,
+			Set<Sha256Hash> cancelRecords, Set<Sha256Hash> remainderRecords, long inserttime,
+			Set<ContractEventRecord> remainderContractEventRecord, Set<Sha256Hash> referencedOrderBlocks) {
 		this.setBlockHash(blockhash);
 		this.contracttokenid = contractid;
 		this.prevblockhash = prevblockhash;
@@ -63,6 +65,7 @@ public class ContractResult extends SpentBlock {
 
 		this.remainderContractEventRecord = remainderContractEventRecord;
 		this.referencedBlocks = referencedOrderBlocks;
+		this.contractchainlength = contractchainlength;
 	}
 
 	public byte[] toByteArray() {
@@ -73,7 +76,7 @@ public class ContractResult extends SpentBlock {
 			Utils.writeNBytesString(dos, contracttokenid);
 			Utils.writeNBytes(dos, outputTxHash.getBytes());
 			Utils.writeNBytes(dos, prevblockhash.getBytes());
-
+			Utils.writeLong(dos, contractchainlength);
 			dos.writeInt(allRecords.size());
 			for (Sha256Hash c : allRecords) {
 				Utils.writeNBytes(dos, c.getBytes());
@@ -100,11 +103,12 @@ public class ContractResult extends SpentBlock {
 	}
 
 	@Override
-	public ContractResult parseDIS(DataInputStream dis) throws IOException {
+	public ContractExecutionResult parseDIS(DataInputStream dis) throws IOException {
 		super.parseDIS(dis);
 		contracttokenid = Utils.readNBytesString(dis);
 		outputTxHash = Sha256Hash.wrap(Utils.readNBytes(dis));
 		prevblockhash = Sha256Hash.wrap(Utils.readNBytes(dis));
+		contractchainlength = Utils.readLong(dis);
 		allRecords = new HashSet<>();
 		int allRecordsSize = dis.readInt();
 		for (int i = 0; i < allRecordsSize; i++) {
@@ -129,7 +133,7 @@ public class ContractResult extends SpentBlock {
 		return this;
 	}
 
-	public ContractResult parseChecked(byte[] buf) {
+	public ContractExecutionResult parseChecked(byte[] buf) {
 		try {
 			return parse(buf);
 		} catch (IOException e) {
@@ -138,7 +142,7 @@ public class ContractResult extends SpentBlock {
 		}
 	}
 
-	public ContractResult parse(byte[] buf) throws IOException {
+	public ContractExecutionResult parse(byte[] buf) throws IOException {
 		ByteArrayInputStream bain = new ByteArrayInputStream(buf);
 		DataInputStream dis = new DataInputStream(bain);
 		parseDIS(dis);
@@ -219,11 +223,22 @@ public class ContractResult extends SpentBlock {
 		this.referencedBlocks = referencedBlocks;
 	}
 
+	public long getContractchainlength() {
+		return contractchainlength;
+	}
+
+	public void setContractchainlength(long contractchainlength) {
+		this.contractchainlength = contractchainlength;
+	}
+
 	@Override
 	public String toString() {
-		return "ContractResult [contracttokenid=" + contracttokenid + ", prevblockhash=" + prevblockhash
-				+ ", outputTxHash=" + outputTxHash + ", outputTx=" + outputTx + ", allRecords=" + allRecords
-				+ ", cancelRecords=" + cancelRecords + ", remainderRecords=" + remainderRecords + "]";
+		return "ContractExecutionResult [contracttokenid=" + contracttokenid + ", prevblockhash=" + prevblockhash
+				+ ", contractchainlength=" + contractchainlength + ", referencedBlocks=" + referencedBlocks
+				+ ", outputTxHash=" + outputTxHash + ", allRecords=" + allRecords + ", cancelRecords=" + cancelRecords
+				+ ", remainderRecords=" + remainderRecords + ", outputTx=" + outputTx
+				+ ", remainderContractEventRecord=" + remainderContractEventRecord + "]";
 	}
+ 
 
 }

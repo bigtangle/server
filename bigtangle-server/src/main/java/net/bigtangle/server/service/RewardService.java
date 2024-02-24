@@ -96,14 +96,17 @@ public class RewardService {
 			if (lock == null) {
 				store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
 				canrun = true;
-			} else if (lock.getLocktime() < System.currentTimeMillis() - 5 * scheduleConfiguration.getMiningrate()) {
-				log.info(" reward locked is fored delete   " + lock.getLocktime() + " < "
-						+ (System.currentTimeMillis() - 5 * scheduleConfiguration.getMiningrate()));
-				store.deleteLockobject(LOCKID);
-				store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
-				canrun = true;
 			} else {
-				log.info("reward running return:  " + Utils.dateTimeFormat(lock.getLocktime()));
+				long timeout = 15 * scheduleConfiguration.getMiningrate();
+				if (lock.getLocktime() < System.currentTimeMillis() - timeout) {
+					log.info(" reward locked is fored delete   " + lock.getLocktime() + " < "
+							+ (System.currentTimeMillis() - timeout));
+					store.deleteLockobject(LOCKID);
+					store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+					canrun = true;
+				} else {
+					log.info("reward running return:  " + Utils.dateTimeFormat(lock.getLocktime()));
+				}
 			}
 			if (canrun) {
 				createReward(store);

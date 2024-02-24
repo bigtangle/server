@@ -29,7 +29,7 @@ import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.ContractEventRecord;
-import net.bigtangle.server.data.ContractResult;
+import net.bigtangle.server.data.ContractExecutionResult;
 import net.bigtangle.server.data.OrderExecutionResult;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.service.CacheBlockService;
@@ -178,7 +178,8 @@ public class ServiceBase {
 
 	public Set<Sha256Hash> getReferrencedBlockHashes(Block block) {
 		if (block.getBlockType().equals(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE)) {
-			return new ContractResult().parseChecked(block.getTransactions().get(0).getData()).getReferencedBlocks();
+			return new ContractExecutionResult().parseChecked(block.getTransactions().get(0).getData())
+					.getReferencedBlocks();
 		}
 		if (block.getBlockType().equals(Block.Type.BLOCKTYPE_ORDER_EXECUTE)) {
 			return new OrderExecutionResult().parseChecked(block.getTransactions().get(0).getData())
@@ -305,8 +306,6 @@ public class ServiceBase {
 				// missingCalculation =
 				// SolidityState.fromMissingCalculation(predecessor.getBlockHash());
 
-			} else if (predecessor.getBlockEvaluation().getSolid() == 0 && predecessorsSolid) {
-				missingDependency = SolidityState.from(predecessor.getBlockHash(), false);
 			} else {
 				// TODO check logger.warn("predecessor.getBlockEvaluation().getSolid() = "
 				// + predecessor.getBlockEvaluation().getSolid() + " " + block.toString());

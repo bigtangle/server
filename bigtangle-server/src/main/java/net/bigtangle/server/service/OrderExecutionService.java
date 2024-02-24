@@ -25,7 +25,9 @@ import org.springframework.stereotype.Service;
 import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.NetworkParameters;
+import net.bigtangle.core.Orderresult;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
@@ -43,8 +45,8 @@ import net.bigtangle.store.FullBlockStoreImpl;
 
 /**
  * <p>
- * A OrderExecutionService provides service for create and validate the
- * contract common execution.
+ * A OrderExecutionService provides service for create and validate the contract
+ * common execution.
  * </p>
  */
 @Service
@@ -71,7 +73,7 @@ public class OrderExecutionService {
 	protected CacheBlockPrototypeService cacheBlockPrototypeService;
 	@Autowired
 	private BlockSaveService blockSaveService;
-	
+
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	private final String LOCKID = this.getClass().getName();
@@ -101,7 +103,8 @@ public class OrderExecutionService {
 				store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
 				canrun = true;
 			} else {
-		//		log.info("OrderExecution running return:  " + Utils.dateTimeFormat(lock.getLocktime()));
+				// log.info("OrderExecution running return: " +
+				// Utils.dateTimeFormat(lock.getLocktime()));
 			}
 			if (canrun) {
 				createOrderExecution(store);
@@ -116,7 +119,7 @@ public class OrderExecutionService {
 		}
 
 	}
- 
+
 	public Block createOrderExecution(FullBlockStore store) throws Exception {
 		Block contractExecution = createOrderExecutionDo(store);
 		if (contractExecution != null) {
@@ -136,9 +139,10 @@ public class OrderExecutionService {
 
 	public Block createOrderExecutionDo(FullBlockStore store) throws Exception {
 
-		Stopwatch watch = Stopwatch.createStarted();
+		// Stopwatch watch = Stopwatch.createStarted();
 		Block b = cacheBlockPrototypeService.getBlockPrototype(store);
-	//	log.debug("  getValidatedOrderExecutionBlockPair time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+		// log.debug(" getValidatedOrderExecutionBlockPair time {} ms.",
+		// watch.elapsed(TimeUnit.MILLISECONDS));
 
 		return createOrderExecution(b, store);
 
@@ -150,35 +154,40 @@ public class OrderExecutionService {
 		// Build transaction for block
 		Transaction tx = new Transaction(networkParameters);
 		block.addTransaction(tx);
-		Sha256Hash prevHash = Sha256Hash.ZERO_HASH;
-		// calculate prev
-		Sha256Hash prev = store.getLastOrderResultBlockHash();
-		if (prev != null) {
-			prevHash = prev;
-		}
-		// collect the order block as reference
+
 		// Read previous reward block's data
 		Sha256Hash prevRewardHash = cacheBlockService.getMaxConfirmedReward(store).getBlockHash();
 		long prevChainLength = block.getLastMiningRewardBlock();
-		Set<BlockWrap> referencedblocks = new HashSet< >();
+		Set<BlockWrap> referencedblocks = new HashSet<>();
 		long cutoffheight = blockService.getRewardCutoffHeight(prevRewardHash, store);
+		List<Orderresult> prevUnspents = collectPrevsChain(store.getOrderResultUnspent());
 
 		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
 		ordertypes.add(Block.Type.BLOCKTYPE_ORDER_CANCEL);
 		ordertypes.add(Block.Type.BLOCKTYPE_ORDER_OPEN);
-		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService);
+		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
+				cacheBlockService);
+		// add all blocks of dependencies
+		for (Orderresult b : prevUnspents) {
+			serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
+					blockService.getBlockWrap(b.getBlockHash(), store), cutoffheight, prevChainLength, true, ordertypes,
+					true, store);
+		}
 		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBlockHash(), store), cutoffheight, prevChainLength, true,
-				ordertypes, store);
+				ordertypes, true, store);
 		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBranchBlockHash(), store), cutoffheight, prevChainLength, true,
-				ordertypes, store);
+				ordertypes, true, store);
 
+		Set<BlockWrap> collectOrdersNoSpent = collectOrdersNoSpent(referencedblocks, prevUnspents, store);
+		Orderresult prevblockHash = prevUnspents.isEmpty() ? Orderresult.zeroOrderresult() : prevUnspents.get(0);
 		OrderExecutionResult result = new ServiceOrderExecution(serverConfiguration, networkParameters,
-				cacheBlockService).orderMatching(block, prevHash, serviceBase.getHashSet(referencedblocks), store);
+				cacheBlockService)
+				.orderMatching(block, prevblockHash, serviceBase.getHashSet(collectOrdersNoSpent), store);
 		// do not create the execution block, if there is no new referencedblocks and no
 		// match
-		if (result == null || (result.getOutputTx().getOutputs().isEmpty() && referencedblocks.isEmpty()))
+		if (result == null || (result.getOutputTx().getOutputs().isEmpty() && collectOrdersNoSpent.isEmpty()))
 			return null;
 
 		tx.setData(result.toByteArray());
@@ -186,6 +195,55 @@ public class OrderExecutionService {
 		blockService.adjustHeightRequiredBlocks(block, store);
 
 		return blockSolve(block, Utils.decodeCompactBits(block.getDifficultyTarget()));
+	}
+
+	protected List<Orderresult> collectPrevsChain(List<Orderresult> prevs) {
+		// get all unspents forms a chain, remove others from prevs
+		List<Orderresult> re = new ArrayList<>();
+		if (prevs.isEmpty())
+			return re;
+		Orderresult startingBlock = prevs.get(0);
+		re.add(startingBlock);
+
+		while (startingBlock != null) {
+			startingBlock = findPrev(prevs, startingBlock);
+			if (startingBlock != null)
+				re.add(startingBlock);
+		}
+		return re;
+	}
+
+	protected Orderresult findPrev(List<Orderresult> prevs, Orderresult orderresult) {
+
+		for (Orderresult b : prevs) {
+			if (orderresult.getPrevblockhash().equals(b.getBlockHash())) {
+				return b;
+			}
+		}
+		return null;
+
+	}
+
+	protected Set<BlockWrap> collectOrdersNoSpent(Set<BlockWrap> collectedBlocks, List<Orderresult> prevUnspents,
+			FullBlockStore blockStore) throws BlockStoreException {
+		Set<BlockWrap> collectOrdersNoSpents = new HashSet<>();
+		Set<Sha256Hash> alreadyCollected = collectOrdersNoSpentFrom(prevUnspents);
+		for (BlockWrap b : collectedBlocks) {
+			if (!alreadyCollected.contains(b.getBlockHash())) {
+				collectOrdersNoSpents.add(b);
+			}
+
+		}
+		return collectOrdersNoSpents;
+	}
+
+	protected Set<Sha256Hash> collectOrdersNoSpentFrom(List<Orderresult> prevUnspents) throws BlockStoreException {
+		Set<Sha256Hash> collectOrdersNoSpents = new HashSet<>();
+		for (Orderresult b : prevUnspents) {
+			collectOrdersNoSpents
+					.addAll(new OrderExecutionResult().parseChecked(b.getOrderresult()).getReferencedBlocks());
+		}
+		return collectOrdersNoSpents;
 	}
 
 	private Block blockSolve(Block block, final BigInteger chainTargetFinal)

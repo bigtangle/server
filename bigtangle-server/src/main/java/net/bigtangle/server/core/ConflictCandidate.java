@@ -10,7 +10,7 @@ import com.google.common.base.Objects;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TransactionOutPoint;
-import net.bigtangle.server.data.ContractResult;
+import net.bigtangle.server.data.ContractExecutionResult;
 import net.bigtangle.server.data.OrderExecutionResult;
 
 public class ConflictCandidate {
@@ -43,7 +43,7 @@ public class ConflictCandidate {
     public static ConflictCandidate fromDomainToken(BlockWrap block, Token token) {
         return new ConflictCandidate(block, ConflictPoint.fromDomainToken(token));
     }
-    public static ConflictCandidate fromContractExecute(BlockWrap block, ContractResult token) {
+    public static ConflictCandidate fromContractExecute(BlockWrap block, ContractExecutionResult token) {
         return new ConflictCandidate(block, ConflictPoint.fromContractExecute(token));
     }
 

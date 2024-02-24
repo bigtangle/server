@@ -77,8 +77,8 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		// Find conflicts in the dependency set
 		HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
 		for (Sha256Hash hash : milestoneSet)
-			allApprovedNewBlocks.add(getBlockWrap(hash,store));
-		allApprovedNewBlocks.add(getBlockWrap(newMilestoneBlock.getHash(),store));
+			allApprovedNewBlocks.add(getBlockWrap(hash, store));
+		allApprovedNewBlocks.add(getBlockWrap(newMilestoneBlock.getHash(), store));
 
 		// If anything is already spent, no-go
 		boolean anySpentInputs = hasSpentInputs(allApprovedNewBlocks, store);
@@ -151,7 +151,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
 
 		for (Sha256Hash hash : currRewardInfo.getBlocks()) {
-			BlockWrap block = getBlockWrap(hash,store);
+			BlockWrap block = getBlockWrap(hash, store);
 			if (block == null)
 				return SolidityState.fromReferenced(hash, true);
 			if (block.getBlock().getHeight() < cutoffHeight)
@@ -159,7 +159,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 			Set<Sha256Hash> requiredBlocks = getAllRequiredBlockHashes(block.getBlock(), false);
 			for (Sha256Hash reqHash : requiredBlocks) {
-				BlockWrap req = getBlockWrap(reqHash,store);
+				BlockWrap req = getBlockWrap(reqHash, store);
 				if (req == null)
 					return SolidityState.from(reqHash, true);
 
@@ -179,7 +179,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 		RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
 		for (Sha256Hash hash : currRewardInfo.getBlocks()) {
-			BlockWrap block = getBlockWrap(hash,store);
+			BlockWrap block = getBlockWrap(hash, store);
 			if (block.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD)
 				throw new VerificationException("Reward block approves other reward blocks");
 		}
@@ -201,8 +201,8 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 	public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash,
 			long currentTime, boolean fee, FullBlockStore store) throws BlockStoreException {
 
-		BlockWrap prevTrunkBlock = getBlockWrap(prevTrunk,store);
-		BlockWrap prevBranchBlock =  getBlockWrap(prevBranch,store);
+		BlockWrap prevTrunkBlock = getBlockWrap(prevTrunk, store);
+		BlockWrap prevBranchBlock = getBlockWrap(prevBranch, store);
 		if (fee) {
 			return makeRewardNoOrder(prevTrunkBlock, prevBranchBlock, prevRewardHash, currentTime, store);
 		} else {
@@ -217,21 +217,22 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		// Build transaction for block
 		Transaction tx = new Transaction(networkParameters);
 
-		Set<BlockWrap> blocks = new HashSet< >();
+		Set<BlockWrap> blocks = new HashSet<>();
 		long cutoffheight = getRewardCutoffHeight(prevRewardHash, store);
 
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);
 		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true, null,
-				store);
+				false, store);
 		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true, null,
-				store);
+				false, store);
 
 		long difficultyReward = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
 				.calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
 
 		// Build the type-specific tx data
-		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward,serviceBase.getHashSet(blocks) , prevChainLength + 1);
+		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, serviceBase.getHashSet(blocks),
+				prevChainLength + 1);
 		tx.setData(rewardInfo.toByteArray());
 		tx.setMemo(new MemoInfo("Reward"));
 		return new RewardBuilderResult(tx, difficultyReward);
@@ -246,7 +247,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		// Build transaction for block
 		Transaction tx = new Transaction(networkParameters);
 
-		Set<BlockWrap> blocks = new HashSet< >();
+		Set<BlockWrap> blocks = new HashSet<>();
 		long cutoffheight = getRewardCutoffHeight(prevRewardHash, store);
 
 		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
@@ -263,16 +264,17 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		// exclude the contract event and order open , cancel
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);
-		serviceBase.addRequiredNonContainedBlockHashesTo( blocks, prevBranch, cutoffheight, prevChainLength, true,
-				ordertypes, store);
+		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true,
+				ordertypes, true, store);
 		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true,
-				ordertypes, store);
+				ordertypes, true, store);
 
 		long difficultyReward = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
 				.calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
 
 		// Build the type-specific tx data
-		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, serviceBase.getHashSet(blocks), prevChainLength + 1);
+		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, serviceBase.getHashSet(blocks),
+				prevChainLength + 1);
 		tx.setData(rewardInfo.toByteArray());
 		tx.setMemo(new MemoInfo("Reward"));
 		return new RewardBuilderResult(tx, difficultyReward);
@@ -317,11 +319,11 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 			if (!oldBlock.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
 				// Unset the milestone (Chain length) of this one
 				long milestoneNumber = oldBlock.getRewardInfo().getChainlength();
-				List<Sha256Hash> blocksInMilestoneInterval =  getBlocksInMilestoneInterval(milestoneNumber,
-						milestoneNumber,store);
+				List<Sha256Hash> blocksInMilestoneInterval = getBlocksInMilestoneInterval(milestoneNumber,
+						milestoneNumber, store);
 				// Unconfirm anything not in milestone
 				for (Sha256Hash wipeBlock : blocksInMilestoneInterval)
-					unconfirm(wipeBlock , new HashSet<>(), store);
+					unconfirm(wipeBlock, new HashSet<>(), store);
 			}
 		}
 		Block cursor;

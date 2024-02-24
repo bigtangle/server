@@ -46,276 +46,276 @@ import net.bigtangle.store.FullBlockStore;
  */
 @Service
 public class MCMCService {
-    private  final   String  LOCKID = this.getClass().getName();
+	private final String LOCKID = this.getClass().getName();
 
-    private static final Logger log = LoggerFactory.getLogger(MCMCService.class);
+	private static final Logger log = LoggerFactory.getLogger(MCMCService.class);
 
-    @Autowired
-    protected FullBlockStoreImpl blockGraph;
+	@Autowired
+	protected FullBlockStoreImpl blockGraph;
 
-    @Autowired
-    private TipsService tipsService;
+	@Autowired
+	private TipsService tipsService;
 
-    @Autowired
-    private BlockService blockService;
-    @Autowired
-    protected CacheBlockService cacheBlockService;
-    @Autowired
-    protected CacheBlockPrototypeService cacheBlockPrototypeService;
+	@Autowired
+	private BlockService blockService;
+	@Autowired
+	protected CacheBlockService cacheBlockService;
+	@Autowired
+	protected CacheBlockPrototypeService cacheBlockPrototypeService;
 	@Autowired
 	private ServerConfiguration serverConfiguration;
 
 	@Autowired
 	protected NetworkParameters networkParameters;
- 
-    @Autowired
-    private StoreService storeService;
-    @Autowired
-    private ScheduleConfiguration scheduleConfiguration;
 
-    public void startSingleProcess() throws BlockStoreException {
-        // ExecutorService executor = Executors.newSingleThreadExecutor();
+	@Autowired
+	private StoreService storeService;
+	@Autowired
+	private ScheduleConfiguration scheduleConfiguration;
 
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+	public void startSingleProcess() throws BlockStoreException {
+		// ExecutorService executor = Executors.newSingleThreadExecutor();
 
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        final Future<String> handler = executor.submit(new Callable() {
-            @Override
-            public String call() throws Exception {
-                startSingleProcessDo();
-                return "finish";
-            }
-        });
-        try {
-            handler.get(scheduleConfiguration.getMcmcrate()*5, TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-         //   log.debug(" mcmcService  Timeout  ");
-            handler.cancel(true);
-        }catch (InterruptedException e) {
-         //   log.debug(" mcmcService     ", e);
-        } catch (Exception e) {
-            log.debug(" mcmcService     ", e);
-        } finally {
-            executor.shutdownNow();
-        }
+		ExecutorService executor = Executors.newSingleThreadExecutor();
 
-    }
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		final Future<String> handler = executor.submit(new Callable() {
+			@Override
+			public String call() throws Exception {
+				startSingleProcessDo();
+				return "finish";
+			}
+		});
+		try {
+			handler.get(scheduleConfiguration.getMcmcrate() * 5, TimeUnit.MILLISECONDS);
+		} catch (TimeoutException e) {
+			// log.debug(" mcmcService Timeout ");
+			handler.cancel(true);
+		} catch (InterruptedException e) {
+			// log.debug(" mcmcService ", e);
+		} catch (Exception e) {
+			log.debug(" mcmcService     ", e);
+		} finally {
+			executor.shutdownNow();
+		}
 
-    public void startSingleProcessDo() throws BlockStoreException {
-        FullBlockStore store = storeService.getStore();
-        try {
-            // log.info("mcmcService started");
-            LockObject lock = store.selectLockobject(LOCKID);
-            boolean canrun = false;
-            if (lock == null) {
-                store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
-                canrun = true;
-            } else if (lock.getLocktime() < System.currentTimeMillis() - scheduleConfiguration.getMcmcrate() * 100) {
-                log.info("mcmcService   out date delete and insert: " + Utils.dateTimeFormat(lock.getLocktime()));
-                store.deleteLockobject(LOCKID);
-                store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
-                canrun = true;
-            } else {
-             //   log.info("mcmcService running  at start = " + Utils.dateTimeFormat(lock.getLocktime()));
-            }
-            if (canrun) {
-                Stopwatch watch = Stopwatch.createStarted();
-                update(store);
-                store.deleteLockobject(LOCKID);
-                // if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
-           //     log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
-                watch.stop();
-            }
-        } catch (Exception e) {
-            log.error("mcmcService ", e);
-            if (!e.getLocalizedMessage().contains("java.sql.SQLIntegrityConstraintViolationException")) {
-                store.deleteLockobject(LOCKID);
-            }
-        } finally {
-            store.close();
-        }
+	}
 
-    }
+	public void startSingleProcessDo() throws BlockStoreException {
+		FullBlockStore store = storeService.getStore();
+		try {
+			// log.info("mcmcService started");
+			LockObject lock = store.selectLockobject(LOCKID);
+			boolean canrun = false;
+			if (lock == null) {
+				store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+				canrun = true;
+			} else if (lock.getLocktime() < System.currentTimeMillis() - scheduleConfiguration.getMcmcrate() * 100) {
+				log.info("mcmcService   out date delete and insert: " + Utils.dateTimeFormat(lock.getLocktime()));
+				store.deleteLockobject(LOCKID);
+				store.insertLockobject(new LockObject(LOCKID, System.currentTimeMillis()));
+				canrun = true;
+			} else {
+				// log.info("mcmcService running at start = " +
+				// Utils.dateTimeFormat(lock.getLocktime()));
+			}
+			if (canrun) {
+				Stopwatch watch = Stopwatch.createStarted();
+				update(store);
+				store.deleteLockobject(LOCKID);
+				// if (watch.elapsed(TimeUnit.MILLISECONDS) > 1000)
+				// log.info("mcmcService time {} ms.", watch.elapsed(TimeUnit.MILLISECONDS));
+				watch.stop();
+			}
+		} catch (Exception e) {
+			log.error("mcmcService ", e);
+			if (!e.getLocalizedMessage().contains("java.sql.SQLIntegrityConstraintViolationException")) {
+				store.deleteLockobject(LOCKID);
+			}
+		} finally {
+			store.close();
+		}
 
-    public void update(FullBlockStore store) throws InterruptedException, ExecutionException, BlockStoreException {
+	}
 
-        try {
-            TXReward maxConfirmedReward = cacheBlockService.getMaxConfirmedReward(store);
-            long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward, store);
-            long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward, store);
-            updateWeightAndDepth(maxConfirmedReward, cutoffHeight, maxHeight, store);
-            updateRating(maxConfirmedReward, cutoffHeight, maxHeight, store);
-            deleteMCMC(maxConfirmedReward, store);
-            cacheBlockPrototypeService.evictBlockPrototypeByte();
-            cacheBlockService.evictBlockMCMC();
-        } catch (Exception e) {
-            log.debug("update  ", e);
-        }
+	public void update(FullBlockStore store) throws InterruptedException, ExecutionException, BlockStoreException {
 
-    }
+		try {
+			TXReward maxConfirmedReward = cacheBlockService.getMaxConfirmedReward(store);
+			long cutoffHeight = blockService.getCurrentCutoffHeight(maxConfirmedReward, store);
+			long maxHeight = blockService.getCurrentMaxHeight(maxConfirmedReward, store);
+			updateWeightAndDepth(maxConfirmedReward, cutoffHeight, maxHeight, store);
+			updateRating(maxConfirmedReward, cutoffHeight, maxHeight, store);
+			deleteMCMC(maxConfirmedReward, store);
+			cacheBlockService.evictBlockMCMC();
+			cacheBlockPrototypeService.evictBlockPrototypeByte();
+		} catch (Exception e) {
+			log.debug("update  ", e);
+		}
 
-    private void deleteMCMC(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
-        store.deleteMCMC(maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
-    }
+	}
 
-    /**
-     * Update cumulative weight: the amount of blocks a block is approved by.
-     * Update depth: the longest chain of blocks to a tip. Allows unsolid blocks
-     * too.
-     * 
-     * @throws BlockStoreException
-     */
-    private void updateWeightAndDepth(TXReward maxConfirmedReward, long cutoffHeight, long maxHeight,
-            FullBlockStore store) throws BlockStoreException {
-        // Begin from the highest maintained height blocks and go backwards from
-        // there
-        PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksInIntervalDescending(cutoffHeight, maxHeight);
-        HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers = new HashMap<>();
-        HashMap<Sha256Hash, Long> depths = new HashMap<>();
+	private void deleteMCMC(TXReward maxConfirmedReward, FullBlockStore store) throws BlockStoreException {
+		store.deleteMCMC(maxConfirmedReward.getChainLength() - NetworkParameters.MILESTONE_CUTOFF);
+	}
 
-        // Initialize weight and depth of blocks
-        for (BlockWrap block : blockQueue) {
-            approvers.put(block.getBlockHash(), new HashSet<>());
-            depths.put(block.getBlockHash(), 0L);
-        }
+	/**
+	 * Update cumulative weight: the amount of blocks a block is approved by. Update
+	 * depth: the longest chain of blocks to a tip. Allows unsolid blocks too.
+	 * 
+	 * @throws BlockStoreException
+	 */
+	private void updateWeightAndDepth(TXReward maxConfirmedReward, long cutoffHeight, long maxHeight,
+			FullBlockStore store) throws BlockStoreException {
+		// Begin from the highest maintained height blocks and go backwards from
+		// there
+		PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksInIntervalDescending(cutoffHeight, maxHeight);
+		HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers = new HashMap<>();
+		HashMap<Sha256Hash, Long> depths = new HashMap<>();
 
-        BlockWrap currentBlock = null;
-        List<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
-        while ((currentBlock = blockQueue.poll()) != null) {
-            Sha256Hash currentBlockHash = currentBlock.getBlockHash();
+		// Initialize weight and depth of blocks
+		for (BlockWrap block : blockQueue) {
+			approvers.put(block.getBlockHash(), new HashSet<>());
+			depths.put(block.getBlockHash(), 0L);
+		}
 
-            // Abort if unmaintained, since it will be irrelevant for any tip
-            // selections
-            if (currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
-                continue;
+		BlockWrap currentBlock = null;
+		List<DepthAndWeight> depthAndWeight = new ArrayList<DepthAndWeight>();
+		while ((currentBlock = blockQueue.poll()) != null) {
+			Sha256Hash currentBlockHash = currentBlock.getBlockHash();
 
-            // Add your own hash to approver hashes of current approver hashes
-            approvers.get(currentBlockHash).add(currentBlockHash);
+			// Abort if unmaintained, since it will be irrelevant for any tip
+			// selections
+			if (currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
+				continue;
 
-            // Add all current references to both approved blocks
-            Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
-            subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevTrunk, store);
+			// Add your own hash to approver hashes of current approver hashes
+			approvers.get(currentBlockHash).add(currentBlockHash);
 
-            Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
-            subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevBranch, store);
+			// Add all current references to both approved blocks
+			Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
+			subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevTrunk, store);
 
-            // Update and dereference
-            // TODO reduce the update
-            // if (currentBlock.getBlockEvaluation().getMilestone() < 0) {
-            depthAndWeight.add(new DepthAndWeight(currentBlock.getBlockHash(), approvers.get(currentBlockHash).size(),
-                    depths.get(currentBlockHash)));
+			Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
+			subUpdateWeightAndDepth(blockQueue, approvers, depths, currentBlockHash, prevBranch, store);
 
-            approvers.remove(currentBlockHash);
-            depths.remove(currentBlockHash);
-        }
-        store.updateBlockEvaluationWeightAndDepth(depthAndWeight);
-    }
+			// Update and dereference
+			// TODO reduce the update
+			// if (currentBlock.getBlockEvaluation().getMilestone() < 0) {
+			depthAndWeight.add(new DepthAndWeight(currentBlock.getBlockHash(), approvers.get(currentBlockHash).size(),
+					depths.get(currentBlockHash)));
 
-    private void subUpdateWeightAndDepth(PriorityQueue<BlockWrap> blockQueue,
-            HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers, HashMap<Sha256Hash, Long> depths,
-            Sha256Hash currentBlockHash, Sha256Hash approvedBlockHash, FullBlockStore store)
-            throws BlockStoreException {
-        Long currentDepth = depths.get(currentBlockHash);
-        HashSet<Sha256Hash> currentApprovers = approvers.get(currentBlockHash);
-        if (!approvers.containsKey(approvedBlockHash)) {
-            BlockWrap prevBlock = new ServiceBaseConnect(serverConfiguration, networkParameters,
-					cacheBlockService) .getBlockWrap(approvedBlockHash,store);
-            if (prevBlock != null) {
-                blockQueue.add(prevBlock);
-                approvers.put(approvedBlockHash, new HashSet<>(currentApprovers));
-                depths.put(approvedBlockHash, currentDepth + 1);
-            }
-        } else {
-            approvers.get(approvedBlockHash).addAll(currentApprovers);
-            if (currentDepth + 1 > depths.get(approvedBlockHash))
-                depths.put(approvedBlockHash, currentDepth + 1);
-        }
-    }
+			approvers.remove(currentBlockHash);
+			depths.remove(currentBlockHash);
+		}
+		store.updateBlockEvaluationWeightAndDepth(depthAndWeight);
+	}
 
-    /**
-     * Update rating: the percentage of times that tips selected by MCMC approve
-     * a block. Allows unsolid blocks too.
-     * 
-     * @throws BlockStoreException
-     */
-    private void updateRating(TXReward maxConfirmedReward, long cutoffHeight, long maxHeight, FullBlockStore store)
-            throws BlockStoreException {
-        // Select #tipCount solid tips via MCMC
-        HashMap<Sha256Hash, HashSet<UUID>> selectedTipApprovers = new HashMap<Sha256Hash, HashSet<UUID>>(
-                NetworkParameters.NUMBER_RATING_TIPS);
+	private void subUpdateWeightAndDepth(PriorityQueue<BlockWrap> blockQueue,
+			HashMap<Sha256Hash, HashSet<Sha256Hash>> approvers, HashMap<Sha256Hash, Long> depths,
+			Sha256Hash currentBlockHash, Sha256Hash approvedBlockHash, FullBlockStore store)
+			throws BlockStoreException {
+		Long currentDepth = depths.get(currentBlockHash);
+		HashSet<Sha256Hash> currentApprovers = approvers.get(currentBlockHash);
+		if (!approvers.containsKey(approvedBlockHash)) {
+			BlockWrap prevBlock = new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+					.getBlockWrap(approvedBlockHash, store);
+			if (prevBlock != null) {
+				blockQueue.add(prevBlock);
+				approvers.put(approvedBlockHash, new HashSet<>(currentApprovers));
+				depths.put(approvedBlockHash, currentDepth + 1);
+			}
+		} else {
+			approvers.get(approvedBlockHash).addAll(currentApprovers);
+			if (currentDepth + 1 > depths.get(approvedBlockHash))
+				depths.put(approvedBlockHash, currentDepth + 1);
+		}
+	}
 
-        Collection<BlockWrap> selectedTips = tipsService.getRatingTips(maxConfirmedReward,
-                NetworkParameters.NUMBER_RATING_TIPS, maxHeight, store);
+	/**
+	 * Update rating: the percentage of times that tips selected by MCMC approve a
+	 * block. Allows unsolid blocks too.
+	 * 
+	 * @throws BlockStoreException
+	 */
+	private void updateRating(TXReward maxConfirmedReward, long cutoffHeight, long maxHeight, FullBlockStore store)
+			throws BlockStoreException {
+		// Select #tipCount solid tips via MCMC
+		HashMap<Sha256Hash, HashSet<UUID>> selectedTipApprovers = new HashMap<Sha256Hash, HashSet<UUID>>(
+				NetworkParameters.NUMBER_RATING_TIPS);
 
-        // Initialize all approvers as UUID
-        for (BlockWrap selectedTip : selectedTips) {
-            UUID randomUUID = UUID.randomUUID();
-            if (selectedTipApprovers.containsKey(selectedTip.getBlockHash())) {
-                HashSet<UUID> result = selectedTipApprovers.get(selectedTip.getBlockHash());
-                result.add(randomUUID);
-            } else {
-                HashSet<UUID> result = new HashSet<>();
-                result.add(randomUUID);
-                selectedTipApprovers.put(selectedTip.getBlockHash(), result);
-            }
-        }
+		Collection<BlockWrap> selectedTips = tipsService.getRatingTips(maxConfirmedReward,
+				NetworkParameters.NUMBER_RATING_TIPS, maxHeight, store);
 
-        // Begin from the highest solid height tips plus selected tips and go
-        // backwards from there
-        PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksInIntervalDescending(cutoffHeight, maxHeight);
-        HashSet<BlockWrap> selectedTipSet = new HashSet<>(selectedTips);
-        selectedTipSet.removeAll(blockQueue);
-        blockQueue.addAll(selectedTipSet);
-        HashMap<Sha256Hash, HashSet<UUID>> approvers = new HashMap<>();
-        for (BlockWrap tip : blockQueue) {
-            approvers.put(tip.getBlock().getHash(), new HashSet<>());
-        }
+		// Initialize all approvers as UUID
+		for (BlockWrap selectedTip : selectedTips) {
+			UUID randomUUID = UUID.randomUUID();
+			if (selectedTipApprovers.containsKey(selectedTip.getBlockHash())) {
+				HashSet<UUID> result = selectedTipApprovers.get(selectedTip.getBlockHash());
+				result.add(randomUUID);
+			} else {
+				HashSet<UUID> result = new HashSet<>();
+				result.add(randomUUID);
+				selectedTipApprovers.put(selectedTip.getBlockHash(), result);
+			}
+		}
 
-        BlockWrap currentBlock = null;
-        List<Rating> ratings = new ArrayList<Rating>();
-        while ((currentBlock = blockQueue.poll()) != null) {
-            // Abort if unmaintained
-            if (currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
-                continue;
+		// Begin from the highest solid height tips plus selected tips and go
+		// backwards from there
+		PriorityQueue<BlockWrap> blockQueue = store.getSolidBlocksInIntervalDescending(cutoffHeight, maxHeight);
+		HashSet<BlockWrap> selectedTipSet = new HashSet<>(selectedTips);
+		selectedTipSet.removeAll(blockQueue);
+		blockQueue.addAll(selectedTipSet);
+		HashMap<Sha256Hash, HashSet<UUID>> approvers = new HashMap<>();
+		for (BlockWrap tip : blockQueue) {
+			approvers.put(tip.getBlock().getHash(), new HashSet<>());
+		}
 
-            // Add your own hashes as reference if current block is one of the
-            // selected tips
-            if (selectedTipApprovers.containsKey(currentBlock.getBlockHash()))
-                approvers.get(currentBlock.getBlockHash())
-                        .addAll(selectedTipApprovers.get(currentBlock.getBlockHash()));
+		BlockWrap currentBlock = null;
+		List<Rating> ratings = new ArrayList<Rating>();
+		while ((currentBlock = blockQueue.poll()) != null) {
+			// Abort if unmaintained
+			if (currentBlock.getBlockEvaluation().getHeight() <= cutoffHeight)
+				continue;
 
-            // Add all current references to both approved blocks (initialize if
-            // not yet initialized)
-            Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
-            subUpdateRating(blockQueue, approvers, currentBlock, prevTrunk, store);
+			// Add your own hashes as reference if current block is one of the
+			// selected tips
+			if (selectedTipApprovers.containsKey(currentBlock.getBlockHash()))
+				approvers.get(currentBlock.getBlockHash())
+						.addAll(selectedTipApprovers.get(currentBlock.getBlockHash()));
 
-            Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
-            subUpdateRating(blockQueue, approvers, currentBlock, prevBranch, store);
+			// Add all current references to both approved blocks (initialize if
+			// not yet initialized)
+			Sha256Hash prevTrunk = currentBlock.getBlock().getPrevBlockHash();
+			subUpdateRating(blockQueue, approvers, currentBlock, prevTrunk, store);
 
-            // Update your rating if solid
-            if (currentBlock.getBlockEvaluation().getSolid() == 2)
-            // && currentBlock.getBlockEvaluation().getMilestone() < 0 )
-            {
-                ratings.add(new Rating(currentBlock.getBlockHash(), approvers.get(currentBlock.getBlockHash()).size()));
-            }
-            approvers.remove(currentBlock.getBlockHash());
-        }
-        store.updateBlockEvaluationRating(ratings);
+			Sha256Hash prevBranch = currentBlock.getBlock().getPrevBranchBlockHash();
+			subUpdateRating(blockQueue, approvers, currentBlock, prevBranch, store);
 
-    }
+			// Update your rating if solid
+			if (currentBlock.getBlockEvaluation().getSolid() == 2)
+			// && currentBlock.getBlockEvaluation().getMilestone() < 0 )
+			{
+				ratings.add(new Rating(currentBlock.getBlockHash(), approvers.get(currentBlock.getBlockHash()).size()));
+			}
+			approvers.remove(currentBlock.getBlockHash());
+		}
+		store.updateBlockEvaluationRating(ratings);
 
-    private void subUpdateRating(PriorityQueue<BlockWrap> blockQueue, HashMap<Sha256Hash, HashSet<UUID>> approvers,
-            BlockWrap currentBlock, Sha256Hash prevTrunk, FullBlockStore store) throws BlockStoreException {
-        if (!approvers.containsKey(prevTrunk)) {
-            BlockWrap prevBlock =   new ServiceBaseConnect(serverConfiguration, networkParameters,
-					cacheBlockService) .getBlockWrap(prevTrunk,store);
-            if (prevBlock != null) {
-                blockQueue.add(prevBlock);
-                approvers.put(prevBlock.getBlockHash(), new HashSet<>(approvers.get(currentBlock.getBlockHash())));
-            }
-        } else {
-            approvers.get(prevTrunk).addAll(approvers.get(currentBlock.getBlockHash()));
-        }
-    }
+	}
+
+	private void subUpdateRating(PriorityQueue<BlockWrap> blockQueue, HashMap<Sha256Hash, HashSet<UUID>> approvers,
+			BlockWrap currentBlock, Sha256Hash prevTrunk, FullBlockStore store) throws BlockStoreException {
+		if (!approvers.containsKey(prevTrunk)) {
+			BlockWrap prevBlock = new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+					.getBlockWrap(prevTrunk, store);
+			if (prevBlock != null) {
+				blockQueue.add(prevBlock);
+				approvers.put(prevBlock.getBlockHash(), new HashSet<>(approvers.get(currentBlock.getBlockHash())));
+			}
+		} else {
+			approvers.get(prevTrunk).addAll(approvers.get(currentBlock.getBlockHash()));
+		}
+	}
 
 }

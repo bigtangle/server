@@ -12,7 +12,7 @@ import com.google.common.base.Objects;
 import net.bigtangle.core.RewardInfo;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TransactionOutPoint;
-import net.bigtangle.server.data.ContractResult;
+import net.bigtangle.server.data.ContractExecutionResult;
 import net.bigtangle.server.data.OrderExecutionResult;
 
 public class ConflictPoint {
@@ -29,12 +29,12 @@ public class ConflictPoint {
 	private Token connectedDomainToken;
 
 	@Nullable
-	private ContractResult connectedContracExecute;
+	private ContractExecutionResult connectedContracExecute;
 	@Nullable
 	private OrderExecutionResult connectedOrderExecute;
 
 	private ConflictPoint(ConflictType type, TransactionOutPoint connectedOutpoint, RewardInfo reward,
-			Token connectedToken, Token connectedDomainToken, ContractResult connectedContracExecute,
+			Token connectedToken, Token connectedDomainToken, ContractExecutionResult connectedContracExecute,
 			OrderExecutionResult connectedOrderExecute) {
 		super();
 		this.type = type;
@@ -63,7 +63,7 @@ public class ConflictPoint {
 		return new ConflictPoint(ConflictType.DOMAINISSUANCE, null, null, null, token, null, null);
 	}
 
-	public static ConflictPoint fromContractExecute(ContractResult contractResult) {
+	public static ConflictPoint fromContractExecute(ContractExecutionResult contractResult) {
 		return new ConflictPoint(ConflictType.CONTRACTEXECUTE, null, null, null, null, contractResult, null);
 	}
 
@@ -154,7 +154,7 @@ public class ConflictPoint {
 		return connectedDomainToken;
 	}
 
-	public ContractResult getConnectedContracExecute() {
+	public ContractExecutionResult getConnectedContracExecute() {
 		return connectedContracExecute;
 	}
 	public   OrderExecutionResult getConnectedOrderExecute() {

@@ -254,10 +254,14 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 
 	protected final String INSERT_CONTRACT_RESULT_SQL = getInsert()
 			+ "  INTO contractresult (blockhash,  contracttokenid, confirmed, spent, spenderblockhash, "
-			+ " contractresult, prevblockhash, inserttime) " + " VALUES (?, ?, ?, ?, ?, ?, ?,?)";
+			+ " contractresult, prevblockhash, inserttime, contractchainlength) " + " VALUES (?, ?, ?, ?, ?, ?, ?,?,?)";
 
-	protected final String SELECT_CONTRACTRESULT_LAST__SQL = "SELECT  blockhash "
-			+ " FROM contractresult WHERE contracttokenid=? and confirmed=true and spent=false order by inserttime desc limit 1 ";
+	protected final String SELECT_CONTRACTRESULT_SQL = "SELECT  blockhash,  contracttokenid, confirmed, spent, spenderblockhash,  "
+			+ " contractresult, prevblockhash, inserttime, contractchainlength "
+			+ " FROM contractresult WHERE contracttokenid=? and spent=false order by contractchainlength desc  ";
+	protected final String SELECT_CONTRACTRESULT_HASH_SQL = "SELECT  blockhash,  contracttokenid, confirmed, spent, spenderblockhash,  "
+			+ " contractresult, prevblockhash, inserttime, contractchainlength "
+			+ " FROM contractresult WHERE blockhash=?   ";
 
 	protected final String UPDATE_ORDERRESULT_SPENT_SQL = getUpdate()
 			+ " orderresult SET spent = ?, spenderblockhash = ? " + " WHERE blockhash = ?";
@@ -265,9 +269,13 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 			+ " WHERE blockhash = ?";
 	protected final String INSERT_ORDER_RESULT_SQL = getInsert()
 			+ "  INTO orderresult (blockhash, confirmed, spent, spenderblockhash, "
-			+ " orderresult, prevblockhash, inserttime) " + " VALUES (?, ?, ?, ?, ?, ?, ?)";
-	protected final String SELECT_ORDERRESULT_LAST__SQL = "SELECT  blockhash "
-			+ " FROM orderresult WHERE confirmed=true and spent=false order by inserttime desc limit 1 ";
+			+ " orderresult, prevblockhash, inserttime, orderchainlength) " + " VALUES (?, ?, ?, ?, ?, ?, ?,?)";
+	protected final String SELECT_ORDERRESULT_SQL =   "  select blockhash, confirmed, spent, spenderblockhash, "
+			+ " orderresult, prevblockhash, inserttime , orderchainlength" 
+			+ " FROM orderresult WHERE spent=false order by orderchainlength desc ";
+	protected final String SELECT_ORDERRESULT_HASH_SQL =   "  select blockhash, confirmed, spent, spenderblockhash, "
+			+ " orderresult, prevblockhash, inserttime , orderchainlength" 
+			+ " FROM orderresult WHERE blockhash=?";
 
 	protected final String INSERT_TOKENS_SQL = getInsert()
 			+ " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, "

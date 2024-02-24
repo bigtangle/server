@@ -66,6 +66,9 @@ public class SpentBlock extends DataClass {
 		confirmed = dis.readBoolean();
 		confirmed = dis.readBoolean();
 		spenderBlockHash = Sha256Hash.wrap(Utils.readNBytes(dis));
+		if (spenderBlockHash.equals(Sha256Hash.ZERO_HASH)) {
+			spenderBlockHash = null;
+		}
 		time = dis.readLong();
 		return this;
 	}
