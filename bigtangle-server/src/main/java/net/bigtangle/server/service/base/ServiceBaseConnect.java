@@ -1514,8 +1514,8 @@ public class ServiceBaseConnect extends ServiceBase {
 			ContractExecutionResult check = new ServiceContract(serverConfiguration, networkParameters,
 					cacheBlockService).executeContract(block, blockStore, result.getContracttokenid(), prevblockhash,
 							result.getReferencedBlocks());
-			Sets.difference(result.getRemainderRecords(), check.getRemainderRecords());
-			Sets.difference(check.getRemainderRecords(), result.getRemainderRecords());
+		//	Sets.difference(result.getRemainderRecords(), check.getRemainderRecords());
+		//	Sets.difference(check.getRemainderRecords(), result.getRemainderRecords());
 			if (check != null && result.getOutputTxHash().equals(check.getOutputTxHash())
 					&& result.getAllRecords().equals(check.getAllRecords())
 					&& result.getRemainderRecords().equals(check.getRemainderRecords())

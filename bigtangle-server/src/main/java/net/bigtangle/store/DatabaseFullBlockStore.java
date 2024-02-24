@@ -2687,7 +2687,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(
-					getUpdate() + " contractresult SET spent = ?, spenderblockhash = ? " + " WHERE blockhash = ? ");
+					getUpdate() + " orderresult SET spent = ?, spenderblockhash = ? " + " WHERE blockhash = ? ");
 
 			preparedStatement.setBoolean(1, spent);
 			preparedStatement.setBytes(2, spentBlock != null ? spentBlock.getBytes() : null);
