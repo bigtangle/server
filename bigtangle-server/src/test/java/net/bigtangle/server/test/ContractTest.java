@@ -37,9 +37,9 @@ import net.bigtangle.server.service.base.ServiceBaseConnect;
 import net.bigtangle.server.service.base.ServiceContract;
 import net.bigtangle.wallet.Wallet;
 
-public class ContractLotteryTest extends AbstractIntegrationTest {
+public class ContractTest extends AbstractIntegrationTest {
 
-	protected static final Logger log = LoggerFactory.getLogger(ContractLotteryTest.class);
+	protected static final Logger log = LoggerFactory.getLogger(ContractTest.class);
 
 	@Autowired
 	public NetworkParameters networkParameters;
@@ -100,7 +100,7 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 		List<UTXO> utxos = getBalance(false, ulist);
 		List<UTXO> ylist = utxos.stream().filter(u -> u.getTokenId().equals(yuanTokenPub)).collect(Collectors.toList());
 		for (UTXO u : ylist) {
-			// log.debug(u.toString());
+			  log.debug(u.toString());
 			BigInteger p = map.get(u.getAddress());
 			if (p != null) {
 				map.put(u.getAddress(), p.add(u.getValue().getValue()));
@@ -170,6 +170,71 @@ public class ContractLotteryTest extends AbstractIntegrationTest {
 
 				}
 			}
+		}
+
+	}
+
+	@Test
+	public void multipleExecutions() throws Exception {
+		// multiple executions of contract and rewards confirms
+
+		prepare();
+		// Sha256Hash prevbeforeConflict = Sha256Hash.ZERO_HASH;
+		List<Contractresult> prevbeforeConflict = store.getContractresultUnspent(contractKey.getPublicKeyAsHex());
+		assertTrue(prevbeforeConflict.isEmpty());
+		Block resultBlock = null;
+		for (ECKey key : ulist) {
+			Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
+			w.payContract(null, yuanTokenPub, payContractAmount, null, null, contractKey.getPublicKeyAsHex());
+
+			resultBlock = contractExecutionService.createContractExecution(contractKey.getPublicKeyAsHex(), store);
+			Map<String, BigInteger> endMap = new HashMap<>();
+			check(ulist, endMap);
+			
+			if (resultBlock != null) {
+				ContractExecutionResult result = new ContractExecutionResult()
+						.parse(resultBlock.getTransactions().get(0).getData());
+
+				ContractExecutionResult check = new ServiceContract(serverConfiguration, networkParameters,
+						cacheBlockService).executeContract(resultBlock, store, result.getContracttokenid(),
+								store.getContractresult(result.getPrevblockhash()), result.getReferencedBlocks());
+				blockSaveService.saveBlock(resultBlock, store);
+
+				assertTrue(resultBlock != null);
+				if (!check.getOutputTx().getOutputs().isEmpty()) {
+					Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey()
+							.getToAddress(networkParameters);
+					//confirm the contract execution
+					makeRewardBlock(resultBlock);
+					// check one of user get the winnerAmount
+					 endMap = new HashMap<>();
+					check(ulist, endMap);
+	
+					
+					// List<UTXO> utxos = getBalance(false, ulist);
+					assertTrue(endMap.get(winnerAddress.toString()) != null);
+					assertTrue(endMap.get(winnerAddress.toString()).equals(new BigInteger(winnerAmount)));
+
+				}
+			}
+		}
+		makeRewardBlock(resultBlock);
+		ContractExecutionResult result = new ContractExecutionResult()
+				.parse(resultBlock.getTransactions().get(0).getData());
+
+		ContractExecutionResult check = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
+				.executeContract(resultBlock, store, result.getContracttokenid(),
+						store.getContractresult(result.getPrevblockhash()), result.getReferencedBlocks());
+
+		if (!check.getOutputTx().getOutputs().isEmpty()) {
+			Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey().getToAddress(networkParameters);
+			// check one of user get the winnerAmount
+			Map<String, BigInteger> endMap = new HashMap<>();
+			check(ulist, endMap);
+			// List<UTXO> utxos = getBalance(false, ulist);
+			assertTrue(endMap.get(winnerAddress.toString()) != null);
+			assertTrue(endMap.get(winnerAddress.toString()).equals(new BigInteger(winnerAmount)));
+
 		}
 
 	}

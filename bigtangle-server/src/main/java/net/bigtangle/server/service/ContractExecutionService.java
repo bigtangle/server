@@ -176,6 +176,8 @@ public class ContractExecutionService {
 		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
 		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EVENT);
 		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACTEVENT_CANCEL);
+		//the related previous execution
+		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);
 		// add all blocks of dependencies
@@ -191,7 +193,7 @@ public class ContractExecutionService {
 		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBranchBlockHash(), store), cutoffheight, prevChainLength, true,
 				ordertypes, true, store);
-		Set<BlockWrap> collectNotSpents = collectOrdersNoSpent(referencedblocks, prevs, store);
+		Set<BlockWrap> collectNotSpents = collectNotSpents(referencedblocks, prevs, store);
 
 		Contractresult prevblockHash = prevs.isEmpty() ? Contractresult.zeroContractresult() : prevs.get(0);
 		ContractExecutionResult result = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
@@ -235,19 +237,20 @@ public class ContractExecutionService {
 
 	}
 
-	protected Set<BlockWrap> collectOrdersNoSpent(Set<BlockWrap> collectedBlocks, List<Contractresult> prevUnspents,
+	protected Set<BlockWrap> collectNotSpents(Set<BlockWrap> collectedBlocks, List<Contractresult> prevUnspents,
 			FullBlockStore blockStore) throws BlockStoreException {
 		Set<BlockWrap> collectOrdersNoSpents = new HashSet<>();
-		Set<Sha256Hash> alreadyCollected = collectOrdersNoSpentFrom(prevUnspents);
+		Set<Sha256Hash> alreadyCollected = collectOrdersNotSpentFrom(prevUnspents);
 		for (BlockWrap b : collectedBlocks) {
-			if (!alreadyCollected.contains(b.getBlockHash())) {
+			if (!alreadyCollected.contains(b.getBlockHash())
+					|| Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(b.getBlock().getBlockType())) {
 				collectOrdersNoSpents.add(b);
 			}
 		}
 		return collectOrdersNoSpents;
 	}
 
-	protected Set<Sha256Hash> collectOrdersNoSpentFrom(List<Contractresult> prevUnspents) throws BlockStoreException {
+	protected Set<Sha256Hash> collectOrdersNotSpentFrom(List<Contractresult> prevUnspents) throws BlockStoreException {
 		Set<Sha256Hash> collectOrdersNoSpents = new HashSet<>();
 		for (Contractresult b : prevUnspents) {
 			collectOrdersNoSpents

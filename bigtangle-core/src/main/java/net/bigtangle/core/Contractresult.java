@@ -99,6 +99,11 @@ public class Contractresult extends SpentBlock implements java.io.Serializable {
 		this.contractchainlength = contractchainLength;
 	}
 
+	@Override
+	public String toString() {
+		return "Contractresult [prevblockhash=" + prevblockhash + ", contractchainlength=" + contractchainlength + "]";
+	}
+
  
 
 }

@@ -76,8 +76,14 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 		// Find conflicts in the dependency set
 		HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
-		for (Sha256Hash hash : milestoneSet)
-			allApprovedNewBlocks.add(getBlockWrap(hash, store));
+		for (Sha256Hash hash : milestoneSet) {
+			BlockWrap blockWrap = getBlockWrap(hash, store);
+			allApprovedNewBlocks.add(blockWrap);
+			if ((Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(blockWrap.getBlock().getBlockType())
+					|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(blockWrap.getBlock().getBlockType()))) {
+				allApprovedNewBlocks.addAll(getReferrencedBlockWrap(blockWrap.getBlock(), store));
+			}
+		}
 		allApprovedNewBlocks.add(getBlockWrap(newMilestoneBlock.getHash(), store));
 
 		// If anything is already spent, no-go

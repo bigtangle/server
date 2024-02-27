@@ -618,7 +618,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		ECKey genesisKey = ECKey.fromPrivateAndPrecalculatedPublic(Utils.HEX.decode(testPriv),
 				Utils.HEX.decode(testPub));
 		ECKey testKey = new ECKey();
-		;
 		List<Block> addedBlocks = new ArrayList<>();
 
 		// Make test token
@@ -643,9 +642,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		// Execute order matching
 		makeOrderExecutionAndReward(addedBlocks);
 
-		// Verify the tokens changed possession
-		// TODO FEE assertHasAvailableToken(testKey,
-		// NetworkParameters.BIGTANGLE_TOKENID_STRING, 99950l);
 		assertHasAvailableToken(genesisKey, testKey.getPublicKeyAsHex(), 100l);
 
 		// Verify token amount invariance
@@ -1253,7 +1249,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	public void chechDecimalFormat() throws Exception {
+	public void checkDecimalFormat() throws Exception {
 
 		ECKey dollarKey = new ECKey(); 
 		List<Block> addedBlocks = new ArrayList<>();

@@ -37,14 +37,14 @@ import net.bigtangle.core.response.ErrorResponse;
 import net.bigtangle.core.response.GetBalancesResponse;
 import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.params.ReqCmd;
-import net.bigtangle.server.test.ContractLotteryTest;
+import net.bigtangle.server.test.ContractTest;
 import net.bigtangle.utils.Json;
 import net.bigtangle.utils.OkHttp3Util;
 import net.bigtangle.wallet.Wallet;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class PerformanceTest extends ContractLotteryTest {
+public class PerformanceTest extends ContractTest {
 
 	@BeforeEach
 	public void setUp() throws Exception {

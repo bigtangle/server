@@ -3,7 +3,7 @@ select * from orders   ;
 select * from contractevent   ;
 select * from contractresult   ;
 select * from orderresult   ;
-select * from outputs  where confirmed =true and spent=false ;
+select * from outputs  where confirmed =true and spent=false and tokenid !="bc" and toaddress="154AxPN4kEUYNY5Ubt8yCssoR7Zgppw8y4";
 select count( *) from blocks   ;
 select count( *) from blocks  WHERE milestone>9;
 select count( *) from unsolidblocks   where inserttime < 1515432033 ;
@@ -25,7 +25,7 @@ select *  FROM blocks, mcmc  WHERE blocks.hash=mcmc.hash and solid=2 AND milesto
 AND confirmed = false   AND mcmc.rating >= 5;
 
 select *  FROM info.blocks where  hash=0x000c1f398adde6b2c31722340987dea675eadff2841cdb7825afc90f1d4c5097;
-select * from outputs where blockhash = 0x00a1bed74a04dfb29c741d4117969dfc2eb917f4076e6e7f28b27ca999343257;
+select * from outputs where blockhash = 0x007a1d7e3d908208161eec81d9243b217c375cfd7324553b11464012d1e03aa5;
 
 select * from blocks where blocktype=2 order by height desc limit 500
 select * from blocks where milestone=339 and blocktype=3

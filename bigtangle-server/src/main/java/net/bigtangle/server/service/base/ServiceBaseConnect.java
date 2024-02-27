@@ -278,8 +278,8 @@ public class ServiceBaseConnect extends ServiceBase {
 			allApprovedNewBlocks.add(block);
 		}
 
-		if (check && Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(block.getBlock().getBlockType())
-				|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(block.getBlock().getBlockType())) {
+		if (check && (Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(block.getBlock().getBlockType())
+				|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(block.getBlock().getBlockType()))) {
 			allApprovedNewBlocks.addAll(getReferrencedBlockWrap(block.getBlock(), store));
 		}
 	}
@@ -1138,7 +1138,7 @@ public class ServiceBaseConnect extends ServiceBase {
 					logger.debug("hasSpentInputs " + c.getBlock().getBlock().toString());
 				return re;
 			} catch (BlockStoreException e) {
-	//			e.printStackTrace();
+				// e.printStackTrace();
 				return true;
 			}
 		});
@@ -1514,13 +1514,14 @@ public class ServiceBaseConnect extends ServiceBase {
 			ContractExecutionResult check = new ServiceContract(serverConfiguration, networkParameters,
 					cacheBlockService).executeContract(block, blockStore, result.getContracttokenid(), prevblockhash,
 							result.getReferencedBlocks());
-		//	Sets.difference(result.getRemainderRecords(), check.getRemainderRecords());
-		//	Sets.difference(check.getRemainderRecords(), result.getRemainderRecords());
+			// Sets.difference(result.getRemainderRecords(), check.getRemainderRecords());
+			// Sets.difference(check.getRemainderRecords(), result.getRemainderRecords());
 			if (check != null && result.getOutputTxHash().equals(check.getOutputTxHash())
 					&& result.getAllRecords().equals(check.getAllRecords())
 					&& result.getRemainderRecords().equals(check.getRemainderRecords())
 					&& result.getCancelRecords().equals(check.getCancelRecords())) {
 
+			//	blockStore.updateContractEventConfirmed(check.getAllRecords(), true);
 				blockStore.updateContractEventSpent(check.getAllRecords(), block.getHash(), true);
 
 				blockStore.updateContractResultConfirmed(block.getHash(), true);
@@ -1640,12 +1641,18 @@ public class ServiceBaseConnect extends ServiceBase {
 	}
 
 	private void confirmTransaction(Block block, Transaction tx, FullBlockStore blockStore) throws BlockStoreException {
-		// Set used other outputs spent
-		if (!tx.isCoinBase()) {
-			for (TransactionInput in : tx.getInputs()) {
+
+		// Set own outputs confirmed
+		for (TransactionOutput out : tx.getOutputs()) {
+			blockStore.updateTransactionOutputConfirmed(block.getHash(), tx.getHash(), out.getIndex(), true);
+		}
+
+		for (TransactionInput in : tx.getInputs()) {
+
+			// Set used other outputs spent
+			if (!tx.isCoinBase()) {
 				UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getBlockHash(),
 						in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
-
 				// Sanity check
 				if (prevOut == null) {
 					BlockWrap b = getBlockWrap(in.getOutpoint().getBlockHash(), blockStore);
@@ -1659,10 +1666,6 @@ public class ServiceBaseConnect extends ServiceBase {
 			}
 		}
 
-		// Set own outputs confirmed
-		for (TransactionOutput out : tx.getOutputs()) {
-			blockStore.updateTransactionOutputConfirmed(block.getHash(), tx.getHash(), out.getIndex(), true);
-		}
 	}
 
 	public void evictTransactions(Block block, FullBlockStore blockStore) throws BlockStoreException {

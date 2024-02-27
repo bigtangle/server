@@ -2521,9 +2521,10 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 			}
 		}
 	}
-	@Override 
+
+	@Override
 	public Contractresult getContractresult(Sha256Hash blockhash) throws BlockStoreException {
-		PreparedStatement preparedStatement = null; 
+		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_CONTRACTRESULT_HASH_SQL);
 			preparedStatement.setBytes(1, blockhash.getBytes());
@@ -2546,10 +2547,10 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 			}
 		}
 	}
-	
-	@Override 
+
+	@Override
 	public Orderresult getOrderResult(Sha256Hash blockhash) throws BlockStoreException {
-		PreparedStatement preparedStatement = null; 
+		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_ORDERRESULT_HASH_SQL);
 			preparedStatement.setBytes(1, blockhash.getBytes());
@@ -2572,7 +2573,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 			}
 		}
 	}
-	
+
 	@Override
 	public List<Orderresult> getOrderResultUnspent() throws BlockStoreException {
 
@@ -2639,7 +2640,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		return new Contractresult(Sha256Hash.wrap(resultSet.getBytes("blockhash")), resultSet.getBoolean("confirmed"),
 				resultSet.getBoolean("spent"), Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),
 				Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")), resultSet.getBytes("contractresult"),
-				resultSet.getLong("inserttime"), resultSet.getLong("contractchainlength"));
+				resultSet.getLong("contractchainlength"), resultSet.getLong("inserttime"));
 
 	}
 

@@ -241,8 +241,10 @@ public class UTXO extends SpentBlock implements  Serializable {
         return "UTXO [value=" + value + ", \n script=" + script + ", \n hash=" + hash + ", \n index=" + index
                 + ", coinbase=" + coinbase + ", \n address=" + address + ", \n fromaddress=" + fromaddress
                 + ", \n time=" + Utils.dateTimeFormat(getTime()*1000)
-                + ", \n memo=" + memo + ", \n spendPending=" + spendPending 
+                + ", \n memo=" + memo 
                 + ", \n confirmed=" + isConfirmed() 
+                + ", \n spent=" + isSpent() 
+                + ", \n spendPending=" + spendPending 
                 + ", \n spendPendingTime="          + spendPendingTime 
                 + ", \n spenderBlockHash="          + getSpenderBlockHash()  
                 + ", \n tokenId=" + tokenId + ", \n minimumsign=" + minimumsign + " \n ]";
