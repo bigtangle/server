@@ -566,14 +566,19 @@ public class ServiceBaseConnect extends ServiceBase {
 			if (connectedContracExecute.getPrevblockhash().equals(networkParameters.getGenesisBlock().getHash())) {
 				return false;
 			} else {
-				return store.checkContractResultSpent(connectedContracExecute.getPrevblockhash()) != null;
+				Sha256Hash checkContractResultSpent = store
+						.checkContractResultSpent(connectedContracExecute.getPrevblockhash());
+				return checkContractResultSpent != null
+						&& !checkContractResultSpent.equals(c.getBlock().getBlockHash());
 			}
 		case ORDEREXECUTE:
 			final OrderExecutionResult connectedOrderExecute = c.getConflictPoint().getConnectedOrderExecute();
 			if (connectedOrderExecute.getPrevblockhash().equals(Sha256Hash.ZERO_HASH)) {
 				return false;
 			} else {
-				return store.checkOrderResultSpent(connectedOrderExecute.getPrevblockhash()) != null;
+				Sha256Hash checkOrderResultSpent = store
+						.checkOrderResultSpent(connectedOrderExecute.getPrevblockhash());
+				return checkOrderResultSpent != null && !checkOrderResultSpent.equals(c.getBlock().getBlockHash());
 			}
 
 		default:
@@ -1521,7 +1526,7 @@ public class ServiceBaseConnect extends ServiceBase {
 					&& result.getRemainderRecords().equals(check.getRemainderRecords())
 					&& result.getCancelRecords().equals(check.getCancelRecords())) {
 
-			//	blockStore.updateContractEventConfirmed(check.getAllRecords(), true);
+				// blockStore.updateContractEventConfirmed(check.getAllRecords(), true);
 				blockStore.updateContractEventSpent(check.getAllRecords(), block.getHash(), true);
 
 				blockStore.updateContractResultConfirmed(block.getHash(), true);
@@ -1557,9 +1562,15 @@ public class ServiceBaseConnect extends ServiceBase {
 
 		try {
 			OrderExecutionResult result = new OrderExecutionResult().parse(block.getTransactions().get(0).getData());
-			blockStore.updateOrderResultSpent(result.getPrevblockhash(), null, false);
+			Orderresult prevblockhash = blockStore.getOrderResult(result.getPrevblockhash());
+			OrderExecutionResult check = new ServiceOrderExecution(serverConfiguration, networkParameters,
+					cacheBlockService).orderMatching(block, prevblockhash, result.getReferencedBlocks(), blockStore);
+			for (OrderRecord c : check.getSpentOrderRecord()) {
+				c.setSpent(false);
+				c.setSpenderBlockHash(null);
+			}
+			blockStore.updateOrderSpent(check.getSpentOrderRecord());
 			blockStore.updateOrderResultConfirmed(block.getHash(), false);
-			blockStore.updateOrderSpent(result.getAllRecords(), block.getHash(), false);
 			blockStore.updateTransactionOutputConfirmed(block.getHash(), result.getOutputTxHash(), 0, false);
 			evictTransactions(block.getHash(), blockStore);
 

@@ -156,9 +156,10 @@ public abstract class AbstractIntegrationTest {
 	@Autowired
 	private ScheduleConfiguration scheduleConfiguration;
 	@Autowired
-	protected 	CacheBlockPrototypeService cacheBlockPrototypeService;
+	protected CacheBlockPrototypeService cacheBlockPrototypeService;
 	@Autowired
 	protected BlockSaveService blockSaveService;
+
 	@Autowired
 	protected void prepareContextRoot(@Value("${local.server.port}") int port) {
 		contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
@@ -207,7 +208,7 @@ public abstract class AbstractIntegrationTest {
 		rollingBlock1 = rollingBlock1.createNextBlock(rollingBlock1);
 		rollingBlock1.addTransaction(wallet.feeTransaction(null));
 		rollingBlock1.solve();
-		blockGraph.add(rollingBlock1, true, store); 
+		blockGraph.add(rollingBlock1, true, store);
 		return rollingBlock1;
 	}
 
@@ -247,13 +248,14 @@ public abstract class AbstractIntegrationTest {
 	 */
 	public void resetStore() throws BlockStoreException {
 
-		store.resetStore(); 
+		store.resetStore();
 		cacheBlockService.evictOutputs();
-		cacheBlockService.evictBlock(); 
-		cacheBlockService.evictAccountBalance(); 
-		cacheBlockService.evictMaxConfirmedReward(); 
-		cacheBlockService.evictBlockMCMC(); 
-		cacheBlockService.evictBlockEvaluation();; 
+		cacheBlockService.evictBlock();
+		cacheBlockService.evictAccountBalance();
+		cacheBlockService.evictMaxConfirmedReward();
+		cacheBlockService.evictBlockMCMC();
+		cacheBlockService.evictBlockEvaluation();
+		;
 		cacheBlockPrototypeService.evictBlockPrototypeByte();
 	}
 
@@ -271,7 +273,7 @@ public abstract class AbstractIntegrationTest {
 
 	private Block payList(List<Block> addedBlocks, HashMap<String, BigInteger> giveMoneyResult, byte[] tokenid)
 			throws JsonProcessingException, IOException, InsufficientMoneyException, Exception {
-		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult,  tokenid, "payList");
+		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, tokenid, "payList");
 		// log.debug("block " + (b == null ? "block is null" : b.toString()));
 		if (addedBlocks != null) {
 			addedBlocks.add(b);
@@ -455,6 +457,14 @@ public abstract class AbstractIntegrationTest {
 		return block;
 	}
 
+	protected void makeSellOrderNoReward(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount,
+			List<Block> addedBlocks) throws Exception {
+		makeSellOrder(beneficiary, tokenId, sellPrice, sellAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+				addedBlocks);
+		addedBlocks.add(orderExecutionService.createOrderExecution(store));
+
+	}
+
 	protected Block makeSellOrder(ECKey beneficiary, String tokenId, long sellPrice, long sellAmount, String basetoken,
 			List<Block> addedBlocks) throws Exception {
 		payBigTo(beneficiary, Coin.FEE_DEFAULT.getValue(), addedBlocks);
@@ -490,6 +500,15 @@ public abstract class AbstractIntegrationTest {
 		Block block = makeAndConfirmBuyOrder(beneficiary, tokenId, buyPrice, buyAmount,
 				NetworkParameters.BIGTANGLE_TOKENID_STRING, addedBlocks);
 		return block;
+	}
+
+	protected void makeBuyOrderNoReward(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
+			List<Block> addedBlocks) throws Exception {
+
+		makeBuyOrder(beneficiary, tokenId, buyPrice, buyAmount, NetworkParameters.BIGTANGLE_TOKENID_STRING,
+				addedBlocks);
+		addedBlocks.add(orderExecutionService.createOrderExecution(store));
+
 	}
 
 	protected Block makeAndConfirmBuyOrder(ECKey beneficiary, String tokenId, long buyPrice, long buyAmount,
@@ -553,8 +572,8 @@ public abstract class AbstractIntegrationTest {
 		return block;
 	}
 
-	protected Block makeContractEventCancel(Block order, ECKey legitimatingKey, List<Block> addedBlocks, Block predecessor)
-			throws Exception {
+	protected Block makeContractEventCancel(Block order, ECKey legitimatingKey, List<Block> addedBlocks,
+			Block predecessor) throws Exception {
 		// Make an order op
 		Transaction tx = new Transaction(networkParameters);
 		ContractEventCancelInfo info = new ContractEventCancelInfo(order.getHash());
@@ -575,9 +594,10 @@ public abstract class AbstractIntegrationTest {
 
 		this.blockGraph.add(block, true, store);
 		addedBlocks.add(block);
- 
+
 		return block;
 	}
+
 	protected Block makeRewardBlock() throws Exception {
 		Block predecessor = tipsService.getValidatedBlockPair(store).getLeft().getBlock();
 		return makeRewardBlock(predecessor);
@@ -903,8 +923,6 @@ public abstract class AbstractIntegrationTest {
 		}
 		return listCoin;
 	}
-
- 
 
 	// get balance for the walletKeys
 	protected List<UTXO> getBalance(String address) throws Exception {
@@ -1461,7 +1479,7 @@ public abstract class AbstractIntegrationTest {
 	public BlockWrap defaultBlockWrap(Block block) throws Exception {
 		return new BlockWrap(block, BlockEvaluation.buildInitial(block), null, networkParameters);
 	}
-	
+
 	public BlockEvaluation getBlockEvaluation(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
 		return store.getBlockWrap(hash).getBlockEvaluation();
 	}

@@ -198,7 +198,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 	protected final String SELECT_BLOCKS_NON_CHAIN_HEIGTH_SQL = "SELECT block "
 			+ "FROM blocks WHERE milestone = -1 AND height >= ? " + afterSelect();
 
-	protected final String UPDATE_ORDER_SPENT_SQL = getUpdate() + " orders SET spent = ?, spenderblockhash = ? "
+	protected final String UPDATE_ORDER_SPENT_SQL = getUpdate() + " orders SET spent = ?, spenderblockhash = ?, confirmed =true "
 			+ " WHERE blockhash = ? AND collectinghash = ?";
 	protected final String UPDATE_ORDER_CONFIRMED_SQL = getUpdate() + " orders SET confirmed = ? "
 			+ " WHERE blockhash = ? AND collectinghash = ?";
