@@ -1137,14 +1137,11 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
 		// Open orders
-		makeSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
-		makeBuyOrder(genesisKey, testTokenId, 1000, 225, addedBlocks);
-		makeSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
-		makeBuyOrder(genesisKey, testTokenId, 1000, 150, addedBlocks);
-		makeSellOrder(testKey, testTokenId, 1000, 150, addedBlocks);
-		Block b = makeBuyOrder(genesisKey, testTokenId, 1000, 75, addedBlocks);
+		makeSellOrderNoReward(testKey, testTokenId, 1000, 150, addedBlocks);
+		makeBuyOrderNoReward(genesisKey, testTokenId, 1000, 150, addedBlocks);
 
-		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).unconfirm(b.getHash(),
+		Block b = makeRewardBlock(addedBlocks);
+		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).unconfirmRecursive(b.getHash(),
 				new HashSet<>(), store);
 
 		assertCurrentTokenAmountEquals(origTokenAmounts);
@@ -1193,7 +1190,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
-	
 		makeBuyOrderNoReward(genesisKey, testTokenId, 1000, 150, addedBlocks);
 		makeSellOrderNoReward(testKey, testTokenId, 1000, 150, addedBlocks);
 
@@ -1211,7 +1207,6 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		readdConfirmedBlocksAndAssertDeterministicExecution(addedBlocks);
 	}
 
-	
 	@Test
 	public void testMultiMatching1() throws Exception {
 

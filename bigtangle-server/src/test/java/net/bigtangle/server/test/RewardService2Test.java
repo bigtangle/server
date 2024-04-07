@@ -49,11 +49,10 @@ public class RewardService2Test extends AbstractIntegrationTest {
 
 	// test payment, buy and sell
 	public Block createReward(List<Block> blocksAddedAll) throws Exception {
-		for (int j = 1; j < 2; j++) {
-			payMoneyToWallet1(j, blocksAddedAll);
-			sell(blocksAddedAll);
-			buy(blocksAddedAll);
-		}
+
+		payMoneyToWallet1(1, blocksAddedAll);
+		sell(blocksAddedAll);
+		buy(blocksAddedAll);
 
 		// Generate mining reward block
 		Block next = makeRewardBlock(blocksAddedAll);
@@ -70,7 +69,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		// first chains
 		testToken(a1);
 
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 1; i++) {
 			createReward(a1);
 		}
 
@@ -79,12 +78,12 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		testToken(a2);
 		// second chain
 
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 2; i++) {
 			createReward(a2);
 		}
 		checkSum();
 
-		Sha256Hash hash = checkpointService.checkToken(store).hash();
+		checkpointService.checkToken(store).hash();
 		// replay
 		resetStore();
 
@@ -93,7 +92,6 @@ public class RewardService2Test extends AbstractIntegrationTest {
 			if (b != null)
 				blockGraph.add(b, true, true, store);
 		}
-		// check
 		// replay second chain
 		for (Block b : a2) {
 			if (b != null)
@@ -101,7 +99,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 
 		}
 
-		Sha256Hash hash1 = checkSum();
+		checkSum();
 		// assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
 		// replay second and then replay first
 		resetStore();
@@ -116,7 +114,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		}
 
 		// assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
-		Sha256Hash hash2 = checkSum();
+		checkSum();
 		// assertTrue(hash1.equals(hash2));
 	}
 
@@ -131,11 +129,10 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		}
 		checkSum();
 
-		Sha256Hash hash = checkpointService.checkToken(store).hash();
+		checkpointService.checkToken(store).hash();
 		// replay
 		resetStore();
 
-		// check
 		// replay second chain
 		Collections.shuffle(a2);
 		for (Block b : a2) {

@@ -1471,9 +1471,16 @@ public class ServiceBaseConnect extends ServiceBase {
 	}
 
 	/*
-	 * connect from the contract Execution
+	 * confirm from the Execution
 	 */
 	public void confirmOrderExecute(Block block, FullBlockStore blockStore) throws BlockStoreException {
+
+		confirmOrderExecute(block, true, blockStore);
+
+	}
+
+	public void confirmOrderExecute(Block block, boolean confirm, FullBlockStore blockStore)
+			throws BlockStoreException {
 
 		try {
 			OrderExecutionResult result = new OrderExecutionResult().parse(block.getTransactions().get(0).getData());
@@ -1484,22 +1491,37 @@ public class ServiceBaseConnect extends ServiceBase {
 					&& result.getAllRecords().equals(check.getAllRecords())
 					&& result.getRemainderRecords().equals(check.getRemainderRecords())
 					&& result.getCancelRecords().equals(check.getCancelRecords())) {
-				for (OrderRecord c : check.getSpentOrderRecord()) {
-					c.setSpent(true);
-					c.setSpenderBlockHash(block.getHash());
+				if (confirm) {
+					for (OrderRecord c : check.getSpentOrderRecord()) {
+						c.setSpent(true);
+						c.setSpenderBlockHash(block.getHash());
+					}
+				} else {
+					for (OrderRecord c : check.getSpentOrderRecord()) {
+						c.setSpent(false);
+						c.setSpenderBlockHash(null);
+					}
 				}
 				blockStore.updateOrderSpent(check.getSpentOrderRecord());
 
-				blockStore.updateOrderConfirmed(check.getRemainderRecords(), block.getHash(), true);
-				blockStore.updateOrderCancelSpent(check.getCancelRecords(), block.getHash(), true);
-				blockStore.updateOrderResultConfirmed(block.getHash(), true);
-				blockStore.updateOrderResultSpent(check.getPrevblockhash(), block.getHash(), true);
-				confirmTransaction(block, check.getOutputTx(), blockStore);
-				//
+				blockStore.updateOrderConfirmed(check.getRemainderRecords(), block.getHash(), confirm);
+
+				blockStore.updateOrderResultConfirmed(block.getHash(), confirm);
+
+				confirmTransaction(block, confirm, check.getOutputTx(), blockStore);
+				if (confirm) {
+					blockStore.updateOrderCancelSpent(check.getCancelRecords(), block.getHash(), confirm);
+					blockStore.updateOrderResultSpent(check.getPrevblockhash(), block.getHash(), confirm);
+					// Update the matching
+					addMatchingEventsOrderExecution(check, check.getOutputTx().getHashAsString(),
+							block.getTimeSeconds(), blockStore);
+				} else {
+					blockStore.updateOrderCancelSpent(check.getCancelRecords(), null, confirm);
+					blockStore.updateOrderResultSpent(check.getPrevblockhash(), null, confirm);
+
+				}
 				evictTransactions(block.getHash(), blockStore);
-				// Update the matching
-				addMatchingEventsOrderExecution(check, check.getOutputTx().getHashAsString(), block.getTimeSeconds(),
-						blockStore);
+
 			}
 			// blockStore.updateContractEvent( );
 		} catch (IOException e) {
@@ -1560,23 +1582,7 @@ public class ServiceBaseConnect extends ServiceBase {
 
 	public void unConfirmOrderExecute(Block block, FullBlockStore blockStore) throws BlockStoreException {
 
-		try {
-			OrderExecutionResult result = new OrderExecutionResult().parse(block.getTransactions().get(0).getData());
-			Orderresult prevblockhash = blockStore.getOrderResult(result.getPrevblockhash());
-			OrderExecutionResult check = new ServiceOrderExecution(serverConfiguration, networkParameters,
-					cacheBlockService).orderMatching(block, prevblockhash, result.getReferencedBlocks(), blockStore);
-			for (OrderRecord c : check.getSpentOrderRecord()) {
-				c.setSpent(false);
-				c.setSpenderBlockHash(null);
-			}
-			blockStore.updateOrderSpent(check.getSpentOrderRecord());
-			blockStore.updateOrderResultConfirmed(block.getHash(), false);
-			blockStore.updateTransactionOutputConfirmed(block.getHash(), result.getOutputTxHash(), 0, false);
-			evictTransactions(block.getHash(), blockStore);
-
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+		confirmOrderExecute(block, false, blockStore);
 	}
 
 	private void confirmOrderOpen(BlockWrap block, FullBlockStore blockStore) throws BlockStoreException {
@@ -1652,15 +1658,19 @@ public class ServiceBaseConnect extends ServiceBase {
 	}
 
 	private void confirmTransaction(Block block, Transaction tx, FullBlockStore blockStore) throws BlockStoreException {
+		confirmTransaction(block, true, tx, blockStore);
+	}
+
+	private void confirmTransaction(Block block, boolean confirm, Transaction tx, FullBlockStore blockStore)
+			throws BlockStoreException {
 
 		// Set own outputs confirmed
 		for (TransactionOutput out : tx.getOutputs()) {
-			blockStore.updateTransactionOutputConfirmed(block.getHash(), tx.getHash(), out.getIndex(), true);
+			blockStore.updateTransactionOutputConfirmed(block.getHash(), tx.getHash(), out.getIndex(), confirm);
 		}
-
+		// Set previous outputs as spent
 		for (TransactionInput in : tx.getInputs()) {
 
-			// Set used other outputs spent
 			if (!tx.isCoinBase()) {
 				UTXO prevOut = blockStore.getTransactionOutput(in.getOutpoint().getBlockHash(),
 						in.getOutpoint().getTxHash(), in.getOutpoint().getIndex());
@@ -1671,9 +1681,13 @@ public class ServiceBaseConnect extends ServiceBase {
 				}
 				// FIXME transaction check at connected if (prevOut.isSpent())
 				// throw new RuntimeException("Attempted to spend an already spent output!");
-
-				blockStore.updateTransactionOutputSpent(prevOut.getBlockHash(), prevOut.getTxHash(), prevOut.getIndex(),
-						true, block.getHash());
+				if (confirm)
+					blockStore.updateTransactionOutputSpent(prevOut.getBlockHash(), prevOut.getTxHash(),
+							prevOut.getIndex(), confirm, block.getHash());
+				else {
+					blockStore.updateTransactionOutputSpent(prevOut.getBlockHash(), prevOut.getTxHash(),
+							prevOut.getIndex(), confirm, null);
+				}
 			}
 		}
 
@@ -1716,16 +1730,16 @@ public class ServiceBaseConnect extends ServiceBase {
 
 	public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, FullBlockStore blockStore)
 			throws BlockStoreException {
-		unconfirm(blockHash, traversedBlockHashes, blockStore, false);
+		BlockWrap blockWrap = getBlockWrap(blockHash, blockStore);
+		unconfirm(blockWrap, traversedBlockHashes, blockStore);
 	}
 
-	public void unconfirm(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes, FullBlockStore blockStore,
-			Boolean accountBalance) throws BlockStoreException {
+	public void unconfirm(BlockWrap blockWrap, HashSet<Sha256Hash> traversedBlockHashes, FullBlockStore blockStore)
+			throws BlockStoreException {
 		// If already unconfirmed, return
-		if (traversedBlockHashes.contains(blockHash))
+		if (traversedBlockHashes.contains(blockWrap.getBlockHash()))
 			return;
 
-		BlockWrap blockWrap = getBlockWrap(blockHash, blockStore);
 		BlockEvaluation blockEvaluation = blockWrap.getBlockEvaluation();
 		Block block = blockWrap.getBlock();
 
@@ -1743,7 +1757,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		evictTransactions(block, blockStore);
 
 		// Keep track of unconfirmed blocks
-		traversedBlockHashes.add(blockHash);
+		traversedBlockHashes.add(blockWrap.getBlockHash());
 	}
 
 	public void unconfirmRecursive(Sha256Hash blockHash, HashSet<Sha256Hash> traversedBlockHashes,
@@ -1917,7 +1931,7 @@ public class ServiceBaseConnect extends ServiceBase {
 	}
 
 	/**
-	 * Disconnect the block, unconfirming all UTXOs and UTXO-like constructs.
+	 * Disconnect the block, unconfirm all outputs of order, UTXOs and UTXO-like etc constructs.
 	 * 
 	 * @throws BlockStoreException if the block store had an underlying error or
 	 *                             block does not exist in the block store at all.

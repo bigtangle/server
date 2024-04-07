@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -29,6 +31,7 @@ import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.service.CacheBlockService;
 import net.bigtangle.store.FullBlockStore;
+import net.bigtangle.utils.UtilSort.SortbyBlock;
 
 public class ServiceBaseReward extends ServiceBaseConnect {
 
@@ -320,6 +323,8 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		final LinkedList<Block> newBlocks = getPartialChain(newChainHead, splitPoint, store);
 		// Disconnect each transaction in the previous best chain that is no
 		// longer in the new best chain
+
+		Collections.sort(oldBlocks, new SortbyBlock());
 		for (Block oldBlock : oldBlocks) {
 			// Sanity check:
 			if (!oldBlock.getHash().equals(networkParameters.getGenesisBlock().getHash())) {
@@ -328,11 +333,23 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 				List<Sha256Hash> blocksInMilestoneInterval = getBlocksInMilestoneInterval(milestoneNumber,
 						milestoneNumber, store);
 				// Unconfirm anything not in milestone
-				for (Sha256Hash wipeBlock : blocksInMilestoneInterval)
-					unconfirm(wipeBlock, new HashSet<>(), store);
+				for (Sha256Hash wipeBlock : blocksInMilestoneInterval) {
+					BlockWrap blockWrap = getBlockWrap(wipeBlock, store); 
+					unconfirm(blockWrap, new HashSet<>(), store); 
+					// also Unconfirm the referenced execution as second chain
+					if ((Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(blockWrap.getBlock().getBlockType())
+							|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(blockWrap.getBlock().getBlockType()))) {
+						for (BlockWrap dep : getReferrencedBlockWrap(blockWrap.getBlock(), store)) {
+							unconfirm(dep, new HashSet<>(), store);
+						}
+						;
+					}
+				}
 			}
 		}
 		Block cursor;
+		store.commitDatabaseBatchWrite();
+		store.beginDatabaseBatchWrite();
 		// Walk in ascending chronological order.
 		for (Iterator<Block> it = newBlocks.descendingIterator(); it.hasNext();) {
 			cursor = it.next();
@@ -347,6 +364,13 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 		// Update the pointer to the best known block.
 		// setChainHead(storedNewHead);
+	}
+
+	public class SortbyBlock implements Comparator<Block> {
+
+		public int compare(Block a, Block b) {
+			return a.getHeight() > b.getHeight() ? 1 : -1;
+		}
 	}
 
 	/**

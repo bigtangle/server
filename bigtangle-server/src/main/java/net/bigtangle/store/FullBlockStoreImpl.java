@@ -495,7 +495,7 @@ public class FullBlockStoreImpl {
 
 			try {
 				blockStore.beginDatabaseBatchWrite();
-				serviceBase.unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore, true);
+				serviceBase.unconfirm(block.getBlockHash(), traversedUnconfirms, blockStore);
 				blockStore.commitDatabaseBatchWrite();
 			} catch (Exception e) {
 				blockStore.abortDatabaseBatchWrite();
