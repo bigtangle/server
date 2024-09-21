@@ -151,8 +151,8 @@ public interface FullBlockStore {
 	public void create() throws BlockStoreException;
 
 	/* Blocks */
-	public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException; 
-	
+	public List<BlockWrap> getNotInvalidApproverBlocks(Sha256Hash hash) throws BlockStoreException;
+
 	public List<Sha256Hash> getSolidApproverBlockHashes(Sha256Hash hash) throws BlockStoreException;
 
 	public BlockWrap getBlockWrap(Sha256Hash hash) throws BlockStoreException;
@@ -222,7 +222,7 @@ public interface FullBlockStore {
 
 	public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException;
 
-	public void updateOrderSpent(Set<Sha256Hash> orderRecords, Sha256Hash blockhash, Boolean spent)
+	public void updateOrderUnSpent(Sha256Hash spentBlockHash)
 			throws BlockStoreException;
 
 	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)
@@ -313,9 +313,8 @@ public interface FullBlockStore {
 	public List<BlockEvaluationDisplay> getSearchBlockEvaluationsByhashs(List<String> blockhashs)
 			throws BlockStoreException;
 
-	public  BlockEvaluation getBlockEvaluationsByhashs(Sha256Hash blockhashs)
-			throws BlockStoreException;
-	
+	public BlockEvaluation getBlockEvaluationsByhashs(Sha256Hash blockhashs) throws BlockStoreException;
+
 	public List<byte[]> blocksFromChainLength(long start, long end) throws BlockStoreException;
 
 	public List<byte[]> blocksFromNonChainHeigth(long heigth) throws BlockStoreException;
@@ -443,9 +442,9 @@ public interface FullBlockStore {
 	public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException;
 
 	List<Sha256Hash> getWhereConfirmedNotMilestone() throws BlockStoreException;
- 
+
 	TXReward getRewardConfirmedAtHeight(long chainlength) throws BlockStoreException;
- 
+
 	List<Sha256Hash> getBlocksInMilestoneInterval(long minMilestone, long maxMilestone) throws BlockStoreException;
 
 	List<OrderCancel> getOrderCancelByOrderBlockHash(HashSet<String> orderBlockHashs) throws BlockStoreException;
@@ -526,7 +525,8 @@ public interface FullBlockStore {
 	public void updateContractResultConfirmed(Sha256Hash contract, boolean confirm) throws BlockStoreException;
 
 	public List<Contractresult> getContractresultUnspent(String contractid) throws BlockStoreException;
-	public  Contractresult getContractresult(Sha256Hash blockhash) throws BlockStoreException;
+
+	public Contractresult getContractresult(Sha256Hash blockhash) throws BlockStoreException;
 
 	public Sha256Hash checkContractResultSpent(Sha256Hash contractResultRecords) throws BlockStoreException;
 
@@ -535,7 +535,9 @@ public interface FullBlockStore {
 	public void updateOrderResultConfirmed(Sha256Hash contract, boolean confirm) throws BlockStoreException;
 
 	public List<Orderresult> getOrderResultUnspent() throws BlockStoreException;
+
 	public Orderresult getOrderResult(Sha256Hash blockhash) throws BlockStoreException;
+
 	public Sha256Hash checkOrderResultSpent(Sha256Hash OrderResultRecords) throws BlockStoreException;
 
 	public boolean checkOrderResultConfirmed(Sha256Hash OrderResultRecords) throws BlockStoreException;
@@ -548,12 +550,14 @@ public interface FullBlockStore {
 	public List<Coin> getAccountBalance(String address, String tokenid) throws BlockStoreException;
 
 	public void calculateAccount(String address, String tokenid) throws BlockStoreException;
-	
+
 	public void insertContractEventCancel(ContractEventCancel contractEventCancel) throws BlockStoreException;
 
 	public List<ContractEventCancel> getContractEventCancelConfirmed() throws BlockStoreException;
+
 	public void updateContractEventCancelSpent(Set<Sha256Hash> cancels, Sha256Hash blockhash, Boolean spent)
 			throws BlockStoreException;
+
 	List<ContractEventCancel> getContractEventCancelByBlockHash(HashSet<String> blockHashs) throws BlockStoreException;
 
 }

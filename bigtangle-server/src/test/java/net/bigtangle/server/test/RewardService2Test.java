@@ -83,7 +83,6 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		}
 		checkSum();
 
-		checkpointService.checkToken(store).hash();
 		// replay
 		resetStore();
 
@@ -92,6 +91,7 @@ public class RewardService2Test extends AbstractIntegrationTest {
 			if (b != null)
 				blockGraph.add(b, true, true, store);
 		}
+		checkSum();
 		// replay second chain
 		for (Block b : a2) {
 			if (b != null)
@@ -100,7 +100,6 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		}
 
 		checkSum();
-		// assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
 		// replay second and then replay first
 		resetStore();
 		for (Block b : a2) {
@@ -111,6 +110,52 @@ public class RewardService2Test extends AbstractIntegrationTest {
 		for (Block b : a1) {
 			if (b != null)
 				blockGraph.add(b, true, true, store);
+		}
+
+		// assertTrue(hash.equals(checkpointService.checkToken(store).hash()));
+		checkSum();
+		// assertTrue(hash1.equals(hash2));
+	}
+
+	@Test
+	// the switch to longest chain
+	public void testReorgMiningRewardShuffle() throws Exception {
+		List<Block> a1 = new ArrayList<Block>();
+		List<Block> a2 = new ArrayList<Block>();
+		// first chains
+		testToken(a1);
+
+		for (int i = 0; i < 1; i++) {
+			createReward(a1);
+		}
+
+		checkSum();
+		resetStore();
+		testToken(a2);
+		// second chain
+
+		for (int i = 0; i < 2; i++) {
+			createReward(a2);
+		}
+		checkSum();
+
+		// replay
+		resetStore();
+
+		// replay first chain
+		for (Block b : a1) {
+			if (b != null)
+				blockGraph.add(b, true, true, store);
+		}
+		checkSum();
+		// replay second chain
+		Collections.shuffle(a2);
+		for (Block b : a2) {
+			if (b != null) {
+				blockGraph.add(b, true, true, store);
+				checkSum();
+			}
+
 		}
 
 		// assertTrue(hash.equals(checkpointService.checkToken(store).hash()));

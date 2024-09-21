@@ -1277,7 +1277,7 @@ public class ServiceBaseConnect extends ServiceBase {
 
 			// Get list of consumed orders, virtual order matching tx and newly
 			// generated remaining order book
-			if (!enableFee(block)) {
+			if (!enableOrderMatchExecutionChain(block)) {
 				matchingResult = generateOrderMatching(block, blockStore);
 				tx = matchingResult.getOutputTx();
 				insertVirtualUTXOs(block, tx, blockStore);
@@ -1331,7 +1331,7 @@ public class ServiceBaseConnect extends ServiceBase {
 		case BLOCKTYPE_REWARD:
 			// For rewards, update reward to be confirmed now
 			confirmReward(block, blockStore);
-			if (!enableFee(block.getBlock())) {
+			if (!enableOrderMatchExecutionChain(block.getBlock())) {
 				confirmOrderMatching(block, blockStore);
 			}
 			break;
@@ -1856,7 +1856,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			FullBlockStore blockStore) throws BlockStoreException {
 		// Get list of consumed orders, virtual order matching tx and newly
 		// generated remaining order book
-		if (!enableFee(block)) {
+		if (!enableOrderMatchExecutionChain(block)) {
 			OrderMatchingResult matchingResult = generateOrderMatching(block, blockStore);
 
 			// Disconnect all virtual transaction output dependents
@@ -1954,7 +1954,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			break;
 		case BLOCKTYPE_REWARD:
 			unconfirmReward(block, blockStore);
-			if (!enableFee(block)) {
+			if (!enableOrderMatchExecutionChain(block)) {
 				unconfirmOrderMatching(block, blockStore);
 			}
 			break;
@@ -1990,7 +1990,7 @@ public class ServiceBaseConnect extends ServiceBase {
 	private void unconfirmOrderMatching(Block block, FullBlockStore blockStore) throws BlockStoreException {
 		// Get list of consumed orders, virtual order matching tx and newly
 		// generated remaining order book
-		if (!enableFee(block)) {
+		if (!enableOrderMatchExecutionChain(block)) {
 			OrderMatchingResult matchingResult = generateOrderMatching(block, blockStore);
 			unconfirmOrderMatching(block, matchingResult, blockStore);
 		}
@@ -2001,13 +2001,19 @@ public class ServiceBaseConnect extends ServiceBase {
 
 		// All consumed order records are now unspent by this block
 		Set<OrderRecord> updateOrder = new HashSet<OrderRecord>(matchingResult.getSpentOrders());
+		 
 		for (OrderRecord o : updateOrder) {
 			o.setSpent(false);
-			o.setSpenderBlockHash(null);
+			o.setSpenderBlockHash(null); 
 		}
 		blockStore.updateOrderSpent(updateOrder);
+	 	blockStore.updateOrderConfirmed(updateOrder, false);
+	 	//reset the spent of  this BlockHash
+		RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
 
+	 	blockStore.updateOrderUnSpent(rewardInfo. getPrevRewardHash());
 		// Set virtual outputs unconfirmed
+	 	
 		unconfirmVirtualCoinbaseTransaction(block.getHash(), blockStore);
 
 		blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
@@ -2820,7 +2826,7 @@ public class ServiceBaseConnect extends ServiceBase {
 	//
 	public Transaction generateVirtualMiningRewardTX(Block block, FullBlockStore blockStore)
 			throws BlockStoreException {
-		if (enableFee(block)) {
+		if (enableOrderMatchExecutionChain(block)) {
 			return generateVirtualMiningRewardTXFeeBased(block, blockStore);
 		} else {
 			return generateVirtualMiningRewardTX1(block, blockStore);

@@ -482,36 +482,23 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		String orderbaseToken = yuan.getPublicKeyAsHex();
 		int amount = 1000000;
 		long tokennumber = amount * 1000;
+		// Make yuan token
 		makeTestToken(yuan, BigInteger.valueOf(tokennumber), addedBlocks, 2);
 		// Make test token
-		makeTestToken(testKey, BigInteger.valueOf(tokennumber), addedBlocks, 2);
-		String testTokenId = testKey.getPublicKeyAsHex();
-
+		makeTestToken(testKey, BigInteger.valueOf(tokennumber), addedBlocks, 2); 
 		// Get current existing token amount
 		HashMap<String, Long> origTokenAmounts = getCurrentTokenAmounts();
 
 		// Open sell order for test tokens
-		makeAndConfirmSellOrder(testKey, testTokenId, 200, amount, orderbaseToken, addedBlocks);
-		checkAllOpenOrders(1);
-		// Open buy order for test tokens restAmount=1
-		int buyAmount = amount + 100;
-		makeAndConfirmBuyOrder(yuan, testTokenId, 200, buyAmount, orderbaseToken, addedBlocks);
+		makeAndConfirmSellOrder(testKey, testKey.getPublicKeyAsHex(), 200, amount, orderbaseToken, addedBlocks);
+	
+		// Open buy order for test tokens restAmount=100 
+		makeAndConfirmBuyOrder(yuan, testKey.getPublicKeyAsHex(), 200, amount + 100, orderbaseToken, addedBlocks);
 
-		// the first in will execute the two order with the price, the buy order will be
-		// remainder buyAmount - amount = 100
 		checkAllOpenOrders(1);
 
-		// Verify the tokens changed possession
 		assertHasAvailableToken(testKey, orderbaseToken, 2l);
 		assertHasAvailableToken(yuan, testKey.getPublicKeyAsHex(), amount * 1l);
-		// Open sell order for test tokens
-		makeAndConfirmSellOrder(testKey, testTokenId, 200, buyAmount, orderbaseToken, addedBlocks);
-		checkAllOpenOrders(1);
-
-		// Verify the tokens changed possession
-		assertHasAvailableToken(testKey, orderbaseToken, 2l);
-		assertHasAvailableToken(yuan, testKey.getPublicKeyAsHex(), amount * 1l + 100);
-
 		// Verify token amount invariance
 		assertCurrentTokenAmountEquals(origTokenAmounts);
 
@@ -1141,6 +1128,7 @@ public class OrderMatchTest extends AbstractIntegrationTest {
 		makeBuyOrderNoReward(genesisKey, testTokenId, 1000, 150, addedBlocks);
 
 		Block b = makeRewardBlock(addedBlocks);
+		assertCurrentTokenAmountEquals(origTokenAmounts);
 		new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).unconfirmRecursive(b.getHash(),
 				new HashSet<>(), store);
 

@@ -127,13 +127,13 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 		RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
 
-		RewardBuilderResult result = makeReward(newMilestoneBlock.getPrevBlockHash(),
+		RewardBuilderResult result = calcRewardBuilderResult(newMilestoneBlock.getPrevBlockHash(),
 				newMilestoneBlock.getPrevBranchBlockHash(), currRewardInfo.getPrevRewardHash(),
-				newMilestoneBlock.getTimeSeconds(), enableFee(newMilestoneBlock), store);
+				newMilestoneBlock.getTimeSeconds(), enableOrderMatchExecutionChain(newMilestoneBlock), store);
 		if (currRewardInfo.getDifficultyTargetReward() != result.getDifficulty()) {
 			throw new VerificationException("Incorrect difficulty target");
 		}
-		if (!enableFee(newMilestoneBlock)) {
+		if (!enableOrderMatchExecutionChain(newMilestoneBlock)) {
 			OrderMatchingResult ordermatchresult = generateOrderMatching(newMilestoneBlock, store);
 
 			// Only check the Hash of OrderMatchingResult
@@ -207,48 +207,20 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 	 * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
 	 *         perTxReward)
 	 */
-	public RewardBuilderResult makeReward(Sha256Hash prevTrunk, Sha256Hash prevBranch, Sha256Hash prevRewardHash,
-			long currentTime, boolean fee, FullBlockStore store) throws BlockStoreException {
+	public RewardBuilderResult calcRewardBuilderResult(Sha256Hash prevTrunk, Sha256Hash prevBranch,
+			Sha256Hash prevRewardHash, long currentTime, boolean ordermatchexecutionChain, FullBlockStore store)
+			throws BlockStoreException {
 
 		BlockWrap prevTrunkBlock = getBlockWrap(prevTrunk, store);
 		BlockWrap prevBranchBlock = getBlockWrap(prevBranch, store);
-		if (fee) {
-			return makeRewardNoOrder(prevTrunkBlock, prevBranchBlock, prevRewardHash, currentTime, store);
-		} else {
-			return makeRewardWithOrder(prevTrunkBlock, prevBranchBlock, prevRewardHash, currentTime, store);
-		}
+
+		return calcRewardInfo(ordermatchexecutionChain, prevTrunkBlock, prevBranchBlock, prevRewardHash, currentTime,
+				store);
+
 	}
 
-	public RewardBuilderResult makeRewardWithOrder(BlockWrap prevTrunk, BlockWrap prevBranch, Sha256Hash prevRewardHash,
-			long currentTime, FullBlockStore store) throws BlockStoreException {
-		// Read previous reward block's data
-		long prevChainLength = store.getRewardChainLength(prevRewardHash);
-		// Build transaction for block
-		Transaction tx = new Transaction(networkParameters);
-
-		Set<BlockWrap> blocks = new HashSet<>();
-		long cutoffheight = getRewardCutoffHeight(prevRewardHash, store);
-
-		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
-				cacheBlockService);
-		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true, null,
-				false, store);
-		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true, null,
-				false, store);
-
-		long difficultyReward = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
-				.calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
-
-		// Build the type-specific tx data
-		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, serviceBase.getHashSet(blocks),
-				prevChainLength + 1);
-		tx.setData(rewardInfo.toByteArray());
-		tx.setMemo(new MemoInfo("Reward"));
-		return new RewardBuilderResult(tx, difficultyReward);
-	}
-
-	public RewardBuilderResult makeRewardNoOrder(BlockWrap prevTrunk, BlockWrap prevBranch, Sha256Hash prevRewardHash,
-			long currentTime, FullBlockStore store) throws BlockStoreException {
+	public RewardBuilderResult calcRewardInfo(boolean noOrder, BlockWrap prevTrunk, BlockWrap prevBranch,
+			Sha256Hash prevRewardHash, long currentTime, FullBlockStore store) throws BlockStoreException {
 
 		// Read previous reward block's data
 		long prevChainLength = store.getRewardChainLength(prevRewardHash);
@@ -259,18 +231,8 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		Set<BlockWrap> blocks = new HashSet<>();
 		long cutoffheight = getRewardCutoffHeight(prevRewardHash, store);
 
-		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
-		ordertypes.add(Block.Type.BLOCKTYPE_INITIAL);
-		ordertypes.add(Block.Type.BLOCKTYPE_TRANSFER);
-		ordertypes.add(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-		ordertypes.add(Block.Type.BLOCKTYPE_FILE);
-		ordertypes.add(Block.Type.BLOCKTYPE_USERDATA);
-		ordertypes.add(Block.Type.BLOCKTYPE_REWARD);
-		ordertypes.add(Block.Type.BLOCKTYPE_GOVERNANCE);
-		ordertypes.add(Block.Type.BLOCKTYPE_CROSSTANGLE);
-		ordertypes.add(Block.Type.BLOCKTYPE_ORDER_EXECUTE);
-		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
-		// exclude the contract event and order open , cancel
+		List<Block.Type> ordertypes = getListedBlock(noOrder);
+
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);
 		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true,
@@ -287,6 +249,37 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		tx.setData(rewardInfo.toByteArray());
 		tx.setMemo(new MemoInfo("Reward"));
 		return new RewardBuilderResult(tx, difficultyReward);
+	}
+
+	private List<Block.Type> getListedBlock(boolean noOrder) {
+		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
+		if (noOrder) {
+			// exclude order open , cancel
+
+			ordertypes.add(Block.Type.BLOCKTYPE_INITIAL);
+			ordertypes.add(Block.Type.BLOCKTYPE_TRANSFER);
+			ordertypes.add(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+			ordertypes.add(Block.Type.BLOCKTYPE_FILE);
+			ordertypes.add(Block.Type.BLOCKTYPE_USERDATA);
+			ordertypes.add(Block.Type.BLOCKTYPE_REWARD);
+			ordertypes.add(Block.Type.BLOCKTYPE_GOVERNANCE);
+			ordertypes.add(Block.Type.BLOCKTYPE_CROSSTANGLE);
+			ordertypes.add(Block.Type.BLOCKTYPE_ORDER_EXECUTE);
+			ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
+		} else {
+			ordertypes.add(Block.Type.BLOCKTYPE_INITIAL);
+			ordertypes.add(Block.Type.BLOCKTYPE_TRANSFER);
+			ordertypes.add(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+			ordertypes.add(Block.Type.BLOCKTYPE_FILE);
+			ordertypes.add(Block.Type.BLOCKTYPE_USERDATA);
+			ordertypes.add(Block.Type.BLOCKTYPE_REWARD);
+			ordertypes.add(Block.Type.BLOCKTYPE_GOVERNANCE);
+			ordertypes.add(Block.Type.BLOCKTYPE_CROSSTANGLE);
+			ordertypes.add(Block.Type.BLOCKTYPE_ORDER_OPEN);
+			ordertypes.add(Block.Type.BLOCKTYPE_ORDER_CANCEL);
+			ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
+		}
+		return ordertypes;
 	}
 
 	/**
@@ -334,8 +327,8 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 						milestoneNumber, store);
 				// Unconfirm anything not in milestone
 				for (Sha256Hash wipeBlock : blocksInMilestoneInterval) {
-					BlockWrap blockWrap = getBlockWrap(wipeBlock, store); 
-					unconfirm(blockWrap, new HashSet<>(), store); 
+					BlockWrap blockWrap = getBlockWrap(wipeBlock, store);
+					unconfirm(blockWrap, new HashSet<>(), store);
 					// also Unconfirm the referenced execution as second chain
 					if ((Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(blockWrap.getBlock().getBlockType())
 							|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(blockWrap.getBlock().getBlockType()))) {
@@ -348,8 +341,8 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 			}
 		}
 		Block cursor;
-		store.commitDatabaseBatchWrite();
-		store.beginDatabaseBatchWrite();
+//		store.commitDatabaseBatchWrite();
+//problem with order rollback		store.beginDatabaseBatchWrite();
 		// Walk in ascending chronological order.
 		for (Iterator<Block> it = newBlocks.descendingIterator(); it.hasNext();) {
 			cursor = it.next();

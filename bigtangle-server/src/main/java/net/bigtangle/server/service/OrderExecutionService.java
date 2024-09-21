@@ -143,8 +143,12 @@ public class OrderExecutionService {
 		Block b = cacheBlockPrototypeService.getBlockPrototype(store);
 		// log.debug(" getValidatedOrderExecutionBlockPair time {} ms.",
 		// watch.elapsed(TimeUnit.MILLISECONDS));
+		if (new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService).enableOrderMatchExecutionChain(b)) {
 
-		return createOrderExecution(b, store);
+			return createOrderExecution(b, store);
+		} else {
+			return null;
+		}
 
 	}
 

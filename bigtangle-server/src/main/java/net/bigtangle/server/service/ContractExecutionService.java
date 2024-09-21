@@ -146,8 +146,9 @@ public class ContractExecutionService {
 		Block b = cacheBlockPrototypeService.getBlockPrototype(store);
 		// log.debug(" getValidatedContractExecutionBlockPair time {} ms.",
 		// watch.elapsed(TimeUnit.MILLISECONDS));
-
-		return createContractExecution(b, contractid, store);
+	 		return createContractExecution(b, contractid, store);
+		 
+ 
 
 	}
 
@@ -176,7 +177,7 @@ public class ContractExecutionService {
 		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
 		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EVENT);
 		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACTEVENT_CANCEL);
-		//the related previous execution
+		// the related previous execution
 		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);

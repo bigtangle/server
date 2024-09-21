@@ -5,7 +5,6 @@
 package net.bigtangle.server.service.base;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -28,7 +27,6 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetBlockListResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
-import net.bigtangle.server.data.ContractEventRecord;
 import net.bigtangle.server.data.ContractExecutionResult;
 import net.bigtangle.server.data.OrderExecutionResult;
 import net.bigtangle.server.data.SolidityState;
@@ -53,6 +51,14 @@ public class ServiceBase {
 		return (block.getLastMiningRewardBlock() > 1424626
 				&& networkParameters.getId().equals(NetworkParameters.ID_MAINNET))
 				|| networkParameters.getId().equals(NetworkParameters.ID_UNITTESTNET);
+	}
+
+ 
+	/*
+	 * Enable each order execution in own chain and not part of reward chain
+	 */
+	public boolean enableOrderMatchExecutionChain(Block block) {
+		return false;
 	}
 
 	/**

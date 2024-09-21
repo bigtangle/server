@@ -768,6 +768,7 @@ public abstract class AbstractIntegrationTest {
 		// Redo and assert snapshot equal to new state
 		resetStore();
 		for (Block b : addedBlocks) {
+			if(b!=null)
 			blockGraph.add(b, true, true, store);
 		}
 

@@ -204,12 +204,8 @@ public class RewardService {
 		block.setMinerAddress(
 				Address.fromBase58(networkParameters, serverConfiguration.getMineraddress()).getHash160());
 
-		RewardBuilderResult result;
-		if (serviceBase.enableFee(block)) {
-			result = serviceBase.makeRewardNoOrder(prevTrunk, prevBranch, prevRewardHash, currentTime, store);
-		} else {
-			result = serviceBase.makeRewardWithOrder(prevTrunk, prevBranch, prevRewardHash, currentTime, store);
-		}
+		RewardBuilderResult result = serviceBase.calcRewardInfo(serviceBase.enableOrderMatchExecutionChain(block),
+				prevTrunk, prevBranch, prevRewardHash, currentTime, store);
 
 		Transaction tx = result.getTx();
 		RewardInfo currRewardInfo = new RewardInfo().parseChecked(tx.getData());
@@ -224,7 +220,7 @@ public class RewardService {
 		}
 
 		block.addTransaction(tx);
-		if (!serviceBase.enableFee(block)) {
+		if (!serviceBase.enableOrderMatchExecutionChain(block)) {
 			OrderMatchingResult ordermatchresult = serviceBase.generateOrderMatching(block, currRewardInfo, store);
 			currRewardInfo.setOrdermatchingResult(ordermatchresult.getOrderMatchingResultHash());
 			tx.setData(currRewardInfo.toByteArray());

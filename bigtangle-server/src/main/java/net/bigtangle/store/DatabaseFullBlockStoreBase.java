@@ -200,9 +200,13 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 
 	protected final String UPDATE_ORDER_SPENT_SQL = getUpdate() + " orders SET spent = ?, spenderblockhash = ?, confirmed =true "
 			+ " WHERE blockhash = ? AND collectinghash = ?";
+	
+	protected final String UPDATE_ORDER_UNSPENT_SQL = getUpdate() + " orders SET spent = false, spenderblockhash = null "
+			+ " WHERE spenderblockhash = ?";
+	
 	protected final String UPDATE_ORDER_CONFIRMED_SQL = getUpdate() + " orders SET confirmed = ? "
 			+ " WHERE blockhash = ? AND collectinghash = ?";
-
+ 
 	protected final String ORDER_TEMPLATE = "  blockhash, collectinghash, offercoinvalue, offertokenid, "
 			+ "confirmed, spent, spenderblockhash, targetcoinvalue, targettokenid, "
 			+ "beneficiarypubkey, validToTime, validFromTime, side , beneficiaryaddress, orderbasetoken, price, tokendecimals ";
