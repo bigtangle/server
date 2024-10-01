@@ -31,7 +31,6 @@ import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.service.CacheBlockService;
 import net.bigtangle.store.FullBlockStore;
-import net.bigtangle.utils.UtilSort.SortbyBlock;
 
 public class ServiceBaseReward extends ServiceBaseConnect {
 
@@ -314,9 +313,8 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 			oldBlocks = getPartialChain(head, splitPoint, store);
 		}
 		final LinkedList<Block> newBlocks = getPartialChain(newChainHead, splitPoint, store);
-		// Disconnect each transaction in the previous best chain that is no
-		// longer in the new best chain
-
+		// Disconnect each block in the previous best chain that is no
+		// longer in the new best chain  from last to begin	
 		Collections.sort(oldBlocks, new SortbyBlock());
 		for (Block oldBlock : oldBlocks) {
 			// Sanity check:
@@ -329,20 +327,16 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 				for (Sha256Hash wipeBlock : blocksInMilestoneInterval) {
 					BlockWrap blockWrap = getBlockWrap(wipeBlock, store);
 					unconfirm(blockWrap, new HashSet<>(), store);
-					// also Unconfirm the referenced execution as second chain
-					if ((Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(blockWrap.getBlock().getBlockType())
-							|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(blockWrap.getBlock().getBlockType()))) {
-						for (BlockWrap dep : getReferrencedBlockWrap(blockWrap.getBlock(), store)) {
-							unconfirm(dep, new HashSet<>(), store);
-						}
-						;
-					}
+
 				}
+		//		store.commitDatabaseBatchWrite();
+		//		store.beginDatabaseBatchWrite();
 			}
+
 		}
 		Block cursor;
-//		store.commitDatabaseBatchWrite();
-//problem with order rollback		store.beginDatabaseBatchWrite();
+		// problem with order rollback
+
 		// Walk in ascending chronological order.
 		for (Iterator<Block> it = newBlocks.descendingIterator(); it.hasNext();) {
 			cursor = it.next();
@@ -362,7 +356,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 	public class SortbyBlock implements Comparator<Block> {
 
 		public int compare(Block a, Block b) {
-			return a.getHeight() > b.getHeight() ? 1 : -1;
+			return a.getHeight() < b.getHeight() ? 1 : -1;
 		}
 	}
 

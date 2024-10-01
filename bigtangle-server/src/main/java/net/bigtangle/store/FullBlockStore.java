@@ -220,7 +220,7 @@ public interface FullBlockStore {
 
 	public void updateOrderConfirmed(Collection<OrderRecord> orderRecords, boolean confirm) throws BlockStoreException;
 
-	public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException;
+	public void updateOrderSpent(Collection<OrderRecord> orderRecords) throws BlockStoreException;
 
 	public void updateOrderUnSpent(Sha256Hash spentBlockHash)
 			throws BlockStoreException;

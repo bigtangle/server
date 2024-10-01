@@ -2100,7 +2100,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	}
 
 	@Override
-	public void updateOrderSpent(Set<OrderRecord> orderRecords) throws BlockStoreException {
+	public void updateOrderSpent(Collection<OrderRecord> orderRecords) throws BlockStoreException {
 
 		PreparedStatement preparedStatement = null;
 		try {

@@ -75,6 +75,7 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.CutoffException;
 import net.bigtangle.core.exception.VerificationException.InvalidTransactionDataException;
+import net.bigtangle.core.exception.VerificationException.MissingDependencyException;
 import net.bigtangle.core.ordermatch.MatchResult;
 import net.bigtangle.core.ordermatch.OrderBookEvents;
 import net.bigtangle.core.ordermatch.OrderBookEvents.Event;
@@ -1491,42 +1492,88 @@ public class ServiceBaseConnect extends ServiceBase {
 					&& result.getAllRecords().equals(check.getAllRecords())
 					&& result.getRemainderRecords().equals(check.getRemainderRecords())
 					&& result.getCancelRecords().equals(check.getCancelRecords())) {
+				debugOrderExecutionResult(block, check,confirm, blockStore);
+
 				if (confirm) {
 					for (OrderRecord c : check.getSpentOrderRecord()) {
 						c.setSpent(true);
 						c.setSpenderBlockHash(block.getHash());
 					}
-				} else {
-					for (OrderRecord c : check.getSpentOrderRecord()) {
-						c.setSpent(false);
-						c.setSpenderBlockHash(null);
-					}
-				}
-				blockStore.updateOrderSpent(check.getSpentOrderRecord());
+					blockStore.updateOrderSpent(check.getSpentOrderRecord());
+					blockStore.updateOrderConfirmed(check.getRemainderRecords(), block.getHash(), confirm);
+					blockStore.updateOrderResultConfirmed(block.getHash(), confirm);
+					confirmTransaction(block, confirm, check.getOutputTx(), blockStore);
 
-				blockStore.updateOrderConfirmed(check.getRemainderRecords(), block.getHash(), confirm);
-
-				blockStore.updateOrderResultConfirmed(block.getHash(), confirm);
-
-				confirmTransaction(block, confirm, check.getOutputTx(), blockStore);
-				if (confirm) {
 					blockStore.updateOrderCancelSpent(check.getCancelRecords(), block.getHash(), confirm);
 					blockStore.updateOrderResultSpent(check.getPrevblockhash(), block.getHash(), confirm);
 					// Update the matching
 					addMatchingEventsOrderExecution(check, check.getOutputTx().getHashAsString(),
 							block.getTimeSeconds(), blockStore);
+					for (BlockWrap dep : getReferrencedBlockWrap(block, blockStore)) {
+						confirmBlock(dep, blockStore);
+					}
 				} else {
+					for (OrderRecord c : check.getSpentOrderRecord()) {
+						// not revert if the same order is in remainder, 
+						if (!spentInRemainder(c, check.getRemainderOrderRecord())) {
+							c.setSpent(false);
+							c.setSpenderBlockHash(null);
+						}
+					}
+					for (OrderRecord c : check.getRemainderOrderRecord()) {
+						c.setSpent(false);
+						c.setSpenderBlockHash(null);
+					}
+					blockStore.updateOrderSpent(check.getSpentOrderRecord());
+					blockStore.updateOrderSpent(check.getRemainderOrderRecord());
+					blockStore.updateOrderConfirmed(check.getRemainderRecords(), block.getHash(), confirm);
+					blockStore.updateOrderResultConfirmed(block.getHash(), confirm);
+					confirmTransaction(block, confirm, check.getOutputTx(), blockStore);
+
 					blockStore.updateOrderCancelSpent(check.getCancelRecords(), null, confirm);
 					blockStore.updateOrderResultSpent(check.getPrevblockhash(), null, confirm);
-
+					for (BlockWrap dep : getReferrencedBlockWrap(block, blockStore)) {
+						unconfirm(dep, new HashSet<>(), blockStore);
+					}
 				}
+
 				evictTransactions(block.getHash(), blockStore);
 
+			} else {
+				logger.debug("check failed result=" + result.toString() + " check =" + check.toString());
 			}
-			// blockStore.updateContractEvent( );
+
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public boolean spentInRemainder(OrderRecord c, Collection<OrderRecord> remainderRecords)
+			throws BlockStoreException, IOException {
+		for (OrderRecord r : remainderRecords) {
+			if (r.getBlockHash().equals(c.getBlockHash()))
+				return true;
+		}
+		return false;
+	}
+
+	public void debugOrderExecutionResult(Block block, OrderExecutionResult check,boolean confirm, FullBlockStore blockStore)
+			throws BlockStoreException, IOException {
+
+		for (BlockWrap c : getReferrencedBlockWrap(block, blockStore)) {
+			logger.debug("getReferrencedBlockWrap +  confirm ="+confirm);
+			logger.debug(c.toString());
+		}
+
+		for (OrderRecord c : check.getSpentOrderRecord()) {
+			logger.debug("getSpentOrderRecord +  confirm ="+confirm);
+			logger.debug(c.toString());
+		}
+		for (OrderRecord c : check.getRemainderOrderRecord()) {
+			logger.debug("getRemainderOrderRecord +  confirm ="+confirm);
+			logger.debug(c.toString());
+		}
+
 	}
 
 	/*
@@ -1931,7 +1978,8 @@ public class ServiceBaseConnect extends ServiceBase {
 	}
 
 	/**
-	 * Disconnect the block, unconfirm all outputs of order, UTXOs and UTXO-like etc constructs.
+	 * Disconnect the block, unconfirm all outputs of order, UTXOs and UTXO-like etc
+	 * constructs.
 	 * 
 	 * @throws BlockStoreException if the block store had an underlying error or
 	 *                             block does not exist in the block store at all.
@@ -2001,19 +2049,19 @@ public class ServiceBaseConnect extends ServiceBase {
 
 		// All consumed order records are now unspent by this block
 		Set<OrderRecord> updateOrder = new HashSet<OrderRecord>(matchingResult.getSpentOrders());
-		 
+
 		for (OrderRecord o : updateOrder) {
 			o.setSpent(false);
-			o.setSpenderBlockHash(null); 
+			o.setSpenderBlockHash(null);
 		}
 		blockStore.updateOrderSpent(updateOrder);
-	 	blockStore.updateOrderConfirmed(updateOrder, false);
-	 	//reset the spent of  this BlockHash
+		blockStore.updateOrderConfirmed(updateOrder, false);
+		// reset the spent of this BlockHash
 		RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
 
-	 	blockStore.updateOrderUnSpent(rewardInfo. getPrevRewardHash());
+		blockStore.updateOrderUnSpent(rewardInfo.getPrevRewardHash());
 		// Set virtual outputs unconfirmed
-	 	
+
 		unconfirmVirtualCoinbaseTransaction(block.getHash(), blockStore);
 
 		blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
@@ -2403,13 +2451,10 @@ public class ServiceBaseConnect extends ServiceBase {
 				result.setBlockHash(block.getHash());
 				blockStore.insertOrderResult(result);
 				insertVirtualUTXOs(block, check.getOutputTx(), blockStore);
-//				for (OrderRecord c : check.getSpentOrderRecord()) {
-//					c.setSpent(true);
-//					c.setSpenderBlockHash(block.getHash());
-//				}
-//			 	blockStore.updateOrderSpent(check.getSpentOrderRecord());
+
 				for (OrderRecord c : check.getRemainderOrderRecord()) {
 					c.setIssuingMatcherBlockHash(block.getHash());
+					c.setConfirmed(false);
 				}
 				blockStore.insertOrder(check.getRemainderOrderRecord());
 
@@ -2798,10 +2843,12 @@ public class ServiceBaseConnect extends ServiceBase {
 	}
 
 	protected void collectOrdersWithCancel(Block block, Set<Sha256Hash> collectedBlocks, List<OrderCancelInfo> cancels,
-			Map<Sha256Hash, OrderRecord> newOrders, Set<OrderRecord> spentOrders, FullBlockStore blockStore)
+			Map<Sha256Hash, OrderRecord> newOrders, Set<OrderRecord> toBeSpentOrders, FullBlockStore blockStore)
 			throws BlockStoreException {
 		for (Sha256Hash bHash : collectedBlocks) {
 			BlockWrap b = getBlockWrap(bHash, blockStore);
+			if (b == null)
+				throw new MissingDependencyException();
 			if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_OPEN) {
 
 				OrderRecord order = blockStore.getOrder(b.getBlock().getHash(), Sha256Hash.ZERO_HASH);
@@ -2813,7 +2860,7 @@ public class ServiceBaseConnect extends ServiceBase {
 				}
 				if (order != null) {
 					newOrders.put(b.getBlock().getHash(), OrderRecord.cloneOrderRecord(order));
-					spentOrders.add(order);
+					toBeSpentOrders.add(order);
 				}
 			} else if (b.getBlock().getBlockType() == Type.BLOCKTYPE_ORDER_CANCEL) {
 				OrderCancelInfo info = new OrderCancelInfo()

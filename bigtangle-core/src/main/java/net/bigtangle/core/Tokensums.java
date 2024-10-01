@@ -46,7 +46,7 @@ public class Tokensums  extends DataClass implements java.io.Serializable {
 
     @Override
     public String toString() {
-        return "Tokensums [ \n tokenid=" + tokenid + ",  \n initial=" + initial + ", \n unspent=" + unspent + ", \n order=" + order
+        return "Tokensums [ \n tokenid=" + tokenid + ",  \n initial=" + initial + ", \n unspent UTXO=" + unspent + ", \n order=" + order
                 + " \n unspent.add(order) = " + unspent.add(order) + "]";
     }
 

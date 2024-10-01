@@ -38,6 +38,7 @@ import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.core.exception.VerificationException.GenericInvalidityException;
+import net.bigtangle.core.exception.VerificationException.MissingDependencyException;
 import net.bigtangle.core.exception.VerificationException.UnsolidException;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
@@ -259,9 +260,14 @@ public class FullBlockStoreImpl {
 			RewardInfo currRewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
 
 			// Solidify referenced blocks
+			try {
 			new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
 					.solidifyBlocks(currRewardInfo, store);
-
+			}catch (MissingDependencyException e) {
+				log.warn("Block isFailState. MissingDependencyException" + block.toString()+ " MissingDependencyException"
+						+ e.toString());
+				return;
+			}
 			SolidityState solidityState = new ServiceBaseCheck(serverConfiguration, networkParameters,
 					cacheBlockService).checkChainSolidity(block, true, store);
 

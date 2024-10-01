@@ -5,8 +5,6 @@
 
 package net.bigtangle.core;
 
-import java.util.Arrays;
-
 public class OrderRecord extends SpentBlock {
 
 	private static final long serialVersionUID = -2331665478149550684L;
@@ -215,7 +213,9 @@ public class OrderRecord extends SpentBlock {
 		return "OrderRecord [  price " + price  + ", side=" + side+ " , offerValue=" + offerValue
 				+ ", offerTokenid=" + offerTokenid + ", targetValue=" + targetValue + ", targetTokenid=" + targetTokenid
 				+ ", beneficiaryAddress=" + beneficiaryAddress + ", validToTime=" + validToTime + ", validFromTime="
-				+ validFromTime  +", issuingMatcherBlockHash=" + issuingMatcherBlockHash + "]";
+				+ validFromTime  +", issuingMatcherBlockHash=" + issuingMatcherBlockHash 
+				+  super.toString()
+				+ "]";
 	}
 
 }
