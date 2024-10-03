@@ -44,8 +44,7 @@ import net.bigtangle.utils.OkHttp3Util;
  */
 public class RewardService2Test extends AbstractIntegrationTest {
 
-	@Autowired
-	CheckpointService checkpointService;
+	
 
 	// test payment, buy and sell
 	public Block createReward(List<Block> blocksAddedAll) throws Exception {
@@ -190,14 +189,6 @@ public class RewardService2Test extends AbstractIntegrationTest {
 
 	}
 
-	private Sha256Hash checkSum() throws JsonProcessingException, Exception {
-		TokensumsMap map = checkpointService.checkToken(store);
-		Map<String, Tokensums> r11 = map.getTokensumsMap();
-		for (Entry<String, Tokensums> a : r11.entrySet()) {
-			assertTrue(a.getValue().check(), " " + a.toString());
-		}
-		return map.hash();
-	}
 
 	public void testToken(List<Block> blocksAddedAll) throws Exception {
 

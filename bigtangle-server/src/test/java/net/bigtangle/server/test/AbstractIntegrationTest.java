@@ -60,6 +60,8 @@ import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.TokenKeyValues;
+import net.bigtangle.core.Tokensums;
+import net.bigtangle.core.TokensumsMap;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
 import net.bigtangle.core.TransactionOutput;
@@ -80,6 +82,7 @@ import net.bigtangle.crypto.TransactionSignature;
 import net.bigtangle.params.ReqCmd;
 import net.bigtangle.script.Script;
 import net.bigtangle.script.ScriptBuilder;
+import net.bigtangle.server.checkpoint.CheckpointService;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
@@ -159,7 +162,8 @@ public abstract class AbstractIntegrationTest {
 	protected CacheBlockPrototypeService cacheBlockPrototypeService;
 	@Autowired
 	protected BlockSaveService blockSaveService;
-
+	@Autowired
+	CheckpointService checkpointService;
 	@Autowired
 	protected void prepareContextRoot(@Value("${local.server.port}") int port) {
 		contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
@@ -625,7 +629,7 @@ public abstract class AbstractIntegrationTest {
 
 	}
 
-	private Block rewardWithBlock(List<Block> addedBlocks, Block b) throws Exception {
+	public Block rewardWithBlock(List<Block> addedBlocks, Block b) throws Exception {
 		if (b != null) {
 			if (addedBlocks != null) {
 				addedBlocks.add(b);
@@ -961,13 +965,17 @@ public abstract class AbstractIntegrationTest {
 
 	protected Block testCreateToken(ECKey outKey, String tokennameName, String domainpre, List<Block> blocksAddedAll)
 			throws JsonProcessingException, Exception {
+		return testCreateToken(outKey, tokennameName,domainpre,  77777L, blocksAddedAll);
+	}
+	protected Block testCreateToken(ECKey outKey, String tokennameName, String domainpre, Long amountgiven, List<Block> blocksAddedAll)
+			throws JsonProcessingException, Exception {
 		// ECKey outKey = walletKeys.get(0);
 		byte[] pubKey = outKey.getPubKey();
 		TokenInfo tokenInfo = new TokenInfo();
 
 		String tokenid = Utils.HEX.encode(pubKey);
 
-		Coin basecoin = Coin.valueOf(77777L, pubKey);
+		Coin basecoin = Coin.valueOf(amountgiven, pubKey);
 		BigInteger amount = basecoin.getValue();
 
 		Token token = Token.buildSimpleTokenInfo(true, null, tokenid, tokennameName, "", 1, 0, amount, true, 0,
@@ -1484,4 +1492,13 @@ public abstract class AbstractIntegrationTest {
 	public BlockEvaluation getBlockEvaluation(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
 		return store.getBlockWrap(hash).getBlockEvaluation();
 	}
+	public Sha256Hash checkSum() throws JsonProcessingException, Exception {
+		TokensumsMap map = checkpointService.checkToken(store);
+		Map<String, Tokensums> r11 = map.getTokensumsMap();
+		for (Entry<String, Tokensums> a : r11.entrySet()) {
+			assertTrue(a.getValue().check(), " " + a.toString());
+		}
+		return map.hash();
+	}
+
 }

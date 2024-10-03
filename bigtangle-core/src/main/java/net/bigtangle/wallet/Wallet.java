@@ -2700,7 +2700,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		return getDomainBlockHashResponse;
 	}
 
-	public void multiSign(final String tokenid, ECKey outKey, KeyParameter aesKey) throws Exception {
+	public Block multiSign(final String tokenid, ECKey outKey, KeyParameter aesKey) throws Exception {
 		HashMap<String, Object> requestParam = new HashMap<String, Object>();
 
 		String address = outKey.toAddress(params).toBase58();
@@ -2711,7 +2711,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 
 		MultiSignResponse multiSignResponse = Json.jsonmapper().readValue(resp, MultiSignResponse.class);
 		if (multiSignResponse.getMultiSigns() == null || multiSignResponse.getMultiSigns().isEmpty())
-			return;
+			return null;
 		MultiSign multiSign = multiSignResponse.getMultiSigns().get(0);
 
 		byte[] payloadBytes = Utils.HEX.decode((String) multiSign.getBlockhashHex());
@@ -2743,7 +2743,7 @@ public class Wallet extends BaseTaggableObject implements KeyBag {
 		MultiSignByRequest multiSignByRequest = MultiSignByRequest.create(multiSignBies);
 		transaction.setDataSignature(Json.jsonmapper().writeValueAsBytes(multiSignByRequest));
 
-		block = adjustSolveAndSign(checkBlockPrototype(block));
+		return adjustSolveAndSign(checkBlockPrototype(block));
 	}
 
 	private Block checkBlockPrototype(Block oldBlock) throws BlockStoreException, NoBlockException, IOException {

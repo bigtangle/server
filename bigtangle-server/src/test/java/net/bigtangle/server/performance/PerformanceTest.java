@@ -59,8 +59,8 @@ public class PerformanceTest extends ContractTest {
 
 		testToken(a1);
 		wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
-		testTokens();
-		testContractTokens();
+		testToken(a1);
+		testContractTokens(a1);
 		wallet = Wallet.fromKeys(networkParameters, ECKey.fromPrivate(Utils.HEX.decode(testPriv)), contextRoot);
 	}
 
@@ -77,19 +77,21 @@ public class PerformanceTest extends ContractTest {
 
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		@SuppressWarnings("rawtypes")
-		final Future<String> handler = executor.submit(new Callable() {
+		Callable callable = new Callable() {
 			@Override
 			public String call() throws Exception {
 				payMoneyToWallet1(blocksAddedAll);
 				sell(blocksAddedAll);
 				buy(blocksAddedAll);
 				ulist = createUserkey();
-				payUserKeys(ulist);
-				payBigUserKeys(ulist);
+				payUserKeys(ulist,"1",blocksAddedAll);
+				payBigUserKeys(ulist,blocksAddedAll);
 				payContract();
 				return "";
 			}
-		});
+		};
+	 
+		final Future<String> handler = executor.submit(callable);
 		try {
 			handler.get(30, TimeUnit.MINUTES);
 		} catch (Exception e) {
