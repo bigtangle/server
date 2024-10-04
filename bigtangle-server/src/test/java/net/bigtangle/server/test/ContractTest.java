@@ -274,7 +274,9 @@ public class ContractTest extends AbstractIntegrationTest {
 					// check one of user get the winnerAmount
 					endMap = new HashMap<>();
 					check(ulist, endMap);
+					assertTrue(endMap.get(winnerAddress.toString()) != null);
 
+			//		assertTrue(endMap.get(winnerAddress.toString()).equals(new BigInteger(winnerAmount)));
 				}
 			}
 		}
