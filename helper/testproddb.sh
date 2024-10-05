@@ -1,7 +1,7 @@
 set -x
 docker network create --driver bridge   bigtangle-bridged-network
 
-export BIGTANGLEVERSION=0.3.6
+export BIGTANGLEVERSION=0.5.0
 export DBHOST=testprod-bigtangle-mysql
 export DB_PASSWORD=test1234
  
