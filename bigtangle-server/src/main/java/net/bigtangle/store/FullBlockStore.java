@@ -222,7 +222,7 @@ public interface FullBlockStore {
 
 	public void updateOrderSpent(Collection<OrderRecord> orderRecords) throws BlockStoreException;
 
-	public void updateOrderUnSpent(Sha256Hash spentBlockHash)
+	public void updateOrderSpent(Set<Sha256Hash> orderRecords, Sha256Hash blockhash, Boolean spent)
 			throws BlockStoreException;
 
 	public HashMap<Sha256Hash, OrderRecord> getOrderMatchingIssuedOrders(Sha256Hash issuingMatcherBlockHash)

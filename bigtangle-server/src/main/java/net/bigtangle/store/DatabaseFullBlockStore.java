@@ -2078,14 +2078,20 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	}
 
 	@Override
-	public void updateOrderUnSpent(Sha256Hash spentBlockHash) throws BlockStoreException {
+	public void updateOrderSpent(Set<Sha256Hash> orderRecords, Sha256Hash blockhash, Boolean spent)
+			throws BlockStoreException {
 
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_UNSPENT_SQL);
-			preparedStatement.setBytes(1, spentBlockHash.getBytes());
-			preparedStatement.executeUpdate();
-
+			preparedStatement = getConnection().prepareStatement(UPDATE_ORDER_SPENT_SQL);
+			for (Sha256Hash o : orderRecords) {
+				preparedStatement.setBoolean(1, spent);
+				preparedStatement.setBytes(2, blockhash != null ? blockhash.getBytes() : null);
+				preparedStatement.setBytes(3, o.getBytes());
+				preparedStatement.setBytes(4, Sha256Hash.ZERO_HASH.getBytes());
+				preparedStatement.addBatch();
+			}
+			preparedStatement.executeBatch();
 		} catch (SQLException e) {
 			throw new BlockStoreException(e);
 		} finally {

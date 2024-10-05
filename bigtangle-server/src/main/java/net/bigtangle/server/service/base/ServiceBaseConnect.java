@@ -2049,19 +2049,13 @@ public class ServiceBaseConnect extends ServiceBase {
 
 		// All consumed order records are now unspent by this block
 		Set<OrderRecord> updateOrder = new HashSet<OrderRecord>(matchingResult.getSpentOrders());
-
 		for (OrderRecord o : updateOrder) {
 			o.setSpent(false);
 			o.setSpenderBlockHash(null);
 		}
 		blockStore.updateOrderSpent(updateOrder);
-		blockStore.updateOrderConfirmed(updateOrder, false);
-		// reset the spent of this BlockHash
-		RewardInfo rewardInfo = new RewardInfo().parseChecked(block.getTransactions().get(0).getData());
 
-		blockStore.updateOrderUnSpent(rewardInfo.getPrevRewardHash());
 		// Set virtual outputs unconfirmed
-
 		unconfirmVirtualCoinbaseTransaction(block.getHash(), blockStore);
 
 		blockStore.updateOrderConfirmed(matchingResult.getRemainingOrders(), false);
