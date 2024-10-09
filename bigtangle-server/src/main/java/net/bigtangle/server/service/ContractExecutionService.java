@@ -194,7 +194,7 @@ public class ContractExecutionService {
 		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBranchBlockHash(), store), cutoffheight, prevChainLength, true,
 				ordertypes, true, store);
-		Set<BlockWrap> collectNotSpents = collectNotSpents(referencedblocks, prevs, store);
+		Set<BlockWrap> collectNotSpents = collectNotSpents(block, referencedblocks, prevs, store);
 
 		Contractresult prevblockHash = prevs.isEmpty() ? Contractresult.zeroContractresult() : prevs.get(0);
 		ContractExecutionResult result = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
@@ -238,14 +238,17 @@ public class ContractExecutionService {
 
 	}
 
-	protected Set<BlockWrap> collectNotSpents(Set<BlockWrap> collectedBlocks, List<Contractresult> prevUnspents,
+	protected Set<BlockWrap> collectNotSpents(Block contractEx, Set<BlockWrap> collectedBlocks, List<Contractresult> prevUnspents,
 			FullBlockStore blockStore) throws BlockStoreException {
 		Set<BlockWrap> collectOrdersNoSpents = new HashSet<>();
 		Set<Sha256Hash> alreadyCollected = collectOrdersNotSpentFrom(prevUnspents);
 		for (BlockWrap b : collectedBlocks) {
+			// check height
+			if (b.getBlock().getHeight() < contractEx.getHeight()) {
 			if (!alreadyCollected.contains(b.getBlockHash())
 					|| Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(b.getBlock().getBlockType())) {
 				collectOrdersNoSpents.add(b);
+			}
 			}
 		}
 		return collectOrdersNoSpents;

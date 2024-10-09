@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
+import com.google.common.math.LongMath;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
@@ -76,6 +78,7 @@ import net.bigtangle.core.response.GetBlockEvaluationsResponse;
 import net.bigtangle.core.response.GetTokensResponse;
 import net.bigtangle.core.response.MultiSignByRequest;
 import net.bigtangle.core.response.MultiSignResponse;
+import net.bigtangle.core.response.OrderdataResponse;
 import net.bigtangle.core.response.PermissionedAddressesResponse;
 import net.bigtangle.core.response.TokenIndexResponse;
 import net.bigtangle.crypto.TransactionSignature;
@@ -1499,6 +1502,85 @@ public abstract class AbstractIntegrationTest {
 			assertTrue(a.getValue().check(), " " + a.toString());
 		}
 		return map.hash();
+	}
+
+	public void sell(List<Block> blocksAddedAll) throws Exception {
+
+		List<String> keyStrHex000 = new ArrayList<String>();
+
+		for (ECKey ecKey : wallet.walletKeys()) {
+			keyStrHex000.add(Utils.HEX.encode(ecKey.getPubKeyHash()));
+		}
+
+		byte[] response = OkHttp3Util.post(contextRoot + ReqCmd.getBalances.name(),
+				Json.jsonmapper().writeValueAsString(keyStrHex000).getBytes());
+
+		GetBalancesResponse getBalancesResponse = Json.jsonmapper().readValue(response, GetBalancesResponse.class);
+		List<UTXO> utxos = getBalancesResponse.getOutputs();
+		Collections.shuffle(utxos);
+		// long q = 8;
+		for (UTXO utxo : utxos) {
+			if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())) {
+				wallet.setServerURL(contextRoot);
+				try {
+					Block sellOrder = wallet.sellOrder(null, utxo.getTokenId(), 10000000,
+							utxo.getValue().getValue().longValue(), null, null,
+							NetworkParameters.BIGTANGLE_TOKENID_STRING, true);
+					blocksAddedAll.add(sellOrder);
+				//	makeOrderExecutionAndReward(blocksAddedAll);
+				} catch (InsufficientMoneyException e) {
+					// ignore: handle exception
+				}
+			}
+		}
+	}
+
+	public void payMoneyToWallet1(List<Block> blocksAddedAll) throws Exception {
+
+		HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
+
+		for (int i = 0; i < 10; i++) {
+			giveMoneyResult.put(new ECKey().toAddress(networkParameters).toString(),
+					BigInteger.valueOf(3333000000l / LongMath.pow(2, 1)));
+		}
+
+		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
+		blocksAddedAll.add(b);
+	//	makeRewardBlock(blocksAddedAll);
+	}
+
+	public void buy(List<Block> blocksAddedAll) throws Exception {
+
+		HashMap<String, Object> requestParam = new HashMap<String, Object>();
+		byte[] response0 = OkHttp3Util.post(contextRoot + ReqCmd.getOrders.name(),
+				Json.jsonmapper().writeValueAsString(requestParam).getBytes());
+
+		OrderdataResponse orderdataResponse = Json.jsonmapper().readValue(response0, OrderdataResponse.class);
+
+		for (OrderRecord orderRecord : orderdataResponse.getAllOrdersSorted()) {
+			try {
+				buy(orderRecord, blocksAddedAll);
+			} catch (InsufficientMoneyException e) {
+				Thread.sleep(4000);
+			} catch (Exception e) {
+				log.debug("", e);
+			}
+		}
+	}
+
+	public void buy(OrderRecord orderRecord, List<Block> blocksAddedAll) throws Exception {
+
+		if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(orderRecord.getOfferTokenid())) {
+			// sell order and make buy
+			long price = orderRecord.getTargetValue() / orderRecord.getOfferValue();
+
+			Block buyOrder = wallet.buyOrder(null, orderRecord.getOfferTokenid(), price, orderRecord.getOfferValue(),
+					null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, false);
+			blocksAddedAll.add(buyOrder);
+		//	makeOrderExecutionAndReward(blocksAddedAll);
+
+		}
+
 	}
 
 }

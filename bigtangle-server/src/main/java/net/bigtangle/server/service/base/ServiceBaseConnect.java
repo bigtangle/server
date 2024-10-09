@@ -395,11 +395,12 @@ public class ServiceBaseConnect extends ServiceBase {
 		if (a == null)
 			return false;
 		boolean re = a.isSpent() && !c.getBlock().getBlockHash().equals(a.getSpenderBlockHash());
-		if (re) {
+	/*	if (re) {
 			logger.debug("getUTXOSpent true " + a.toString() + "\n TransactionOutPoint = "
 					+ getBlock(txout.getBlockHash(), store) + " \n spender = "
 					+ getBlock(a.getSpenderBlockHash(), store));
 		}
+		*/
 		return re;
 
 	}

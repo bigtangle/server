@@ -60,14 +60,14 @@ public class ContractTest extends AbstractIntegrationTest {
 		prepare("1", a1);
 
 	}
-
+ 
 	public void prepare(String factor, List<Block> a1) throws JsonProcessingException, Exception {
 		wallet.importKey(ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)));
 		testToken(a1);
 		testContractTokens(a1);
 		ulist = createUserkey();
 		payUserKeys(ulist, factor, a1);
-		payBigUserKeys(ulist, a1);
+		payBigUserKeys(ulist,  Long.valueOf(factor), a1);
 
 	}
 
@@ -244,8 +244,19 @@ public class ContractTest extends AbstractIntegrationTest {
 
 	}
 
+	public void ordermatch(List<Block> a1) throws Exception {
+	//	payMoneyToWallet1(a1); 
+		sell(a1);
+		buy(a1);
+		// Generate mining reward block
+		Block next = makeRewardBlock(a1);
+		a1.add(next);
+	}
 	public void createReward(List<Block> a1) throws Exception {
-		// multiple executions of contract and rewards confirms
+	 	ordermatch(a1);
+		contractExecution(a1);
+	}
+	public void contractExecution(List<Block> a1) throws Exception {
 
 		Block resultBlock = null;
 		for (ECKey key : ulist) {
@@ -278,6 +289,7 @@ public class ContractTest extends AbstractIntegrationTest {
 
 			//		assertTrue(endMap.get(winnerAddress.toString()).equals(new BigInteger(winnerAmount)));
 				}
+				
 			}
 		}
 
@@ -298,7 +310,7 @@ public class ContractTest extends AbstractIntegrationTest {
 		resetStore();
 
 		// second chain
-		prepare("5", a2);
+		prepare("2", a2);
 		for (int i = 0; i < 2; i++) {
 			createReward(a2);
 		}
@@ -536,14 +548,14 @@ public class ContractTest extends AbstractIntegrationTest {
 		return ECKey.fromPrivate(Utils.HEX.decode(yuanTokenPriv)).toAddress(networkParameters);
 	}
 
-	public void payBigUserKeys(List<ECKey> userkeys, List<Block> blocksAddedAll) throws Exception {
+	public void payBigUserKeys(List<ECKey> userkeys, Long factor, List<Block> blocksAddedAll) throws Exception {
 
 		List<List<ECKey>> parts = Wallet.chopped(userkeys, 1000);
 
 		for (List<ECKey> list : parts) {
 			HashMap<String, BigInteger> giveMoneyResult = new HashMap<>();
 			for (ECKey key : list) {
-				giveMoneyResult.put(key.toAddress(networkParameters).toString(), BigInteger.valueOf(10000));
+				giveMoneyResult.put(key.toAddress(networkParameters).toString(), BigInteger.valueOf(10000*factor));
 			}
 			Block b = wallet.payToList(null, giveMoneyResult, NetworkParameters.BIGTANGLE_TOKENID, "pay big to user");
 			// log.debug("block " + (b == null ? "block is null" : b.toString()));
@@ -593,4 +605,6 @@ public class ContractTest extends AbstractIntegrationTest {
 		log.debug("rate  " + usernumber * 1.0 / watch.elapsed(TimeUnit.SECONDS));
 
 	}
+	
+	
 }

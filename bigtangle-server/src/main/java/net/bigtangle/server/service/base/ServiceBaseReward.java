@@ -189,7 +189,8 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		for (Sha256Hash hash : currRewardInfo.getBlocks()) {
 			BlockWrap block = getBlockWrap(hash, store);
 			if (block.getBlock().getBlockType() == Type.BLOCKTYPE_REWARD)
-				throw new VerificationException("Reward block approves other reward blocks");
+				throw new VerificationException(
+						"Reward block referenced block has other reward blocks" + block.toString());
 		}
 	}
 
@@ -314,7 +315,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		}
 		final LinkedList<Block> newBlocks = getPartialChain(newChainHead, splitPoint, store);
 		// Disconnect each block in the previous best chain that is no
-		// longer in the new best chain  from last to begin	
+		// longer in the new best chain from last to begin
 		Collections.sort(oldBlocks, new SortbyBlock());
 		for (Block oldBlock : oldBlocks) {
 			// Sanity check:
@@ -329,8 +330,8 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 					unconfirm(blockWrap, new HashSet<>(), store);
 
 				}
-		//		store.commitDatabaseBatchWrite();
-		//		store.beginDatabaseBatchWrite();
+				// store.commitDatabaseBatchWrite();
+				// store.beginDatabaseBatchWrite();
 			}
 
 		}
