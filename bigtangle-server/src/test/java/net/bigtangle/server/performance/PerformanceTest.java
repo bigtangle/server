@@ -51,8 +51,8 @@ public class PerformanceTest extends ContractTest {
 		List<Block> a2 = new ArrayList<Block>();
 
 		// second chain
-		prepare("200", a2);
-		for (int i = 0; i < 200; i++) {
+		prepare("12200", a2);
+		for (int i = 0; i < 12200; i++) {
 			createReward(a2);
 		}
 	}

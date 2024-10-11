@@ -15,7 +15,7 @@ public class Orderresult extends SpentBlock implements java.io.Serializable {
 
 	private Sha256Hash prevblockhash;
 
-	private byte[] orderresult;
+	private byte[] orderExecutionResult;
 	private long orderchainLength;
 
 	// this is for json
@@ -24,7 +24,7 @@ public class Orderresult extends SpentBlock implements java.io.Serializable {
 	}
 
 	public Orderresult(Sha256Hash hash, boolean confirmed, boolean spent, Sha256Hash prevBlockHash,
-			Sha256Hash spenderblockhash, byte[] orderresult,  long orderchainLength,   long inserttime ) {
+			Sha256Hash spenderblockhash, byte[] orderExecutionResult,  long orderchainLength,   long inserttime ) {
 		super();
 		this.setBlockHash(hash);
 		this.setConfirmed(confirmed);
@@ -32,7 +32,7 @@ public class Orderresult extends SpentBlock implements java.io.Serializable {
 		this.setTime(inserttime); 
 		this.prevblockhash = prevBlockHash;
 		this.setSpenderBlockHash(spenderblockhash);
-		this.orderresult = orderresult;
+		this.orderExecutionResult = orderExecutionResult;
 		this.orderchainLength = orderchainLength;
 	}
 
@@ -46,7 +46,7 @@ public class Orderresult extends SpentBlock implements java.io.Serializable {
 			DataOutputStream dos = new DataOutputStream(baos);
 			dos.write(super.toByteArray());
 			Utils.writeNBytes(dos, prevblockhash.getBytes());
-			Utils.writeNBytes(dos, orderresult ); 
+			Utils.writeNBytes(dos, orderExecutionResult ); 
 			dos.writeLong(orderchainLength);
 			dos.close();
 		} catch (IOException e) {
@@ -61,7 +61,7 @@ public class Orderresult extends SpentBlock implements java.io.Serializable {
 
 		prevblockhash = Sha256Hash.wrap(Utils.readNBytes(dis));
 
-		orderresult = Utils.readNBytes(dis);
+		orderExecutionResult = Utils.readNBytes(dis);
 		orderchainLength = dis.readLong();
 
 		return this;
@@ -83,13 +83,16 @@ public class Orderresult extends SpentBlock implements java.io.Serializable {
 	public void setPrevblockhash(Sha256Hash prevblockhash) {
 		this.prevblockhash = prevblockhash;
 	}
+ 
 
-	public byte[] getOrderresult() {
-		return orderresult;
+	 
+
+	public byte[] getOrderExecutionResult() {
+		return orderExecutionResult;
 	}
 
-	public void setOrderresult(byte[] orderresult) {
-		this.orderresult = orderresult;
+	public void setOrderExecutionResult(byte[] orderExecutionResult) {
+		this.orderExecutionResult = orderExecutionResult;
 	}
 
 	public long getOrderchainLength() {

@@ -386,7 +386,7 @@ public class FullBlockStoreImpl {
 		Block head = store.get(cacheBlockService.getMaxConfirmedReward(store).getBlockHash());
 		if (block.getRewardInfo().getPrevRewardHash().equals(head.getHash())) {
 			connect(block, solidityState, store);
-			new ServiceBaseReward(serverConfiguration, networkParameters, cacheBlockService).buildRewardChain(block,
+			new ServiceBaseReward(serverConfiguration, networkParameters, cacheBlockService).checkRewardChain(block,
 					store);
 		} else {
 			// This block connects to somewhere other than the top of the best

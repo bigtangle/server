@@ -165,18 +165,14 @@ public class OrderExecutionService {
 		Set<BlockWrap> referencedblocks = new HashSet<>();
 		long cutoffheight = blockService.getRewardCutoffHeight(prevRewardHash, store);
 		List<Orderresult> prevUnspents = collectPrevsChain(store.getOrderResultUnspent());
-
+		 Orderresult prevOrderresult = store.getMaxConfirmedOrderresult( ) ;
+		
 		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
 		ordertypes.add(Block.Type.BLOCKTYPE_ORDER_CANCEL);
 		ordertypes.add(Block.Type.BLOCKTYPE_ORDER_OPEN);
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);
-		// add all blocks of dependencies
-		for (Orderresult b : prevUnspents) {
-			serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
-					blockService.getBlockWrap(b.getBlockHash(), store), cutoffheight, prevChainLength, true, ordertypes,
-					true, store);
-		}
+		// add all blocks of dependencies 
 		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBlockHash(), store), cutoffheight, prevChainLength, true,
 				ordertypes, true, store);
@@ -185,7 +181,7 @@ public class OrderExecutionService {
 				ordertypes, true, store);
 
 		Set<BlockWrap> collectOrdersNoSpent = collectOrdersNoSpent(referencedblocks, prevUnspents, store);
-		Orderresult prevblockHash = prevUnspents.isEmpty() ? Orderresult.zeroOrderresult() : prevUnspents.get(0);
+		Orderresult prevblockHash = prevOrderresult==null ? Orderresult.zeroOrderresult() : prevOrderresult;
 		OrderExecutionResult result = new ServiceOrderExecution(serverConfiguration, networkParameters,
 				cacheBlockService)
 				.orderMatching(block, prevblockHash, serviceBase.getHashSet(collectOrdersNoSpent), store);
@@ -245,7 +241,7 @@ public class OrderExecutionService {
 		Set<Sha256Hash> collectOrdersNoSpents = new HashSet<>();
 		for (Orderresult b : prevUnspents) {
 			collectOrdersNoSpents
-					.addAll(new OrderExecutionResult().parseChecked(b.getOrderresult()).getReferencedBlocks());
+					.addAll(new OrderExecutionResult().parseChecked(b.getOrderExecutionResult()).getReferencedBlocks());
 		}
 		return collectOrdersNoSpents;
 	}

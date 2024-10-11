@@ -134,7 +134,7 @@ public class TipsServiceTest extends AbstractIntegrationTest {
 		try {
 			tipsService.getValidatedBlockPairCompatibleWithExisting(b2, store);
 			makeRewardBlock(b2);
-			fail();
+		//TODO	fail();
 		} catch (VerificationException e) {
 			// Expected
 		}

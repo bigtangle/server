@@ -2640,7 +2640,9 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		return new Contractresult(Sha256Hash.wrap(resultSet.getBytes("blockhash")), resultSet.getBoolean("confirmed"),
 				resultSet.getBoolean("spent"), Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),
 				Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")), resultSet.getBytes("contractresult"),
-				resultSet.getLong("contractchainlength"), resultSet.getLong("inserttime"));
+				resultSet.getLong("contractchainlength"), 
+				resultSet.getString("contracttokenid"),   
+				resultSet.getLong("inserttime"));
 
 	}
 
@@ -4728,5 +4730,59 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		deleteAccountCoin(address, tokenid);
 		Map<String, Map<String, Coin>> toAddressMap = queryOutputsMap(address, tokenid);
 		addAccountCoinBatch(toAddressMap);
+	}
+	
+
+	@Override
+	public Contractresult getMaxConfirmedContractresult( String contracttokenid) throws BlockStoreException {
+
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = getConnection().prepareStatement(SELECT_CONTRACTRESULT_MAX_CONFIRMED_SQL);
+			preparedStatement.setString(1, contracttokenid);
+			ResultSet resultSet = preparedStatement.executeQuery();
+			if (resultSet.next()) {
+
+				return setContractresult(resultSet);
+			} else
+				return null;
+
+		} catch (SQLException ex) {
+			throw new BlockStoreException(ex);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// // throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+
+	@Override
+	public Orderresult getMaxConfirmedOrderresult() throws BlockStoreException {
+
+		PreparedStatement preparedStatement = null;
+		try {
+			preparedStatement = getConnection().prepareStatement(SELECT_ORDER_RESULT_MAX_CONFIRMED_SQL);
+			ResultSet resultSet = preparedStatement.executeQuery();
+			if (resultSet.next()) {
+
+				return setOrderresult(resultSet);
+			} else
+				return null;
+
+		} catch (SQLException ex) {
+			throw new BlockStoreException(ex);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// // throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
 	}
 }

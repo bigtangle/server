@@ -42,10 +42,10 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 	private static final Logger logger = LoggerFactory.getLogger(ServiceBaseReward.class);
 
-	public void buildRewardChain(Block newMilestoneBlock, FullBlockStore store) throws BlockStoreException {
+	public void checkRewardChain(Block newMilestoneBlock, FullBlockStore store) throws BlockStoreException {
 
 		RewardInfo currRewardInfo = new RewardInfo().parseChecked(newMilestoneBlock.getTransactions().get(0).getData());
-		Set<Sha256Hash> milestoneSet = currRewardInfo.getBlocks();
+		Set<Sha256Hash> referrencedBlocks = currRewardInfo.getBlocks();
 		long cutoffHeight = getRewardCutoffHeight(currRewardInfo.getPrevRewardHash(), store);
 
 		// Check all referenced blocks have their requirements
@@ -78,7 +78,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 		// Find conflicts in the dependency set
 		HashSet<BlockWrap> allApprovedNewBlocks = new HashSet<>();
-		for (Sha256Hash hash : milestoneSet) {
+		for (Sha256Hash hash : referrencedBlocks) {
 			BlockWrap blockWrap = getBlockWrap(hash, store);
 			allApprovedNewBlocks.add(blockWrap);
 			if ((Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(blockWrap.getBlock().getBlockType())
@@ -86,6 +86,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 				allApprovedNewBlocks.addAll(getReferrencedBlockWrap(blockWrap.getBlock(), store));
 			}
 		}
+
 		allApprovedNewBlocks.add(getBlockWrap(newMilestoneBlock.getHash(), store));
 
 		// If anything is already spent, no-go
@@ -231,7 +232,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		Set<BlockWrap> blocks = new HashSet<>();
 		long cutoffheight = getRewardCutoffHeight(prevRewardHash, store);
 
-		List<Block.Type> ordertypes = getListedBlock(noOrder);
+		List<Block.Type> ordertypes = getListedBlockOfType(noOrder);
 
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);
@@ -251,33 +252,28 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		return new RewardBuilderResult(tx, difficultyReward);
 	}
 
-	private List<Block.Type> getListedBlock(boolean noOrder) {
+	private List<Block.Type> getListedBlockOfType(boolean contractExecute) {
 		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
-		if (noOrder) {
-			// exclude order open , cancel
 
-			ordertypes.add(Block.Type.BLOCKTYPE_INITIAL);
-			ordertypes.add(Block.Type.BLOCKTYPE_TRANSFER);
-			ordertypes.add(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-			ordertypes.add(Block.Type.BLOCKTYPE_FILE);
-			ordertypes.add(Block.Type.BLOCKTYPE_USERDATA);
-			ordertypes.add(Block.Type.BLOCKTYPE_REWARD);
-			ordertypes.add(Block.Type.BLOCKTYPE_GOVERNANCE);
-			ordertypes.add(Block.Type.BLOCKTYPE_CROSSTANGLE);
+		ordertypes.add(Block.Type.BLOCKTYPE_INITIAL);
+		ordertypes.add(Block.Type.BLOCKTYPE_TRANSFER);
+		ordertypes.add(Block.Type.BLOCKTYPE_TOKEN_CREATION);
+		ordertypes.add(Block.Type.BLOCKTYPE_FILE);
+		ordertypes.add(Block.Type.BLOCKTYPE_USERDATA);
+		// Reward can not be as Referenced ordertypes.add(Block.Type.BLOCKTYPE_REWARD);
+		ordertypes.add(Block.Type.BLOCKTYPE_GOVERNANCE);
+		ordertypes.add(Block.Type.BLOCKTYPE_CROSSTANGLE);
+
+		if (contractExecute) {
+			// exclude order open , cancel
 			ordertypes.add(Block.Type.BLOCKTYPE_ORDER_EXECUTE);
 			ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
 		} else {
-			ordertypes.add(Block.Type.BLOCKTYPE_INITIAL);
-			ordertypes.add(Block.Type.BLOCKTYPE_TRANSFER);
-			ordertypes.add(Block.Type.BLOCKTYPE_TOKEN_CREATION);
-			ordertypes.add(Block.Type.BLOCKTYPE_FILE);
-			ordertypes.add(Block.Type.BLOCKTYPE_USERDATA);
-			ordertypes.add(Block.Type.BLOCKTYPE_REWARD);
-			ordertypes.add(Block.Type.BLOCKTYPE_GOVERNANCE);
-			ordertypes.add(Block.Type.BLOCKTYPE_CROSSTANGLE);
 			ordertypes.add(Block.Type.BLOCKTYPE_ORDER_OPEN);
 			ordertypes.add(Block.Type.BLOCKTYPE_ORDER_CANCEL);
-			ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
+			ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EVENT);
+			ordertypes.add(Block.Type.BLOCKTYPE_CONTRACTEVENT_CANCEL);
+
 		}
 		return ordertypes;
 	}
@@ -341,7 +337,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		// Walk in ascending chronological order.
 		for (Iterator<Block> it = newBlocks.descendingIterator(); it.hasNext();) {
 			cursor = it.next();
-			buildRewardChain(cursor, store);
+			checkRewardChain(cursor, store);
 			// if we build a chain longer than head, do a commit, even it may be
 			// failed after this.
 			if (cursor.getRewardInfo().getChainlength() > head.getRewardInfo().getChainlength()) {

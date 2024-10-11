@@ -146,23 +146,13 @@ public class ContractExecutionService {
 		Block b = cacheBlockPrototypeService.getBlockPrototype(store);
 		// log.debug(" getValidatedContractExecutionBlockPair time {} ms.",
 		// watch.elapsed(TimeUnit.MILLISECONDS));
-	 		return createContractExecution(b, contractid, store);
-		 
- 
+		return createContractExecution(b, contractid, store);
 
 	}
 
 	public Block createContractExecution(Block block, String contractid, FullBlockStore store)
 			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
-		// calculate prev
-		List<Contractresult> prevs = store.getContractresultUnspent(contractid);
 
-		return createContractExecution(block, contractid, prevs, store);
-	}
-
-	public Block createContractExecution(Block block, String contractid, List<Contractresult> prevs,
-			FullBlockStore store)
-			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
 		block.setBlockType(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
 		// Build transaction for block
 		Transaction tx = new Transaction(networkParameters);
@@ -174,34 +164,28 @@ public class ContractExecutionService {
 		Set<BlockWrap> referencedblocks = new HashSet<>();
 		long cutoffheight = blockService.getRewardCutoffHeight(prevRewardHash, store);
 
-		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
-		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EVENT);
-		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACTEVENT_CANCEL);
-		// the related previous execution
-		ordertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
+		List<Block.Type> referencedOrdertypes = new ArrayList<Block.Type>();
+		referencedOrdertypes.add(Block.Type.BLOCKTYPE_CONTRACT_EVENT);
+		referencedOrdertypes.add(Block.Type.BLOCKTYPE_CONTRACTEVENT_CANCEL);
+
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);
 		// add all blocks of dependencies
-		for (Contractresult b : prevs) {
-			serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
-					blockService.getBlockWrap(b.getBlockHash(), store), cutoffheight, prevChainLength, true, ordertypes,
-					true, store);
-		}
 
 		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBlockHash(), store), cutoffheight, prevChainLength, true,
-				ordertypes, true, store);
+				referencedOrdertypes, true, store);
 		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBranchBlockHash(), store), cutoffheight, prevChainLength, true,
-				ordertypes, true, store);
-		Set<BlockWrap> collectNotSpents = collectNotSpents(block, referencedblocks, prevs, store);
+				referencedOrdertypes, true, store);
+		Contractresult prev = store.getMaxConfirmedContractresult(contractid);
 
-		Contractresult prevblockHash = prevs.isEmpty() ? Contractresult.zeroContractresult() : prevs.get(0);
+		Contractresult prevblockHash = prev == null ? Contractresult.zeroContractresult() : prev;
 		ContractExecutionResult result = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
-				.executeContract(block, store, contractid, prevblockHash, serviceBase.getHashSet(collectNotSpents));
+				.executeContract(block, store, contractid, prevblockHash, serviceBase.getHashSet(referencedblocks));
 		// do not create the execution block, if there is no new referencedblocks and no
 		// match
-		if (result == null || (result.getOutputTx().getOutputs().isEmpty() && collectNotSpents.isEmpty()))
+		if (result == null || (result.getOutputTx().getOutputs().isEmpty() && referencedblocks.isEmpty()))
 			return null;
 
 		tx.setData(result.toByteArray());
@@ -238,17 +222,17 @@ public class ContractExecutionService {
 
 	}
 
-	protected Set<BlockWrap> collectNotSpents(Block contractEx, Set<BlockWrap> collectedBlocks, List<Contractresult> prevUnspents,
-			FullBlockStore blockStore) throws BlockStoreException {
+	protected Set<BlockWrap> collectNotSpents(Block contractEx, Set<BlockWrap> collectedBlocks,
+			List<Contractresult> prevUnspents, FullBlockStore blockStore) throws BlockStoreException {
 		Set<BlockWrap> collectOrdersNoSpents = new HashSet<>();
 		Set<Sha256Hash> alreadyCollected = collectOrdersNotSpentFrom(prevUnspents);
 		for (BlockWrap b : collectedBlocks) {
 			// check height
 			if (b.getBlock().getHeight() < contractEx.getHeight()) {
-			if (!alreadyCollected.contains(b.getBlockHash())
-					|| Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(b.getBlock().getBlockType())) {
-				collectOrdersNoSpents.add(b);
-			}
+				if (!alreadyCollected.contains(b.getBlockHash())
+						|| Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(b.getBlock().getBlockType())) {
+					collectOrdersNoSpents.add(b);
+				}
 			}
 		}
 		return collectOrdersNoSpents;

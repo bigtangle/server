@@ -259,14 +259,13 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 	protected final String INSERT_CONTRACT_RESULT_SQL = getInsert()
 			+ "  INTO contractresult (blockhash,  contracttokenid, confirmed, spent, spenderblockhash, "
 			+ " contractresult, prevblockhash, inserttime, contractchainlength) " + " VALUES (?, ?, ?, ?, ?, ?, ?,?,?)";
-
-	protected final String SELECT_CONTRACTRESULT_SQL = "SELECT  blockhash,  contracttokenid, confirmed, spent, spenderblockhash,  "
+	protected final String SELECT_CONTRACTRESULT  = "SELECT  blockhash,  contracttokenid, confirmed, spent, spenderblockhash,  "
 			+ " contractresult, prevblockhash, inserttime, contractchainlength "
-			+ " FROM contractresult WHERE contracttokenid=? and spent=false order by contractchainlength desc  ";
-	protected final String SELECT_CONTRACTRESULT_HASH_SQL = "SELECT  blockhash,  contracttokenid, confirmed, spent, spenderblockhash,  "
-			+ " contractresult, prevblockhash, inserttime, contractchainlength "
-			+ " FROM contractresult WHERE blockhash=?   ";
-
+			+ " FROM contractresult ";
+	protected final String SELECT_CONTRACTRESULT_SQL = SELECT_CONTRACTRESULT + " WHERE contracttokenid=? and spent=false order by contractchainlength desc  ";
+	protected final String SELECT_CONTRACTRESULT_HASH_SQL =SELECT_CONTRACTRESULT +"  WHERE blockhash=?   ";
+	protected final String SELECT_CONTRACTRESULT_MAX_CONFIRMED_SQL = SELECT_CONTRACTRESULT
+			+ " WHERE confirmed = 1 and spent=false and contracttokenid=?  order by contractchainlength desc limit 1";
 	protected final String UPDATE_ORDERRESULT_SPENT_SQL = getUpdate()
 			+ " orderresult SET spent = ?, spenderblockhash = ? " + " WHERE blockhash = ?";
 	protected final String UPDATE_ORDERRESULT_CONFIRMED_SQL = getUpdate() + " orderresult SET confirmed = ? "
@@ -274,13 +273,15 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 	protected final String INSERT_ORDER_RESULT_SQL = getInsert()
 			+ "  INTO orderresult (blockhash, confirmed, spent, spenderblockhash, "
 			+ " orderresult, prevblockhash, inserttime, orderchainlength) " + " VALUES (?, ?, ?, ?, ?, ?, ?,?)";
-	protected final String SELECT_ORDERRESULT_SQL =   "  select blockhash, confirmed, spent, spenderblockhash, "
+	protected final String SELECT_ORDERRESULT =   "  select blockhash, confirmed, spent, spenderblockhash, "
 			+ " orderresult, prevblockhash, inserttime , orderchainlength" 
-			+ " FROM orderresult WHERE spent=false order by orderchainlength desc ";
-	protected final String SELECT_ORDERRESULT_HASH_SQL =   "  select blockhash, confirmed, spent, spenderblockhash, "
-			+ " orderresult, prevblockhash, inserttime , orderchainlength" 
-			+ " FROM orderresult WHERE blockhash=?";
-
+			+ " FROM orderresult ";
+	protected final String SELECT_ORDERRESULT_SQL =   SELECT_ORDERRESULT
+			+ " WHERE spent=false order by orderchainlength desc ";
+	protected final String SELECT_ORDERRESULT_HASH_SQL =   SELECT_ORDERRESULT +" WHERE blockhash=?";
+	protected final String SELECT_ORDER_RESULT_MAX_CONFIRMED_SQL = SELECT_ORDERRESULT
+			+ " WHERE confirmed = 1 and spent=false order by orderchainlength desc limit 1";
+	
 	protected final String INSERT_TOKENS_SQL = getInsert()
 			+ " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, "
 			+ "tokenname, description, domainname, signnumber,tokentype, tokenstop,"
