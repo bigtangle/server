@@ -182,14 +182,15 @@ public class ServiceBaseConnect extends ServiceBase {
 
 	/**
 	 * Recursively adds the specified block and its approved blocks to the
-	 * collection if the blocks are not in the collection. if a block is missing
-	 * somewhere, returns false. throwException will be true, if it required the
-	 * validation for consensus. Otherwise, it does ignore the cutoff blocks.
+	 * collection as referenced if the blocks are not in the collection. if a block
+	 * is missing somewhere, returns false. throwException will be true, if it
+	 * required the validation for consensus. Otherwise, it does ignore the cutoff
+	 * blocks.
 	 *
 	 */
-	public boolean addRequiredNonContainedBlockHashesTo(Set<BlockWrap> blocks, BlockWrap startingBlock,
-			long cutoffHeight, long prevMilestoneNumber, boolean throwException, List<Block.Type> blocktypes,
-			boolean checkSpentConflict, FullBlockStore store) throws BlockStoreException {
+	public boolean addReferencedBlockHashesTo(Set<BlockWrap> blocks, BlockWrap startingBlock, long cutoffHeight,
+			long prevMilestoneNumber, boolean throwException, List<Block.Type> blocktypes, boolean checkSpentConflict,
+			FullBlockStore store) throws BlockStoreException {
 
 		PriorityQueue<BlockWrap> blockQueue = new PriorityQueue<BlockWrap>(
 				Comparator.comparingLong((BlockWrap b) -> b.getBlockEvaluation().getHeight()).reversed());
@@ -225,11 +226,11 @@ public class ServiceBaseConnect extends ServiceBase {
 
 			// Add this block and recursive referenced.
 			if (blocktypes == null) {
-				add(blocks, block, checkSpentConflict, store);
+				addBlockToReferenced(blocks, block, checkSpentConflict, store);
 			} else {
 				for (Block.Type type : blocktypes) {
 					if (type.equals(block.getBlock().getBlockType())) {
-						add(blocks, block, checkSpentConflict, store);
+						addBlockToReferenced(blocks, block, checkSpentConflict, store);
 					}
 				}
 			}
@@ -262,11 +263,11 @@ public class ServiceBaseConnect extends ServiceBase {
 		return false;
 	}
 
-	public void add(Set<BlockWrap> allApprovedNewBlocks, BlockWrap block, boolean checkCSpentConflict,
+	public void addBlockToReferenced(Set<BlockWrap> allApprovedNewBlocks, BlockWrap block, boolean checkCSpentConflict,
 			FullBlockStore store) throws BlockStoreException {
 		boolean check = true;
 		if (checkCSpentConflict) {
-			// contract execution add all referenced blocks
+			// contract execution, then check all referenced blocks with no conflicts
 			if (Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(block.getBlock().getBlockType())
 					|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(block.getBlock().getBlockType())) {
 				for (BlockWrap b : getReferrencedBlockWrap(block.getBlock(), store)) {
@@ -277,12 +278,12 @@ public class ServiceBaseConnect extends ServiceBase {
 		}
 		if (check) {
 			allApprovedNewBlocks.add(block);
+			if ((Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(block.getBlock().getBlockType())
+					|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(block.getBlock().getBlockType()))) {
+				allApprovedNewBlocks.addAll(getReferrencedBlockWrap(block.getBlock(), store));
+			}
 		}
 
-		if (check && (Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(block.getBlock().getBlockType())
-				|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(block.getBlock().getBlockType()))) {
-			allApprovedNewBlocks.addAll(getReferrencedBlockWrap(block.getBlock(), store));
-		}
 	}
 
 	public boolean checkSpentAndConflict(Set<BlockWrap> allApproved, BlockWrap newBlock, FullBlockStore store)
@@ -395,12 +396,11 @@ public class ServiceBaseConnect extends ServiceBase {
 		if (a == null)
 			return false;
 		boolean re = a.isSpent() && !c.getBlock().getBlockHash().equals(a.getSpenderBlockHash());
-	/*	if (re) {
-			logger.debug("getUTXOSpent true " + a.toString() + "\n TransactionOutPoint = "
-					+ getBlock(txout.getBlockHash(), store) + " \n spender = "
-					+ getBlock(a.getSpenderBlockHash(), store));
-		}
-		*/
+		/*
+		 * if (re) { logger.debug("getUTXOSpent true " + a.toString() +
+		 * "\n TransactionOutPoint = " + getBlock(txout.getBlockHash(), store) +
+		 * " \n spender = " + getBlock(a.getSpenderBlockHash(), store)); }
+		 */
 		return re;
 
 	}
@@ -1493,7 +1493,7 @@ public class ServiceBaseConnect extends ServiceBase {
 					&& result.getAllRecords().equals(check.getAllRecords())
 					&& result.getRemainderRecords().equals(check.getRemainderRecords())
 					&& result.getCancelRecords().equals(check.getCancelRecords())) {
-				debugOrderExecutionResult(block, check,confirm, blockStore);
+				debugOrderExecutionResult(block, check, confirm, blockStore);
 
 				if (confirm) {
 					for (OrderRecord c : check.getSpentOrderRecord()) {
@@ -1515,7 +1515,7 @@ public class ServiceBaseConnect extends ServiceBase {
 					}
 				} else {
 					for (OrderRecord c : check.getSpentOrderRecord()) {
-						// not revert if the same order is in remainder, 
+						// not revert if the same order is in remainder,
 						if (!spentInRemainder(c, check.getRemainderOrderRecord())) {
 							c.setSpent(false);
 							c.setSpenderBlockHash(null);
@@ -1558,20 +1558,20 @@ public class ServiceBaseConnect extends ServiceBase {
 		return false;
 	}
 
-	public void debugOrderExecutionResult(Block block, OrderExecutionResult check,boolean confirm, FullBlockStore blockStore)
-			throws BlockStoreException, IOException {
+	public void debugOrderExecutionResult(Block block, OrderExecutionResult check, boolean confirm,
+			FullBlockStore blockStore) throws BlockStoreException, IOException {
 
 		for (BlockWrap c : getReferrencedBlockWrap(block, blockStore)) {
-			logger.debug("getReferrencedBlockWrap +  confirm ="+confirm);
+			logger.debug("getReferrencedBlockWrap +  confirm =" + confirm);
 			logger.debug(c.toString());
 		}
 
 		for (OrderRecord c : check.getSpentOrderRecord()) {
-			logger.debug("getSpentOrderRecord +  confirm ="+confirm);
+			logger.debug("getSpentOrderRecord +  confirm =" + confirm);
 			logger.debug(c.toString());
 		}
 		for (OrderRecord c : check.getRemainderOrderRecord()) {
-			logger.debug("getRemainderOrderRecord +  confirm ="+confirm);
+			logger.debug("getRemainderOrderRecord +  confirm =" + confirm);
 			logger.debug(c.toString());
 		}
 
@@ -1602,6 +1602,9 @@ public class ServiceBaseConnect extends ServiceBase {
 				blockStore.updateContractResultConfirmed(block.getHash(), true);
 				blockStore.updateContractResultSpent(result.getPrevblockhash(), block.getHash(), true);
 				confirmTransaction(block, check.getOutputTx(), blockStore);
+				for (BlockWrap dep : getReferrencedBlockWrap(block, blockStore)) {
+					confirmBlock(dep, blockStore);
+				}
 				// reset cache
 				evictTransactions(block.getHash(), blockStore);
 
@@ -1621,6 +1624,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			blockStore.updateContractResultConfirmed(block.getHash(), false);
 			blockStore.updateContractEventSpent(result.getAllRecords(), block.getHash(), false);
 			blockStore.updateTransactionOutputConfirmed(block.getHash(), result.getOutputTxHash(), 0, false);
+
 			evictTransactions(block.getHash(), blockStore);
 
 		} catch (IOException e) {

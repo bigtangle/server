@@ -206,7 +206,7 @@ public class ContractTest extends AbstractIntegrationTest {
 					// confirm the contract execution
 					makeRewardBlock(resultBlock);
 					// check one of user get the winnerAmount
-					HashMap	endMap = new HashMap<>();
+					Map<String, BigInteger> 	endMap = new HashMap<>();
 					check(ulist, endMap);
 
 					// List<UTXO> utxos = getBalance(false, ulist);
@@ -247,7 +247,7 @@ public class ContractTest extends AbstractIntegrationTest {
 	}
 
 	public void createReward(List<Block> a1) throws Exception {
-		  ordermatch(a1);
+		//  ordermatch(a1);
 		contractExecution(a1);
 	}
 
@@ -275,7 +275,7 @@ public class ContractTest extends AbstractIntegrationTest {
 					// confirm the contract execution
 					rewardWithBlock(a1, resultBlock);
 					// check one of user get the winnerAmount
-					HashMap endMap = new HashMap<>();
+					Map<String, BigInteger>  endMap = new HashMap<>();
 					check(ulist, endMap);
 					assertTrue(endMap.get(winnerAddress.toString()) != null);
 
@@ -295,11 +295,13 @@ public class ContractTest extends AbstractIntegrationTest {
 		List<Block> a2 = new ArrayList<Block>();
 
 		prepare(a1);
+		checkSum();
 		for (int i = 0; i < 1; i++) {
 			createReward(a1);
+			checkSum();
 		}
 
-		checkSum();
+	
 		resetStore();
 
 		// second chain

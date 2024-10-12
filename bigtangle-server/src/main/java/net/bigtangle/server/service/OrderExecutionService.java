@@ -173,10 +173,10 @@ public class OrderExecutionService {
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);
 		// add all blocks of dependencies 
-		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
+		serviceBase.addReferencedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBlockHash(), store), cutoffheight, prevChainLength, true,
 				ordertypes, true, store);
-		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
+		serviceBase.addReferencedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBranchBlockHash(), store), cutoffheight, prevChainLength, true,
 				ordertypes, true, store);
 

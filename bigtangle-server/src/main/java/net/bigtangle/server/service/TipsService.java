@@ -206,10 +206,10 @@ public class TipsService {
 			throw new InfeasiblePrototypeException("The given starting points are insolid");
 		if (!serviceBase.addRequiredUnconfirmedBlocksTo(currentApprovedUnconfirmedBlocks, right, cutoffHeight, store))
 			throw new InfeasiblePrototypeException("The given starting points are insolid");
-		if (!serviceBase.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, left, cutoffHeight,
+		if (!serviceBase.addReferencedBlockHashesTo(currentNewMilestoneBlocks, left, cutoffHeight,
 				prevMilestoneNumber, true, null,false, store))
 			throw new InfeasiblePrototypeException("The given starting points are insolid");
-		if (!serviceBase.addRequiredNonContainedBlockHashesTo(currentNewMilestoneBlocks, right, cutoffHeight,
+		if (!serviceBase.addReferencedBlockHashesTo(currentNewMilestoneBlocks, right, cutoffHeight,
 				prevMilestoneNumber, true, null,false, store))
 			throw new InfeasiblePrototypeException("The given starting points are insolid");
 
@@ -231,7 +231,7 @@ public class TipsService {
 				// Terminate if next left approves too many new milestone blocks
 				@SuppressWarnings("unchecked")
 				HashSet<BlockWrap> nextNewMilestoneBlocks = (HashSet< BlockWrap>) currentNewMilestoneBlocks.clone();
-				if (!serviceBase.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, cutoffHeight,
+				if (!serviceBase.addReferencedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, cutoffHeight,
 						prevMilestoneNumber, false, null,false, store))
 					throw new InfeasiblePrototypeException(
 							"Shouldn't happen: block is missing predecessors but was approved.");
@@ -257,7 +257,7 @@ public class TipsService {
 				// blocks
 				@SuppressWarnings("unchecked")
 				HashSet<BlockWrap> nextNewMilestoneBlocks = (HashSet<BlockWrap>) currentNewMilestoneBlocks.clone();
-				if (!serviceBase.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight, cutoffHeight,
+				if (!serviceBase.addReferencedBlockHashesTo(nextNewMilestoneBlocks, nextRight, cutoffHeight,
 						prevMilestoneNumber, false, null,false, store))
 					throw new InfeasiblePrototypeException(
 							"Shouldn't happen: block is missing predecessors but was approved.");
@@ -287,7 +287,7 @@ public class TipsService {
 			// Terminate if next left approves too many new milestone blocks
 			@SuppressWarnings("unchecked")
 			HashSet<BlockWrap> nextNewMilestoneBlocks = (HashSet<BlockWrap>) currentNewMilestoneBlocks.clone();
-			if (!serviceBase.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, cutoffHeight,
+			if (!serviceBase.addReferencedBlockHashesTo(nextNewMilestoneBlocks, nextLeft, cutoffHeight,
 					prevMilestoneNumber, false, null,false, store))
 				throw new InfeasiblePrototypeException(
 						"Shouldn't happen: block is missing predecessors but was approved.");
@@ -309,7 +309,7 @@ public class TipsService {
 			// Terminate if next right approves too many new milestone blocks
 			@SuppressWarnings("unchecked")
 			HashSet<BlockWrap> nextNewMilestoneBlocks = (HashSet<BlockWrap>) currentNewMilestoneBlocks.clone();
-			if (!serviceBase.addRequiredNonContainedBlockHashesTo(nextNewMilestoneBlocks, nextRight, cutoffHeight,
+			if (!serviceBase.addReferencedBlockHashesTo(nextNewMilestoneBlocks, nextRight, cutoffHeight,
 					prevMilestoneNumber, false, null, false, store))
 				throw new InfeasiblePrototypeException(
 						"Shouldn't happen: block is missing predecessors but was approved.");

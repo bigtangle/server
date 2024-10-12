@@ -172,10 +172,10 @@ public class ContractExecutionService {
 				cacheBlockService);
 		// add all blocks of dependencies
 
-		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
+		serviceBase.addReferencedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBlockHash(), store), cutoffheight, prevChainLength, true,
 				referencedOrdertypes, true, store);
-		serviceBase.addRequiredNonContainedBlockHashesTo(referencedblocks,
+		serviceBase.addReferencedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBranchBlockHash(), store), cutoffheight, prevChainLength, true,
 				referencedOrdertypes, true, store);
 		Contractresult prev = store.getMaxConfirmedContractresult(contractid);

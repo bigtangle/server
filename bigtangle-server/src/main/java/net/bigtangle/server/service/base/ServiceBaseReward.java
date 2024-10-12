@@ -236,9 +236,9 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);
-		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true,
+		serviceBase.addReferencedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true,
 				ordertypes, true, store);
-		serviceBase.addRequiredNonContainedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true,
+		serviceBase.addReferencedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true,
 				ordertypes, true, store);
 
 		long difficultyReward = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
