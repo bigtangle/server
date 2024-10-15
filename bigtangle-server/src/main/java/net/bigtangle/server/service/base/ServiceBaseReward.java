@@ -27,6 +27,8 @@ import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.exception.VerificationException;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.data.ContractExecutionResult;
+import net.bigtangle.server.data.OrderExecutionResult;
 import net.bigtangle.server.data.OrderMatchingResult;
 import net.bigtangle.server.data.SolidityState;
 import net.bigtangle.server.service.CacheBlockService;
@@ -236,16 +238,18 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);
-		serviceBase.addReferencedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true,
-				ordertypes, true, store);
-		serviceBase.addReferencedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true,
-				ordertypes, true, store);
+		serviceBase.addReferencedBlockHashesTo(blocks, prevBranch, cutoffheight, prevChainLength, true, ordertypes,
+				true, store);
+		serviceBase.addReferencedBlockHashesTo(blocks, prevTrunk, cutoffheight, prevChainLength, true, ordertypes, true,
+				store);
 
 		long difficultyReward = new ServiceBaseCheck(serverConfiguration, networkParameters, cacheBlockService)
 				.calculateNextChainDifficulty(prevRewardHash, prevChainLength + 1, currentTime, store);
 
+		Set<BlockWrap> collected = addReferencedChainedContractExecutions(blocks, store);
+		collected = addReferencedChainedOrderExecutions(collected, store);
 		// Build the type-specific tx data
-		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, serviceBase.getHashSet(blocks),
+		RewardInfo rewardInfo = new RewardInfo(prevRewardHash, difficultyReward, serviceBase.getHashSet(collected),
 				prevChainLength + 1);
 		tx.setData(rewardInfo.toByteArray());
 		tx.setMemo(new MemoInfo("Reward"));
@@ -276,6 +280,61 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 		}
 		return ordertypes;
+	}
+
+	/*
+	 * contract execution forms chained, it will takes all the chained contract
+	 * execution until to last execution in rewards
+	 */
+	public Set<BlockWrap> addReferencedChainedContractExecutions(Set<BlockWrap> blocks, FullBlockStore store)
+			throws BlockStoreException {
+		BlockWrap headContractExecutions = null;
+		Set<BlockWrap> re = new HashSet<BlockWrap>();
+		// take all exclude the BLOCKTYPE_CONTRACT_EXECUTE and get the last
+		// BLOCKTYPE_CONTRACT_EXECUTE
+		for (BlockWrap block : blocks) {
+			if (Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(block.getBlock().getBlockType())) {
+				if (headContractExecutions == null) {
+					headContractExecutions = block;
+				} else {
+					if (headContractExecutions.getBlock().getHeight() < block.getBlock().getHeight()) {
+						headContractExecutions = block;
+					}
+				}
+			} else {
+				re.add(block);
+			}
+		}
+		// get all chained BLOCKTYPE_CONTRACT_EXECUTE until milestone
+		if (headContractExecutions != null) {
+			re.addAll(collectReferencedChainedContractExecutions(headContractExecutions, store));
+		}
+
+		return re;
+	}
+
+	public Set<BlockWrap> addReferencedChainedOrderExecutions(Set<BlockWrap> blocks, FullBlockStore store)
+			throws BlockStoreException {
+		BlockWrap headContractExecutions = null;
+		Set<BlockWrap> re = new HashSet<BlockWrap>();
+		for (BlockWrap block : blocks) {
+			if (Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(block.getBlock().getBlockType())) {
+				if (headContractExecutions == null) {
+					headContractExecutions = block;
+				} else {
+					if (headContractExecutions.getBlock().getHeight() < block.getBlock().getHeight()) {
+						headContractExecutions = block;
+					}
+				}
+			} else {
+				re.add(block);
+			}
+		}
+		if (headContractExecutions != null) {
+			re.addAll(collectReferencedChainedOrderExecutions(headContractExecutions, store));
+		}
+
+		return re;
 	}
 
 	/**

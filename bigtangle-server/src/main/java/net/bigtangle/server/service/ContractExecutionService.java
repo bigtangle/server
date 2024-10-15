@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,10 +26,8 @@ import org.springframework.stereotype.Service;
 import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
-import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.Contractresult;
 import net.bigtangle.core.NetworkParameters;
-import net.bigtangle.core.Orderresult;
 import net.bigtangle.core.Sha256Hash;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.Utils;
@@ -151,7 +150,7 @@ public class ContractExecutionService {
 	}
 
 	public Block createContractExecution(Block block, String contractid, FullBlockStore store)
-			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
+			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException, IOException {
 
 		block.setBlockType(Block.Type.BLOCKTYPE_CONTRACT_EXECUTE);
 		// Build transaction for block
@@ -179,12 +178,16 @@ public class ContractExecutionService {
 				blockService.getBlockWrap(block.getPrevBranchBlockHash(), store), cutoffheight, prevChainLength, true,
 				referencedOrdertypes, true, store);
 		Contractresult prev = store.getMaxConfirmedContractresult(contractid);
-
 		Contractresult prevblockHash = prev == null ? Contractresult.zeroContractresult() : prev;
+		BlockWrap prevBlock = serviceBase.getBlockWrap(prevblockHash.getBlockHash(), store);
+		Set<BlockWrap> prevs = serviceBase.collectReferencedChainedContractExecutions(prevBlock, store);
+		Set<BlockWrap> collectNotSpents = collectNotAreadyCollected(referencedblocks, prevs);
+
+		
+
 		ContractExecutionResult result = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
-				.executeContract(block, store, contractid, prevblockHash, serviceBase.getHashSet(referencedblocks));
-		// do not create the execution block, if there is no new referencedblocks and no
-		// match
+				.executeContract(block, store, contractid, prevblockHash, serviceBase.getHashSet(collectNotSpents));
+		// do not create the execution block, if there is no new referencedblocks
 		if (result == null || (result.getOutputTx().getOutputs().isEmpty() && referencedblocks.isEmpty()))
 			return null;
 
@@ -195,54 +198,26 @@ public class ContractExecutionService {
 		return blockSolve(block, Utils.decodeCompactBits(block.getDifficultyTarget()));
 	}
 
-	protected List<Contractresult> collectPrevsChain(List<Contractresult> prevs) {
-		// get all unspents forms a chain, remove others from prevs
-		List<Contractresult> re = new ArrayList<>();
-		if (prevs.isEmpty())
-			return re;
-		Contractresult startingBlock = prevs.get(0);
-		re.add(startingBlock);
-
-		while (startingBlock != null) {
-			startingBlock = findPrev(prevs, startingBlock);
-			if (startingBlock != null)
-				re.add(startingBlock);
-		}
-		return re;
-	}
-
-	protected Contractresult findPrev(List<Contractresult> prevs, Contractresult orderresult) {
-
-		for (Contractresult b : prevs) {
-			if (orderresult.getPrevblockhash().equals(b.getBlockHash())) {
-				return b;
-			}
-		}
-		return null;
-
-	}
-
-	protected Set<BlockWrap> collectNotSpents(Block contractEx, Set<BlockWrap> collectedBlocks,
-			List<Contractresult> prevUnspents, FullBlockStore blockStore) throws BlockStoreException {
-		Set<BlockWrap> collectOrdersNoSpents = new HashSet<>();
-		Set<Sha256Hash> alreadyCollected = collectOrdersNotSpentFrom(prevUnspents);
+	protected Set<BlockWrap> collectNotAreadyCollected(Set<BlockWrap> collectedBlocks, Set<BlockWrap> prevs)
+			throws BlockStoreException, IOException {
+		Set<BlockWrap> collectNews = new HashSet<>();
+		Set<Sha256Hash> alreadyCollected = collectNotSpentFrom(prevs);
 		for (BlockWrap b : collectedBlocks) {
 			// check height
-			if (b.getBlock().getHeight() < contractEx.getHeight()) {
-				if (!alreadyCollected.contains(b.getBlockHash())
-						|| Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(b.getBlock().getBlockType())) {
-					collectOrdersNoSpents.add(b);
-				}
+			if (!alreadyCollected.contains(b.getBlockHash())) {
+				collectNews.add(b);
 			}
 		}
-		return collectOrdersNoSpents;
+		return collectNews;
 	}
 
-	protected Set<Sha256Hash> collectOrdersNotSpentFrom(List<Contractresult> prevUnspents) throws BlockStoreException {
+	protected Set<Sha256Hash> collectNotSpentFrom(Set<BlockWrap> prevs) throws BlockStoreException, IOException {
 		Set<Sha256Hash> collectOrdersNoSpents = new HashSet<>();
-		for (Contractresult b : prevUnspents) {
-			collectOrdersNoSpents
-					.addAll(new ContractExecutionResult().parseChecked(b.getContractresult()).getReferencedBlocks());
+		for (BlockWrap b : prevs) {
+			ContractExecutionResult result = new ContractExecutionResult()
+					.parse(b.getBlock().getTransactions().get(0).getData());
+
+			collectOrdersNoSpents.addAll(result.getReferencedBlocks());
 		}
 		return collectOrdersNoSpents;
 	}

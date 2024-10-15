@@ -120,7 +120,7 @@ public class ServiceContract extends ServiceBaseConnect {
 				usedRecords = new TreeMap<>(Comparator.comparing(
 						blockHash -> Sha256Hash.wrap(Utils.xor(((Sha256Hash) blockHash).getBytes(), randomness))));
 				Transaction tx = createPayoutTransaction(block, payouts);
-				return new ContractExecutionResult(null, contract.getTokenid(),
+				return new ContractExecutionResult(block.getHash(), contract.getTokenid(),
 						getContractEventRecordHash(toBeSpent.values()), tx.getHash(), tx, prevHash.getBlockHash(),
 						prevHash.getContractchainlength()+1,
 						getContractEventRecordHash(cancelledContractEventRecord),

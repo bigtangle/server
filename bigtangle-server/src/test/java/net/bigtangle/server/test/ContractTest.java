@@ -188,7 +188,7 @@ public class ContractTest extends AbstractIntegrationTest {
 			w.payContract(null, yuanTokenPub, payContractAmount, null, null, contractKey.getPublicKeyAsHex());
 
 			resultBlock = contractExecutionService.createContractExecution(contractKey.getPublicKeyAsHex(), store);
-		 
+
 			if (resultBlock != null) {
 				ContractExecutionResult result = new ContractExecutionResult()
 						.parse(resultBlock.getTransactions().get(0).getData());
@@ -198,15 +198,18 @@ public class ContractTest extends AbstractIntegrationTest {
 								store.getContractresult(result.getPrevblockhash()), result.getReferencedBlocks());
 				blockSaveService.saveBlock(resultBlock, store);
 				// confirm the contract execution
-				makeRewardBlock(resultBlock);
+				new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+				.confirmContractExecute(resultBlock, store);
+
 				assertTrue(resultBlock != null);
 				if (!check.getOutputTx().getOutputs().isEmpty()) {
 					Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey()
 							.getToAddress(networkParameters);
 					// confirm the contract execution
-					makeRewardBlock(resultBlock);
+					new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
+					.confirmContractExecute(resultBlock, store);
 					// check one of user get the winnerAmount
-					Map<String, BigInteger> 	endMap = new HashMap<>();
+					Map<String, BigInteger> endMap = new HashMap<>();
 					check(ulist, endMap);
 
 					// List<UTXO> utxos = getBalance(false, ulist);
@@ -246,11 +249,6 @@ public class ContractTest extends AbstractIntegrationTest {
 
 	}
 
-	public void createReward(List<Block> a1) throws Exception {
-		//  ordermatch(a1);
-		contractExecution(a1);
-	}
-
 	public void contractExecution(List<Block> a1) throws Exception {
 
 		Block resultBlock = null;
@@ -275,7 +273,7 @@ public class ContractTest extends AbstractIntegrationTest {
 					// confirm the contract execution
 					rewardWithBlock(a1, resultBlock);
 					// check one of user get the winnerAmount
-					Map<String, BigInteger>  endMap = new HashMap<>();
+					Map<String, BigInteger> endMap = new HashMap<>();
 					check(ulist, endMap);
 					assertTrue(endMap.get(winnerAddress.toString()) != null);
 
@@ -297,18 +295,19 @@ public class ContractTest extends AbstractIntegrationTest {
 		prepare(a1);
 		checkSum();
 		for (int i = 0; i < 1; i++) {
-			createReward(a1);
-			checkSum();
-		}
+			contractExecution(a1);
 
-	
+		}
+		ordermatch(a1);
+		checkSum();
 		resetStore();
 
 		// second chain
-		prepare("200", a2);
+		prepare("800", a2);
 		for (int i = 0; i < 2; i++) {
-			createReward(a2);
+			contractExecution(a2);
 		}
+		ordermatch(a1);
 		checkSum();
 
 		// replay

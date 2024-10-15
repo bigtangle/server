@@ -226,11 +226,11 @@ public class ServiceBaseConnect extends ServiceBase {
 
 			// Add this block and recursive referenced.
 			if (blocktypes == null) {
-				addBlockToReferenced(blocks, block, checkSpentConflict, store);
+				addBlockWithCheckReferenced(blocks, block, checkSpentConflict, store);
 			} else {
 				for (Block.Type type : blocktypes) {
 					if (type.equals(block.getBlock().getBlockType())) {
-						addBlockToReferenced(blocks, block, checkSpentConflict, store);
+						addBlockWithCheckReferenced(blocks, block, checkSpentConflict, store);
 					}
 				}
 			}
@@ -263,8 +263,8 @@ public class ServiceBaseConnect extends ServiceBase {
 		return false;
 	}
 
-	public void addBlockToReferenced(Set<BlockWrap> allApprovedNewBlocks, BlockWrap block, boolean checkCSpentConflict,
-			FullBlockStore store) throws BlockStoreException {
+	public void addBlockWithCheckReferenced(Set<BlockWrap> allApprovedNewBlocks, BlockWrap block,
+			boolean checkCSpentConflict, FullBlockStore store) throws BlockStoreException {
 		boolean check = true;
 		if (checkCSpentConflict) {
 			// contract execution, then check all referenced blocks with no conflicts
@@ -309,6 +309,78 @@ public class ServiceBaseConnect extends ServiceBase {
 
 		return true;
 
+	}
+
+	public Set<BlockWrap> collectReferencedChainedOrderExecutions(BlockWrap headContractExecutions,
+			FullBlockStore store) throws BlockStoreException {
+
+		Set<BlockWrap> re = new HashSet<BlockWrap>();
+		boolean brokenChained = true;
+		BlockWrap startingBlock = headContractExecutions;
+		while (startingBlock != null) {
+			re.add(startingBlock);
+			startingBlock = getBlockWrap(new OrderExecutionResult()
+					.parseChecked(startingBlock.getBlock().getTransactions().get(0).getData()).getPrevblockhash(),
+					store);
+
+			if (startingBlock == null  ){
+				brokenChained = false;
+		 
+			}
+			if (startingBlock != null &&  Sha256Hash.ZERO_HASH.equals(startingBlock.getBlock().getHash())){
+				brokenChained = false;
+				// finish at origin or
+				startingBlock = null;
+			}
+			if (startingBlock != null && startingBlock.getBlockEvaluation().getMilestone() > 0) {
+				brokenChained = false;
+				// finish at origin or
+				startingBlock = null;
+			}
+		}
+		if (brokenChained) {
+			return new HashSet<BlockWrap>();
+		} else {
+			return re;
+		}
+	}
+
+	/*
+	 * all Execution Blocks not in milestone
+	 */
+	public Set<BlockWrap> collectReferencedChainedContractExecutions(BlockWrap headContractExecutions,
+			FullBlockStore store) throws BlockStoreException {
+
+		Set<BlockWrap> re = new HashSet<BlockWrap>();
+
+		BlockWrap startingBlock = headContractExecutions;
+		boolean brokenChained = true;
+		while (startingBlock != null) {
+			re.add(startingBlock);
+			startingBlock = getBlockWrap(new ContractExecutionResult()
+					.parseChecked(startingBlock.getBlock().getTransactions().get(0).getData()).getPrevblockhash(),
+					store);
+
+			if (startingBlock == null  ){
+				brokenChained = false;
+		 
+			}
+			if (startingBlock != null &&  Sha256Hash.ZERO_HASH.equals(startingBlock.getBlock().getHash())){
+				brokenChained = false;
+				// finish at origin or
+				startingBlock = null;
+			}
+			if (startingBlock != null && startingBlock.getBlockEvaluation().getMilestone() > 0) {
+				brokenChained = false;
+				// finish at origin or
+				startingBlock = null;
+			}
+		}
+		if (brokenChained) {
+			return new HashSet<BlockWrap>();
+		} else {
+			return re;
+		}
 	}
 
 	/**
