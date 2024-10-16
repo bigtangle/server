@@ -65,7 +65,7 @@ public class PerformanceTest extends ContractTest {
 			@Override
 			public String call() throws Exception {
 			 	ordermatch(blocksAddedAll);
-				contractExecution(blocksAddedAll);
+				contractExecution(blocksAddedAll,true);
 				return "";
 			}
 		};

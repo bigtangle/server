@@ -265,7 +265,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 	protected final String SELECT_CONTRACTRESULT_SQL = SELECT_CONTRACTRESULT + " WHERE contracttokenid=? and spent=false order by contractchainlength desc  ";
 	protected final String SELECT_CONTRACTRESULT_HASH_SQL =SELECT_CONTRACTRESULT +"  WHERE blockhash=?   ";
 	protected final String SELECT_CONTRACTRESULT_MAX_CONFIRMED_SQL = SELECT_CONTRACTRESULT
-			+ " WHERE confirmed = 1 and spent=false and contracttokenid=?  order by contractchainlength desc limit 1";
+			+ " WHERE confirmed = 1 and contracttokenid=?  and spent=? order by contractchainlength desc limit 1";
 	protected final String UPDATE_ORDERRESULT_SPENT_SQL = getUpdate()
 			+ " orderresult SET spent = ?, spenderblockhash = ? " + " WHERE blockhash = ?";
 	protected final String UPDATE_ORDERRESULT_CONFIRMED_SQL = getUpdate() + " orderresult SET confirmed = ? "
@@ -280,7 +280,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 			+ " WHERE spent=false order by orderchainlength desc ";
 	protected final String SELECT_ORDERRESULT_HASH_SQL =   SELECT_ORDERRESULT +" WHERE blockhash=?";
 	protected final String SELECT_ORDER_RESULT_MAX_CONFIRMED_SQL = SELECT_ORDERRESULT
-			+ " WHERE confirmed = 1 and spent=false order by orderchainlength desc limit 1";
+			+ " WHERE confirmed = 1 and spent=? order by orderchainlength desc limit 1";
 	
 	protected final String INSERT_TOKENS_SQL = getInsert()
 			+ " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, "

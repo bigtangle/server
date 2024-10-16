@@ -177,16 +177,25 @@ public class ContractExecutionService {
 		serviceBase.addReferencedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBranchBlockHash(), store), cutoffheight, prevChainLength, true,
 				referencedOrdertypes, true, store);
-		Contractresult prev = store.getMaxConfirmedContractresult(contractid);
-		Contractresult prevblockHash = prev == null ? Contractresult.zeroContractresult() : prev;
-		BlockWrap prevBlock = serviceBase.getBlockWrap(prevblockHash.getBlockHash(), store);
+		Contractresult prev = store.getMaxConfirmedContractresult(contractid, false);
+		Contractresult prevExecution = prev == null ? Contractresult.zeroContractresult() : prev;
+		Contractresult prevSpent = store.getMaxConfirmedContractresult(contractid, true);
+		Contractresult prevSpentExecution = prevSpent == null ? Contractresult.zeroContractresult() : prevSpent;
+		//Take only the longest execution
+		 if(prevExecution.getContractchainlength() <=   prevSpentExecution.getContractchainlength()
+				 && prev!=null ) {
+			 return null;
+		 }
+		
+		BlockWrap prevBlock = serviceBase.getBlockWrap(prevExecution.getBlockHash(), store);
 		Set<BlockWrap> prevs = serviceBase.collectReferencedChainedContractExecutions(prevBlock, store);
 		Set<BlockWrap> collectNotSpents = collectNotAreadyCollected(referencedblocks, prevs);
 
 		
 
 		ContractExecutionResult result = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
-				.executeContract(block, store, contractid, prevblockHash, serviceBase.getHashSet(collectNotSpents));
+				.executeContract(block, store, contractid, prevExecution, serviceBase.getHashSet(collectNotSpents));
+		 
 		// do not create the execution block, if there is no new referencedblocks
 		if (result == null || (result.getOutputTx().getOutputs().isEmpty() && referencedblocks.isEmpty()))
 			return null;

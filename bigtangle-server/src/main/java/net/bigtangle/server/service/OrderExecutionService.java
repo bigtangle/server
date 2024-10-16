@@ -4,6 +4,7 @@
  *******************************************************************************/
 package net.bigtangle.server.service;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Block;
+import net.bigtangle.core.Contractresult;
 import net.bigtangle.core.Block.Type;
 import net.bigtangle.core.NetworkParameters;
 import net.bigtangle.core.Orderresult;
@@ -36,6 +38,7 @@ import net.bigtangle.core.exception.NoBlockException;
 import net.bigtangle.server.config.ScheduleConfiguration;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
+import net.bigtangle.server.data.ContractExecutionResult;
 import net.bigtangle.server.data.LockObject;
 import net.bigtangle.server.data.OrderExecutionResult;
 import net.bigtangle.server.service.base.ServiceBaseConnect;
@@ -153,7 +156,7 @@ public class OrderExecutionService {
 	}
 
 	public Block createOrderExecution(Block block, FullBlockStore store)
-			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException {
+			throws BlockStoreException, NoBlockException, InterruptedException, ExecutionException, IOException {
 		block.setBlockType(Block.Type.BLOCKTYPE_ORDER_EXECUTE);
 		// Build transaction for block
 		Transaction tx = new Transaction(networkParameters);
@@ -163,9 +166,17 @@ public class OrderExecutionService {
 		Sha256Hash prevRewardHash = cacheBlockService.getMaxConfirmedReward(store).getBlockHash();
 		long prevChainLength = block.getLastMiningRewardBlock();
 		Set<BlockWrap> referencedblocks = new HashSet<>();
+		
 		long cutoffheight = blockService.getRewardCutoffHeight(prevRewardHash, store);
-		List<Orderresult> prevUnspents = collectPrevsChain(store.getOrderResultUnspent());
-		 Orderresult prevOrderresult = store.getMaxConfirmedOrderresult( ) ;
+		Orderresult prev = store.getMaxConfirmedOrderresult(  false);
+		Orderresult prevExecution = prev == null ? Orderresult.zeroOrderresult() : prev;
+		Orderresult prevSpent = store.getMaxConfirmedOrderresult(true);
+		Orderresult prevSpentExecution = prevSpent == null ? Orderresult.zeroOrderresult() : prevSpent;
+		//Take only the longest execution
+		 if(prevExecution.getOrderchainLength() <=   prevSpentExecution.getOrderchainLength()
+				 && prev!=null ) {
+			 return null;
+		 }
 		
 		List<Block.Type> ordertypes = new ArrayList<Block.Type>();
 		ordertypes.add(Block.Type.BLOCKTYPE_ORDER_CANCEL);
@@ -180,14 +191,18 @@ public class OrderExecutionService {
 				blockService.getBlockWrap(block.getPrevBranchBlockHash(), store), cutoffheight, prevChainLength, true,
 				ordertypes, true, store);
 
-		Set<BlockWrap> collectOrdersNoSpent = collectOrdersNoSpent(referencedblocks, prevUnspents, store);
-		Orderresult prevblockHash = prevOrderresult==null ? Orderresult.zeroOrderresult() : prevOrderresult;
+		BlockWrap prevBlock = serviceBase.getBlockWrap(prevExecution.getBlockHash(), store);
+		Set<BlockWrap> prevs = serviceBase.collectReferencedChainedOrderExecutions(prevBlock, store);
+		Set<BlockWrap> collectNotSpents = collectNotAreadyCollected(referencedblocks, prevs);
+ 
+		
 		OrderExecutionResult result = new ServiceOrderExecution(serverConfiguration, networkParameters,
 				cacheBlockService)
-				.orderMatching(block, prevblockHash, serviceBase.getHashSet(collectOrdersNoSpent), store);
+				.orderMatching(block, prevExecution, serviceBase.getHashSet(collectNotSpents), store);
+	 
 		// do not create the execution block, if there is no new referencedblocks and no
 		// match
-		if (result == null || (result.getOutputTx().getOutputs().isEmpty() && collectOrdersNoSpent.isEmpty()))
+		if (result == null || (result.getOutputTx().getOutputs().isEmpty() && collectNotSpents.isEmpty()))
 			return null;
 
 		tx.setData(result.toByteArray());
@@ -197,55 +212,30 @@ public class OrderExecutionService {
 		return blockSolve(block, Utils.decodeCompactBits(block.getDifficultyTarget()));
 	}
 
-	protected List<Orderresult> collectPrevsChain(List<Orderresult> prevs) {
-		// get all unspents forms a chain, remove others from prevs
-		List<Orderresult> re = new ArrayList<>();
-		if (prevs.isEmpty())
-			return re;
-		Orderresult startingBlock = prevs.get(0);
-		re.add(startingBlock);
-
-		while (startingBlock != null) {
-			startingBlock = findPrev(prevs, startingBlock);
-			if (startingBlock != null)
-				re.add(startingBlock);
-		}
-		return re;
-	}
-
-	protected Orderresult findPrev(List<Orderresult> prevs, Orderresult orderresult) {
-
-		for (Orderresult b : prevs) {
-			if (orderresult.getPrevblockhash().equals(b.getBlockHash())) {
-				return b;
-			}
-		}
-		return null;
-
-	}
-
-	protected Set<BlockWrap> collectOrdersNoSpent(Set<BlockWrap> collectedBlocks, List<Orderresult> prevUnspents,
-			FullBlockStore blockStore) throws BlockStoreException {
-		Set<BlockWrap> collectOrdersNoSpents = new HashSet<>();
-		Set<Sha256Hash> alreadyCollected = collectOrdersNoSpentFrom(prevUnspents);
+	protected Set<BlockWrap> collectNotAreadyCollected(Set<BlockWrap> collectedBlocks, Set<BlockWrap> prevs)
+			throws BlockStoreException, IOException {
+		Set<BlockWrap> collectNews = new HashSet<>();
+		Set<Sha256Hash> alreadyCollected = collectNotSpentFrom(prevs);
 		for (BlockWrap b : collectedBlocks) {
+			// check height
 			if (!alreadyCollected.contains(b.getBlockHash())) {
-				collectOrdersNoSpents.add(b);
+				collectNews.add(b);
 			}
-
 		}
-		return collectOrdersNoSpents;
+		return collectNews;
 	}
 
-	protected Set<Sha256Hash> collectOrdersNoSpentFrom(List<Orderresult> prevUnspents) throws BlockStoreException {
+	protected Set<Sha256Hash> collectNotSpentFrom(Set<BlockWrap> prevs) throws BlockStoreException, IOException {
 		Set<Sha256Hash> collectOrdersNoSpents = new HashSet<>();
-		for (Orderresult b : prevUnspents) {
-			collectOrdersNoSpents
-					.addAll(new OrderExecutionResult().parseChecked(b.getOrderExecutionResult()).getReferencedBlocks());
+		for (BlockWrap b : prevs) {
+			OrderExecutionResult result = new OrderExecutionResult()
+					.parse(b.getBlock().getTransactions().get(0).getData());
+
+			collectOrdersNoSpents.addAll(result.getReferencedBlocks());
 		}
 		return collectOrdersNoSpents;
 	}
-
+  
 	private Block blockSolve(Block block, final BigInteger chainTargetFinal)
 			throws InterruptedException, ExecutionException {
 		ExecutorService executor = Executors.newSingleThreadExecutor();

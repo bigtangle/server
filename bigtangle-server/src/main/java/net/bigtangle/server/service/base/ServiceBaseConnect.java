@@ -346,7 +346,7 @@ public class ServiceBaseConnect extends ServiceBase {
 	}
 
 	/*
-	 * all Execution Blocks not in milestone
+	 * return all Execution Blocks not in milestone and chained to headContractExecutions
 	 */
 	public Set<BlockWrap> collectReferencedChainedContractExecutions(BlockWrap headContractExecutions,
 			FullBlockStore store) throws BlockStoreException {

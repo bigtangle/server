@@ -4734,12 +4734,13 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	
 
 	@Override
-	public Contractresult getMaxConfirmedContractresult( String contracttokenid) throws BlockStoreException {
+	public Contractresult getMaxConfirmedContractresult( String contracttokenid, boolean spent) throws BlockStoreException {
 
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_CONTRACTRESULT_MAX_CONFIRMED_SQL);
 			preparedStatement.setString(1, contracttokenid);
+			preparedStatement.setBoolean(2, spent);
 			ResultSet resultSet = preparedStatement.executeQuery();
 			if (resultSet.next()) {
 
@@ -4761,11 +4762,12 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 	}
 
 	@Override
-	public Orderresult getMaxConfirmedOrderresult() throws BlockStoreException {
+	public Orderresult getMaxConfirmedOrderresult(boolean spent) throws BlockStoreException {
 
 		PreparedStatement preparedStatement = null;
 		try {
 			preparedStatement = getConnection().prepareStatement(SELECT_ORDER_RESULT_MAX_CONFIRMED_SQL);
+			preparedStatement.setBoolean(1, spent);
 			ResultSet resultSet = preparedStatement.executeQuery();
 			if (resultSet.next()) {
 

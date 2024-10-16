@@ -559,6 +559,6 @@ public interface FullBlockStore {
 			throws BlockStoreException;
 
 	List<ContractEventCancel> getContractEventCancelByBlockHash(HashSet<String> blockHashs) throws BlockStoreException;
-	public Orderresult getMaxConfirmedOrderresult() throws BlockStoreException;
-	public Contractresult getMaxConfirmedContractresult(String contracttokenid) throws BlockStoreException;
+	public Orderresult getMaxConfirmedOrderresult( boolean spent) throws BlockStoreException;
+	public Contractresult getMaxConfirmedContractresult(String contracttokenid, boolean spent) throws BlockStoreException;
 }

@@ -22,7 +22,6 @@ import com.google.common.base.Stopwatch;
 
 import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
-import net.bigtangle.core.Contractresult;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.KeyValue;
 import net.bigtangle.core.NetworkParameters;
@@ -199,7 +198,7 @@ public class ContractTest extends AbstractIntegrationTest {
 				blockSaveService.saveBlock(resultBlock, store);
 				// confirm the contract execution
 				new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
-				.confirmContractExecute(resultBlock, store);
+						.confirmContractExecute(resultBlock, store);
 
 				assertTrue(resultBlock != null);
 				if (!check.getOutputTx().getOutputs().isEmpty()) {
@@ -207,7 +206,7 @@ public class ContractTest extends AbstractIntegrationTest {
 							.getToAddress(networkParameters);
 					// confirm the contract execution
 					new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
-					.confirmContractExecute(resultBlock, store);
+							.confirmContractExecute(resultBlock, store);
 					// check one of user get the winnerAmount
 					Map<String, BigInteger> endMap = new HashMap<>();
 					check(ulist, endMap);
@@ -250,6 +249,10 @@ public class ContractTest extends AbstractIntegrationTest {
 	}
 
 	public void contractExecution(List<Block> a1) throws Exception {
+		contractExecution(a1, false);
+	}
+
+	public void contractExecution(List<Block> a1, boolean confirm) throws Exception {
 
 		Block resultBlock = null;
 		for (ECKey key : ulist) {
@@ -261,12 +264,17 @@ public class ContractTest extends AbstractIntegrationTest {
 				ContractExecutionResult result = new ContractExecutionResult()
 						.parse(resultBlock.getTransactions().get(0).getData());
 
-				ContractExecutionResult check = new ServiceContract(serverConfiguration, networkParameters,
-						cacheBlockService).executeContract(resultBlock, store, result.getContracttokenid(),
-								store.getContractresult(result.getPrevblockhash()), result.getReferencedBlocks());
+				ServiceContract serviceContract = new ServiceContract(serverConfiguration, networkParameters,
+						cacheBlockService);
+				ContractExecutionResult check = serviceContract.executeContract(resultBlock, store,
+						result.getContracttokenid(), store.getContractresult(result.getPrevblockhash()),
+						result.getReferencedBlocks());
 				blockSaveService.saveBlock(resultBlock, store);
 				a1.add(resultBlock);
 				assertTrue(resultBlock != null);
+				if (confirm) {
+					serviceContract.confirmContractExecute(resultBlock, store);
+				}
 				if (!check.getOutputTx().getOutputs().isEmpty()) {
 					Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey()
 							.getToAddress(networkParameters);
