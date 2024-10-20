@@ -181,11 +181,11 @@ public class ServiceBaseConnect extends ServiceBase {
 	}
 
 	/**
-	 * Recursively adds the specified block and its approved blocks to the
-	 * collection as referenced if the blocks are not in the collection. if a block
-	 * is missing somewhere, returns false. throwException will be true, if it
-	 * required the validation for consensus. Otherwise, it does ignore the cutoff
-	 * blocks.
+	 * Recursively adds the specified block and its approved and required blocks to
+	 * the collection as referenced if the blocks are not in the collection etc, see
+	 * continue. if a required as dependency block is missing somewhere, returns
+	 * false. throwException will be true, if it required the validation for
+	 * consensus. Otherwise, it does ignore the cutoff blocks.
 	 *
 	 */
 	public boolean addReferencedBlockHashesTo(Set<BlockWrap> blocks, BlockWrap startingBlock, long cutoffHeight,
@@ -214,13 +214,11 @@ public class ServiceBaseConnect extends ServiceBase {
 
 			// Check if the block is in cutoff and not in chain
 			if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
-		 
-			//		notMissingAnything = false;
-					continue;
-			 
+				continue;
+
 			}
 
-			// Add this block and recursive referenced.
+			// Add this block and its referenced.
 			if (blocktypes == null) {
 				addBlockWithCheckReferenced(blocks, block, checkSpentConflict, store);
 			} else {
@@ -268,7 +266,7 @@ public class ServiceBaseConnect extends ServiceBase {
 			// contract execution, then check all referenced blocks with no conflicts
 			if (Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(block.getBlock().getBlockType())
 					|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(block.getBlock().getBlockType())) {
-				allApprovedCheckBlocks.addAll( getReferrencedBlockWrap(block.getBlock(), store))  ;
+				allApprovedCheckBlocks.addAll(getReferrencedBlockWrap(block.getBlock(), store));
 			}
 			check = checkSpentAndConflict(allApprovedNewBlocks, allApprovedCheckBlocks, store);
 		}
@@ -319,11 +317,11 @@ public class ServiceBaseConnect extends ServiceBase {
 					.parseChecked(startingBlock.getBlock().getTransactions().get(0).getData()).getPrevblockhash(),
 					store);
 
-			if (startingBlock == null  ){
+			if (startingBlock == null) {
 				brokenChained = false;
-		 
+
 			}
-			if (startingBlock != null &&  Sha256Hash.ZERO_HASH.equals(startingBlock.getBlock().getHash())){
+			if (startingBlock != null && Sha256Hash.ZERO_HASH.equals(startingBlock.getBlock().getHash())) {
 				brokenChained = false;
 				// finish at origin or
 				startingBlock = null;
@@ -342,7 +340,8 @@ public class ServiceBaseConnect extends ServiceBase {
 	}
 
 	/*
-	 * return all Execution Blocks not in milestone and chained to headContractExecutions
+	 * return all Execution Blocks not in milestone and chained to
+	 * headContractExecutions
 	 */
 	public Set<BlockWrap> collectReferencedChainedContractExecutions(BlockWrap headContractExecutions,
 			FullBlockStore store) throws BlockStoreException {
@@ -357,11 +356,11 @@ public class ServiceBaseConnect extends ServiceBase {
 					.parseChecked(startingBlock.getBlock().getTransactions().get(0).getData()).getPrevblockhash(),
 					store);
 
-			if (startingBlock == null  ){
+			if (startingBlock == null) {
 				brokenChained = false;
-		 
+
 			}
-			if (startingBlock != null &&  Sha256Hash.ZERO_HASH.equals(startingBlock.getBlock().getHash())){
+			if (startingBlock != null && Sha256Hash.ZERO_HASH.equals(startingBlock.getBlock().getHash())) {
 				brokenChained = false;
 				// finish at origin or
 				startingBlock = null;
@@ -407,8 +406,9 @@ public class ServiceBaseConnect extends ServiceBase {
 			// Check if the block is in cutoff and not in chain
 			if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
 				continue;
-		//		throw new CutoffException(
-		//				"Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
+				// throw new CutoffException(
+				// "Block is cut off at " + cutoffHeight + " for block: " +
+				// block.getBlock().toString());
 			}
 
 			// Add this block.
@@ -1210,8 +1210,8 @@ public class ServiceBaseConnect extends ServiceBase {
 		return allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates()).flatMap(i -> i.stream()).anyMatch(c -> {
 			try {
 				boolean re = hasSpentDependencies(c, store);
-		//		if (re)
-		//			logger.debug("hasSpentInputs " + c.getBlock().getBlock().toString());
+				// if (re)
+				// logger.debug("hasSpentInputs " + c.getBlock().getBlock().toString());
 				return re;
 			} catch (BlockStoreException e) {
 				// e.printStackTrace();

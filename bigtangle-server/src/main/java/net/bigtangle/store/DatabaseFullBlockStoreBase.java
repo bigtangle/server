@@ -178,7 +178,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 	// Tables exist SQL.
 	protected final String SELECT_CHECK_TABLES_EXIST_SQL = "SELECT * FROM settings WHERE 1 = 2";
 
-	protected final String getTokenTypeList = "SELECT" + SELECT_BLOCKS_TEMPLATE
+	protected final String SELECT_BLOCKS_MCMC_CONFIRM = "SELECT" + SELECT_BLOCKS_TEMPLATE
 			+ " FROM blocks, mcmc  WHERE blocks.hash=mcmc.hash and solid=2 AND milestone = -1 AND confirmed = false AND height > ?"
 			+ " AND height <= ? AND mcmc.rating >= " + NetworkParameters.CONFIRMATION_UPPER_THRESHOLD + afterSelect();
 
@@ -1599,7 +1599,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 		
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = getConnection().prepareStatement(getTokenTypeList);
+			preparedStatement = getConnection().prepareStatement(SELECT_BLOCKS_MCMC_CONFIRM);
 			preparedStatement.setLong(1, cutoffHeight);
 			preparedStatement.setLong(2, maxHeight);
 			ResultSet resultSet = preparedStatement.executeQuery();
