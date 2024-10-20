@@ -10,9 +10,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import net.bigtangle.core.Address;
 import net.bigtangle.core.Block;
 import net.bigtangle.core.BlockEvaluation;
 import net.bigtangle.core.BlockMCMC;
+import net.bigtangle.core.DataClassName;
 import net.bigtangle.core.ECKey;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
@@ -23,8 +25,11 @@ import net.bigtangle.core.Token;
 import net.bigtangle.core.TokenInfo;
 import net.bigtangle.core.Transaction;
 import net.bigtangle.core.TransactionInput;
+import net.bigtangle.core.UserData;
+import net.bigtangle.core.Utils;
 import net.bigtangle.core.exception.BlockStoreException;
 import net.bigtangle.core.response.GetBlockListResponse;
+import net.bigtangle.core.response.PermissionedAddressesResponse;
 import net.bigtangle.server.config.ServerConfiguration;
 import net.bigtangle.server.core.BlockWrap;
 import net.bigtangle.server.data.ContractExecutionResult;
@@ -53,7 +58,6 @@ public class ServiceBase {
 				|| networkParameters.getId().equals(NetworkParameters.ID_UNITTESTNET);
 	}
 
- 
 	/*
 	 * Enable each order execution in own chain and not part of reward chain
 	 */
@@ -301,7 +305,7 @@ public class ServiceBase {
 			throws BlockStoreException {
 		// final List<BlockWrap> allPredecessors = getAllRequirements(block, store);
 		// SolidityState missingCalculation = null;
-		SolidityState missingDependency = null;
+
 		for (BlockWrap predecessor : allPredecessors) {
 			if (predecessor.getBlockEvaluation().getSolid() == 2) {
 				continue;
@@ -320,13 +324,8 @@ public class ServiceBase {
 			}
 		}
 
-		if (missingDependency == null) {
+		return SolidityState.getSuccessState();
 
-			return SolidityState.getSuccessState();
-
-		} else {
-			return missingDependency;
-		}
 	}
 
 	public Set<Sha256Hash> getHashSet(Set<BlockWrap> alist) {
@@ -335,6 +334,74 @@ public class ServiceBase {
 			hashs.add(o.getBlockHash());
 		}
 		return hashs;
+	}
+	
+	protected void synchronizationUserData(Sha256Hash blockhash, DataClassName dataClassName, byte[] data, String pubKey,
+			long blocktype, FullBlockStore blockStore) throws BlockStoreException {
+		UserData userData = blockStore.queryUserDataWithPubKeyAndDataclassname(dataClassName.name(), pubKey);
+		if (userData == null) {
+			userData = new UserData();
+			userData.setBlockhash(blockhash);
+			userData.setData(data);
+			userData.setDataclassname(dataClassName.name());
+			userData.setPubKey(pubKey);
+			userData.setBlocktype(blocktype);
+			blockStore.insertUserData(userData);
+			return;
+		}
+		userData.setBlockhash(blockhash);
+		userData.setData(data);
+		blockStore.updateUserData(userData);
+	}
+
+	public PermissionedAddressesResponse queryDomainnameTokenPermissionedAddresses(String domainNameBlockHash,
+			FullBlockStore store) throws BlockStoreException {
+		if (domainNameBlockHash.equals(networkParameters.getGenesisBlock().getHashAsString())) {
+			List<MultiSignAddress> multiSignAddresses = new ArrayList<MultiSignAddress>();
+			for (Iterator<PermissionDomainname> iterator = networkParameters.getPermissionDomainnameList()
+					.iterator(); iterator.hasNext();) {
+				PermissionDomainname permissionDomainname = iterator.next();
+				ECKey ecKey = permissionDomainname.getOutKey();
+				multiSignAddresses.add(new MultiSignAddress("", "", ecKey.getPublicKeyAsHex()));
+			}
+			PermissionedAddressesResponse response = (PermissionedAddressesResponse) PermissionedAddressesResponse
+					.create("", false, multiSignAddresses);
+			return response;
+		} else {
+			Token token = store.getTokenByBlockHash(Sha256Hash.wrap(domainNameBlockHash));
+			final String domainName = token.getTokenname();
+
+			List<MultiSignAddress> multiSignAddresses = this
+					.queryDomainnameTokenMultiSignAddresses(token.getBlockHash(), store);
+
+			PermissionedAddressesResponse response = (PermissionedAddressesResponse) PermissionedAddressesResponse
+					.create(domainName, false, multiSignAddresses);
+			return response;
+		}
+	}
+
+	protected String fromAddress(final Transaction tx, boolean isCoinBase) {
+		String fromAddress = "";
+		if (!isCoinBase) {
+			for (TransactionInput t : tx.getInputs()) {
+				try {
+					if (t.getConnectedOutput().getScriptPubKey().isSentToAddress()) {
+						fromAddress = t.getFromAddress().toBase58();
+					} else {
+						fromAddress = new Address(networkParameters,
+								Utils.sha256hash160(t.getConnectedOutput().getScriptPubKey().getPubKey())).toBase58();
+
+					}
+
+					if (!fromAddress.equals(""))
+						return fromAddress;
+				} catch (Exception e) {
+					// No address found.
+				}
+			}
+			return fromAddress;
+		}
+		return fromAddress;
 	}
 
 }
