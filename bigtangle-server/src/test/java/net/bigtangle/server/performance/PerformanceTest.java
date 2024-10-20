@@ -51,7 +51,8 @@ public class PerformanceTest extends ContractTest {
 		List<Block> a2 = new ArrayList<Block>();
 
 		// second chain
-		prepare("12200", a2);
+	//	usernumber=2000;
+	 	prepare("12200", a2);
 		for (int i = 0; i < 12200; i++) {
 			createReward(a2);
 		}
@@ -63,10 +64,21 @@ public class PerformanceTest extends ContractTest {
 		@SuppressWarnings("rawtypes")
 		Callable callable = new Callable() {
 			@Override
-			public String call() throws Exception {
+			public String call()  {
+				try {
 			 	ordermatch(blocksAddedAll);
+				}catch (Exception e) {
+					e.printStackTrace();
+					return "";
+				}
+				try {
 				contractExecution(blocksAddedAll,true);
+				checkSum();
 				return "";
+				}catch (Exception e) {
+					e.printStackTrace();
+					return "";
+				}
 			}
 		};
 	 

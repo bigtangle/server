@@ -83,10 +83,6 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		for (Sha256Hash hash : referrencedBlocks) {
 			BlockWrap blockWrap = getBlockWrap(hash, store);
 			allApprovedNewBlocks.add(blockWrap);
-			if ((Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(blockWrap.getBlock().getBlockType())
-					|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(blockWrap.getBlock().getBlockType()))) {
-				allApprovedNewBlocks.addAll(getReferrencedBlockWrap(blockWrap.getBlock(), store));
-			}
 		}
 
 		allApprovedNewBlocks.add(getBlockWrap(newMilestoneBlock.getHash(), store));

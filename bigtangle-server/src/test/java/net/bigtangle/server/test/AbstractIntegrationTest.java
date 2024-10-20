@@ -167,6 +167,7 @@ public abstract class AbstractIntegrationTest {
 	protected BlockSaveService blockSaveService;
 	@Autowired
 	CheckpointService checkpointService;
+
 	@Autowired
 	protected void prepareContextRoot(@Value("${local.server.port}") int port) {
 		contextRoot = String.format(CONTEXT_ROOT_TEMPLATE, port);
@@ -775,8 +776,8 @@ public abstract class AbstractIntegrationTest {
 		// Redo and assert snapshot equal to new state
 		resetStore();
 		for (Block b : addedBlocks) {
-			if(b!=null)
-			blockGraph.add(b, true, true, store);
+			if (b != null)
+				blockGraph.add(b, true, true, store);
 		}
 
 		List<OrderRecord> allOrdersSorted2 = store.getAllOpenOrdersSorted(null, null);
@@ -968,10 +969,11 @@ public abstract class AbstractIntegrationTest {
 
 	protected Block testCreateToken(ECKey outKey, String tokennameName, String domainpre, List<Block> blocksAddedAll)
 			throws JsonProcessingException, Exception {
-		return testCreateToken(outKey, tokennameName,domainpre,  77777L, blocksAddedAll);
+		return testCreateToken(outKey, tokennameName, domainpre, 77777L, blocksAddedAll);
 	}
-	protected Block testCreateToken(ECKey outKey, String tokennameName, String domainpre, Long amountgiven, List<Block> blocksAddedAll)
-			throws JsonProcessingException, Exception {
+
+	protected Block testCreateToken(ECKey outKey, String tokennameName, String domainpre, Long amountgiven,
+			List<Block> blocksAddedAll) throws JsonProcessingException, Exception {
 		// ECKey outKey = walletKeys.get(0);
 		byte[] pubKey = outKey.getPubKey();
 		TokenInfo tokenInfo = new TokenInfo();
@@ -1495,6 +1497,7 @@ public abstract class AbstractIntegrationTest {
 	public BlockEvaluation getBlockEvaluation(Sha256Hash hash, FullBlockStore store) throws BlockStoreException {
 		return store.getBlockWrap(hash).getBlockEvaluation();
 	}
+
 	public Sha256Hash checkSum() throws JsonProcessingException, Exception {
 		TokensumsMap map = checkpointService.checkToken(store);
 		Map<String, Tokensums> r11 = map.getTokensumsMap();
@@ -1520,18 +1523,20 @@ public abstract class AbstractIntegrationTest {
 		Collections.shuffle(utxos);
 		// long q = 8;
 		for (UTXO utxo : utxos) {
-			if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())) {
+			if (!NetworkParameters.BIGTANGLE_TOKENID_STRING.equals(utxo.getTokenId())
+					&& utxo.getValue().isGreaterThan(Coin.ZERO)) {
 				wallet.setServerURL(contextRoot);
 				try {
-					Block sellOrder = wallet.sellOrder(null, utxo.getTokenId(), 10000000,
-							utxo.getValue().getValue().longValue(), null, null,
+					Block sellOrder = wallet.sellOrder(null, utxo.getTokenId(), 100, 1000, null, null,
 							NetworkParameters.BIGTANGLE_TOKENID_STRING, true);
 					blocksAddedAll.add(sellOrder);
-				//	makeOrderExecutionAndReward(blocksAddedAll);
+
 				} catch (InsufficientMoneyException e) {
 					// ignore: handle exception
 				}
+				// break;
 			}
+
 		}
 	}
 
@@ -1546,7 +1551,7 @@ public abstract class AbstractIntegrationTest {
 
 		Block b = wallet.payMoneyToECKeyList(null, giveMoneyResult, "payMoneyToWallet1");
 		blocksAddedAll.add(b);
-	//	makeRewardBlock(blocksAddedAll);
+		// makeRewardBlock(blocksAddedAll);
 	}
 
 	public void buy(List<Block> blocksAddedAll) throws Exception {
@@ -1577,7 +1582,7 @@ public abstract class AbstractIntegrationTest {
 			Block buyOrder = wallet.buyOrder(null, orderRecord.getOfferTokenid(), price, orderRecord.getOfferValue(),
 					null, null, NetworkParameters.BIGTANGLE_TOKENID_STRING, false);
 			blocksAddedAll.add(buyOrder);
-		//	makeOrderExecutionAndReward(blocksAddedAll);
+			// makeOrderExecutionAndReward(blocksAddedAll);
 
 		}
 

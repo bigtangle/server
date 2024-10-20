@@ -214,14 +214,10 @@ public class ServiceBaseConnect extends ServiceBase {
 
 			// Check if the block is in cutoff and not in chain
 			if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
-				if (throwException) {
-					// TODO throw new CutoffException(
-					// logger.debug("Block is cut off at " + cutoffHeight + " for block: " +
-					// block.getBlock().toString());
-				} else {
-					notMissingAnything = false;
+		 
+			//		notMissingAnything = false;
 					continue;
-				}
+			 
 			}
 
 			// Add this block and recursive referenced.
@@ -267,14 +263,14 @@ public class ServiceBaseConnect extends ServiceBase {
 			boolean checkCSpentConflict, FullBlockStore store) throws BlockStoreException {
 		boolean check = true;
 		if (checkCSpentConflict) {
+			Set<BlockWrap> allApprovedCheckBlocks = new HashSet<>();
+			allApprovedCheckBlocks.add(block);
 			// contract execution, then check all referenced blocks with no conflicts
 			if (Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(block.getBlock().getBlockType())
 					|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(block.getBlock().getBlockType())) {
-				for (BlockWrap b : getReferrencedBlockWrap(block.getBlock(), store)) {
-					check = checkSpentAndConflict(allApprovedNewBlocks, b, store);
-				}
+				allApprovedCheckBlocks.addAll( getReferrencedBlockWrap(block.getBlock(), store))  ;
 			}
-			check = checkSpentAndConflict(allApprovedNewBlocks, block, store);
+			check = checkSpentAndConflict(allApprovedNewBlocks, allApprovedCheckBlocks, store);
 		}
 		if (check) {
 			allApprovedNewBlocks.add(block);
@@ -286,12 +282,12 @@ public class ServiceBaseConnect extends ServiceBase {
 
 	}
 
-	public boolean checkSpentAndConflict(Set<BlockWrap> allApproved, BlockWrap newBlock, FullBlockStore store)
+	public boolean checkSpentAndConflict(Set<BlockWrap> allApproved, Set<BlockWrap> newBlocks, FullBlockStore store)
 			throws BlockStoreException {
 		Set<BlockWrap> allApprovedNewBlocks = new HashSet<>();
 
 		allApprovedNewBlocks.addAll(allApproved);
-		allApprovedNewBlocks.add(newBlock);
+		allApprovedNewBlocks.addAll(newBlocks);
 
 		boolean anySpentInputs = hasSpentInputs(allApprovedNewBlocks, store);
 
@@ -410,8 +406,9 @@ public class ServiceBaseConnect extends ServiceBase {
 
 			// Check if the block is in cutoff and not in chain
 			if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
-				throw new CutoffException(
-						"Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
+				continue;
+		//		throw new CutoffException(
+		//				"Block is cut off at " + cutoffHeight + " for block: " + block.getBlock().toString());
 			}
 
 			// Add this block.
@@ -1213,8 +1210,8 @@ public class ServiceBaseConnect extends ServiceBase {
 		return allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates()).flatMap(i -> i.stream()).anyMatch(c -> {
 			try {
 				boolean re = hasSpentDependencies(c, store);
-				if (re)
-					logger.debug("hasSpentInputs " + c.getBlock().getBlock().toString());
+		//		if (re)
+		//			logger.debug("hasSpentInputs " + c.getBlock().getBlock().toString());
 				return re;
 			} catch (BlockStoreException e) {
 				// e.printStackTrace();
