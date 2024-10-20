@@ -63,8 +63,6 @@ public class ServiceBaseConnect extends ServiceBaseConfirmation {
 
 	}
 
-
-
 	/*
 	 * failed blocks without conflict for retry
 	 */
@@ -97,8 +95,6 @@ public class ServiceBaseConnect extends ServiceBaseConfirmation {
 		}
 	}
 
-
-
 	/**
 	 * Locates the point in the chain at which newBlock and chainHead diverge.
 	 * Returns null if no split point was found (ie they are not part of the same
@@ -130,10 +126,8 @@ public class ServiceBaseConnect extends ServiceBaseConfirmation {
 		return currentChainCursor;
 	}
 
-
 	@Override
-	protected void connectUTXOs(Block block, FullBlockStore blockStore)
-			throws BlockStoreException  {
+	protected void connectUTXOs(Block block, FullBlockStore blockStore) throws BlockStoreException {
 		List<Transaction> transactions = block.getTransactions();
 		connectUTXOs(block, transactions, blockStore);
 	}
@@ -382,7 +376,13 @@ public class ServiceBaseConnect extends ServiceBaseConfirmation {
 		}
 	}
 
-
+	/*
+	 * updateConfirmedDo update the confirmation via MCMC, there ma be conflicts
+	 * within those blocks not in milestone. calculate all blocks not in milestone
+	 * (reward) with MCMC low and set this as unconfirmed. calculate all blocks not
+	 * in milestone (reward) with MCMC upper value and conflict free, then set those
+	 * as confirmed.
+	 */
 	public void updateConfirmedDo(TXReward maxConfirmedReward, FullBlockStore blockStore) throws BlockStoreException {
 
 		// First remove any blocks that should no longer be in the milestone
@@ -429,15 +429,4 @@ public class ServiceBaseConnect extends ServiceBaseConfirmation {
 
 	}
 
-
-
-	
-	protected void connectUTXOs(Block block, ArrayList<Transaction> txs, FullBlockStore blockStore)
-			throws BlockStoreException {
-		// TODO Auto-generated method stub
-		
-	}
-
-
- 
 }

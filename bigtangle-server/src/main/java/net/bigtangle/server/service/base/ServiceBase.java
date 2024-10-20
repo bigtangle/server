@@ -95,7 +95,10 @@ public class ServiceBase {
 		}
 	}
 
-	public List<BlockWrap> getAllBlocks(Block block, Set<Sha256Hash> allBlockHashes, FullBlockStore store)
+	/*
+	 * return List<BlockWrap> from the Hash List
+	 */
+	public List<BlockWrap> getAllBlocksFromHash(Set<Sha256Hash> allBlockHashes, FullBlockStore store)
 			throws BlockStoreException {
 		List<BlockWrap> result = new ArrayList<>();
 		for (Sha256Hash pred : allBlockHashes)
@@ -116,11 +119,6 @@ public class ServiceBase {
 		if (includePredecessor) {
 			allrequireds.add(block.getPrevBlockHash());
 			allrequireds.add(block.getPrevBranchBlockHash());
-		}
-		// contract execution add all referenced blocks
-		if (Block.Type.BLOCKTYPE_CONTRACT_EXECUTE.equals(block.getBlockType())
-				|| Block.Type.BLOCKTYPE_ORDER_EXECUTE.equals(block.getBlockType())) {
-			allrequireds.addAll(getReferrencedBlockHashes(block));
 		}
 		// All used transaction outputs
 
@@ -162,8 +160,10 @@ public class ServiceBase {
 		case BLOCKTYPE_CONTRACT_EVENT:
 			break;
 		case BLOCKTYPE_CONTRACT_EXECUTE:
+			allrequireds.addAll(getReferrencedBlockHashes(block));
 			break;
 		case BLOCKTYPE_ORDER_EXECUTE:
+			allrequireds.addAll(getReferrencedBlockHashes(block));
 			break;
 		case BLOCKTYPE_ORDER_OPEN:
 			break;
@@ -335,9 +335,9 @@ public class ServiceBase {
 		}
 		return hashs;
 	}
-	
-	protected void synchronizationUserData(Sha256Hash blockhash, DataClassName dataClassName, byte[] data, String pubKey,
-			long blocktype, FullBlockStore blockStore) throws BlockStoreException {
+
+	protected void synchronizationUserData(Sha256Hash blockhash, DataClassName dataClassName, byte[] data,
+			String pubKey, long blocktype, FullBlockStore blockStore) throws BlockStoreException {
 		UserData userData = blockStore.queryUserDataWithPubKeyAndDataclassname(dataClassName.name(), pubKey);
 		if (userData == null) {
 			userData = new UserData();

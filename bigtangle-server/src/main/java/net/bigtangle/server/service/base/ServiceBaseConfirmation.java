@@ -66,16 +66,16 @@ import net.bigtangle.server.service.CacheBlockService;
 import net.bigtangle.store.FullBlockStore;
 import net.bigtangle.utils.Json;
 
-public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
+public abstract class ServiceBaseConfirmation extends ServiceBaseOrder {
 
 	private static final Logger logger = LoggerFactory.getLogger(ServiceBaseConfirmation.class);
 
 	public ServiceBaseConfirmation(ServerConfiguration serverConfiguration, NetworkParameters networkParameters,
 			CacheBlockService cacheBlockService) {
 		super(serverConfiguration, networkParameters, cacheBlockService);
- 
+
 	}
-  
+
 	/**
 	 * Recursively removes the specified block and its approvers from the collection
 	 * if this block is contained in the collection.
@@ -223,10 +223,14 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 		return false;
 	}
 
+	/*
+	 * add the block and its referenced BlockWrap to allApprovedNewBlocks, if
+	 * checkSpentConflict then add this block and its referenced all or nothing
+	 */
 	public void addBlockWithCheckReferenced(Set<BlockWrap> allApprovedNewBlocks, BlockWrap block,
-			boolean checkCSpentConflict, FullBlockStore store) throws BlockStoreException {
+			boolean checkSpentConflict, FullBlockStore store) throws BlockStoreException {
 		boolean check = true;
-		if (checkCSpentConflict) {
+		if (checkSpentConflict) {
 			Set<BlockWrap> allApprovedCheckBlocks = new HashSet<>();
 			allApprovedCheckBlocks.add(block);
 			// contract execution, then check all referenced blocks with no conflicts
@@ -270,6 +274,7 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 		return true;
 
 	}
+
 	public boolean hasSpentInputs(Set<BlockWrap> allApprovedNewBlocks, FullBlockStore store) {
 		return allApprovedNewBlocks.stream().map(b -> b.toConflictCandidates()).flatMap(i -> i.stream()).anyMatch(c -> {
 			try {
@@ -363,8 +368,8 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 	}
 
 	/*
-	 * return all Execution Blocks not in milestone and chained to
-	 * headContractExecutions
+	 * return all Execution Blocks not in milestone and chained from
+	 * headContractExecutions to Execution in milestone or begin.
 	 */
 	public Set<BlockWrap> collectReferencedChainedContractExecutions(BlockWrap headContractExecutions,
 			FullBlockStore store) throws BlockStoreException {
@@ -390,7 +395,7 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 			}
 			if (startingBlock != null && startingBlock.getBlockEvaluation().getMilestone() > 0) {
 				brokenChained = false;
-				// finish at origin or
+				// finish at origin
 				startingBlock = null;
 			}
 		}
@@ -404,7 +409,8 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 	/**
 	 * Recursively adds the specified block and its approved blocks to the
 	 * collection if the blocks are not in the current milestone and not in the
-	 * collection. if a block is missing somewhere, returns false.
+	 * collection. if a block is missing somewhere, returns false. For check missing
+	 * is not allowed, for build missing is not checked
 	 *
 	 */
 	public boolean addRequiredUnconfirmedBlocksTo(Collection<BlockWrap> blocks, BlockWrap startingBlock,
@@ -416,6 +422,8 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 		blockQueue.add(startingBlock);
 		blockQueueSet.add(startingBlock.getBlockHash());
 		boolean notMissingAnything = true;
+
+		// continue will skip this block as start
 
 		while (!blockQueue.isEmpty()) {
 			BlockWrap block = blockQueue.poll();
@@ -429,9 +437,6 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 			// Check if the block is in cutoff and not in chain
 			if (block.getBlock().getHeight() <= cutoffHeight && block.getBlockEvaluation().getMilestone() < 0) {
 				continue;
-				// throw new CutoffException(
-				// "Block is cut off at " + cutoffHeight + " for block: " +
-				// block.getBlock().toString());
 			}
 
 			// Add this block.
@@ -601,7 +606,7 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 		Iterator<BlockWrap> iterator = blocksToAdd.iterator();
 		while (iterator.hasNext()) {
 			BlockWrap b = iterator.next();
-			List<BlockWrap> allRequirements = getAllBlocks(b.getBlock(), getAllRequiredBlockHashes(b.getBlock(), true),
+			List<BlockWrap> allRequirements = getAllBlocksFromHash(getAllRequiredBlockHashes(b.getBlock(), true),
 					store);
 			for (BlockWrap req : allRequirements) {
 				if (!req.getBlockEvaluation().isConfirmed() && !blocksToAdd.contains(req)) {
@@ -1032,7 +1037,6 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 		TXReward confirmedAtHeightReward = store.getRewardConfirmedAtHeight(chainlength);
 		return store.get(confirmedAtHeightReward.getBlockHash()).getHeight();
 	}
-	
 
 	public boolean getUTXOSpent(ConflictCandidate c, FullBlockStore store) throws BlockStoreException {
 		TransactionOutPoint txout = c.getConflictPoint().getConnectedOutpoint();
@@ -1056,6 +1060,7 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 		return re;
 
 	}
+
 	/**
 	 * Checks if the given set is eligible to be walked to during local approval tip
 	 * selection given the currentcheckBur set of non-confirmed blocks to include.
@@ -1322,7 +1327,6 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 		}
 	}
 
-
 	/*
 	 * connect from the contract Execution
 	 */
@@ -1400,8 +1404,6 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 		blockStore.updateRewardConfirmed(block.getBlock().getHash(), true);
 		cacheBlockService.evictMaxConfirmedReward();
 	}
-
-
 
 	protected void insertVirtualUTXOs(Block block, Transaction virtualTx, FullBlockStore blockStore) {
 		try {
@@ -1928,6 +1930,7 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 		}
 		cacheBlockService.evictBlockEvaluation(block.getHash());
 	}
+
 	/**
 	 * Calculates and inserts any virtual transaction outputs so dependees can
 	 * become solid
@@ -1990,6 +1993,7 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 		// Return the computation result
 		return Optional.ofNullable(matchingResult);
 	}
+
 	@SuppressWarnings("unused")
 	private Optional<ConflictCandidate> findFirstSpentInput(HashSet<BlockWrap> allApprovedNewBlocks,
 			FullBlockStore store) {
@@ -2002,7 +2006,6 @@ public abstract class  ServiceBaseConfirmation extends ServiceBaseOrder {
 			}
 		}).findFirst();
 	}
-
 
 	/**
 	 * Adds the specified block and all approved blocks to the confirmed set. This

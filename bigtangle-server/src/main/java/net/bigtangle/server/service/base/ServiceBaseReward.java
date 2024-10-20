@@ -194,17 +194,12 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 	}
 
 	/**
-	 * DOES NOT CHECK FOR SOLIDITY. Computes eligibility of rewards + data tx +
-	 * Pair.of(new difficulty + new perTxReward) here for new reward blocks. This is
-	 * a prototype implementation. In the actual Spark implementation, the
-	 * computational cost is not a problem, since it is instead backpropagated and
-	 * calculated for free with delay. For more info, see notes.
+	 * Computes RewardBuilderResult here for new reward blocks. 
 	 * 
 	 * @param prevTrunk      a predecessor block in the db
 	 * @param prevBranch     a predecessor block in the db
 	 * @param prevRewardHash the predecessor reward
-	 * @return eligibility of rewards + data tx + Pair.of(new difficulty + new
-	 *         perTxReward)
+	 * @return RewardBuilderResult
 	 */
 	public RewardBuilderResult calcRewardBuilderResult(Sha256Hash prevTrunk, Sha256Hash prevBranch,
 			Sha256Hash prevRewardHash, long currentTime, boolean ordermatchexecutionChain, FullBlockStore store)
@@ -218,7 +213,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 
 	}
 
-	public RewardBuilderResult calcRewardInfo(boolean noOrder, BlockWrap prevTrunk, BlockWrap prevBranch,
+	public RewardBuilderResult calcRewardInfo(boolean contractExecute, BlockWrap prevTrunk, BlockWrap prevBranch,
 			Sha256Hash prevRewardHash, long currentTime, FullBlockStore store) throws BlockStoreException {
 
 		// Read previous reward block's data
@@ -230,7 +225,7 @@ public class ServiceBaseReward extends ServiceBaseConnect {
 		Set<BlockWrap> blocks = new HashSet<>();
 		long cutoffheight = getRewardCutoffHeight(prevRewardHash, store);
 
-		List<Block.Type> ordertypes = getListedBlockOfType(noOrder);
+		List<Block.Type> ordertypes = getListedBlockOfType(contractExecute);
 
 		ServiceBaseConnect serviceBase = new ServiceBaseConnect(serverConfiguration, networkParameters,
 				cacheBlockService);

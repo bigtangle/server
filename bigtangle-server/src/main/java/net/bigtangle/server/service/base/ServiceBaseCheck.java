@@ -1200,7 +1200,7 @@ public class ServiceBaseCheck extends ServiceBase {
 				return formalSolidityResult;
 			final Set<Sha256Hash> allPredecessorBlockHashes = getAllRequiredBlockHashes(block,
 					!allowMissingPredecessor);
-			List<BlockWrap> allRequirements = getAllBlocks(block, allPredecessorBlockHashes, store);
+			List<BlockWrap> allRequirements = getAllBlocksFromHash(  allPredecessorBlockHashes, store);
 			// Predecessors must exist and be ok
 			SolidityState predecessorsExist = checkPredecessorsExistAndOk(block, throwExceptions, allRequirements,
 					store);
