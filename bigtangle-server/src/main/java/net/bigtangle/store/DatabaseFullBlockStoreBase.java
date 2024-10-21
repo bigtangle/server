@@ -561,13 +561,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 	 */
 	protected abstract String getDatabaseDriverClass();
 
-	/**
-	 * Get the SQL statements that create the schema (DDL).
-	 * 
-	 * @return The list of SQL statements.
-	 */
-	protected abstract List<String> getCreateSchemeSQL();
-
+	 
 	/**
 	 * Get the SQL statements that create the tables (DDL).
 	 * 
@@ -1357,8 +1351,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 
 		}
 	}
-
-	protected abstract List<String> getDropIndexsSQL();
+ 
 
 	@Override
 	public List<UTXO> getOpenAllOutputs(String tokenid) throws UTXOProviderException {
@@ -1819,7 +1812,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 		}
 	}
 
-	protected abstract String getUpdateBlockEvaluationMilestoneSQL();
+ 
 
 	@Override
 	public void updateBlockEvaluationMilestone(Sha256Hash blockhash, long b) throws BlockStoreException {
@@ -1828,7 +1821,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 		
 
 		try {
-			preparedStatement = getConnection().prepareStatement(getUpdateBlockEvaluationMilestoneSQL());
+			preparedStatement = getConnection().prepareStatement(UPDATE_BLOCKEVALUATION_MILESTONE_SQL);
 			preparedStatement.setLong(1, b);
 			preparedStatement.setLong(2, System.currentTimeMillis());
 			preparedStatement.setBytes(3, blockhash.getBytes());
@@ -1871,8 +1864,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 		}
 
 	}
-
-	protected abstract String getUpdateBlockEvaluationRatingSQL();
+ 
 
 	@Override
 	public void updateBlockEvaluationRating(List<Rating> ratings) throws BlockStoreException {
@@ -1881,7 +1873,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 		
 		try {
 
-			preparedStatement = getConnection().prepareStatement(getUpdateBlockEvaluationRatingSQL());
+			preparedStatement = getConnection().prepareStatement(UPDATE_BLOCKEVALUATION_RATING_SQL);
 
 			for (Rating r : ratings) {
 				preparedStatement.setLong(1, r.getRating());
@@ -1955,16 +1947,14 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 			}
 		}
 	}
-
-	protected abstract String getUpdateOutputsSpentSQL();
-
+ 
 	@Override
 	public void updateTransactionOutputSpent(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b,
 			@Nullable Sha256Hash spenderBlockHash) throws BlockStoreException {
 		
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = getConnection().prepareStatement(getUpdateOutputsSpentSQL());
+			preparedStatement = getConnection().prepareStatement(UPDATE_OUTPUTS_SPENT_SQL);
 			preparedStatement.setBoolean(1, b);
 			preparedStatement.setBytes(2, spenderBlockHash != null ? spenderBlockHash.getBytes() : null);
 			preparedStatement.setBytes(3, prevTxHash.getBytes());
@@ -1985,8 +1975,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 		}
 
 	}
-
-	protected abstract String getUpdateOutputsConfirmedSQL();
+ 
 
 	@Override
 	public void updateTransactionOutputConfirmed(Sha256Hash prevBlockHash, Sha256Hash prevTxHash, long index, boolean b)
@@ -1994,7 +1983,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 		
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = getConnection().prepareStatement(getUpdateOutputsConfirmedSQL());
+			preparedStatement = getConnection().prepareStatement(UPDATE_OUTPUTS_CONFIRMED_SQL);
 			preparedStatement.setBoolean(1, b);
 			preparedStatement.setBytes(2, prevTxHash.getBytes());
 			preparedStatement.setLong(3, index);
@@ -2034,8 +2023,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 			}
 		}
 	}
-
-	protected abstract String getUpdateOutputsSpendPendingSQL();
+ 
 
 	@Override
 	public void updateTransactionOutputSpendPending(List<UTXO> utxos) throws BlockStoreException {
@@ -2043,7 +2031,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = getConnection().prepareStatement(getUpdateOutputsSpendPendingSQL());
+			preparedStatement = getConnection().prepareStatement(UPDATE_OUTPUTS_SPENDPENDING_SQL);
 			for (UTXO u : utxos) {
 				preparedStatement.setBoolean(1, true);
 				preparedStatement.setLong(2, System.currentTimeMillis());

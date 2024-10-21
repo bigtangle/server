@@ -177,6 +177,7 @@ public class ContractExecutionService {
 		serviceBase.addReferencedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBranchBlockHash(), store), cutoffheight, prevChainLength, true,
 				referencedOrdertypes, true, store);
+		
 		Contractresult prev = store.getMaxConfirmedContractresult(contractid, false);
 		Contractresult prevExecution = prev == null ? Contractresult.zeroContractresult() : prev;
 		Contractresult prevSpent = store.getMaxConfirmedContractresult(contractid, true);

@@ -544,12 +544,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_BLOCKS_MILESTONE_CONFIRMED_INDEX);
         return sqlStatements;
     }
-    @Override
-    protected List<String> getCreateSchemeSQL() {
-        // do nothing
-        return Collections.emptyList();
-    }
-
+    
     @Override
     protected String getDatabaseDriverClass() {
         return DATABASE_DRIVER_CLASS;
@@ -561,36 +556,5 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         return getUpdate() + " settings SET settingvalue = ? WHERE name = ?";
     }
 
-
-    @Override
-    public String getUpdateBlockEvaluationMilestoneSQL() {
-        return UPDATE_BLOCKEVALUATION_MILESTONE_SQL;
-    }
-
-    @Override
-    protected String getUpdateBlockEvaluationRatingSQL() {
-        return UPDATE_BLOCKEVALUATION_RATING_SQL;
-    }
-
-    @Override
-    protected String getUpdateOutputsSpentSQL() {
-        return UPDATE_OUTPUTS_SPENT_SQL;
-    }
-
-    @Override
-    protected String getUpdateOutputsConfirmedSQL() {
-        return UPDATE_OUTPUTS_CONFIRMED_SQL;
-    }
-
-    @Override
-    protected String getUpdateOutputsSpendPendingSQL() {
-        return UPDATE_OUTPUTS_SPENDPENDING_SQL;
-    }
-
-    @Override
-    protected List<String> getDropIndexsSQL() {
-        return new ArrayList<String>();
-    }
-
-  
+ 
 }
