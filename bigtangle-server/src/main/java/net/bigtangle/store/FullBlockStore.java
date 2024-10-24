@@ -24,7 +24,6 @@ import net.bigtangle.core.BlockMCMC;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ContractEventCancel;
 import net.bigtangle.core.Contractresult;
-import net.bigtangle.core.Exchange;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
@@ -429,18 +428,6 @@ public interface FullBlockStore {
 
 	Token getTokensByDomainname(String domainname) throws BlockStoreException;
 
-	Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException;
-
-	public List<Exchange> getExchangeListWithAddressA(String address) throws BlockStoreException;
-
-	void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException;
-
-	void saveExchange(Exchange exchange) throws BlockStoreException;
-
-	void deleteExchange(String orderid) throws BlockStoreException;
-
-	public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException;
-
 	List<Sha256Hash> getWhereConfirmedNotMilestone() throws BlockStoreException;
 
 	TXReward getRewardConfirmedAtHeight(long chainlength) throws BlockStoreException;
@@ -559,6 +546,13 @@ public interface FullBlockStore {
 			throws BlockStoreException;
 
 	List<ContractEventCancel> getContractEventCancelByBlockHash(HashSet<String> blockHashs) throws BlockStoreException;
-	public Orderresult getMaxConfirmedOrderresult( boolean spent) throws BlockStoreException;
-	public Contractresult getMaxConfirmedContractresult(String contracttokenid, boolean spent) throws BlockStoreException;
+
+	public Orderresult getMaxConfirmedOrderresult(boolean spent) throws BlockStoreException;
+
+	void updateContractresultMilestone(Sha256Hash blockhash, long milestone) throws BlockStoreException;
+
+	void updateOrderresultMilestone(Sha256Hash blockhash, long milestone) throws BlockStoreException;
+
+	public Contractresult getMaxMilestoneContractresult(String contracttokenid) throws BlockStoreException;
+	public  List<Contractresult> getConfirmedContractresultNotMilestone(String contracttokenid) throws BlockStoreException;
 }

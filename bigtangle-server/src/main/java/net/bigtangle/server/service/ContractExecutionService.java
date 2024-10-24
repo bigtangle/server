@@ -177,28 +177,28 @@ public class ContractExecutionService {
 		serviceBase.addReferencedBlockHashesTo(referencedblocks,
 				blockService.getBlockWrap(block.getPrevBranchBlockHash(), store), cutoffheight, prevChainLength, true,
 				referencedOrdertypes, true, store);
-		
-		Contractresult prev = store.getMaxConfirmedContractresult(contractid, false);
-		Contractresult prevExecution = prev == null ? Contractresult.zeroContractresult() : prev;
-		Contractresult prevSpent = store.getMaxConfirmedContractresult(contractid, true);
-		Contractresult prevSpentExecution = prevSpent == null ? Contractresult.zeroContractresult() : prevSpent;
-		//Take only the longest execution
-		 if(prevExecution.getContractchainlength() <=   prevSpentExecution.getContractchainlength()
-				 && prev!=null ) {
-			 return null;
-		 }
-		
-		BlockWrap prevBlock = serviceBase.getBlockWrap(prevExecution.getBlockHash(), store);
-		Set<BlockWrap> prevs = serviceBase.collectReferencedChainedContractExecutions(prevBlock, store);
-		Set<BlockWrap> collectNotSpents = collectNotAreadyCollected(referencedblocks, prevs);
 
-		
+		Contractresult prevMilestone = store.getMaxMilestoneContractresult(contractid);
+
+		Contractresult prevMilestoneExecution = prevMilestone == null ? Contractresult.zeroContractresult()
+				: prevMilestone;
+		List<Contractresult> prevNotMilestons = store.getConfirmedContractresultNotMilestone(contractid);
+
+		Set<BlockWrap> prevsNotMilestone = serviceBase.collectPrevsChain(prevNotMilestons, prevMilestoneExecution,
+				store);
+		// take last NotMilestons
+		Contractresult lastExecution = prevMilestoneExecution;
+		if (!prevsNotMilestone.isEmpty()) {
+			lastExecution = getLast(prevsNotMilestone, store);
+		}
+
+		Set<BlockWrap> collectNotSpents = collectNotAreadyCollected(referencedblocks, prevsNotMilestone);
 
 		ContractExecutionResult result = new ServiceContract(serverConfiguration, networkParameters, cacheBlockService)
-				.executeContract(block, store, contractid, prevExecution, serviceBase.getHashSet(collectNotSpents));
-		 
+				.executeContract(block, store, contractid, lastExecution, serviceBase.getHashSet(collectNotSpents));
+
 		// do not create the execution block, if there is no new referencedblocks
-		if (result == null || (result.getOutputTx().getOutputs().isEmpty() && referencedblocks.isEmpty()))
+		if (result == null || (result.getOutputTx().getOutputs().isEmpty() && collectNotSpents.isEmpty()))
 			return null;
 
 		tx.setData(result.toByteArray());
@@ -219,6 +219,21 @@ public class ContractExecutionService {
 			}
 		}
 		return collectNews;
+	}
+
+	protected Contractresult getLast(Set<BlockWrap> prevs, FullBlockStore store)
+			throws BlockStoreException, IOException {
+		BlockWrap re = null;
+		for (BlockWrap b : prevs) {
+			if (re == null)
+				re = b;
+			else {
+				if (b.getBlock().getHeight() > re.getBlock().getHeight())
+					re = b;
+			}
+		}
+
+		return store.getContractresult(re.getBlock().getHash());
 	}
 
 	protected Set<Sha256Hash> collectNotSpentFrom(Set<BlockWrap> prevs) throws BlockStoreException, IOException {

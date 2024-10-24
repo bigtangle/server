@@ -104,7 +104,7 @@ public class ContractTest extends AbstractIntegrationTest {
 		List<UTXO> utxos = getBalance(false, ulist);
 		List<UTXO> ylist = utxos.stream().filter(u -> u.getTokenId().equals(yuanTokenPub)).collect(Collectors.toList());
 		for (UTXO u : ylist) {
-			// log.debug(u.toString());
+			log.debug(u.toString());
 			BigInteger p = map.get(u.getAddress());
 			if (p != null) {
 				map.put(u.getAddress(), p.add(u.getValue().getValue()));
@@ -178,14 +178,17 @@ public class ContractTest extends AbstractIntegrationTest {
 
 	@Test
 	public void multipleExecutions() throws Exception {
-		// multiple executions of contract and rewards confirms
+		// multiple executions of contract confirms without reward and then do rewards
+		// chain to take all.
 		List<Block> blocks = new ArrayList<>();
 		prepare(blocks);
 		Block resultBlock = null;
+		int count=0;
 		for (ECKey key : ulist) {
 			Wallet w = Wallet.fromKeys(networkParameters, key, contextRoot);
 			w.payContract(null, yuanTokenPub, payContractAmount, null, null, contractKey.getPublicKeyAsHex());
-
+			count ++;
+			log.debug(" count "+count+  " payContract "  + key.toString());
 			resultBlock = contractExecutionService.createContractExecution(contractKey.getPublicKeyAsHex(), store);
 
 			if (resultBlock != null) {
@@ -200,19 +203,18 @@ public class ContractTest extends AbstractIntegrationTest {
 				new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
 						.confirmContractExecute(resultBlock, store);
 
-				assertTrue(resultBlock != null);
 				if (!check.getOutputTx().getOutputs().isEmpty()) {
 					Address winnerAddress = check.getOutputTx().getOutput(0).getScriptPubKey()
 							.getToAddress(networkParameters);
-					// confirm the contract execution
-					new ServiceBaseConnect(serverConfiguration, networkParameters, cacheBlockService)
-							.confirmContractExecute(resultBlock, store);
+
 					// check one of user get the winnerAmount
 					Map<String, BigInteger> endMap = new HashMap<>();
 					check(ulist, endMap);
 
 					// List<UTXO> utxos = getBalance(false, ulist);
 					assertTrue(endMap.get(winnerAddress.toString()) != null);
+					log.debug("endMap.get(winnerAddress.toString())=" + winnerAddress.toString() + " = "+
+					endMap.get(winnerAddress.toString()));
 					assertTrue(endMap.get(winnerAddress.toString()).equals(new BigInteger(winnerAmount)));
 
 				}

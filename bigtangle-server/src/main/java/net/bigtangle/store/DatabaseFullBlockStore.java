@@ -29,8 +29,6 @@ import net.bigtangle.core.Block;
 import net.bigtangle.core.Coin;
 import net.bigtangle.core.ContractEventCancel;
 import net.bigtangle.core.Contractresult;
-import net.bigtangle.core.Exchange;
-import net.bigtangle.core.ExchangeMulti;
 import net.bigtangle.core.MultiSign;
 import net.bigtangle.core.MultiSignAddress;
 import net.bigtangle.core.NetworkParameters;
@@ -2393,6 +2391,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 					record.getPrevblockhash() != null ? record.getPrevblockhash().getBytes() : null);
 			preparedStatement.setLong(8, record.getTime());
 			preparedStatement.setLong(9, record.getContractchainlength());
+			preparedStatement.setLong(10, -1);
 			preparedStatement.executeUpdate();
 
 		} catch (SQLException e) {
@@ -2632,7 +2631,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		return new Orderresult(Sha256Hash.wrap(resultSet.getBytes("blockhash")), resultSet.getBoolean("confirmed"),
 				resultSet.getBoolean("spent"), Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),
 				Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")), resultSet.getBytes("orderresult"),
-				resultSet.getLong("orderchainlength"), resultSet.getLong("inserttime"));
+				resultSet.getLong("orderchainlength"), resultSet.getLong("milestone"), resultSet.getLong("inserttime"));
 
 	}
 
@@ -2640,9 +2639,8 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		return new Contractresult(Sha256Hash.wrap(resultSet.getBytes("blockhash")), resultSet.getBoolean("confirmed"),
 				resultSet.getBoolean("spent"), Sha256Hash.wrap(resultSet.getBytes("prevblockhash")),
 				Sha256Hash.wrap(resultSet.getBytes("spenderblockhash")), resultSet.getBytes("contractresult"),
-				resultSet.getLong("contractchainlength"), 
-				resultSet.getString("contracttokenid"),   
-				resultSet.getLong("inserttime"));
+				resultSet.getLong("contractchainlength"), resultSet.getString("contracttokenid"),
+				resultSet.getLong("milestone"), resultSet.getLong("inserttime"));
 
 	}
 
@@ -2666,6 +2664,7 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 					record.getPrevblockhash() != null ? record.getPrevblockhash().getBytes() : null);
 			preparedStatement.setLong(7, record.getTime());
 			preparedStatement.setLong(8, record.getOrderchainlength());
+			preparedStatement.setLong(9, -1);
 			preparedStatement.executeUpdate();
 
 		} catch (SQLException e) {
@@ -3360,211 +3359,6 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 				return tokens;
 			}
 			return null;
-		} catch (SQLException e) {
-			throw new BlockStoreException(e);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
-	@Override
-	public Exchange getExchangeInfoByOrderid(String orderid) throws BlockStoreException {
-
-		PreparedStatement preparedStatement = null;
-		PreparedStatement sub_preparedStatement = null;
-		String sql = "SELECT orderid,pubkey,sign,signInputData FROM exchange_multisign WHERE orderid=?";
-		try {
-			preparedStatement = getConnection().prepareStatement(SELECT_EXCHANGE_ORDERID_SQL);
-			preparedStatement.setString(1, orderid);
-			ResultSet resultSet = preparedStatement.executeQuery();
-			if (!resultSet.next()) {
-				return null;
-			}
-			Exchange exchange = new Exchange();
-			exchange.setOrderid(resultSet.getString("orderid"));
-			exchange.setFromAddress(resultSet.getString("fromAddress"));
-			exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
-			exchange.setFromAmount(resultSet.getString("fromAmount"));
-			exchange.setToAddress(resultSet.getString("toAddress"));
-			exchange.setToTokenHex(resultSet.getString("toTokenHex"));
-			exchange.setToAmount(resultSet.getString("toAmount"));
-			exchange.setData(resultSet.getBytes("data"));
-			exchange.setToSign(resultSet.getInt("toSign"));
-			exchange.setFromSign(resultSet.getInt("fromSign"));
-			exchange.setToOrderId(resultSet.getString("toOrderId"));
-			exchange.setFromOrderId(resultSet.getString("fromOrderId"));
-			exchange.setMarket(resultSet.getString("market"));
-
-			exchange.getSigs().add(resultSet.getBytes("signInputData"));
-			sub_preparedStatement = getConnection().prepareStatement(sql);
-			sub_preparedStatement.setString(1, exchange.getToOrderId());
-			ResultSet sub_resultSet = sub_preparedStatement.executeQuery();
-			List<ExchangeMulti> list = new ArrayList<ExchangeMulti>();
-
-			while (sub_resultSet.next()) {
-				exchange.getSigs().add(sub_resultSet.getBytes("signInputData"));
-				list.add(new ExchangeMulti(exchange.getToOrderId(), sub_resultSet.getString("pubkey"),
-						sub_resultSet.getBytes("signInputData"), sub_resultSet.getInt("sign")));
-			}
-			exchange.setExchangeMultis(list);
-			return exchange;
-		} catch (SQLException ex) {
-			throw new BlockStoreException(ex);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
-	@Override
-	public void updateExchangeSign(String orderid, String signtype, byte[] data) throws BlockStoreException {
-
-		PreparedStatement preparedStatement = null;
-		try {
-			String sql = "";
-			if (signtype.equals("to")) {
-				sql = "UPDATE exchange SET toSign = 1, data = ? WHERE orderid = ?";
-			} else {
-				sql = "UPDATE exchange SET fromSign = 1, data = ? WHERE orderid = ?";
-			}
-			preparedStatement = getConnection().prepareStatement(sql);
-			preparedStatement.setString(2, orderid);
-			preparedStatement.setBytes(1, data);
-			preparedStatement.executeUpdate();
-		} catch (SQLException e) {
-			throw new BlockStoreException(e);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
-	@Override
-	public List<Exchange> getExchangeListWithAddressA(String address) throws BlockStoreException {
-
-		PreparedStatement preparedStatement = null;
-		List<Exchange> list = new ArrayList<Exchange>();
-		String sql = SELECT_EXCHANGE_SQL_A;
-
-		try {
-			preparedStatement = getConnection().prepareStatement(sql);
-			preparedStatement.setString(1, address);
-			preparedStatement.setString(2, address);
-			ResultSet resultSet = preparedStatement.executeQuery();
-			while (resultSet.next()) {
-				Exchange exchange = new Exchange();
-				exchange.setOrderid(resultSet.getString("orderid"));
-				exchange.setFromAddress(resultSet.getString("fromAddress"));
-				exchange.setFromTokenHex(resultSet.getString("fromTokenHex"));
-				exchange.setFromAmount(resultSet.getString("fromAmount"));
-				exchange.setToAddress(resultSet.getString("toAddress"));
-				exchange.setToTokenHex(resultSet.getString("toTokenHex"));
-				exchange.setToAmount(resultSet.getString("toAmount"));
-				exchange.setData(resultSet.getBytes("data"));
-				exchange.setToSign(resultSet.getInt("toSign"));
-				exchange.setFromSign(resultSet.getInt("fromSign"));
-				exchange.setToOrderId(resultSet.getString("toOrderId"));
-				exchange.setFromOrderId(resultSet.getString("fromOrderId"));
-				exchange.setMarket(resultSet.getString("market"));
-				exchange.setMemo(resultSet.getString("memo"));
-				list.add(exchange);
-			}
-			return list;
-		} catch (SQLException ex) {
-			throw new BlockStoreException(ex);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
-	@Override
-	public void saveExchange(Exchange exchange) throws BlockStoreException {
-
-		PreparedStatement preparedStatement = null;
-		try {
-			preparedStatement = getConnection().prepareStatement(INSERT_EXCHANGE_SQL);
-			preparedStatement.setString(1, exchange.getOrderid());
-			preparedStatement.setString(2, exchange.getFromAddress());
-			preparedStatement.setString(3, exchange.getFromTokenHex());
-			preparedStatement.setString(4, exchange.getFromAmount());
-			preparedStatement.setString(5, exchange.getToAddress());
-			preparedStatement.setString(6, exchange.getToTokenHex());
-			preparedStatement.setString(7, exchange.getToAmount());
-			preparedStatement.setBytes(8, exchange.getData());
-			preparedStatement.setInt(9, exchange.getToSign());
-			preparedStatement.setInt(10, exchange.getFromSign());
-			preparedStatement.setString(11, exchange.getToOrderId());
-			preparedStatement.setString(12, exchange.getFromOrderId());
-			preparedStatement.setString(13, exchange.getMarket());
-			preparedStatement.setString(14, exchange.getMemo());
-			preparedStatement.executeUpdate();
-		} catch (SQLException e) {
-			throw new BlockStoreException(e);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
-	@Override
-	public void deleteExchange(String orderid) throws BlockStoreException {
-
-		PreparedStatement preparedStatement = null;
-		try {
-			preparedStatement = getConnection().prepareStatement(DELETE_EXCHANGE_SQL);
-			preparedStatement.setString(1, orderid);
-			preparedStatement.executeUpdate();
-		} catch (SQLException e) {
-			throw new BlockStoreException(e);
-		} finally {
-			if (preparedStatement != null) {
-				try {
-					preparedStatement.close();
-				} catch (SQLException e) {
-					// throw new BlockStoreException("Could not close statement");
-				}
-			}
-		}
-	}
-
-	@Override
-	public void updateExchangeSignData(String orderid, byte[] data) throws BlockStoreException {
-
-		PreparedStatement preparedStatement = null;
-		try {
-			String sql = "UPDATE exchange SET toSign = 1, signInputData = ? WHERE orderid = ?";
-
-			preparedStatement = getConnection().prepareStatement(sql);
-			preparedStatement.setString(2, orderid);
-			preparedStatement.setBytes(1, data);
-			preparedStatement.executeUpdate();
 		} catch (SQLException e) {
 			throw new BlockStoreException(e);
 		} finally {
@@ -4731,22 +4525,50 @@ public abstract class DatabaseFullBlockStore extends DatabaseFullBlockStoreBase 
 		Map<String, Map<String, Coin>> toAddressMap = queryOutputsMap(address, tokenid);
 		addAccountCoinBatch(toAddressMap);
 	}
-	
 
 	@Override
-	public Contractresult getMaxConfirmedContractresult( String contracttokenid, boolean spent) throws BlockStoreException {
+	public Contractresult getMaxMilestoneContractresult(String contracttokenid) throws BlockStoreException {
 
 		PreparedStatement preparedStatement = null;
 		try {
-			preparedStatement = getConnection().prepareStatement(SELECT_CONTRACTRESULT_MAX_CONFIRMED_SQL);
+			preparedStatement = getConnection().prepareStatement(SELECT_CONTRACTRESULT_MAX_MILESTONE_SQL);
 			preparedStatement.setString(1, contracttokenid);
-			preparedStatement.setBoolean(2, spent);
 			ResultSet resultSet = preparedStatement.executeQuery();
 			if (resultSet.next()) {
 
 				return setContractresult(resultSet);
 			} else
 				return null;
+
+		} catch (SQLException ex) {
+			throw new BlockStoreException(ex);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// // throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+	}
+
+	@Override
+	public List<Contractresult> getConfirmedContractresultNotMilestone(String contracttokenid)
+			throws BlockStoreException {
+
+		PreparedStatement preparedStatement = null;
+
+		List<Contractresult> re = new ArrayList<Contractresult>();
+		try {
+			preparedStatement = getConnection().prepareStatement(SELECT_CONTRACTRESULT_CONFIRMED_NOTMILESTONE_SQL);
+			preparedStatement.setString(1, contracttokenid);
+			ResultSet resultSet = preparedStatement.executeQuery();
+
+			while (resultSet.next()) {
+				re.add(setContractresult(resultSet));
+			}
+			return re;
 
 		} catch (SQLException ex) {
 			throw new BlockStoreException(ex);

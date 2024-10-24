@@ -333,6 +333,40 @@ public abstract class ServiceBaseConfirmation extends ServiceBaseOrder {
 		return address;
 	}
 
+
+	public Set<BlockWrap> collectPrevsChain(List<Contractresult> prevs, Contractresult prevMilestone,FullBlockStore store) throws BlockStoreException {
+		// get all unspents forms a chain, remove others from prevs
+		Set<BlockWrap> re = new HashSet<BlockWrap>();
+		if (prevs.isEmpty())
+			return re;
+
+		// find the longest chained execution connected to last milestone
+		for (Contractresult prevNotMilestone : prevs) {
+			re = new HashSet<BlockWrap>();
+			Contractresult startingBlock = prevNotMilestone;
+			while (startingBlock != null) {
+				re.add( getBlockWrap(startingBlock.getBlockHash(),store));
+				if (startingBlock.getPrevblockhash().equals(prevMilestone.getBlockHash())) {
+					return re;
+				} else {
+					startingBlock = findPrev(prevs, startingBlock);
+				}
+			}
+		}
+		return re;
+	}
+
+	protected Contractresult findPrev(List<Contractresult> prevs, Contractresult result) {
+
+		for (Contractresult b : prevs) {
+			if (result.getPrevblockhash().equals(b.getBlockHash())) {
+				return b;
+			}
+		}
+		return null;
+
+	}
+	
 	public Set<BlockWrap> collectReferencedChainedOrderExecutions(BlockWrap headContractExecutions,
 			FullBlockStore store) throws BlockStoreException {
 
@@ -1311,6 +1345,7 @@ public abstract class ServiceBaseConfirmation extends ServiceBaseOrder {
 
 					blockStore.updateOrderCancelSpent(check.getCancelRecords(), null, confirm);
 					blockStore.updateOrderResultSpent(check.getPrevblockhash(), null, confirm);
+					blockStore.updateOrderresultMilestone(block.getHash(), -1);
 					for (BlockWrap dep : getReferrencedBlockWrap(block, blockStore)) {
 						unconfirm(dep, new HashSet<>(), blockStore);
 					}
@@ -1374,6 +1409,8 @@ public abstract class ServiceBaseConfirmation extends ServiceBaseOrder {
 			blockStore.updateContractResultConfirmed(block.getHash(), false);
 			blockStore.updateContractEventSpent(result.getAllRecords(), block.getHash(), false);
 			blockStore.updateTransactionOutputConfirmed(block.getHash(), result.getOutputTxHash(), 0, false);
+
+			blockStore.updateContractresultMilestone(block.getHash(), -1);
 
 			evictTransactions(block.getHash(), blockStore);
 
@@ -2038,6 +2075,22 @@ public abstract class ServiceBaseConfirmation extends ServiceBaseOrder {
 
 		// Confirm the block
 		confirmBlock(blockWrap, store);
+
+		// special Conrfirm with update
+
+		switch (blockWrap.getBlock().getBlockType()) {
+
+		case BLOCKTYPE_CONTRACT_EXECUTE:
+			store.updateContractresultMilestone(blockEvaluation.getBlockHash(), milestoneNumber);
+			break;
+		case BLOCKTYPE_ORDER_EXECUTE:
+			store.updateOrderresultMilestone(blockEvaluation.getBlockHash(), milestoneNumber);
+			break;
+		default:
+			break;
+
+		}
+
 		evictTransactions(blockWrap.getBlock(), store);
 
 		// Keep track of confirmed blocks

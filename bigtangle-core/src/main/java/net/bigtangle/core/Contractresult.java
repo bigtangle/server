@@ -16,16 +16,17 @@ public class Contractresult extends SpentBlock implements java.io.Serializable {
 
 	private Sha256Hash prevblockhash;
 
-	private byte[] contractresult;
+	private byte[] contractExecutionResult;
 	private long contractchainlength;
 	private String contracttokenid;
+	private long milestone;
 	// this is for json
 	public Contractresult() {
 
 	}
 
 	public Contractresult(Sha256Hash hash, boolean confirmed, boolean spent, Sha256Hash prevBlockHash,
-			Sha256Hash spenderblockhash, byte[] contractresult,  long contractchainLength,String contracttokenid,   long inserttime ) {
+			Sha256Hash spenderblockhash, byte[] contractExecutionResult,  long contractchainLength,String contracttokenid,long milestone,   long inserttime ) {
 		super();
 		this.setBlockHash(hash);
 		this.setConfirmed(confirmed);
@@ -33,12 +34,13 @@ public class Contractresult extends SpentBlock implements java.io.Serializable {
 		this.setTime(inserttime); 
 		this.prevblockhash = prevBlockHash;
 		this.setSpenderBlockHash(spenderblockhash);
-		this.contractresult = contractresult;
+		this.contractExecutionResult = contractExecutionResult;
 		this.contractchainlength = contractchainLength;
 		this.contracttokenid =contracttokenid;
+		this.milestone =milestone;
 	}
 	public static  Contractresult zeroContractresult() {
-		return new Contractresult(Sha256Hash.ZERO_HASH, false, false, null, null, null, 0,null, 0l);
+		return new Contractresult(Sha256Hash.ZERO_HASH, false, false, null, null, null, 0,null, -1,0l);
 	}
 	
 	public byte[] toByteArray() {
@@ -47,9 +49,10 @@ public class Contractresult extends SpentBlock implements java.io.Serializable {
 			DataOutputStream dos = new DataOutputStream(baos);
 			dos.write(super.toByteArray());
 			Utils.writeNBytes(dos, prevblockhash.getBytes());
-			Utils.writeNBytes(dos, contractresult ); 
+			Utils.writeNBytes(dos, contractExecutionResult ); 
 			dos.writeLong(contractchainlength);
 			Utils.writeNBytesString(dos, contracttokenid ); 
+			dos.writeLong(milestone);
 			dos.close();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -62,9 +65,10 @@ public class Contractresult extends SpentBlock implements java.io.Serializable {
 		super.parseDIS(dis);
 
 		prevblockhash = Sha256Hash.wrap(Utils.readNBytes(dis)); 
-		contractresult = Utils.readNBytes(dis);
+		contractExecutionResult = Utils.readNBytes(dis);
 		contractchainlength = dis.readLong();
 		contracttokenid =  Utils.readNBytesString(dis);
+		milestone = dis.readLong();
 		return this;
 	}
 
@@ -85,13 +89,14 @@ public class Contractresult extends SpentBlock implements java.io.Serializable {
 		this.prevblockhash = prevblockhash;
 	}
  
+ 
 
-	public byte[] getContractresult() {
-		return contractresult;
+	public byte[] getContractExecutionResult() {
+		return contractExecutionResult;
 	}
 
-	public void setContractresult(byte[] contractresult) {
-		this.contractresult = contractresult;
+	public void setContractExecutionResult(byte[] contractExecutionResult) {
+		this.contractExecutionResult = contractExecutionResult;
 	}
 
 	public long getContractchainlength() {
@@ -110,10 +115,19 @@ public class Contractresult extends SpentBlock implements java.io.Serializable {
 		this.contracttokenid = contracttokenid;
 	}
 
+	public long getMilestone() {
+		return milestone;
+	}
+
+	public void setMilestone(long milestone) {
+		this.milestone = milestone;
+	}
+
 	@Override
 	public String toString() {
-		return "Contractresult [prevblockhash=" + prevblockhash  
-				+ ", contractchainlength=" + contractchainlength + ", contracttokenid=" + contracttokenid + "]";
+		return "Contractresult [prevblockhash=" + prevblockhash 
+				+ ", contractchainlength=" + contractchainlength + ", contracttokenid=" + contracttokenid
+				+ ", milestone=" + milestone + "]";
 	}
 
 	 

@@ -213,7 +213,7 @@ public class ServiceContract extends ServiceBaseConnect {
 		log.debug("winner = " + winner.toString());
 		payout(payouts, winner.getBeneficiaryAddress(), winner.getTargetTokenid(), sum(usedRecords.values()));
 		Transaction tx = createPayoutTransaction(winnerBlock, payouts);
-		return new ContractExecutionResult(null, winner.getContractTokenid(),
+		return new ContractExecutionResult(winnerBlock.getHash(), winner.getContractTokenid(),
 				getContractEventRecordHash(allRecords.values()), tx.getHash(), tx, prevHash.getBlockHash(),
 				prevHash.getContractchainlength() + 1, cancels, getRemainder(allRecords.values(), usedRecords.values()),
 				winnerBlock.getTimeSeconds(),

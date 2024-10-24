@@ -17,14 +17,14 @@ public class Orderresult extends SpentBlock implements java.io.Serializable {
 
 	private byte[] orderExecutionResult;
 	private long orderchainLength;
-
+	private long milestone;
 	// this is for json
 	public Orderresult() {
 
 	}
 
 	public Orderresult(Sha256Hash hash, boolean confirmed, boolean spent, Sha256Hash prevBlockHash,
-			Sha256Hash spenderblockhash, byte[] orderExecutionResult,  long orderchainLength,   long inserttime ) {
+			Sha256Hash spenderblockhash, byte[] orderExecutionResult,  long orderchainLength,long milestone,   long inserttime ) {
 		super();
 		this.setBlockHash(hash);
 		this.setConfirmed(confirmed);
@@ -34,10 +34,11 @@ public class Orderresult extends SpentBlock implements java.io.Serializable {
 		this.setSpenderBlockHash(spenderblockhash);
 		this.orderExecutionResult = orderExecutionResult;
 		this.orderchainLength = orderchainLength;
+		this.milestone = milestone;	
 	}
 
 	public static Orderresult zeroOrderresult( ) {
-	 return new Orderresult(Sha256Hash.ZERO_HASH, false, false, null, null, null, 0l, 0l);
+	 return new Orderresult(Sha256Hash.ZERO_HASH, false, false, null, null, null, 0l, -1,0l);
 	}
 	
 	public byte[] toByteArray() {
@@ -48,6 +49,7 @@ public class Orderresult extends SpentBlock implements java.io.Serializable {
 			Utils.writeNBytes(dos, prevblockhash.getBytes());
 			Utils.writeNBytes(dos, orderExecutionResult ); 
 			dos.writeLong(orderchainLength);
+			dos.writeLong(milestone);
 			dos.close();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -63,7 +65,7 @@ public class Orderresult extends SpentBlock implements java.io.Serializable {
 
 		orderExecutionResult = Utils.readNBytes(dis);
 		orderchainLength = dis.readLong();
-
+		milestone= dis.readLong();
 		return this;
 	}
 
@@ -101,6 +103,14 @@ public class Orderresult extends SpentBlock implements java.io.Serializable {
 
 	public void setOrderchainLength(long orderchainLength) {
 		this.orderchainLength = orderchainLength;
+	}
+
+	public long getMilestone() {
+		return milestone;
+	}
+
+	public void setMilestone(long milestone) {
+		this.milestone = milestone;
 	}
   
 

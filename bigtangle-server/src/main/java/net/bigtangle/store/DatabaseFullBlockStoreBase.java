@@ -93,8 +93,7 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 	private static String DROP_ORDERS_TABLE = "DROP TABLE IF EXISTS orders";
 
 	private static String DROP_MYSERVERBLOCKS_TABLE = "DROP TABLE IF EXISTS myserverblocks";
-	private static String DROP_EXCHANGE_TABLE = "DROP TABLE  IF EXISTS  exchange";
-	private static String DROP_EXCHANGEMULTI_TABLE = "DROP TABLE  IF EXISTS  exchange_multisign";
+
 	private static String DROP_ACCESS_PERMISSION_TABLE = "DROP TABLE  IF EXISTS access_permission";
 	private static String DROP_ACCESS_GRANT_TABLE = "DROP TABLE  IF EXISTS access_grant";
 	private static String DROP_CONTRACT_EVENT_TABLE = "DROP TABLE  IF EXISTS contractevent";
@@ -258,29 +257,36 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 
 	protected final String INSERT_CONTRACT_RESULT_SQL = getInsert()
 			+ "  INTO contractresult (blockhash,  contracttokenid, confirmed, spent, spenderblockhash, "
-			+ " contractresult, prevblockhash, inserttime, contractchainlength) " + " VALUES (?, ?, ?, ?, ?, ?, ?,?,?)";
+			+ " contractresult, prevblockhash, inserttime, contractchainlength, milestone) " + " VALUES (?, ?, ?, ?, ?, ?, ?,?,?,?)";
 	protected final String SELECT_CONTRACTRESULT  = "SELECT  blockhash,  contracttokenid, confirmed, spent, spenderblockhash,  "
-			+ " contractresult, prevblockhash, inserttime, contractchainlength "
+			+ " contractresult, prevblockhash, inserttime, contractchainlength , milestone "
 			+ " FROM contractresult ";
 	protected final String SELECT_CONTRACTRESULT_SQL = SELECT_CONTRACTRESULT + " WHERE contracttokenid=? and spent=false order by contractchainlength desc  ";
 	protected final String SELECT_CONTRACTRESULT_HASH_SQL =SELECT_CONTRACTRESULT +"  WHERE blockhash=?   ";
-	protected final String SELECT_CONTRACTRESULT_MAX_CONFIRMED_SQL = SELECT_CONTRACTRESULT
-			+ " WHERE confirmed = 1 and contracttokenid=?  and spent=? order by contractchainlength desc limit 1";
+	protected final String SELECT_CONTRACTRESULT_MAX_MILESTONE_SQL = SELECT_CONTRACTRESULT
+			+ " WHERE confirmed = 1 and contracttokenid=? and milestone >0 order by milestone desc limit 1";
+	protected final String SELECT_CONTRACTRESULT_CONFIRMED_NOTMILESTONE_SQL = SELECT_CONTRACTRESULT
+			+ " WHERE confirmed = 1 and contracttokenid=? and milestone < 0 order by contractchainlength  desc  ";
+	protected final String UPDATE_CONTRACTRESULT_MILESTONE_SQL = getUpdate()
+			+ " contractresult SET milestone = ?   WHERE blockhash = ?";
+	
 	protected final String UPDATE_ORDERRESULT_SPENT_SQL = getUpdate()
 			+ " orderresult SET spent = ?, spenderblockhash = ? " + " WHERE blockhash = ?";
 	protected final String UPDATE_ORDERRESULT_CONFIRMED_SQL = getUpdate() + " orderresult SET confirmed = ? "
 			+ " WHERE blockhash = ?";
 	protected final String INSERT_ORDER_RESULT_SQL = getInsert()
 			+ "  INTO orderresult (blockhash, confirmed, spent, spenderblockhash, "
-			+ " orderresult, prevblockhash, inserttime, orderchainlength) " + " VALUES (?, ?, ?, ?, ?, ?, ?,?)";
+			+ " orderresult, prevblockhash, inserttime, orderchainlength, milestone) " + " VALUES (?, ?, ?, ?, ?, ?, ?,?,?)";
 	protected final String SELECT_ORDERRESULT =   "  select blockhash, confirmed, spent, spenderblockhash, "
-			+ " orderresult, prevblockhash, inserttime , orderchainlength" 
+			+ " orderresult, prevblockhash, inserttime , orderchainlength, milestone" 
 			+ " FROM orderresult ";
 	protected final String SELECT_ORDERRESULT_SQL =   SELECT_ORDERRESULT
 			+ " WHERE spent=false order by orderchainlength desc ";
 	protected final String SELECT_ORDERRESULT_HASH_SQL =   SELECT_ORDERRESULT +" WHERE blockhash=?";
 	protected final String SELECT_ORDER_RESULT_MAX_CONFIRMED_SQL = SELECT_ORDERRESULT
 			+ " WHERE confirmed = 1 and spent=? order by orderchainlength desc limit 1";
+	protected final String UPDATE_ORDERRESULT_MILESTONE_SQL = getUpdate()
+			+ " orderresult SET milestone = ?   WHERE blockhash = ?";
 	
 	protected final String INSERT_TOKENS_SQL = getInsert()
 			+ " INTO tokens (blockhash, confirmed, tokenid, tokenindex, amount, "
@@ -458,28 +464,14 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 			+ "addresstargetable, blockhash, tokenid, fromaddress, memo, spent, confirmed, spendpending,spendpendingtime, minimumsign, time, hash, outputindex, spenderblockhash "
 			+ " FROM outputs WHERE confirmed=1 AND spent=0 ORDER BY hash, outputindex";
 
-	protected String INSERT_EXCHANGE_SQL = getInsert()
-			+ "  INTO exchange (orderid, fromAddress, fromTokenHex, fromAmount,"
-			+ " toAddress, toTokenHex, toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market,memo) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-	protected String DELETE_EXCHANGE_SQL = "DELETE FROM exchange WHERE orderid=?";
-	protected String SELECT_EXCHANGE_ORDERID_SQL = "SELECT orderid,"
-			+ " fromAddress, fromTokenHex, fromAmount, toAddress, toTokenHex,"
-			+ " toAmount, data, toSign, fromSign, toOrderId, fromOrderId, market,signInputData FROM exchange WHERE orderid = ?";
-
-	protected String INSERT_EXCHANGEMULTI_SQL = getInsert()
-			+ "  INTO exchange_multisign (orderid, pubkey,sign) VALUES (?, ?,?)";
-
+  
 	protected final String SELECT_ORDERCANCEL_SQL = "SELECT blockhash, orderblockhash, confirmed, spent, spenderblockhash,time"
 			+ " FROM ordercancel WHERE 1 = 1";
 	protected final String ORDERCANCEL_CONFIRMED_SQL = "SELECT blockhash, orderblockhash, confirmed, spent, spenderblockhash,time"
 			+ " FROM ordercancel WHERE confirmed = true and spent=false";
 	protected final String ORDERCANCEL_UPDATE_SPENT_SQL = "UPDATE ordercancel SET spent = ?, spenderblockhash=?  WHERE blockhash = ? ";
 
-	protected String SELECT_EXCHANGE_SQL_A = "SELECT DISTINCT orderid, fromAddress, "
-			+ "fromTokenHex, fromAmount, toAddress, toTokenHex, toAmount, "
-			+ "data, toSign, fromSign, toOrderId, fromOrderId, market,memo "
-			+ "FROM exchange e WHERE (toSign = false OR fromSign = false) AND " + "(fromAddress = ? OR toAddress = ?) "
-			+ afterSelect();
+ 
 
 	protected final String BlockPrototype_SELECT_SQL = "   select prevblockhash, prevbranchblockhash, "
 			+ " inserttime from blockprototype   ";
@@ -623,8 +615,6 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 		sqlStatements.add(DROP_SUBTANGLE_PERMISSION_TABLE);
 		sqlStatements.add(DROP_ORDERS_TABLE);
 		sqlStatements.add(DROP_MYSERVERBLOCKS_TABLE);
-		sqlStatements.add(DROP_EXCHANGE_TABLE);
-		sqlStatements.add(DROP_EXCHANGEMULTI_TABLE);
 		sqlStatements.add(DROP_ACCESS_PERMISSION_TABLE);
 		sqlStatements.add(DROP_ACCESS_GRANT_TABLE);
 		sqlStatements.add(DROP_CONTRACT_EVENT_TABLE);
@@ -2744,4 +2734,52 @@ public abstract class DatabaseFullBlockStoreBase implements FullBlockStore {
 	}
 
 
+	@Override
+	public void updateOrderresultMilestone(Sha256Hash blockhash, long milestone) throws BlockStoreException {
+
+		PreparedStatement preparedStatement = null;
+		
+
+		try {
+			preparedStatement = getConnection().prepareStatement(UPDATE_ORDERRESULT_MILESTONE_SQL);
+			preparedStatement.setLong(1, milestone);
+			preparedStatement.setBytes(2, blockhash.getBytes());
+			preparedStatement.executeUpdate();
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+
+	}
+	@Override
+	public void updateContractresultMilestone(Sha256Hash blockhash, long milestone) throws BlockStoreException {
+
+		PreparedStatement preparedStatement = null;
+		
+
+		try {
+			preparedStatement = getConnection().prepareStatement(UPDATE_CONTRACTRESULT_MILESTONE_SQL);
+			preparedStatement.setLong(1, milestone);
+			preparedStatement.setBytes(2, blockhash.getBytes());
+			preparedStatement.executeUpdate();
+		} catch (SQLException e) {
+			throw new BlockStoreException(e);
+		} finally {
+			if (preparedStatement != null) {
+				try {
+					preparedStatement.close();
+				} catch (SQLException e) {
+					// throw new BlockStoreException("Could not close statement");
+				}
+			}
+		}
+
+	}
 }

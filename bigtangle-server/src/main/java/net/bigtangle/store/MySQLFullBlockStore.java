@@ -8,7 +8,6 @@ package net.bigtangle.store;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import net.bigtangle.core.NetworkParameters;
@@ -309,31 +308,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "    CONSTRAINT myserverblocks_pk PRIMARY KEY (prevhash, hash) USING BTREE \n" 
             + ") ENGINE=InnoDB";
     
-    private static final String CREATE_EXCHANGE_TABLE = "CREATE TABLE exchange (\n"
-            + "   orderid varchar(255) NOT NULL,\n" 
-            + "   fromAddress varchar(255),\n"
-            + "   fromTokenHex varchar(255),\n" 
-            + "   fromAmount varchar(255),\n" 
-            + "   toAddress varchar(255),\n"
-            + "   toTokenHex varchar(255),\n" 
-            + "   toAmount varchar(255),\n" 
-            + "   data varbinary(5000) NOT NULL,\n"
-            + "   toSign boolean,\n" 
-            + "   fromSign integer,\n" 
-            + "   toOrderId varchar(255),\n"
-            + "   fromOrderId varchar(255),\n" 
-            + "   market varchar(255),\n" 
-            + "   memo varchar(255),\n" 
-            + "   signInputData varbinary(5000),\n"
-            + "   PRIMARY KEY (orderid) ) ENGINE=InnoDB";
-    
-    private static final String CREATE_EXCHANGE_MULTISIGN_TABLE = 
-            "CREATE TABLE exchange_multisign (\n"
-          + "   orderid varchar(255) ,\n" 
-          + "   pubkey varchar(255),\n"
-          + "   signInputData varbinary(5000),\n"
-          + "   sign integer\n"
-          + "    ) ENGINE=InnoDB";
+ 
     
     private static final String CREATE_ACCESS_PERMISSION_TABLE = 
             "CREATE TABLE access_permission (\n"
@@ -387,6 +362,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "   confirmed boolean NOT NULL,\n" 
             + "   spent boolean NOT NULL,\n"
             + "   spenderblockhash binary(32),\n" 
+            + "    milestone bigint NOT NULL,\n"
             + "    inserttime bigint NOT NULL,\n"
             + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
    
@@ -399,6 +375,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
             + "   confirmed boolean NOT NULL,\n" 
             + "   spent boolean NOT NULL,\n"
             + "   spenderblockhash binary(32),\n" 
+            + "    milestone bigint NOT NULL,\n"
             + "    inserttime bigint NOT NULL,\n"
             + "   PRIMARY KEY (blockhash) ) ENGINE=InnoDB";
     private static final String CREATE_CHAINBLOCKQUEUE_TABLE = "CREATE TABLE chainblockqueue (\n" 
@@ -421,9 +398,6 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
     private static final String CREATE_PREVBRANCH_HASH_INDEX = "CREATE INDEX blocks_prevbranchblockhash_idx ON blocks (prevbranchblockhash) USING HASH";
     private static final String CREATE_PREVTRUNK_HASH_INDEX = "CREATE INDEX blocks_prevblockhash_idx ON blocks (prevblockhash) USING HASH";
     
-    private static final String CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX = "CREATE INDEX exchange_fromAddress_idx ON exchange (fromAddress) USING btree";
-    private static final String CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX = "CREATE INDEX exchange_toAddress_idx ON exchange (toAddress) USING btree";
-
     private static final String CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX = "CREATE INDEX orders_collectinghash_idx ON orders (collectinghash) USING btree";
     private static final String CREATE_BLOCKS_MILESTONE_INDEX = "CREATE INDEX blocks_milestone_idx ON blocks (milestone)  USING btree ";
     private static final String CREATE_BLOCKS_HEIGHT_INDEX = "CREATE INDEX blocks_height_idx ON blocks (height)  USING btree ";
@@ -474,8 +448,7 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_ORDERS_TABLE);
         sqlStatements.add(CREATE_MYSERVERBLOCKS_TABLE);
         sqlStatements.add(CREATE_SETTINGS_TABLE);
-        sqlStatements.add(CREATE_EXCHANGE_TABLE);
-        sqlStatements.add(CREATE_EXCHANGE_MULTISIGN_TABLE);
+ 
         sqlStatements.add(CREATE_MCMC_TABLE); 
         sqlStatements.add(CREATE_MATCHING_LAST_TABLE);
         sqlStatements.add(CREATE_MATCHING_LAST_DAY_TABLE);
@@ -526,11 +499,11 @@ public class MySQLFullBlockStore extends DatabaseFullBlockStore {
         sqlStatements.add(CREATE_OUTPUTS_TOADDRESS_INDEX);
         sqlStatements.add(CREATE_PREVBRANCH_HASH_INDEX);
         sqlStatements.add(CREATE_PREVTRUNK_HASH_INDEX);
-        sqlStatements.add(CREATE_EXCHANGE_TOADDRESS_TABLE_INDEX);
+
         sqlStatements.add(CREATE_ORDERS_COLLECTINGHASH_TABLE_INDEX);
         sqlStatements.add(CREATE_BLOCKS_MILESTONE_INDEX);
         sqlStatements.add(CREATE_TXREARD_CHAINLENGTH_INDEX);
-        sqlStatements.add(CREATE_EXCHANGE_FROMADDRESS_TABLE_INDEX);
+
         return sqlStatements;
     }
     protected List<String> getCreateIndexesSQL2() {
